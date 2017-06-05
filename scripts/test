@@ -1,0 +1,5 @@
+#!/bin/bash
+
+set -e
+
+ginkgo -r -p src/crucible/

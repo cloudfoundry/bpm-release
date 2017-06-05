@@ -9,4 +9,4 @@ inputs:
 - name: crucible
 
 run:
-  path: crucible/bin/test
+  path: crucible/scripts/test

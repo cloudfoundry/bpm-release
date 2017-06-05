@@ -5,4 +5,4 @@ dependencies:
   - golang
 
 files:
-  - crucible/cmd/crucible/main.go
+  - crucible/cmd/cruicble/*.go # gosub

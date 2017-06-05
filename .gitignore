@@ -8,4 +8,12 @@ config/dev.yml
 config/private.yml
 src_alt
 
+# Golang
+/bin/
+/pkg/
+
+# gosub and friends
+src/github.com/vito/gosub
+src/github.com/codegangsta/cli
+
 *.tgz
