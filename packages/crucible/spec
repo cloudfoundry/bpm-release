@@ -1,0 +1,8 @@
+---
+name: crucible
+
+dependencies:
+  - golang
+
+files:
+  - crucible/cmd/crucible/main.go

@@ -1,0 +1,10 @@
+---
+name: crucible
+
+templates:
+  crucible_ctl.erb: bin/crucible_ctl
+
+packages:
+  - crucible
+
+properties: {}

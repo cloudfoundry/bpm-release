@@ -1,0 +1,11 @@
+.DS_Store
+
+.blobs/
+blobs/
+.dev_builds/
+dev_releases/
+config/dev.yml
+config/private.yml
+src_alt
+
+*.tgz
