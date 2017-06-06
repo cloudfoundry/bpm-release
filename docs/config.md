@@ -18,7 +18,7 @@ processes:
 - name: worker
   executable: /var/vcap/packages/program/bin/program-worker
   args:
-    - --queus
+    - --queues
     - 4
   env:
     - FOO=BAR
