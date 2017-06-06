@@ -38,7 +38,7 @@ function sync_package() {
   )
 }
 
-sync_package crucible -app  crucible/cmd/cruicble &
+sync_package crucible -app crucible &
 
 wait
 

@@ -15,6 +15,7 @@ import (
 
 var _ = Describe("Crucible", func() {
 	var boshConfigPath string
+
 	BeforeEach(func() {
 		var err error
 		boshConfigPath, err = ioutil.TempDir("", "crucible-main-test")
@@ -63,7 +64,7 @@ var _ = Describe("Crucible", func() {
 				Eventually(session).Should(gexec.Exit(1))
 
 				Expect(session.Err).Should(gbytes.Say(
-					"failed to load config at %s: ",
+					"Error: failed to load config at %s: ",
 					filepath.Join(boshConfigPath, "jobs", "even-job", "config", "crucible.yml"),
 				))
 			})
@@ -79,8 +80,6 @@ var _ = Describe("Crucible", func() {
 				Eventually(session).Should(gexec.Exit(1))
 
 				Expect(session.Err).Should(gbytes.Say("must specify a job name"))
-				Expect(session.Out).Should(gbytes.Say("A bosh process manager for starting and stopping release jobs"))
-				Expect(session.Out).Should(gbytes.Say("Usage: crucible \\[start|stop\\] <job name>"))
 			})
 		})
 	})
@@ -92,9 +91,7 @@ var _ = Describe("Crucible", func() {
 			Expect(err).ShouldNot(HaveOccurred())
 			Eventually(session).Should(gexec.Exit(1))
 
-			Expect(session.Err).Should(gbytes.Say("must specify `start' or `stop'"))
-			Expect(session.Out).Should(gbytes.Say("A bosh process manager for starting and stopping release jobs"))
-			Expect(session.Out).Should(gbytes.Say("Usage: crucible \\[start|stop\\] <job name>"))
+			Expect(session.Err).Should(gbytes.Say("Usage:"))
 		})
 	})
 })

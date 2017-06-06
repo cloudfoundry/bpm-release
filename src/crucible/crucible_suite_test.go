@@ -18,7 +18,7 @@ var (
 )
 
 var _ = SynchronizedBeforeSuite(func() []byte {
-	cruciblePath, err := gexec.Build("crucible/cmd/crucible")
+	cruciblePath, err := gexec.Build("crucible")
 	Expect(err).NotTo(HaveOccurred())
 
 	return []byte(cruciblePath)

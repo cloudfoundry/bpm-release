@@ -1,0 +1,10 @@
+---
+processes:
+- name: server
+  executable: /var/vcap/packages/program/bin/program-server
+  args:
+    - --port=2424
+    - --host="localhost"
+  env:
+    - FOO=BAR
+    - BAZ=BUZZ

@@ -1,0 +1,43 @@
+compilation:
+  cloud_properties: {}
+  network: crucible
+  reuse_compilation_vms: true
+  workers: 3
+jobs:
+- instances: 1
+  name: crucible
+  resource_pool: crucible
+  networks:
+  - name: crucible
+  templates:
+  - name: crucible
+    release: crucible
+name: crucible
+networks:
+- name: crucible
+  subnets:
+  - cloud_properties: {}
+    gateway: 10.244.17.1
+    range: 10.244.17.0/24
+    reserved:
+    - 10.244.17.1
+    static: []
+  type: manual
+releases:
+- name: crucible
+  version: latest
+resource_pools:
+- cloud_properties: {}
+  env: {}
+  name: crucible
+  network: crucible
+  stemcell:
+    name: bosh-warden-boshlite-ubuntu-trusty-go_agent
+    version: latest
+update:
+  canaries: 1
+  canary_watch_time: 5000-120000
+  max_in_flight: 1
+  serial: false
+  update_watch_time: 5000-120000
+

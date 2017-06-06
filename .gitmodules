@@ -18,3 +18,11 @@
 	path = src/golang.org/x/text
 	url = https://go.googlesource.com/text
 	branch = master
+[submodule "src/github.com/spf13/cobra"]
+	path = src/github.com/spf13/cobra
+	url = https://github.com/spf13/cobra
+	branch = master
+[submodule "src/github.com/spf13/pflag"]
+	path = src/github.com/spf13/pflag
+	url = https://github.com/spf13/pflag
+	branch = master
