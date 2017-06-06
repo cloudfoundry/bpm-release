@@ -1,14 +1,10 @@
-[submodule "src/gopkg.in/yaml.v2"]
-	path = src/gopkg.in/yaml.v2
-	url = https://gopkg.in/yaml.v2
-	branch = v2
+[submodule "src/github.com/spf13/pflag"]
+	path = src/github.com/spf13/pflag
+	url = https://github.com/spf13/pflag
+	branch = master
 [submodule "src/github.com/onsi/ginkgo"]
 	path = src/github.com/onsi/ginkgo
 	url = https://github.com/onsi/ginkgo
-	branch = master
-[submodule "src/github.com/onsi/gomega"]
-	path = src/github.com/onsi/gomega
-	url = https://github.com/onsi/gomega
 	branch = master
 [submodule "src/golang.org/x/net"]
 	path = src/golang.org/x/net
@@ -18,11 +14,19 @@
 	path = src/golang.org/x/text
 	url = https://go.googlesource.com/text
 	branch = master
+[submodule "src/github.com/opencontainers/runtime-spec"]
+	path = src/github.com/opencontainers/runtime-spec
+	url = https://github.com/opencontainers/runtime-spec
+	branch = master
 [submodule "src/github.com/spf13/cobra"]
 	path = src/github.com/spf13/cobra
 	url = https://github.com/spf13/cobra
 	branch = master
-[submodule "src/github.com/spf13/pflag"]
-	path = src/github.com/spf13/pflag
-	url = https://github.com/spf13/pflag
+[submodule "src/gopkg.in/yaml.v2"]
+	path = src/gopkg.in/yaml.v2
+	url = https://gopkg.in/yaml.v2
+	branch = v2
+[submodule "src/github.com/onsi/gomega"]
+	path = src/github.com/onsi/gomega
+	url = https://github.com/onsi/gomega
 	branch = master

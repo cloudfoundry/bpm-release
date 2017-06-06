@@ -9,7 +9,7 @@ import (
 )
 
 type CrucibleConfig struct {
-	Processes []Process `yaml:"processes"`
+	Process *Process `yaml:"process"`
 }
 
 type Process struct {

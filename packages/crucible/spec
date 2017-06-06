@@ -8,6 +8,8 @@ files:
   - crucible/*.go # gosub
   - crucible/commands/*.go # gosub
   - crucible/config/*.go # gosub
+  - crucible/specbuilder/*.go # gosub
+  - github.com/opencontainers/runtime-spec/specs-go/*.go # gosub
   - github.com/spf13/cobra/*.go # gosub
   - github.com/spf13/pflag/*.go # gosub
   - gopkg.in/yaml.v2/*.go # gosub

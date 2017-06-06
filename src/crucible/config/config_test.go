@@ -20,12 +20,10 @@ var _ = Describe("Config", func() {
 			cfg, err := config.ParseConfig(configPath)
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(cfg.Processes).To(HaveLen(1))
-			process := cfg.Processes[0]
-			Expect(process.Name).To(Equal("server"))
-			Expect(process.Executable).To(Equal("/var/vcap/packages/program/bin/program-server"))
-			Expect(process.Args).To(ConsistOf("--port=2424", "--host=\"localhost\""))
-			Expect(process.Env).To(ConsistOf("FOO=BAR", "BAZ=BUZZ"))
+			Expect(cfg.Process.Name).To(Equal("server"))
+			Expect(cfg.Process.Executable).To(Equal("/var/vcap/packages/program/bin/program-server"))
+			Expect(cfg.Process.Args).To(ConsistOf("--port=2424", "--host=\"localhost\""))
+			Expect(cfg.Process.Env).To(ConsistOf("FOO=BAR", "BAZ=BUZZ"))
 		})
 
 		Context("when reading the file fails", func() {
