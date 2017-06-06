@@ -23,3 +23,17 @@ processes:
   env:
     - FOO=BAR
 ```
+
+```
+check process job-server
+  with pidfile /var/vcap/sys/run/crucible/job-server.pid
+  start program "/var/vcap/packages/crucible/bin/crucible start job/server"
+  stop program "/var/vcap/packages/crucible/bin/crucible stop job/server"
+  group vcap
+
+check process job-worker
+  with pidfile /var/vcap/sys/run/crucible/job-worker.pid
+  start program "/var/vcap/packages/crucible/bin/crucible start job/worker"
+  stop program "/var/vcap/packages/crucible/bin/crucible stop job/worker"
+  group vcap
+```
