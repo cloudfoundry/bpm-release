@@ -35,6 +35,12 @@ Crucible is also able to offer resource limiting due to the technologies chosen 
 the above features. This stops any one job from starving other collocated jobs of the
 operating system resources they need in order to work.
 
+## Documentation
+
+Documentation can be found in the [docs](docs) directory. As we're developing Crucible this
+documentation my lead the implementation changes briefly but will eventually become the
+offical source of Crucible documentation.
+
 ## Usage
 
 Not yet, please.
