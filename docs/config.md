@@ -1,7 +1,7 @@
 # Configuration Format
 
-**Note:** This is not the final configuration format and is subject to
-change at any time.
+**Note:** This is not the final configuration format and is subject to change at
+any time.
 
 ## Job Configuration
 
@@ -30,8 +30,8 @@ processes:
 
 Crucible still sits on top of `monit` as part of the current BOSH job API.
 However, the contents of the `monit` file now become simpler and less variable.
-The amount of features used is minimized. BOSH would like to remove support for
-`monit` eventually and so reducing the exposed feature area will make this
+The amount of features used is minimized. BOSH would like to remove support
+for `monit` eventually and so reducing the exposed feature area will make this
 easier.
 
 ```
