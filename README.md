@@ -31,8 +31,8 @@ on the same machine.
 
 ### Resource Limits
 
-Due to the technologies chosen for the above features, Crucible is also able to offer
-resource limiting. This stops any one job from starving other collocated jobs of the
+Crucible is also able to offer resource limiting due to the technologies chosen for
+the above features. This stops any one job from starving other collocated jobs of the
 operating system resources they need in order to work.
 
 ## Usage
