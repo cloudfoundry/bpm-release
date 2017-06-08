@@ -1,0 +1,9 @@
+#!/bin/bash
+
+absolute_path() {
+  (cd $1 && pwd)
+}
+
+scripts_path=$(absolute_path `dirname $0`)
+
+fly -t ci execute -c ${scripts_path}/../ci/test.yml

@@ -2,14 +2,17 @@ package commands
 
 import (
 	"crucible/config"
+	"crucible/runcadapter"
 	"crucible/specbuilder"
 	"errors"
 	"fmt"
-	"os/user"
-	"strconv"
 
-	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/spf13/cobra"
+)
+
+const (
+	BUNDLE_ROOT = "/var/vcap/data/crucible/bundles"
+	RUNC_PATH   = "/var/vcap/packages/runc/bin/runc"
 )
 
 func init() {
@@ -28,41 +31,20 @@ func start(cmd *cobra.Command, args []string) error {
 		return errors.New("must specify a job name")
 	}
 
-	jobConfigPath := config.ConfigPath(args[0])
+	jobName := args[0]
+	jobConfigPath := config.ConfigPath(jobName)
 	jobConfig, err := config.ParseConfig(jobConfigPath)
 	if err != nil {
 		return fmt.Errorf("failed to load config at %s: %s", jobConfigPath, err.Error())
 	}
 
-	_ = specbuilder.Build(args[0], jobConfig, idFinder{})
+	spec, _ := specbuilder.Build(jobName, jobConfig, specbuilder.NewUserIDFinder())
 
-	return nil
-}
-
-type idFinder struct{}
-
-// TODO: Test me
-func (i idFinder) Lookup(username string) (specs.User, error) {
-	u, err := user.Lookup(username)
+	adapter := runcadapter.NewRuncAdapater(RUNC_PATH)
+	bundlePath, err := adapter.BuildBundle(BUNDLE_ROOT, jobName, spec)
 	if err != nil {
-		return specs.User{}, err
+		return fmt.Errorf("bundle build failure: %s", err.Error())
 	}
 
-	// TODO: Can these be negative?
-	uid, err := strconv.Atoi(u.Uid)
-	if err != nil {
-		return specs.User{}, err
-	}
-
-	// TODO: Can these be negative?
-	gid, err := strconv.Atoi(u.Gid)
-	if err != nil {
-		return specs.User{}, err
-	}
-
-	return specs.User{
-		UID:      uint32(uid),
-		GID:      uint32(gid),
-		Username: u.Username,
-	}, nil
+	return adapter.RunContainer(bundlePath, jobName)
 }

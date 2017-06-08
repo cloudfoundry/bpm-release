@@ -2,6 +2,7 @@ package specbuilder
 
 import (
 	"crucible/config"
+	"errors"
 	"fmt"
 	"runtime"
 
@@ -13,12 +14,19 @@ type UserIDFinder interface {
 	Lookup(username string) (specs.User, error)
 }
 
-func Build(jobName string, cfg *config.CrucibleConfig, idFinder UserIDFinder) specs.Spec {
-	user, _ := idFinder.Lookup("vcap")
+func Build(jobName string, cfg *config.CrucibleConfig, idFinder UserIDFinder) (specs.Spec, error) {
+	user, err := idFinder.Lookup("vcap")
+	if err != nil {
+		return specs.Spec{}, err
+	}
+
+	if cfg.Process == nil {
+		return specs.Spec{}, errors.New("no process defined")
+	}
 
 	process := &specs.Process{
 		User: user,
-		Args: cfg.Process.Args,
+		Args: append([]string{cfg.Process.Executable}, cfg.Process.Args...),
 		Env:  cfg.Process.Env,
 		Cwd:  "/",
 		Rlimits: []specs.LinuxRlimit{
@@ -41,11 +49,34 @@ func Build(jobName string, cfg *config.CrucibleConfig, idFinder UserIDFinder) sp
 		},
 		Process: process,
 		Root: specs.Root{
-			Path: fmt.Sprintf("/var/vcap/data/crucible/%s/rootfs", jobName),
+			Path: fmt.Sprintf("/var/vcap/data/crucible/bundles/%s/rootfs", jobName),
 		},
 		Hostname: jobName,
 		Mounts:   mounts,
-	}
+		Linux: &specs.Linux{
+			RootfsPropagation: "private",
+			MaskedPaths: []string{
+				"/proc/kcore",
+				"/proc/latency_stats",
+				"/proc/timer_list",
+				"/proc/timer_stats",
+				"/proc/sched_debug",
+				"/sys/firmware",
+			},
+			ReadonlyPaths: []string{
+				"/proc/asound",
+				"/proc/bus",
+				"/proc/fs",
+				"/proc/irq",
+				"/proc/sys",
+				"/proc/sysrq-trigger",
+			},
+			Namespaces: []specs.LinuxNamespace{
+				{Type: "uts"},
+				{Type: "mount"},
+			},
+		},
+	}, nil
 }
 
 func boshMounts(jobName string) []specs.Mount {

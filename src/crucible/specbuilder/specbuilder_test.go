@@ -4,6 +4,7 @@ import (
 	"crucible/config"
 	"crucible/specbuilder"
 	"crucible/specbuilder/specbuilderfakes"
+	"errors"
 	"runtime"
 
 	. "github.com/onsi/ginkgo"
@@ -45,7 +46,8 @@ var _ = Describe("Specbuilder", func() {
 	})
 
 	It("convert a crucible config into a runc spec", func() {
-		spec := specbuilder.Build(jobName, cfg, userIDFinder)
+		spec, err := specbuilder.Build(jobName, cfg, userIDFinder)
+		Expect(err).NotTo(HaveOccurred())
 
 		Expect(spec.Version).To(Equal(specs.Version))
 
@@ -54,6 +56,7 @@ var _ = Describe("Specbuilder", func() {
 			Arch: runtime.GOARCH,
 		}))
 
+		expectedProcessArgs := append([]string{cfg.Process.Executable}, cfg.Process.Args...)
 		Expect(userIDFinder.LookupCallCount()).To(Equal(1))
 		Expect(userIDFinder.LookupArgsForCall(0)).To(Equal("vcap"))
 		Expect(spec.Process).To(Equal(&specs.Process{
@@ -64,7 +67,7 @@ var _ = Describe("Specbuilder", func() {
 				GID:      3000,
 				Username: "vcap",
 			},
-			Args: cfg.Process.Args,
+			Args: expectedProcessArgs,
 			Env:  cfg.Process.Env,
 			Cwd:  "/",
 			Rlimits: []specs.LinuxRlimit{
@@ -78,7 +81,7 @@ var _ = Describe("Specbuilder", func() {
 		}))
 
 		Expect(spec.Root).To(Equal(specs.Root{
-			Path: "/var/vcap/data/crucible/ambien-job/rootfs",
+			Path: "/var/vcap/data/crucible/bundles/ambien-job/rootfs",
 		}))
 
 		Expect(spec.Hostname).To(Equal("ambien-job"))
@@ -175,5 +178,48 @@ var _ = Describe("Specbuilder", func() {
 				Options:     []string{"rbind", "ro"},
 			},
 		}))
+
+		Expect(spec.Linux.RootfsPropagation).To(Equal("private"))
+		Expect(spec.Linux.MaskedPaths).To(ConsistOf([]string{
+			"/proc/kcore",
+			"/proc/latency_stats",
+			"/proc/timer_list",
+			"/proc/timer_stats",
+			"/proc/sched_debug",
+			"/sys/firmware",
+		}))
+
+		Expect(spec.Linux.ReadonlyPaths).To(ConsistOf([]string{
+			"/proc/asound",
+			"/proc/bus",
+			"/proc/fs",
+			"/proc/irq",
+			"/proc/sys",
+			"/proc/sysrq-trigger",
+		}))
+
+		Expect(spec.Linux.Namespaces).To(ConsistOf([]specs.LinuxNamespace{{Type: "uts"}, {Type: "mount"}}))
+	})
+
+	Context("when the user id lookup fails", func() {
+		BeforeEach(func() {
+			userIDFinder.LookupReturns(specs.User{}, errors.New("this user does not exist"))
+		})
+
+		It("returns an error", func() {
+			_, err := specbuilder.Build(jobName, cfg, userIDFinder)
+			Expect(err).To(HaveOccurred())
+		})
+	})
+
+	Context("when there is no process specified", func() {
+		BeforeEach(func() {
+			cfg = &config.CrucibleConfig{}
+		})
+
+		It("returns an error", func() {
+			_, err := specbuilder.Build(jobName, cfg, userIDFinder)
+			Expect(err).To(MatchError("no process defined"))
+		})
 	})
 })

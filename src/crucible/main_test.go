@@ -1,16 +1,21 @@
 package main_test
 
 import (
+	"crucible/config"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 
+	yaml "gopkg.in/yaml.v2"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
+	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
 var _ = Describe("Crucible", func() {
@@ -29,17 +34,34 @@ var _ = Describe("Crucible", func() {
 		)
 
 		BeforeEach(func() {
-			jobName = "odd-job"
+			jobName = fmt.Sprintf("example-%d", GinkgoParallelNode())
+
 			jobConfigPath := filepath.Join(boshConfigPath, "jobs", jobName, "config")
 			err := os.MkdirAll(jobConfigPath, 0755)
 			Expect(err).NotTo(HaveOccurred())
 
-			_, err = os.OpenFile(
+			jobConfig := config.CrucibleConfig{
+				Process: &config.Process{
+					Name:       jobName,
+					Executable: "/bin/sleep",
+					Args:       []string{"100"},
+					Env:        []string{"FOO=BAR"},
+				},
+			}
+
+			f, err := os.OpenFile(
 				filepath.Join(jobConfigPath, "crucible.yml"),
-				os.O_RDONLY|os.O_CREATE,
+				os.O_RDWR|os.O_CREATE,
 				0644,
 			)
 			Expect(err).NotTo(HaveOccurred())
+
+			data, err := yaml.Marshal(jobConfig)
+			Expect(err).NotTo(HaveOccurred())
+
+			n, err := f.Write(data)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(n).To(Equal(len(data)))
 		})
 
 		JustBeforeEach(func() {
@@ -47,10 +69,34 @@ var _ = Describe("Crucible", func() {
 			command.Env = append(command.Env, fmt.Sprintf("CRUCIBLE_BOSH_ROOT=%s", boshConfigPath))
 		})
 
+		AfterEach(func() {
+			cmd := exec.Command("runc", "state", jobName)
+			_, err := cmd.CombinedOutput()
+			if err != nil {
+				return
+			}
+
+			// using force, as we cannot delete a running container.
+			cmd = exec.Command("runc", "delete", "--force", jobName)
+			combinedOutput, err := cmd.CombinedOutput()
+			Expect(err).NotTo(HaveOccurred(), string(combinedOutput))
+		})
+
 		It("runs", func() {
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
 			Eventually(session).Should(gexec.Exit(0))
+
+			cmd := exec.Command("runc", "state", jobName)
+			data, err := cmd.Output()
+			Expect(err).NotTo(HaveOccurred())
+
+			stateResponse := specs.State{}
+			err = json.Unmarshal(data, &stateResponse)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(stateResponse.ID).To(Equal(jobName))
+			Expect(stateResponse.Status).To(Equal("running"))
 		})
 
 		Context("when the crucible configuration file does not exist", func() {

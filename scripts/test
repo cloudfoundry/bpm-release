@@ -3,15 +3,15 @@
 set -e
 
 absolute_path() {
-  (cd $1 && pwd)
+  (cd "$1" && pwd)
 }
 
-scripts_path=$(absolute_path `dirname $0`)
+scripts_path=$(absolute_path "$(dirname "$0")" )
 
 export GOPATH=$scripts_path/..
 export PATH=$GOPATH/bin:$PATH
 
-pushd ${GOPATH}
+pushd "${GOPATH}/src/crucible" > /dev/null
   go install github.com/onsi/ginkgo/ginkgo
-  ginkgo -r -p src/crucible/
-popd
+  ginkgo -r -p -race -randomizeAllSpecs -randomizeSuites "$@"
+popd > /dev/null
