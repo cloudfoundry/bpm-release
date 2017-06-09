@@ -13,5 +13,5 @@ export PATH=$GOPATH/bin:$PATH
 
 pushd "${GOPATH}/src/crucible" > /dev/null
   go install github.com/onsi/ginkgo/ginkgo
-  ginkgo -r -p -race -randomizeAllSpecs -randomizeSuites "$@"
+  ginkgo -r -race -randomizeAllSpecs -randomizeSuites "$@"
 popd > /dev/null
