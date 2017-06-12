@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 
 	yaml "gopkg.in/yaml.v2"
 
@@ -110,7 +111,7 @@ var _ = Describe("Crucible", func() {
 			Expect(err).NotTo(HaveOccurred(), string(combinedOutput))
 		})
 
-		It("runs", func() {
+		It("runs the process in a container with a pidfile", func() {
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
 			Eventually(session).Should(gexec.Exit(0))
@@ -125,6 +126,13 @@ var _ = Describe("Crucible", func() {
 
 			Expect(stateResponse.ID).To(Equal(jobName))
 			Expect(stateResponse.Status).To(Equal("running"))
+
+			pidText, err := ioutil.ReadFile(filepath.Join(boshConfigPath, "sys", "run", "crucible", fmt.Sprintf("%s.pid", jobName)))
+			Expect(err).NotTo(HaveOccurred())
+
+			pid, err := strconv.Atoi(string(pidText))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(pid).To(Equal(stateResponse.Pid))
 		})
 
 		Context("when the crucible configuration file does not exist", func() {
