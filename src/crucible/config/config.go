@@ -35,11 +35,23 @@ func ParseConfig(configPath string) (*CrucibleConfig, error) {
 	return &cconf, nil
 }
 
-func ConfigPath(jobName string) string {
-	configRoot := os.Getenv("CRUCIBLE_BOSH_ROOT")
-	if configRoot == "" {
-		configRoot = "/var/vcap"
+func BoshRoot() string {
+	boshRoot := os.Getenv("CRUCIBLE_BOSH_ROOT")
+	if boshRoot == "" {
+		boshRoot = "/var/vcap"
 	}
 
-	return filepath.Join(configRoot, "jobs", jobName, "config", "crucible.yml")
+	return boshRoot
+}
+
+func ConfigPath(jobName string) string {
+	return filepath.Join(BoshRoot(), "jobs", jobName, "config", "crucible.yml")
+}
+
+func RuncPath() string {
+	return filepath.Join(BoshRoot(), "packages", "runc", "bin", "runc")
+}
+
+func BundlesRoot() string {
+	return filepath.Join(BoshRoot(), "data", "crucible", "bundles")
 }

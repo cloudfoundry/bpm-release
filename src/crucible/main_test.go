@@ -18,6 +18,15 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
+func chownR(path string, uid, gid int) error {
+	return filepath.Walk(path, func(name string, info os.FileInfo, err error) error {
+		if err == nil {
+			err = os.Chown(name, uid, gid)
+		}
+		return err
+	})
+}
+
 var _ = Describe("Crucible", func() {
 	var boshConfigPath string
 
@@ -25,18 +34,40 @@ var _ = Describe("Crucible", func() {
 		var err error
 		boshConfigPath, err = ioutil.TempDir("", "crucible-main-test")
 		Expect(err).NotTo(HaveOccurred())
+
+		err = os.MkdirAll(filepath.Join(boshConfigPath, "packages"), 0755)
+		Expect(err).NotTo(HaveOccurred())
+
+		err = os.MkdirAll(filepath.Join(boshConfigPath, "data", "packages"), 0755)
+		Expect(err).NotTo(HaveOccurred())
+
+		err = os.MkdirAll(filepath.Join(boshConfigPath, "packages", "runc", "bin"), 0755)
+		Expect(err).NotTo(HaveOccurred())
+
+		runcPath, err := exec.LookPath("runc")
+		Expect(err).NotTo(HaveOccurred())
+
+		err = os.Link(runcPath, filepath.Join(boshConfigPath, "packages", "runc", "bin", "runc"))
+		Expect(err).NotTo(HaveOccurred())
+	})
+
+	AfterEach(func() {
+		err := os.RemoveAll(boshConfigPath)
+		Expect(err).NotTo(HaveOccurred())
 	})
 
 	Context("start", func() {
 		var (
 			command *exec.Cmd
 			jobName string
+			jobDir  string
 		)
 
 		BeforeEach(func() {
 			jobName = fmt.Sprintf("example-%d", GinkgoParallelNode())
 
-			jobConfigPath := filepath.Join(boshConfigPath, "jobs", jobName, "config")
+			jobDir = filepath.Join(boshConfigPath, "jobs", jobName)
+			jobConfigPath := filepath.Join(jobDir, "config")
 			err := os.MkdirAll(jobConfigPath, 0755)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -44,7 +75,7 @@ var _ = Describe("Crucible", func() {
 				Process: &config.Process{
 					Name:       jobName,
 					Executable: "/bin/sleep",
-					Args:       []string{"100"},
+					Args:       []string{"10"},
 					Env:        []string{"FOO=BAR"},
 				},
 			}
@@ -62,6 +93,9 @@ var _ = Describe("Crucible", func() {
 			n, err := f.Write(data)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(n).To(Equal(len(data)))
+
+			err = chownR(boshConfigPath, 2000, 3000)
+			Expect(err).NotTo(HaveOccurred())
 		})
 
 		JustBeforeEach(func() {
@@ -70,14 +104,8 @@ var _ = Describe("Crucible", func() {
 		})
 
 		AfterEach(func() {
-			cmd := exec.Command("runc", "state", jobName)
-			_, err := cmd.CombinedOutput()
-			if err != nil {
-				return
-			}
-
 			// using force, as we cannot delete a running container.
-			cmd = exec.Command("runc", "delete", "--force", jobName)
+			cmd := exec.Command("runc", "delete", "--force", jobName)
 			combinedOutput, err := cmd.CombinedOutput()
 			Expect(err).NotTo(HaveOccurred(), string(combinedOutput))
 		})

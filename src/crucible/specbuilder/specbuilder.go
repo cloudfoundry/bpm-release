@@ -3,7 +3,7 @@ package specbuilder
 import (
 	"crucible/config"
 	"errors"
-	"fmt"
+	"path/filepath"
 	"runtime"
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
@@ -49,7 +49,7 @@ func Build(jobName string, cfg *config.CrucibleConfig, idFinder UserIDFinder) (s
 		},
 		Process: process,
 		Root: specs.Root{
-			Path: fmt.Sprintf("/var/vcap/data/crucible/bundles/%s/rootfs", jobName),
+			Path: filepath.Join(config.BundlesRoot(), jobName, "rootfs"),
 		},
 		Hostname: jobName,
 		Mounts:   mounts,
@@ -82,21 +82,21 @@ func Build(jobName string, cfg *config.CrucibleConfig, idFinder UserIDFinder) (s
 func boshMounts(jobName string) []specs.Mount {
 	return []specs.Mount{
 		{
-			Destination: fmt.Sprintf("/var/vcap/jobs/%s", jobName),
+			Destination: filepath.Join(config.BoshRoot(), "jobs", jobName),
 			Type:        "bind",
-			Source:      fmt.Sprintf("/var/vcap/jobs/%s", jobName),
+			Source:      filepath.Join(config.BoshRoot(), "jobs", jobName),
 			Options:     []string{"rbind", "ro"},
 		},
 		{
-			Destination: "/var/vcap/data/packages",
+			Destination: filepath.Join(config.BoshRoot(), "data", "packages"),
 			Type:        "bind",
-			Source:      "/var/vcap/data/packages",
+			Source:      filepath.Join(config.BoshRoot(), "data", "packages"),
 			Options:     []string{"rbind", "ro"},
 		},
 		{
-			Destination: "/var/vcap/packages",
+			Destination: filepath.Join(config.BoshRoot(), "packages"),
 			Type:        "bind",
-			Source:      "/var/vcap/packages",
+			Source:      filepath.Join(config.BoshRoot(), "packages"),
 			Options:     []string{"rbind", "ro"},
 		},
 	}

@@ -10,11 +10,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const (
-	BUNDLE_ROOT = "/var/vcap/data/crucible/bundles"
-	RUNC_PATH   = "/var/vcap/packages/runc/bin/runc"
-)
-
 func init() {
 	RootCmd.AddCommand(startCommand)
 }
@@ -38,10 +33,13 @@ func start(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to load config at %s: %s", jobConfigPath, err.Error())
 	}
 
-	spec, _ := specbuilder.Build(jobName, jobConfig, specbuilder.NewUserIDFinder())
+	spec, err := specbuilder.Build(jobName, jobConfig, specbuilder.NewUserIDFinder())
+	if err != nil {
+		return fmt.Errorf("failed to load config at %s: %s", jobConfigPath, err.Error())
+	}
 
-	adapter := runcadapter.NewRuncAdapater(RUNC_PATH)
-	bundlePath, err := adapter.BuildBundle(BUNDLE_ROOT, jobName, spec)
+	adapter := runcadapter.NewRuncAdapater(config.RuncPath())
+	bundlePath, err := adapter.BuildBundle(config.BundlesRoot(), jobName, spec)
 	if err != nil {
 		return fmt.Errorf("bundle build failure: %s", err.Error())
 	}
