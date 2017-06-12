@@ -1,0 +1,11 @@
+#!/bin/bash
+
+set -e
+
+absolute_path() {
+  (cd "$1" && pwd)
+}
+
+scripts_path=$(absolute_path "$(dirname "$0")" )
+
+sudo docker run --privileged -v  ${scripts_path}/..:/crucible -t pcfsecurity/crucible-ci:latest /crucible/scripts/test
