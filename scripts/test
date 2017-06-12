@@ -11,6 +11,8 @@ scripts_path=$(absolute_path "$(dirname "$0")" )
 export GOPATH=$scripts_path/..
 export PATH=$GOPATH/bin:$PATH
 
+${scripts_path}/mountgroups.sh
+
 pushd "${GOPATH}/src/crucible" > /dev/null
   go install github.com/onsi/ginkgo/ginkgo
   ginkgo -r -race -randomizeAllSpecs -randomizeSuites "$@"
