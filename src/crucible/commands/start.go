@@ -15,7 +15,7 @@ func init() {
 }
 
 var startCommand = &cobra.Command{
-	Use:   "start",
+	Use:   "start <job-name>",
 	Short: "Starts a BOSH Process",
 	Long:  "Starts a BOSH Process",
 	RunE:  start,
@@ -33,12 +33,13 @@ func start(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to load config at %s: %s", jobConfigPath, err.Error())
 	}
 
-	spec, err := specbuilder.Build(jobName, jobConfig, specbuilder.NewUserIDFinder())
+	userIDFinder := specbuilder.NewUserIDFinder()
+	spec, err := specbuilder.Build(jobName, jobConfig, userIDFinder)
 	if err != nil {
 		return fmt.Errorf("failed to load config at %s: %s", jobConfigPath, err.Error())
 	}
 
-	adapter := runcadapter.NewRuncAdapater(config.RuncPath())
+	adapter := runcadapter.NewRuncAdapater(config.RuncPath(), userIDFinder)
 	bundlePath, err := adapter.BuildBundle(config.BundlesRoot(), jobName, spec)
 	if err != nil {
 		return fmt.Errorf("bundle build failure: %s", err.Error())

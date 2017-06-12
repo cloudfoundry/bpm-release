@@ -8,16 +8,26 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
-func (a *runcAdapter) BuildBundle(bundleRoot, jobName string, jobSpec specs.Spec) (string, error) {
-	bundlePath := filepath.Join(bundleRoot, jobName)
+func (a *runcAdapter) BuildBundle(bundlesRoot, jobName string, jobSpec specs.Spec) (string, error) {
+	bundlePath := filepath.Join(bundlesRoot, jobName)
 	err := os.MkdirAll(bundlePath, 0700)
 	if err != nil {
 		return "", err
 	}
-
-	err = os.MkdirAll(filepath.Join(bundlePath, "rootfs"), 0700)
+	rootfsPath := filepath.Join(bundlePath, "rootfs")
+	err = os.MkdirAll(rootfsPath, 0700)
 	if err != nil {
 		return "", err
+	}
+
+	user, err := a.userIdFinder.Lookup("vcap") // hardcoded for now
+	if err != nil {
+		return "", err
+	}
+
+	err = os.Chown(rootfsPath, int(user.UID), int(user.GID))
+	if err != nil {
+		panic(err)
 	}
 
 	f, err := os.OpenFile(filepath.Join(bundlePath, "config.json"), os.O_RDWR|os.O_CREATE, 0700)
@@ -35,19 +45,9 @@ func (a *runcAdapter) BuildBundle(bundleRoot, jobName string, jobSpec specs.Spec
 		return "", err
 	}
 
-	err = chownR(bundlePath, 2000, 3000) // TODO: user UserIDFinder
-	if err != nil {
-		panic(err)
-	}
-
 	return bundlePath, nil
 }
 
-func chownR(path string, uid, gid int) error {
-	return filepath.Walk(path, func(name string, info os.FileInfo, err error) error {
-		if err == nil {
-			err = os.Chown(name, uid, gid)
-		}
-		return err
-	})
+func (a *runcAdapter) DestroyBundle(bundlesRoot, jobName string) error {
+	return os.RemoveAll(filepath.Join(bundlesRoot, jobName))
 }

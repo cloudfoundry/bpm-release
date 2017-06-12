@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"syscall"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -17,7 +18,7 @@ import (
 
 var _ = Describe("Bundlebuilder", func() {
 	var (
-		adapter          runcadapter.RuncAdapater
+		adapter          runcadapter.RuncAdapter
 		jobName          string
 		bundleRoot       string
 		fakeUserIDFinder *specbuilderfakes.FakeUserIDFinder
@@ -25,7 +26,10 @@ var _ = Describe("Bundlebuilder", func() {
 	)
 
 	BeforeEach(func() {
-		adapter = runcadapter.NewRuncAdapater("/var/vcap/packages/runc/bin/runc")
+		fakeUserIDFinder = &specbuilderfakes.FakeUserIDFinder{}
+		fakeUserIDFinder.LookupReturns(specs.User{UID: 200, GID: 300, Username: "jim"}, nil)
+
+		adapter = runcadapter.NewRuncAdapater("/var/vcap/packages/runc/bin/runc", fakeUserIDFinder)
 		jobName = "example"
 
 		jobConfig := &config.CrucibleConfig{
@@ -38,8 +42,6 @@ var _ = Describe("Bundlebuilder", func() {
 		}
 
 		var err error
-		fakeUserIDFinder = &specbuilderfakes.FakeUserIDFinder{}
-		fakeUserIDFinder.LookupReturns(specs.User{UID: 200, GID: 300, Username: "jim"}, nil)
 		jobSpec, err = specbuilder.Build(jobName, jobConfig, fakeUserIDFinder)
 
 		bundleRoot, err = ioutil.TempDir("", "Bundlebuilder")
@@ -66,6 +68,8 @@ var _ = Describe("Bundlebuilder", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(f.IsDir()).To(BeTrue())
 			Expect(f.Mode() & os.ModePerm).To(Equal(os.FileMode(0700)))
+			Expect(f.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(200)))
+			Expect(f.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
 
 			infos, err := ioutil.ReadDir(bundlefs)
 			Expect(err).ToNot(HaveOccurred())

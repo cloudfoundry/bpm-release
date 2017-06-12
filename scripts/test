@@ -15,5 +15,5 @@ ${scripts_path}/mountgroups.sh
 
 pushd "${GOPATH}/src/crucible" > /dev/null
   go install github.com/onsi/ginkgo/ginkgo
-  ginkgo -r -race -randomizeAllSpecs -randomizeSuites "$@"
+  ginkgo -r -p -race -randomizeAllSpecs "$@"
 popd > /dev/null
