@@ -12,6 +12,8 @@ jobs:
   templates:
   - name: crucible
     release: crucible
+  - name: crucible-acceptance
+    release: crucible
 name: crucible
 networks:
 - name: crucible

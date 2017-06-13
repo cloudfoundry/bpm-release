@@ -1,0 +1,10 @@
+---
+name: crucible-acceptance
+
+templates:
+  crucible.yml.erb: config/crucible.yml
+
+packages:
+- crucible-acceptance
+
+properties: {}

@@ -1,0 +1,5 @@
+set -e
+
+mkdir -p ${BOSH_INSTALL_TARGET}/bin
+
+install runc/runc-linux-amd64-v1.0.0-rc3 ${BOSH_INSTALL_TARGET}/bin/runc

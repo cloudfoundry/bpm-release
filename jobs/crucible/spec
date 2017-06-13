@@ -3,8 +3,10 @@ name: crucible
 
 templates:
   crucible_ctl.erb: bin/crucible_ctl
+  pre-start.erb: bin/pre-start
 
 packages:
   - crucible
+  - runc
 
 properties: {}

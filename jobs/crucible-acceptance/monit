@@ -1,0 +1,5 @@
+check process acceptance
+  with pidfile /var/vcap/sys/run/crucible/crucible-acceptance.pid
+  start program "/var/vcap/packages/crucible/bin/crucible start crucible-acceptance"
+  stop program "/var/vcap/packages/crucible/bin/crucible stop crucible-acceptance"
+  group vcap
