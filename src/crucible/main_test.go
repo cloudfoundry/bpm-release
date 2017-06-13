@@ -195,17 +195,20 @@ var _ = Describe("Crucible", func() {
 			})
 		})
 
-		Context("when the job is not currently running", func() {
+		Context("when the crucible configuration file does not exist", func() {
 			BeforeEach(func() {
-				jobName = "foobar"
+				jobName = "even-job"
 			})
 
-			// Note: This behavior will most likely change when we attempt to gracefully
-			// shut down the container.
-			It("does not exit with an error", func() {
+			It("exit with a non-zero exit code and prints an error", func() {
 				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 				Expect(err).ShouldNot(HaveOccurred())
-				Eventually(session).Should(gexec.Exit(0))
+				Eventually(session).Should(gexec.Exit(1))
+
+				Expect(session.Err).Should(gbytes.Say(
+					"Error: failed to load config at %s: ",
+					filepath.Join(boshConfigPath, "jobs", "even-job", "config", "crucible.yml"),
+				))
 			})
 		})
 	})

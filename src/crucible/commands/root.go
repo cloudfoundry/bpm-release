@@ -7,11 +7,14 @@ import (
 )
 
 var RootCmd = &cobra.Command{
-	Use:           "crucible",
-	Short:         "A bosh process manager for starting and stopping release jobs",
 	Long:          "A bosh process manager for starting and stopping release jobs",
+	RunE:          root,
+	Short:         "A bosh process manager for starting and stopping release jobs",
 	SilenceErrors: true,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		return errors.New("Exit code 1")
-	},
+	Use:           "crucible",
+	ValidArgs:     []string{"start", "stop"},
+}
+
+func root(cmd *cobra.Command, args []string) error {
+	return errors.New("Exit code 1")
 }

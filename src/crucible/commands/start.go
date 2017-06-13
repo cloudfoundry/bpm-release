@@ -2,7 +2,7 @@ package commands
 
 import (
 	"crucible/config"
-	"crucible/runcadapter"
+	"crucible/lifecycle"
 	"crucible/specbuilder"
 	"errors"
 	"fmt"
@@ -15,18 +15,19 @@ func init() {
 }
 
 var startCommand = &cobra.Command{
-	Use:   "start <job-name>",
-	Short: "Starts a BOSH Process",
 	Long:  "Starts a BOSH Process",
 	RunE:  start,
+	Short: "Starts a BOSH Process",
+	Use:   "start <job-name>",
 }
 
 func start(cmd *cobra.Command, args []string) error {
-	if len(args) != 1 {
-		return errors.New("must specify a job name")
+	if err := validateStartArguments(args); err != nil {
+		return err
 	}
 
 	jobName := args[0]
+
 	jobConfigPath := config.ConfigPath(jobName)
 	jobConfig, err := config.ParseConfig(jobConfigPath)
 	if err != nil {
@@ -34,16 +35,23 @@ func start(cmd *cobra.Command, args []string) error {
 	}
 
 	userIDFinder := specbuilder.NewUserIDFinder()
-	spec, err := specbuilder.Build(jobName, jobConfig, userIDFinder)
-	if err != nil {
-		return fmt.Errorf("failed to load config at %s: %s", jobConfigPath, err.Error())
+
+	jobLifecycle := lifecycle.NewRuncJobLifecycle(config.RuncPath(),
+		config.BundlesRoot(),
+		jobName,
+		jobConfig,
+		userIDFinder,
+	)
+	return jobLifecycle.StartJob()
+}
+
+// Validate that a job name is provided.
+// Not validating extra arguments is consitent with
+// other CLI behavior
+func validateStartArguments(args []string) error {
+	if len(args) < 1 {
+		return errors.New("must specify a job name")
 	}
 
-	adapter := runcadapter.NewRuncAdapater(config.RuncPath(), userIDFinder)
-	bundlePath, err := adapter.BuildBundle(config.BundlesRoot(), jobName, spec)
-	if err != nil {
-		return fmt.Errorf("bundle build failure: %s", err.Error())
-	}
-
-	return adapter.RunContainer(bundlePath, jobName)
+	return nil
 }

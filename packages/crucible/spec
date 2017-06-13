@@ -8,6 +8,7 @@ files:
   - crucible/*.go # gosub
   - crucible/commands/*.go # gosub
   - crucible/config/*.go # gosub
+  - crucible/lifecycle/*.go # gosub
   - crucible/runcadapter/*.go # gosub
   - crucible/specbuilder/*.go # gosub
   - github.com/opencontainers/runtime-spec/specs-go/*.go # gosub

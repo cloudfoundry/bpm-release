@@ -20,7 +20,7 @@ var _ = Describe("Bundlebuilder", func() {
 	var (
 		adapter          runcadapter.RuncAdapter
 		jobName          string
-		bundleRoot       string
+		bundlesRoot      string
 		fakeUserIDFinder *specbuilderfakes.FakeUserIDFinder
 		jobSpec          specs.Spec
 	)
@@ -44,13 +44,13 @@ var _ = Describe("Bundlebuilder", func() {
 		var err error
 		jobSpec, err = specbuilder.Build(jobName, jobConfig, fakeUserIDFinder)
 
-		bundleRoot, err = ioutil.TempDir("", "Bundlebuilder")
+		bundlesRoot, err = ioutil.TempDir("", "Bundlebuilder")
 		Expect(err).ToNot(HaveOccurred())
 	})
 
 	Context("BuildBundle", func() {
 		It("makes the bundle directory", func() {
-			bundlePath, err := adapter.BuildBundle(bundleRoot, jobName, jobSpec)
+			bundlePath, err := adapter.BuildBundle(bundlesRoot, jobName, jobSpec)
 			Expect(err).ToNot(HaveOccurred())
 
 			f, err := os.Stat(bundlePath)
@@ -60,7 +60,7 @@ var _ = Describe("Bundlebuilder", func() {
 		})
 
 		It("makes an empty rootfs directory", func() {
-			bundlePath, err := adapter.BuildBundle(bundleRoot, jobName, jobSpec)
+			bundlePath, err := adapter.BuildBundle(bundlesRoot, jobName, jobSpec)
 			Expect(err).ToNot(HaveOccurred())
 
 			bundlefs := filepath.Join(bundlePath, "rootfs")
@@ -77,13 +77,13 @@ var _ = Describe("Bundlebuilder", func() {
 		})
 
 		It("writes a config.json in the root bundle directory", func() {
-			bundlePath, err := adapter.BuildBundle(bundleRoot, jobName, jobSpec)
+			bundlePath, err := adapter.BuildBundle(bundlesRoot, jobName, jobSpec)
 			Expect(err).ToNot(HaveOccurred())
 
 			configPath := filepath.Join(bundlePath, "config.json")
 			f, err := os.Stat(configPath)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(f.Mode() & os.ModePerm).To(Equal(os.FileMode(0700)))
+			Expect(f.Mode() & os.ModePerm).To(Equal(os.FileMode(0600)))
 
 			expectedConfigData, err := json.MarshalIndent(&jobSpec, "", "\t")
 			Expect(err).NotTo(HaveOccurred())
@@ -95,19 +95,19 @@ var _ = Describe("Bundlebuilder", func() {
 
 		Context("when creating the bundle directory fails", func() {
 			BeforeEach(func() {
-				_, err := os.Create(filepath.Join(bundleRoot, jobName))
+				_, err := os.Create(filepath.Join(bundlesRoot, jobName))
 				Expect(err).NotTo(HaveOccurred())
 			})
 
 			It("returns the error", func() {
-				_, err := adapter.BuildBundle(bundleRoot, jobName, jobSpec)
+				_, err := adapter.BuildBundle(bundlesRoot, jobName, jobSpec)
 				Expect(err).To(HaveOccurred())
 			})
 		})
 
 		Context("when creating the rootfs directory fails", func() {
 			BeforeEach(func() {
-				bundlePath := filepath.Join(bundleRoot, jobName)
+				bundlePath := filepath.Join(bundlesRoot, jobName)
 				err := os.MkdirAll(bundlePath, 0700)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -116,9 +116,27 @@ var _ = Describe("Bundlebuilder", func() {
 			})
 
 			It("returns the error", func() {
-				_, err := adapter.BuildBundle(bundleRoot, jobName, jobSpec)
+				_, err := adapter.BuildBundle(bundlesRoot, jobName, jobSpec)
 				Expect(err).To(HaveOccurred())
 			})
+		})
+	})
+
+	Context("DestroyBundle", func() {
+		var bundlePath string
+		BeforeEach(func() {
+			var err error
+			bundlePath, err = adapter.BuildBundle(bundlesRoot, jobName, jobSpec)
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		It("deletes the bundle", func() {
+			err := adapter.DestroyBundle(bundlesRoot, jobName)
+			Expect(err).ToNot(HaveOccurred())
+
+			_, err = os.Stat(bundlePath)
+			Expect(err).To(HaveOccurred())
+			Expect(os.IsNotExist(err)).To(BeTrue())
 		})
 	})
 })

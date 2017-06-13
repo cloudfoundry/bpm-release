@@ -30,7 +30,7 @@ func (a *runcAdapter) BuildBundle(bundlesRoot, jobName string, jobSpec specs.Spe
 		panic(err)
 	}
 
-	f, err := os.OpenFile(filepath.Join(bundlePath, "config.json"), os.O_RDWR|os.O_CREATE, 0700)
+	f, err := os.OpenFile(filepath.Join(bundlePath, "config.json"), os.O_RDWR|os.O_CREATE, 0600)
 	if err != nil {
 		// This is super hard to test as we are root.
 		return "", err
