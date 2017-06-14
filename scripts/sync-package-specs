@@ -39,7 +39,7 @@ function sync_package() {
 }
 
 sync_package crucible -app crucible &
-sync_package crucible-acceptance -app crucible-acceptance/cmd/example-server &
+sync_package crucible-test-agent -app crucible-acceptance/fixtures/crucible-test-agent &
 
 wait
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crucible-acceptance/fixtures/crucible-test-agent/handlers"
 	"flag"
 	"fmt"
 	"log"
@@ -9,10 +10,6 @@ import (
 )
 
 var port = flag.Int("port", -1, "port the server listens on")
-
-func handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Crucible is %s!\n", os.Getenv("CRUCIBLE"))
-}
 
 func main() {
 	flag.Parse()
@@ -25,7 +22,10 @@ func main() {
 		log.Fatal("Crucible environment variable not set")
 	}
 
-	http.HandleFunc("/", handler)
+	http.HandleFunc("/", handlers.Hello)
+	http.HandleFunc("/whoami", handlers.Whoami)
+	http.HandleFunc("/hostname", handlers.Hostname)
+	http.HandleFunc("/mounts", handlers.Mounts)
 	err := http.ListenAndServe(fmt.Sprintf(":%d", *port), nil)
 	if err != nil {
 		log.Fatal(err)

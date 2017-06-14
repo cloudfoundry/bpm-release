@@ -1,10 +1,10 @@
 ---
-name: crucible-acceptance
+name: crucible-test-agent
 
 templates:
   crucible.yml.erb: config/crucible.yml
 
 packages:
-- crucible-acceptance
+- crucible-test-agent
 
 properties: {}

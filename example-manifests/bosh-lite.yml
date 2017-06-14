@@ -12,7 +12,7 @@ jobs:
   templates:
   - name: crucible
     release: crucible
-  - name: crucible-acceptance
+  - name: crucible-test-agent
     release: crucible
 name: crucible
 networks:

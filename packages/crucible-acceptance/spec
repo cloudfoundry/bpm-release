@@ -1,8 +1,0 @@
----
-name: crucible-acceptance
-
-dependencies:
-  - golang
-
-files:
-  - crucible-acceptance/cmd/example-server/*.go # gosub
