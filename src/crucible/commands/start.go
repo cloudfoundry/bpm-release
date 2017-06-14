@@ -42,7 +42,18 @@ func start(cmd *cobra.Command, args []string) error {
 		jobConfig,
 		userIDFinder,
 	)
-	return jobLifecycle.StartJob()
+
+	err = jobLifecycle.StartJob()
+	if err != nil {
+		stopErr := jobLifecycle.StopJob()
+		if stopErr != nil {
+			fmt.Fprintf(cmd.OutOrStderr(), "failed to cleanup job: %s", stopErr.Error())
+		}
+
+		return err
+	}
+
+	return nil
 }
 
 // Validate that a job name is provided.

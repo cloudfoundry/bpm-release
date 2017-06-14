@@ -1,4 +1,4 @@
-check process acceptance
+check process crucible-test-agent
   with pidfile /var/vcap/sys/run/crucible/crucible-test-agent.pid
   start program "/var/vcap/packages/crucible/bin/crucible start crucible-test-agent"
   stop program "/var/vcap/packages/crucible/bin/crucible stop crucible-test-agent"

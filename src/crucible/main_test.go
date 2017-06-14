@@ -145,6 +145,30 @@ var _ = Describe("Crucible", func() {
 				Expect(session.Err).Should(gbytes.Say("must specify a job name"))
 			})
 		})
+
+		Context("when starting the job fails", func() {
+			BeforeEach(func() {
+				start := exec.Command(cruciblePath, "start", jobName)
+				start.Env = append(start.Env, fmt.Sprintf("CRUCIBLE_BOSH_ROOT=%s", boshConfigPath))
+
+				session, err := gexec.Start(start, GinkgoWriter, GinkgoWriter)
+				Expect(err).ShouldNot(HaveOccurred())
+				Eventually(session).Should(gexec.Exit(0))
+			})
+
+			It("cleans up the associated container and artifacts", func() {
+				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+				Expect(err).ShouldNot(HaveOccurred())
+				Eventually(session).Should(gexec.Exit(1))
+
+				_, err = os.Open(filepath.Join(boshConfigPath, "data", "crucible", "bundles", jobName))
+				Expect(err).To(HaveOccurred())
+				Expect(os.IsNotExist(err)).To(BeTrue())
+
+				cmd := exec.Command("runc", "state", jobName)
+				Expect(cmd.Run()).To(HaveOccurred())
+			})
+		})
 	})
 
 	Context("stop", func() {
