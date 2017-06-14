@@ -8,7 +8,10 @@ absolute_path() {
 
 scripts_path=$(absolute_path "$(dirname "$0")" )
 
-
 # On development workstations docker must run as root.
 # These settings are not related to the privileges that crucible creates runc containers with.
-sudo docker run --privileged -v  ${scripts_path}/..:/crucible -t pcfsecurity/crucible-ci:latest /crucible/scripts/test
+sudo docker run \
+  --privileged \
+  -v ${scripts_path}/..:/crucible \
+  -t pcfsecurity/crucible-ci:latest \
+  /crucible/scripts/test-unit

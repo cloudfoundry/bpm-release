@@ -6,4 +6,7 @@ absolute_path() {
 
 scripts_path=$(absolute_path `dirname $0`)
 
-fly -t ci execute -p -c ${scripts_path}/../ci/test.yml
+fly -t ci execute \
+  -x \
+  -p \
+  -c ${scripts_path}/../ci/test-unit.yml

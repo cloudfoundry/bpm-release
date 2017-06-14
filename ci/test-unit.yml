@@ -10,4 +10,4 @@ inputs:
 - name: crucible
 
 run:
-  path: crucible/scripts/test
+  path: crucible/scripts/test-unit
