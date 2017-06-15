@@ -25,9 +25,12 @@ export PATH=$GOPATH/bin:$PATH
 
 go install github.com/onsi/ginkgo/ginkgo
 
-agent_host="10.245.0.2"
+# This is the IP of the first VM in the bosh in the concourse container.
+# It will not change unless we deploy more instances/jobs etc or the upstream
+# docker image changes its cloudconfig.
+AGENT_HOST="${AGENT_HOST:-"10.245.0.2"}"
 agent_port=1337
 
 pushd "${GOPATH}/src/crucible-acceptance" > /dev/null
-  ginkgo -r -p -race -randomizeAllSpecs -- --agent-uri="http://${agent_host}:${agent_port}/"
+  ginkgo -r -p -race -randomizeAllSpecs -- --agent-uri="http://${AGENT_HOST}:${agent_port}/"
 popd > /dev/null
