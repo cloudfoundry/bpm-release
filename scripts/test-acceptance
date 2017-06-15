@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+set -eux
+
+start-bosh
+
+source /tmp/local-bosh/director/env
+
+bosh upload-stemcell bosh-stemcell/*.tgz
+
+bosh create-release \
+  --dir "$PWD/crucible/"
+
+bosh upload-release \
+  --dir "$PWD/crucible/"
+
+export BOSH_DEPLOYMENT=crucible
+export BOSH_NON_INTERACTIVE=true
+
+bosh deploy \
+  "$PWD/crucible/example-manifests/bosh-lite-ci.yml"
+
+export GOPATH="$PWD/crucible"
+export PATH=$GOPATH/bin:$PATH
+
+go install github.com/onsi/ginkgo/ginkgo
+
+agent_host="10.245.0.2"
+agent_port=1337
+
+pushd "${GOPATH}/src/crucible-acceptance" > /dev/null
+  ginkgo -r -p -race -randomizeAllSpecs -- --agent-uri="http://${agent_host}:${agent_port}/"
+popd > /dev/null

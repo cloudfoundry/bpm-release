@@ -1,0 +1,16 @@
+---
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    # repository: bosh/main-bosh-docker
+    repository: dpb587/bosh-main-bosh-docker
+    tag: scratch
+
+inputs:
+- name: crucible
+- name: bosh-stemcell
+
+run:
+  path: crucible/scripts/test-acceptance
