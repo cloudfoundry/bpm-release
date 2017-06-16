@@ -14,4 +14,4 @@ sudo docker run \
   --privileged \
   -v ${scripts_path}/..:/crucible \
   -t pcfsecurity/crucible-ci:latest \
-  /crucible/scripts/test-unit
+  /crucible/scripts/test-unit "$@"
