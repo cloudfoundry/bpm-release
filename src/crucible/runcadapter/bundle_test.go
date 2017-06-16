@@ -34,7 +34,6 @@ var _ = Describe("Bundlebuilder", func() {
 
 		jobConfig := &config.CrucibleConfig{
 			Process: &config.Process{
-				Name:       jobName,
 				Executable: "/bin/sleep",
 				Args:       []string{"100"},
 				Env:        []string{"FOO=BAR"},

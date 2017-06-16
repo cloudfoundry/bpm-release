@@ -54,7 +54,6 @@ var _ = Describe("Crucible", func() {
 
 		jobConfig := config.CrucibleConfig{
 			Process: &config.Process{
-				Name:       jobName,
 				Executable: "/bin/sleep",
 				Args:       []string{"10"},
 				Env:        []string{"FOO=BAR"},

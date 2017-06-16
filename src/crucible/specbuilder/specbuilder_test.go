@@ -22,7 +22,6 @@ var _ = Describe("Specbuilder", func() {
 	BeforeEach(func() {
 		cfg = &config.CrucibleConfig{
 			Process: &config.Process{
-				Name:       "ambien",
 				Executable: "/var/vcap/packages/ambien/bin/ambien",
 				Args: []string{
 					"foo",

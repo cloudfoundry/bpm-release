@@ -13,7 +13,6 @@ type CrucibleConfig struct {
 }
 
 type Process struct {
-	Name       string   `yaml:"name"`
 	Executable string   `yaml:"executable"`
 	Args       []string `yaml:"args"`
 	Env        []string `yaml:"env"`

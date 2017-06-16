@@ -20,7 +20,6 @@ var _ = Describe("Config", func() {
 			cfg, err := config.ParseConfig(configPath)
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(cfg.Process.Name).To(Equal("server"))
 			Expect(cfg.Process.Executable).To(Equal("/var/vcap/packages/program/bin/program-server"))
 			Expect(cfg.Process.Args).To(ConsistOf("--port=2424", "--host=\"localhost\""))
 			Expect(cfg.Process.Env).To(ConsistOf("FOO=BAR", "BAZ=BUZZ"))
