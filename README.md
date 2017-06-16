@@ -42,6 +42,19 @@ Documentation can be found in the [docs](docs) directory. As we're developing
 Crucible this documentation my lead the implementation changes briefly but will
 eventually become the official source of Crucible documentation.
 
+## Plans
+
+We're currently planning on switching [Diego][diego-release] to use Crucible as
+a first step. This change will initially be behind a feature flag. If this is
+successful then we'd like to continue migrating both open and closed source
+releases over.
+
+This entire project can also be viewed as a step towards the isolation of BOSH
+jobs such that they can be run on many different work schedulers without code
+changes.
+
+[diego-release]: https://github.com/cloudfoundry/diego-release
+
 ## Usage
 
 Not yet, please.
