@@ -1,7 +1,7 @@
-package specbuilder_test
+package runcadapter_test
 
 import (
-	"crucible/specbuilder"
+	"crucible/runcadapter"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -9,10 +9,10 @@ import (
 )
 
 var _ = Describe("UserIDFinder", func() {
-	var userIDFinder specbuilder.UserIDFinder
+	var userIDFinder runcadapter.UserIDFinder
 
 	BeforeEach(func() {
-		userIDFinder = specbuilder.NewUserIDFinder()
+		userIDFinder = runcadapter.NewUserIDFinder()
 	})
 
 	Context("Lookup", func() {

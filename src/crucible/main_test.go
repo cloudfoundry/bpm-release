@@ -92,6 +92,12 @@ var _ = Describe("Crucible", func() {
 		})
 
 		It("runs the process in a container with a pidfile", func() {
+			stdoutFileLocation := filepath.Join(boshConfigPath, "sys", "log", jobName, jobName+".out.log")
+			stderrFileLocation := filepath.Join(boshConfigPath, "sys", "log", jobName, jobName+".err.log")
+
+			Expect(stdoutFileLocation).NotTo(BeAnExistingFile())
+			Expect(stderrFileLocation).NotTo(BeAnExistingFile())
+
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
 			Eventually(session).Should(gexec.Exit(0))
@@ -113,6 +119,9 @@ var _ = Describe("Crucible", func() {
 			pid, err := strconv.Atoi(string(pidText))
 			Expect(err).NotTo(HaveOccurred())
 			Expect(pid).To(Equal(stateResponse.Pid))
+
+			Expect(stdoutFileLocation).To(BeAnExistingFile())
+			Expect(stderrFileLocation).To(BeAnExistingFile())
 		})
 
 		Context("when the crucible configuration file does not exist", func() {

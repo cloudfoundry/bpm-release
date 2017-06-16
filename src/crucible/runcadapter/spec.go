@@ -1,4 +1,4 @@
-package specbuilder
+package runcadapter
 
 import (
 	"crucible/config"
@@ -9,13 +9,8 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
-//go:generate counterfeiter . UserIDFinder
-type UserIDFinder interface {
-	Lookup(username string) (specs.User, error)
-}
-
-func Build(jobName string, cfg *config.CrucibleConfig, idFinder UserIDFinder) (specs.Spec, error) {
-	user, err := idFinder.Lookup("vcap")
+func (a *runcAdapter) BuildSpec(jobName string, cfg *config.CrucibleConfig) (specs.Spec, error) {
+	user, err := a.userIDFinder.Lookup("vcap")
 	if err != nil {
 		return specs.Spec{}, err
 	}

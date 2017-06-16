@@ -1,9 +1,9 @@
-package specbuilder_test
+package runcadapter_test
 
 import (
 	"crucible/config"
-	"crucible/specbuilder"
-	"crucible/specbuilder/specbuilderfakes"
+	"crucible/runcadapter"
+	"crucible/runcadapter/runcadapterfakes"
 	"errors"
 	"runtime"
 
@@ -12,11 +12,12 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
-var _ = Describe("Specbuilder", func() {
+var _ = Describe("BuildSpec", func() {
 	var (
 		cfg          *config.CrucibleConfig
-		userIDFinder *specbuilderfakes.FakeUserIDFinder
+		userIDFinder *runcadapterfakes.FakeUserIDFinder
 		jobName      string
+		adapter      runcadapter.RuncAdapter
 	)
 
 	BeforeEach(func() {
@@ -36,16 +37,18 @@ var _ = Describe("Specbuilder", func() {
 
 		jobName = "ambien-job"
 
-		userIDFinder = &specbuilderfakes.FakeUserIDFinder{}
+		userIDFinder = &runcadapterfakes.FakeUserIDFinder{}
 		userIDFinder.LookupReturns(specs.User{
 			UID:      2000,
 			GID:      3000,
 			Username: "vcap",
 		}, nil)
+
+		adapter = runcadapter.NewRuncAdapter("not used", userIDFinder)
 	})
 
 	It("convert a crucible config into a runc spec", func() {
-		spec, err := specbuilder.Build(jobName, cfg, userIDFinder)
+		spec, err := adapter.BuildSpec(jobName, cfg)
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(spec.Version).To(Equal(specs.Version))
@@ -206,7 +209,7 @@ var _ = Describe("Specbuilder", func() {
 		})
 
 		It("returns an error", func() {
-			_, err := specbuilder.Build(jobName, cfg, userIDFinder)
+			_, err := adapter.BuildSpec(jobName, cfg)
 			Expect(err).To(HaveOccurred())
 		})
 	})
@@ -217,7 +220,7 @@ var _ = Describe("Specbuilder", func() {
 		})
 
 		It("returns an error", func() {
-			_, err := specbuilder.Build(jobName, cfg, userIDFinder)
+			_, err := adapter.BuildSpec(jobName, cfg)
 			Expect(err).To(MatchError("no process defined"))
 		})
 	})

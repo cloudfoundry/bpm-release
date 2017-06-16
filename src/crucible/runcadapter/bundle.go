@@ -20,7 +20,7 @@ func (a *runcAdapter) BuildBundle(bundlesRoot, jobName string, jobSpec specs.Spe
 		return "", err
 	}
 
-	user, err := a.userIdFinder.Lookup("vcap") // hardcoded for now
+	user, err := a.userIDFinder.Lookup("vcap") // hardcoded for now
 	if err != nil {
 		return "", err
 	}

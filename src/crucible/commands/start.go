@@ -2,8 +2,7 @@ package commands
 
 import (
 	"crucible/config"
-	"crucible/lifecycle"
-	"crucible/specbuilder"
+	"crucible/runcadapter"
 	"errors"
 	"fmt"
 
@@ -34,13 +33,13 @@ func start(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to load config at %s: %s", jobConfigPath, err.Error())
 	}
 
-	userIDFinder := specbuilder.NewUserIDFinder()
+	userIDFinder := runcadapter.NewUserIDFinder()
+	runcAdapter := runcadapter.NewRuncAdapter(config.RuncPath(), userIDFinder)
 
-	jobLifecycle := lifecycle.NewRuncJobLifecycle(config.RuncPath(),
-		config.BundlesRoot(),
+	jobLifecycle := runcadapter.NewRuncJobLifecycle(
+		runcAdapter,
 		jobName,
 		jobConfig,
-		userIDFinder,
 	)
 
 	err = jobLifecycle.StartJob()

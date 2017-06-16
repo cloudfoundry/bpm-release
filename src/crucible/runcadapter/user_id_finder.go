@@ -1,4 +1,4 @@
-package specbuilder
+package runcadapter
 
 import (
 	"errors"
@@ -7,6 +7,11 @@ import (
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
+
+//go:generate counterfeiter . UserIDFinder
+type UserIDFinder interface {
+	Lookup(username string) (specs.User, error)
+}
 
 type userIDFinder struct{}
 

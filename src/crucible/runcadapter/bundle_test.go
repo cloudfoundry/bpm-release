@@ -3,8 +3,7 @@ package runcadapter_test
 import (
 	"crucible/config"
 	"crucible/runcadapter"
-	"crucible/specbuilder"
-	"crucible/specbuilder/specbuilderfakes"
+	"crucible/runcadapter/runcadapterfakes"
 	"encoding/json"
 	"io/ioutil"
 	"os"
@@ -21,15 +20,15 @@ var _ = Describe("Bundlebuilder", func() {
 		adapter          runcadapter.RuncAdapter
 		jobName          string
 		bundlesRoot      string
-		fakeUserIDFinder *specbuilderfakes.FakeUserIDFinder
+		fakeUserIDFinder *runcadapterfakes.FakeUserIDFinder
 		jobSpec          specs.Spec
 	)
 
 	BeforeEach(func() {
-		fakeUserIDFinder = &specbuilderfakes.FakeUserIDFinder{}
+		fakeUserIDFinder = &runcadapterfakes.FakeUserIDFinder{}
 		fakeUserIDFinder.LookupReturns(specs.User{UID: 200, GID: 300, Username: "jim"}, nil)
 
-		adapter = runcadapter.NewRuncAdapater("/var/vcap/packages/runc/bin/runc", fakeUserIDFinder)
+		adapter = runcadapter.NewRuncAdapter("/var/vcap/packages/runc/bin/runc", fakeUserIDFinder)
 		jobName = "example"
 
 		jobConfig := &config.CrucibleConfig{
@@ -41,9 +40,10 @@ var _ = Describe("Bundlebuilder", func() {
 		}
 
 		var err error
-		jobSpec, err = specbuilder.Build(jobName, jobConfig, fakeUserIDFinder)
+		jobSpec, err = adapter.BuildSpec(jobName, jobConfig)
+		Expect(err).ToNot(HaveOccurred())
 
-		bundlesRoot, err = ioutil.TempDir("", "Bundlebuilder")
+		bundlesRoot, err = ioutil.TempDir("", "bundle-builder")
 		Expect(err).ToNot(HaveOccurred())
 	})
 
