@@ -25,6 +25,13 @@ func NewRuncJobLifecycle(
 }
 
 func (j *RuncJobLifecycle) StartJob() error {
+	pidDir, stdout, stderr, err := j.runcAdapter.CreateJobPrerequisites(config.BoshRoot(), j.jobName)
+	if err != nil {
+		return fmt.Errorf("failed to create system files: %s", err.Error())
+	}
+	defer stdout.Close()
+	defer stderr.Close()
+
 	spec, err := j.runcAdapter.BuildSpec(j.jobName, j.config)
 	if err != nil {
 		return err
@@ -34,13 +41,6 @@ func (j *RuncJobLifecycle) StartJob() error {
 	if err != nil {
 		return fmt.Errorf("bundle build failure: %s", err.Error())
 	}
-
-	pidDir, stdout, stderr, err := j.runcAdapter.CreateSystemFiles(config.BoshRoot(), j.jobName)
-	if err != nil {
-		return fmt.Errorf("failed to create system files: %s", err.Error())
-	}
-	defer stdout.Close()
-	defer stderr.Close()
 
 	return j.runcAdapter.RunContainer(pidDir, bundlePath, j.jobName, stdout, stderr)
 }

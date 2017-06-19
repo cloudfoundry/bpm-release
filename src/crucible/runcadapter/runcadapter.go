@@ -19,9 +19,9 @@ const ROOT_UID = 0
 //go:generate counterfeiter . RuncAdapter
 
 type RuncAdapter interface {
+	CreateJobPrerequisites(systemRoot, jobName string) (string, *os.File, *os.File, error)
 	BuildSpec(jobName string, jobConfig *config.CrucibleConfig) (specs.Spec, error)
 	CreateBundle(bundlesRoot, jobName string, jobSpec specs.Spec) (string, error)
-	CreateSystemFiles(systemRoot, jobName string) (string, *os.File, *os.File, error)
 	RunContainer(pidDir, bundlePath, jobName string, stdout, stderr io.Writer) error
 	StopContainer(jobName string) error
 	DestroyBundle(bundlesRoot, jobName string) error
@@ -37,6 +37,68 @@ func NewRuncAdapter(runcPath string, userIDFinder UserIDFinder) RuncAdapter {
 		runcPath:     runcPath,
 		userIDFinder: userIDFinder,
 	}
+}
+
+func (a *runcAdapter) CreateJobPrerequisites(systemRoot, jobName string) (string, *os.File, *os.File, error) {
+	cruciblePidDir := filepath.Join(systemRoot, "sys", "run", "crucible")
+	err := os.MkdirAll(cruciblePidDir, 0700)
+	if err != nil {
+		return "", nil, nil, err
+	}
+
+	user, err := a.userIDFinder.Lookup("vcap")
+	if err != nil {
+		return "", nil, nil, err
+	}
+
+	jobLogDir := filepath.Join(systemRoot, "sys", "log", jobName)
+	stdoutFileLocation := filepath.Join(jobLogDir, fmt.Sprintf("%s.out.log", jobName))
+	stderrFileLocation := filepath.Join(jobLogDir, fmt.Sprintf("%s.err.log", jobName))
+
+	err = os.MkdirAll(jobLogDir, 0750)
+	if err != nil {
+		return "", nil, nil, err
+	}
+	err = os.Chown(jobLogDir, ROOT_UID, int(user.GID))
+	if err != nil {
+		return "", nil, nil, err
+	}
+
+	stdout, err := createFileFor(stdoutFileLocation, int(user.UID), int(user.GID))
+	if err != nil {
+		return "", nil, nil, err
+	}
+
+	stderr, err := createFileFor(stderrFileLocation, int(user.UID), int(user.GID))
+	if err != nil {
+		return "", nil, nil, err
+	}
+
+	dataDir := filepath.Join(systemRoot, "data", jobName)
+	err = os.MkdirAll(dataDir, 0700)
+	if err != nil {
+		return "", nil, nil, err
+	}
+	err = os.Chown(dataDir, int(user.UID), int(user.GID))
+	if err != nil {
+		return "", nil, nil, err
+	}
+
+	return cruciblePidDir, stdout, stderr, nil
+}
+
+func createFileFor(path string, uid, gid int) (*os.File, error) {
+	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0700)
+	if err != nil {
+		return nil, err
+	}
+
+	err = os.Chown(path, uid, gid)
+	if err != nil {
+		return nil, err
+	}
+
+	return f, nil
 }
 
 func (a *runcAdapter) BuildSpec(jobName string, cfg *config.CrucibleConfig) (specs.Spec, error) {
@@ -147,52 +209,6 @@ func (a *runcAdapter) CreateBundle(bundlesRoot, jobName string, jobSpec specs.Sp
 	return bundlePath, nil
 }
 
-func (a *runcAdapter) CreateSystemFiles(systemRoot, jobName string) (string, *os.File, *os.File, error) {
-	cruciblePidDir := filepath.Join(systemRoot, "sys", "run", "crucible")
-	err := os.MkdirAll(cruciblePidDir, 0700)
-	if err != nil {
-		return "", nil, nil, err
-	}
-
-	user, err := a.userIDFinder.Lookup("vcap")
-	if err != nil {
-		return "", nil, nil, err
-	}
-
-	jobLogDir := filepath.Join(systemRoot, "sys", "log", jobName)
-	stdoutFileLocation := filepath.Join(jobLogDir, fmt.Sprintf("%s.out.log", jobName))
-	stderrFileLocation := filepath.Join(jobLogDir, fmt.Sprintf("%s.err.log", jobName))
-
-	err = os.MkdirAll(jobLogDir, 0750)
-	if err != nil {
-		return "", nil, nil, err
-	}
-	err = os.Chown(jobLogDir, ROOT_UID, int(user.GID))
-	if err != nil {
-		return "", nil, nil, err
-	}
-
-	stdout, err := os.OpenFile(stdoutFileLocation, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0700)
-	if err != nil {
-		return "", nil, nil, err
-	}
-	err = os.Chown(stdoutFileLocation, int(user.UID), int(user.GID))
-	if err != nil {
-		return "", nil, nil, err
-	}
-
-	stderr, err := os.OpenFile(stderrFileLocation, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0700)
-	if err != nil {
-		return "", nil, nil, err
-	}
-	err = os.Chown(stderrFileLocation, int(user.UID), int(user.GID))
-	if err != nil {
-		return "", nil, nil, err
-	}
-
-	return cruciblePidDir, stdout, stderr, nil
-}
-
 func (a *runcAdapter) RunContainer(pidDir, bundlePath, jobName string, stdout, stderr io.Writer) error {
 	runcCmd := exec.Command(
 		a.runcPath,
@@ -227,15 +243,21 @@ func (a *runcAdapter) DestroyBundle(bundlesRoot, jobName string) error {
 func boshMounts(jobName string) []specs.Mount {
 	return []specs.Mount{
 		{
-			Destination: filepath.Join(config.BoshRoot(), "jobs", jobName),
+			Destination: filepath.Join(config.BoshRoot(), "data", jobName),
 			Type:        "bind",
-			Source:      filepath.Join(config.BoshRoot(), "jobs", jobName),
-			Options:     []string{"rbind", "ro"},
+			Source:      filepath.Join(config.BoshRoot(), "data", jobName),
+			Options:     []string{"rbind", "rw"},
 		},
 		{
 			Destination: filepath.Join(config.BoshRoot(), "data", "packages"),
 			Type:        "bind",
 			Source:      filepath.Join(config.BoshRoot(), "data", "packages"),
+			Options:     []string{"rbind", "ro"},
+		},
+		{
+			Destination: filepath.Join(config.BoshRoot(), "jobs", jobName),
+			Type:        "bind",
+			Source:      filepath.Join(config.BoshRoot(), "jobs", jobName),
 			Options:     []string{"rbind", "ro"},
 		},
 		{

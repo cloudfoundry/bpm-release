@@ -26,11 +26,14 @@ func main() {
 	log.Println("Test Agent Started - STDERR")
 
 	http.HandleFunc("/", handlers.Hello)
-	http.HandleFunc("/whoami", handlers.Whoami)
 	http.HandleFunc("/hostname", handlers.Hostname)
 	http.HandleFunc("/mounts", handlers.Mounts)
-	http.HandleFunc("/var-vcap", handlers.VarVcap)
 	http.HandleFunc("/processes", handlers.Processes)
+	http.HandleFunc("/var-vcap", handlers.VarVcap)
+	http.HandleFunc("/var-vcap-data", handlers.VarVcapData)
+	http.HandleFunc("/var-vcap-jobs", handlers.VarVcapJobs)
+	http.HandleFunc("/whoami", handlers.Whoami)
+
 	err := http.ListenAndServe(fmt.Sprintf(":%d", *port), nil)
 	if err != nil {
 		log.Fatal(err)

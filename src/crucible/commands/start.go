@@ -46,7 +46,7 @@ func start(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		stopErr := jobLifecycle.StopJob()
 		if stopErr != nil {
-			fmt.Fprintf(cmd.OutOrStderr(), "failed to cleanup job: %s", stopErr.Error())
+			fmt.Fprintf(cmd.OutOrStderr(), "failed to cleanup job: %s\n", stopErr.Error())
 		}
 
 		return err

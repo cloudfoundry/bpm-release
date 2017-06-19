@@ -52,7 +52,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 		Expect(err).NotTo(HaveOccurred())
 		expectedStderr, err = ioutil.TempFile("", "runc-lifecycle-stderr")
 		Expect(err).NotTo(HaveOccurred())
-		fakeRuncAdapter.CreateSystemFilesReturns(expectedPidDir, expectedStdout, expectedStderr, nil)
+		fakeRuncAdapter.CreateJobPrerequisitesReturns(expectedPidDir, expectedStdout, expectedStderr, nil)
 
 		runcLifecycle = runcadapter.NewRuncJobLifecycle(
 			fakeRuncAdapter,
@@ -82,8 +82,8 @@ var _ = Describe("RuncJobLifecycle", func() {
 			Expect(jobName).To(Equal(expectedJobName))
 			Expect(spec).To(Equal(jobSpec))
 
-			Expect(fakeRuncAdapter.CreateSystemFilesCallCount()).To(Equal(1))
-			systemRoot, jobName := fakeRuncAdapter.CreateSystemFilesArgsForCall(0)
+			Expect(fakeRuncAdapter.CreateJobPrerequisitesCallCount()).To(Equal(1))
+			systemRoot, jobName := fakeRuncAdapter.CreateJobPrerequisitesArgsForCall(0)
 			Expect(systemRoot).To(Equal(config.BoshRoot()))
 			Expect(jobName).To(Equal(expectedJobName))
 
@@ -120,7 +120,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 		Context("when creating the system files fails", func() {
 			BeforeEach(func() {
-				fakeRuncAdapter.CreateSystemFilesReturns("", nil, nil, errors.New("boom"))
+				fakeRuncAdapter.CreateJobPrerequisitesReturns("", nil, nil, errors.New("boom"))
 			})
 
 			It("returns an error", func() {

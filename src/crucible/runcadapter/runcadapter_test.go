@@ -34,6 +34,77 @@ var _ = Describe("RuncAdapter", func() {
 		jobName = "example"
 	})
 
+	Describe("CreateJobPrerequisites", func() {
+		var systemRoot string
+
+		BeforeEach(func() {
+			var err error
+			systemRoot, err = ioutil.TempDir("", "runc-adapter-system-files")
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		AfterEach(func() {
+			Expect(os.RemoveAll(systemRoot)).To(Succeed())
+		})
+
+		It("creates the job prerequisites", func() {
+			pidDir, stdout, stderr, err := adapter.CreateJobPrerequisites(systemRoot, jobName)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(fakeUserIDFinder.LookupCallCount()).To(Equal(1))
+			Expect(fakeUserIDFinder.LookupArgsForCall(0)).To(Equal("vcap"))
+
+			logDir := filepath.Join(systemRoot, "sys", "log", jobName)
+			stdoutFileName := fmt.Sprintf("%s.out.log", jobName)
+			stderrFileName := fmt.Sprintf("%s.err.log", jobName)
+
+			// PID Directory
+			Expect(pidDir).To(Equal(filepath.Join(systemRoot, "sys", "run", "crucible")))
+
+			// Log Directory
+			logDirInfo, err := os.Stat(logDir)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(logDirInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0750)))
+			Expect(logDirInfo.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(0)))
+			Expect(logDirInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
+
+			// Stdout Log File
+			Expect(stdout.Name()).To(Equal(filepath.Join(logDir, stdoutFileName)))
+			stdoutInfo, err := stdout.Stat()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(stdoutInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0700)))
+			Expect(stdoutInfo.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(200)))
+			Expect(stdoutInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
+
+			// Stderr Log File
+			Expect(stderr.Name()).To(Equal(filepath.Join(logDir, stderrFileName)))
+			stderrInfo, err := stderr.Stat()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(stderrInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0700)))
+			Expect(stderrInfo.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(200)))
+			Expect(stderrInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
+
+			// Data Directory
+			dataDir := filepath.Join(systemRoot, "data", jobName)
+			dataDirInfo, err := os.Stat(dataDir)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(dataDirInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0700)))
+			Expect(dataDirInfo.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(200)))
+			Expect(dataDirInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
+		})
+
+		Context("when looking up the vcap user fails", func() {
+			BeforeEach(func() {
+				fakeUserIDFinder.LookupReturns(specs.User{}, errors.New("Boom!"))
+			})
+
+			It("returns an error", func() {
+				_, _, _, err := adapter.CreateJobPrerequisites(systemRoot, jobName)
+				Expect(err).To(HaveOccurred())
+			})
+		})
+	})
+
 	Describe("BuildSpec", func() {
 		var cfg *config.CrucibleConfig
 
@@ -168,15 +239,21 @@ var _ = Describe("RuncAdapter", func() {
 					Options:     []string{"nosuid", "nodev", "rbind", "ro"},
 				},
 				{
-					Destination: "/var/vcap/jobs/example",
+					Destination: "/var/vcap/data/example",
 					Type:        "bind",
-					Source:      "/var/vcap/jobs/example",
-					Options:     []string{"rbind", "ro"},
+					Source:      "/var/vcap/data/example",
+					Options:     []string{"rbind", "rw"},
 				},
 				{
 					Destination: "/var/vcap/data/packages",
 					Type:        "bind",
 					Source:      "/var/vcap/data/packages",
+					Options:     []string{"rbind", "ro"},
+				},
+				{
+					Destination: "/var/vcap/jobs/example",
+					Type:        "bind",
+					Source:      "/var/vcap/jobs/example",
 					Options:     []string{"rbind", "ro"},
 				},
 				{
@@ -328,65 +405,6 @@ var _ = Describe("RuncAdapter", func() {
 
 			It("returns the error", func() {
 				_, err := adapter.CreateBundle(bundlesRoot, jobName, jobSpec)
-				Expect(err).To(HaveOccurred())
-			})
-		})
-	})
-
-	Context("CreateSystemFiles", func() {
-		var systemRoot string
-
-		BeforeEach(func() {
-			var err error
-			systemRoot, err = ioutil.TempDir("", "runc-adapter-system-files")
-			Expect(err).NotTo(HaveOccurred())
-		})
-
-		AfterEach(func() {
-			Expect(os.RemoveAll(systemRoot)).To(Succeed())
-		})
-
-		It("creates the system files", func() {
-			pidDir, stdout, stderr, err := adapter.CreateSystemFiles(systemRoot, jobName)
-			Expect(err).NotTo(HaveOccurred())
-
-			Expect(fakeUserIDFinder.LookupCallCount()).To(Equal(1))
-			Expect(fakeUserIDFinder.LookupArgsForCall(0)).To(Equal("vcap"))
-
-			logDir := filepath.Join(systemRoot, "sys", "log", jobName)
-			stdoutFileName := fmt.Sprintf("%s.out.log", jobName)
-			stderrFileName := fmt.Sprintf("%s.err.log", jobName)
-
-			Expect(pidDir).To(Equal(filepath.Join(systemRoot, "sys", "run", "crucible")))
-
-			logDirInfo, err := os.Stat(logDir)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(logDirInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0750)))
-			Expect(logDirInfo.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(0)))
-			Expect(logDirInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
-
-			Expect(stdout.Name()).To(Equal(filepath.Join(logDir, stdoutFileName)))
-			stdoutInfo, err := stdout.Stat()
-			Expect(err).NotTo(HaveOccurred())
-			Expect(stdoutInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0700)))
-			Expect(stdoutInfo.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(200)))
-			Expect(stdoutInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
-
-			Expect(stderr.Name()).To(Equal(filepath.Join(logDir, stderrFileName)))
-			stderrInfo, err := stderr.Stat()
-			Expect(err).NotTo(HaveOccurred())
-			Expect(stderrInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0700)))
-			Expect(stderrInfo.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(200)))
-			Expect(stderrInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
-		})
-
-		Context("when looking up the vcap user fails", func() {
-			BeforeEach(func() {
-				fakeUserIDFinder.LookupReturns(specs.User{}, errors.New("Boom!"))
-			})
-
-			It("returns an error", func() {
-				_, _, _, err := adapter.CreateSystemFiles(systemRoot, jobName)
 				Expect(err).To(HaveOccurred())
 			})
 		})

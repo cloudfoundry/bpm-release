@@ -55,16 +55,25 @@ var _ = Describe("CrucibleAcceptance", func() {
 
 		mounts := parseMounts(string(body))
 
-		expectedMountPaths := []string{"/var/vcap/packages", "/var/vcap/data/packages", "/var/vcap/jobs/crucible-test-agent"}
+		expectedMountPaths := map[string]string{
+			"/var/vcap/data/packages":            "ro",
+			"/var/vcap/data/crucible-test-agent": "rw",
+			"/var/vcap/jobs/crucible-test-agent": "ro",
+			"/var/vcap/packages":                 "ro",
+		}
+
 		var found []string
 		for _, mount := range mounts {
 			if strings.Contains(mount.path, "/var/vcap") {
+				expectedOption, ok := expectedMountPaths[mount.path]
+				Expect(ok).To(BeTrue(), fmt.Sprintf("found unexpected mount path %s", mount.path))
+
 				found = append(found, mount.path)
-				Expect(mount.options).To(ContainElement("ro"), fmt.Sprintf("no read only permissions for %s", mount.path))
+				Expect(mount.options).To(ContainElement(expectedOption), fmt.Sprintf("no %s permissions for %s", expectedOption, mount.path))
 			}
 		}
 
-		Expect(found).To(ConsistOf(expectedMountPaths))
+		Expect(found).To(HaveLen(4), fmt.Sprintf("missing mounts, actual: %#v, expected: %#v", found, expectedMountPaths))
 	})
 
 	It("has the correct read only system mounts", func() {
@@ -98,6 +107,28 @@ var _ = Describe("CrucibleAcceptance", func() {
 		Expect(err).NotTo(HaveOccurred())
 		directories := strings.Split(strings.Trim(string(body), "\n"), "\n")
 		Expect(directories).To(ConsistOf("data", "jobs", "packages"))
+	})
+
+	It("only has access to its own data directory", func() {
+		resp, err := client.Get(fmt.Sprintf("%s/var-vcap-data", agentURI))
+		Expect(err).NotTo(HaveOccurred())
+		defer resp.Body.Close()
+
+		body, err := ioutil.ReadAll(resp.Body)
+		Expect(err).NotTo(HaveOccurred())
+		directories := strings.Split(strings.Trim(string(body), "\n"), "\n")
+		Expect(directories).To(ConsistOf("crucible-test-agent", "packages"))
+	})
+
+	It("only has access to its own job directory", func() {
+		resp, err := client.Get(fmt.Sprintf("%s/var-vcap-jobs", agentURI))
+		Expect(err).NotTo(HaveOccurred())
+		defer resp.Body.Close()
+
+		body, err := ioutil.ReadAll(resp.Body)
+		Expect(err).NotTo(HaveOccurred())
+		directories := strings.Split(strings.Trim(string(body), "\n"), "\n")
+		Expect(directories).To(ConsistOf("crucible-test-agent"))
 	})
 
 	It("is contained in a pid namespace", func() {
