@@ -22,6 +22,9 @@ func main() {
 		log.Fatal("Crucible environment variable not set")
 	}
 
+	fmt.Println("Test Agent Started - STDOUT")
+	log.Println("Test Agent Started - STDERR")
+
 	http.HandleFunc("/", handlers.Hello)
 	http.HandleFunc("/whoami", handlers.Whoami)
 	http.HandleFunc("/hostname", handlers.Hostname)

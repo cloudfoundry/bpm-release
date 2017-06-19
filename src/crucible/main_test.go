@@ -22,9 +22,12 @@ import (
 
 var _ = Describe("Crucible", func() {
 	var (
-		boshConfigPath string
-		command        *exec.Cmd
-		jobName        string
+		command *exec.Cmd
+
+		boshConfigPath,
+		jobName,
+		stdoutFileLocation,
+		stderrFileLocation string
 	)
 
 	BeforeEach(func() {
@@ -54,9 +57,14 @@ var _ = Describe("Crucible", func() {
 
 		jobConfig := config.CrucibleConfig{
 			Process: &config.Process{
-				Executable: "/bin/sleep",
-				Args:       []string{"10"},
-				Env:        []string{"FOO=BAR"},
+				Executable: "/bin/bash",
+				Args: []string{
+					"-c",
+					`echo Foo is $FOO &&
+					  (>&2 echo "$FOO is Foo") &&
+					  sleep 10`,
+				},
+				Env: []string{"FOO=BAR"},
 			},
 		}
 
@@ -73,6 +81,9 @@ var _ = Describe("Crucible", func() {
 		n, err := f.Write(data)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(n).To(Equal(len(data)))
+
+		stdoutFileLocation = filepath.Join(boshConfigPath, "sys", "log", jobName, jobName+".out.log")
+		stderrFileLocation = filepath.Join(boshConfigPath, "sys", "log", jobName, jobName+".err.log")
 	})
 
 	AfterEach(func() {
@@ -92,14 +103,8 @@ var _ = Describe("Crucible", func() {
 		})
 
 		It("runs the process in a container with a pidfile", func() {
-			stdoutFileLocation := filepath.Join(boshConfigPath, "sys", "log", jobName, jobName+".out.log")
-			stderrFileLocation := filepath.Join(boshConfigPath, "sys", "log", jobName, jobName+".err.log")
-
-			Expect(stdoutFileLocation).NotTo(BeAnExistingFile())
-			Expect(stderrFileLocation).NotTo(BeAnExistingFile())
-
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
-			Expect(err).ShouldNot(HaveOccurred())
+			Expect(err).NotTo(HaveOccurred())
 			Eventually(session).Should(gexec.Exit(0))
 
 			cmd := exec.Command("runc", "state", jobName)
@@ -119,9 +124,43 @@ var _ = Describe("Crucible", func() {
 			pid, err := strconv.Atoi(string(pidText))
 			Expect(err).NotTo(HaveOccurred())
 			Expect(pid).To(Equal(stateResponse.Pid))
+		})
 
-			Expect(stdoutFileLocation).To(BeAnExistingFile())
-			Expect(stderrFileLocation).To(BeAnExistingFile())
+		var fileContents = func(path string) func() string {
+			return func() string {
+				data, err := ioutil.ReadFile(path)
+				Expect(err).NotTo(HaveOccurred())
+				return string(data)
+			}
+		}
+
+		It("redirects stdout and stderr to a standard location", func() {
+			Expect(stdoutFileLocation).NotTo(BeAnExistingFile())
+			Expect(stderrFileLocation).NotTo(BeAnExistingFile())
+
+			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+			Eventually(session).Should(gexec.Exit(0))
+
+			Eventually(fileContents(stdoutFileLocation)).Should(Equal("Foo is BAR\n"))
+			Eventually(fileContents(stderrFileLocation)).Should(Equal("BAR is Foo\n"))
+		})
+
+		Context("when the stdout and stderr files already exist", func() {
+			BeforeEach(func() {
+				Expect(os.MkdirAll(filepath.Dir(stdoutFileLocation), 0700)).To(Succeed())
+				Expect(ioutil.WriteFile(stdoutFileLocation, []byte("STDOUT PREFIX: "), 0700)).To(Succeed())
+				Expect(ioutil.WriteFile(stderrFileLocation, []byte("STDERR PREFIX: "), 0700)).To(Succeed())
+			})
+
+			It("does not truncate the file", func() {
+				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+				Eventually(session).Should(gexec.Exit(0))
+
+				Eventually(fileContents(stdoutFileLocation)).Should(Equal("STDOUT PREFIX: Foo is BAR\n"))
+				Eventually(fileContents(stderrFileLocation)).Should(Equal("STDERR PREFIX: BAR is Foo\n"))
+			})
 		})
 
 		Context("when the crucible configuration file does not exist", func() {

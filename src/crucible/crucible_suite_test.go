@@ -27,5 +27,5 @@ var _ = SynchronizedBeforeSuite(func() []byte {
 })
 
 var _ = SynchronizedAfterSuite(func() {}, func() {
-	// gexec.CleanupBuildArtifacts()
+	gexec.CleanupBuildArtifacts()
 })

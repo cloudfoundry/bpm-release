@@ -4,6 +4,8 @@ package runcadapterfakes
 import (
 	"crucible/config"
 	"crucible/runcadapter"
+	"io"
+	"os"
 	"sync"
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
@@ -24,26 +26,47 @@ type FakeRuncAdapter struct {
 		result1 specs.Spec
 		result2 error
 	}
-	BuildBundleStub        func(bundlesRoot, jobName string, jobSpec specs.Spec) (string, error)
-	buildBundleMutex       sync.RWMutex
-	buildBundleArgsForCall []struct {
+	CreateBundleStub        func(bundlesRoot, jobName string, jobSpec specs.Spec) (string, error)
+	createBundleMutex       sync.RWMutex
+	createBundleArgsForCall []struct {
 		bundlesRoot string
 		jobName     string
 		jobSpec     specs.Spec
 	}
-	buildBundleReturns struct {
+	createBundleReturns struct {
 		result1 string
 		result2 error
 	}
-	buildBundleReturnsOnCall map[int]struct {
+	createBundleReturnsOnCall map[int]struct {
 		result1 string
 		result2 error
 	}
-	RunContainerStub        func(bundlePath, jobName string) error
+	CreateSystemFilesStub        func(systemRoot, jobName string) (string, *os.File, *os.File, error)
+	createSystemFilesMutex       sync.RWMutex
+	createSystemFilesArgsForCall []struct {
+		systemRoot string
+		jobName    string
+	}
+	createSystemFilesReturns struct {
+		result1 string
+		result2 *os.File
+		result3 *os.File
+		result4 error
+	}
+	createSystemFilesReturnsOnCall map[int]struct {
+		result1 string
+		result2 *os.File
+		result3 *os.File
+		result4 error
+	}
+	RunContainerStub        func(pidDir, bundlePath, jobName string, stdout, stderr io.Writer) error
 	runContainerMutex       sync.RWMutex
 	runContainerArgsForCall []struct {
+		pidDir     string
 		bundlePath string
 		jobName    string
+		stdout     io.Writer
+		stderr     io.Writer
 	}
 	runContainerReturns struct {
 		result1 error
@@ -130,70 +153,131 @@ func (fake *FakeRuncAdapter) BuildSpecReturnsOnCall(i int, result1 specs.Spec, r
 	}{result1, result2}
 }
 
-func (fake *FakeRuncAdapter) BuildBundle(bundlesRoot string, jobName string, jobSpec specs.Spec) (string, error) {
-	fake.buildBundleMutex.Lock()
-	ret, specificReturn := fake.buildBundleReturnsOnCall[len(fake.buildBundleArgsForCall)]
-	fake.buildBundleArgsForCall = append(fake.buildBundleArgsForCall, struct {
+func (fake *FakeRuncAdapter) CreateBundle(bundlesRoot string, jobName string, jobSpec specs.Spec) (string, error) {
+	fake.createBundleMutex.Lock()
+	ret, specificReturn := fake.createBundleReturnsOnCall[len(fake.createBundleArgsForCall)]
+	fake.createBundleArgsForCall = append(fake.createBundleArgsForCall, struct {
 		bundlesRoot string
 		jobName     string
 		jobSpec     specs.Spec
 	}{bundlesRoot, jobName, jobSpec})
-	fake.recordInvocation("BuildBundle", []interface{}{bundlesRoot, jobName, jobSpec})
-	fake.buildBundleMutex.Unlock()
-	if fake.BuildBundleStub != nil {
-		return fake.BuildBundleStub(bundlesRoot, jobName, jobSpec)
+	fake.recordInvocation("CreateBundle", []interface{}{bundlesRoot, jobName, jobSpec})
+	fake.createBundleMutex.Unlock()
+	if fake.CreateBundleStub != nil {
+		return fake.CreateBundleStub(bundlesRoot, jobName, jobSpec)
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
 	}
-	return fake.buildBundleReturns.result1, fake.buildBundleReturns.result2
+	return fake.createBundleReturns.result1, fake.createBundleReturns.result2
 }
 
-func (fake *FakeRuncAdapter) BuildBundleCallCount() int {
-	fake.buildBundleMutex.RLock()
-	defer fake.buildBundleMutex.RUnlock()
-	return len(fake.buildBundleArgsForCall)
+func (fake *FakeRuncAdapter) CreateBundleCallCount() int {
+	fake.createBundleMutex.RLock()
+	defer fake.createBundleMutex.RUnlock()
+	return len(fake.createBundleArgsForCall)
 }
 
-func (fake *FakeRuncAdapter) BuildBundleArgsForCall(i int) (string, string, specs.Spec) {
-	fake.buildBundleMutex.RLock()
-	defer fake.buildBundleMutex.RUnlock()
-	return fake.buildBundleArgsForCall[i].bundlesRoot, fake.buildBundleArgsForCall[i].jobName, fake.buildBundleArgsForCall[i].jobSpec
+func (fake *FakeRuncAdapter) CreateBundleArgsForCall(i int) (string, string, specs.Spec) {
+	fake.createBundleMutex.RLock()
+	defer fake.createBundleMutex.RUnlock()
+	return fake.createBundleArgsForCall[i].bundlesRoot, fake.createBundleArgsForCall[i].jobName, fake.createBundleArgsForCall[i].jobSpec
 }
 
-func (fake *FakeRuncAdapter) BuildBundleReturns(result1 string, result2 error) {
-	fake.BuildBundleStub = nil
-	fake.buildBundleReturns = struct {
+func (fake *FakeRuncAdapter) CreateBundleReturns(result1 string, result2 error) {
+	fake.CreateBundleStub = nil
+	fake.createBundleReturns = struct {
 		result1 string
 		result2 error
 	}{result1, result2}
 }
 
-func (fake *FakeRuncAdapter) BuildBundleReturnsOnCall(i int, result1 string, result2 error) {
-	fake.BuildBundleStub = nil
-	if fake.buildBundleReturnsOnCall == nil {
-		fake.buildBundleReturnsOnCall = make(map[int]struct {
+func (fake *FakeRuncAdapter) CreateBundleReturnsOnCall(i int, result1 string, result2 error) {
+	fake.CreateBundleStub = nil
+	if fake.createBundleReturnsOnCall == nil {
+		fake.createBundleReturnsOnCall = make(map[int]struct {
 			result1 string
 			result2 error
 		})
 	}
-	fake.buildBundleReturnsOnCall[i] = struct {
+	fake.createBundleReturnsOnCall[i] = struct {
 		result1 string
 		result2 error
 	}{result1, result2}
 }
 
-func (fake *FakeRuncAdapter) RunContainer(bundlePath string, jobName string) error {
+func (fake *FakeRuncAdapter) CreateSystemFiles(systemRoot string, jobName string) (string, *os.File, *os.File, error) {
+	fake.createSystemFilesMutex.Lock()
+	ret, specificReturn := fake.createSystemFilesReturnsOnCall[len(fake.createSystemFilesArgsForCall)]
+	fake.createSystemFilesArgsForCall = append(fake.createSystemFilesArgsForCall, struct {
+		systemRoot string
+		jobName    string
+	}{systemRoot, jobName})
+	fake.recordInvocation("CreateSystemFiles", []interface{}{systemRoot, jobName})
+	fake.createSystemFilesMutex.Unlock()
+	if fake.CreateSystemFilesStub != nil {
+		return fake.CreateSystemFilesStub(systemRoot, jobName)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2, ret.result3, ret.result4
+	}
+	return fake.createSystemFilesReturns.result1, fake.createSystemFilesReturns.result2, fake.createSystemFilesReturns.result3, fake.createSystemFilesReturns.result4
+}
+
+func (fake *FakeRuncAdapter) CreateSystemFilesCallCount() int {
+	fake.createSystemFilesMutex.RLock()
+	defer fake.createSystemFilesMutex.RUnlock()
+	return len(fake.createSystemFilesArgsForCall)
+}
+
+func (fake *FakeRuncAdapter) CreateSystemFilesArgsForCall(i int) (string, string) {
+	fake.createSystemFilesMutex.RLock()
+	defer fake.createSystemFilesMutex.RUnlock()
+	return fake.createSystemFilesArgsForCall[i].systemRoot, fake.createSystemFilesArgsForCall[i].jobName
+}
+
+func (fake *FakeRuncAdapter) CreateSystemFilesReturns(result1 string, result2 *os.File, result3 *os.File, result4 error) {
+	fake.CreateSystemFilesStub = nil
+	fake.createSystemFilesReturns = struct {
+		result1 string
+		result2 *os.File
+		result3 *os.File
+		result4 error
+	}{result1, result2, result3, result4}
+}
+
+func (fake *FakeRuncAdapter) CreateSystemFilesReturnsOnCall(i int, result1 string, result2 *os.File, result3 *os.File, result4 error) {
+	fake.CreateSystemFilesStub = nil
+	if fake.createSystemFilesReturnsOnCall == nil {
+		fake.createSystemFilesReturnsOnCall = make(map[int]struct {
+			result1 string
+			result2 *os.File
+			result3 *os.File
+			result4 error
+		})
+	}
+	fake.createSystemFilesReturnsOnCall[i] = struct {
+		result1 string
+		result2 *os.File
+		result3 *os.File
+		result4 error
+	}{result1, result2, result3, result4}
+}
+
+func (fake *FakeRuncAdapter) RunContainer(pidDir string, bundlePath string, jobName string, stdout io.Writer, stderr io.Writer) error {
 	fake.runContainerMutex.Lock()
 	ret, specificReturn := fake.runContainerReturnsOnCall[len(fake.runContainerArgsForCall)]
 	fake.runContainerArgsForCall = append(fake.runContainerArgsForCall, struct {
+		pidDir     string
 		bundlePath string
 		jobName    string
-	}{bundlePath, jobName})
-	fake.recordInvocation("RunContainer", []interface{}{bundlePath, jobName})
+		stdout     io.Writer
+		stderr     io.Writer
+	}{pidDir, bundlePath, jobName, stdout, stderr})
+	fake.recordInvocation("RunContainer", []interface{}{pidDir, bundlePath, jobName, stdout, stderr})
 	fake.runContainerMutex.Unlock()
 	if fake.RunContainerStub != nil {
-		return fake.RunContainerStub(bundlePath, jobName)
+		return fake.RunContainerStub(pidDir, bundlePath, jobName, stdout, stderr)
 	}
 	if specificReturn {
 		return ret.result1
@@ -207,10 +291,10 @@ func (fake *FakeRuncAdapter) RunContainerCallCount() int {
 	return len(fake.runContainerArgsForCall)
 }
 
-func (fake *FakeRuncAdapter) RunContainerArgsForCall(i int) (string, string) {
+func (fake *FakeRuncAdapter) RunContainerArgsForCall(i int) (string, string, string, io.Writer, io.Writer) {
 	fake.runContainerMutex.RLock()
 	defer fake.runContainerMutex.RUnlock()
-	return fake.runContainerArgsForCall[i].bundlePath, fake.runContainerArgsForCall[i].jobName
+	return fake.runContainerArgsForCall[i].pidDir, fake.runContainerArgsForCall[i].bundlePath, fake.runContainerArgsForCall[i].jobName, fake.runContainerArgsForCall[i].stdout, fake.runContainerArgsForCall[i].stderr
 }
 
 func (fake *FakeRuncAdapter) RunContainerReturns(result1 error) {
@@ -334,8 +418,10 @@ func (fake *FakeRuncAdapter) Invocations() map[string][][]interface{} {
 	defer fake.invocationsMutex.RUnlock()
 	fake.buildSpecMutex.RLock()
 	defer fake.buildSpecMutex.RUnlock()
-	fake.buildBundleMutex.RLock()
-	defer fake.buildBundleMutex.RUnlock()
+	fake.createBundleMutex.RLock()
+	defer fake.createBundleMutex.RUnlock()
+	fake.createSystemFilesMutex.RLock()
+	defer fake.createSystemFilesMutex.RUnlock()
 	fake.runContainerMutex.RLock()
 	defer fake.runContainerMutex.RUnlock()
 	fake.stopContainerMutex.RLock()

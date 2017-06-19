@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-type runcJobLifecycle struct {
+type RuncJobLifecycle struct {
 	runcAdapter  RuncAdapter
 	jobName      string
 	config       *config.CrucibleConfig
@@ -16,32 +16,38 @@ func NewRuncJobLifecycle(
 	runcAdapter RuncAdapter,
 	jobName string,
 	config *config.CrucibleConfig,
-) *runcJobLifecycle {
-	return &runcJobLifecycle{
+) *RuncJobLifecycle {
+	return &RuncJobLifecycle{
 		runcAdapter: runcAdapter,
 		jobName:     jobName,
 		config:      config,
 	}
 }
 
-func (j *runcJobLifecycle) StartJob() error {
+func (j *RuncJobLifecycle) StartJob() error {
 	spec, err := j.runcAdapter.BuildSpec(j.jobName, j.config)
 	if err != nil {
 		return err
 	}
 
-	bundlePath, err := j.runcAdapter.BuildBundle(config.BundlesRoot(), j.jobName, spec)
+	bundlePath, err := j.runcAdapter.CreateBundle(config.BundlesRoot(), j.jobName, spec)
 	if err != nil {
 		return fmt.Errorf("bundle build failure: %s", err.Error())
 	}
 
-	return j.runcAdapter.RunContainer(bundlePath, j.jobName)
+	pidDir, stdout, stderr, err := j.runcAdapter.CreateSystemFiles(config.BoshRoot(), j.jobName)
+	if err != nil {
+		return fmt.Errorf("failed to create system files: %s", err.Error())
+	}
+	defer stdout.Close()
+	defer stderr.Close()
+
+	return j.runcAdapter.RunContainer(pidDir, bundlePath, j.jobName, stdout, stderr)
 }
 
-func (j *runcJobLifecycle) StopJob() error {
+func (j *RuncJobLifecycle) StopJob() error {
 	err := j.runcAdapter.StopContainer(j.jobName)
 	if err != nil {
-		// TODO: test me?
 		return err
 	}
 
