@@ -74,8 +74,22 @@ var _ = Describe("CrucibleAcceptance", func() {
 
 		body, err := ioutil.ReadAll(resp.Body)
 		Expect(err).NotTo(HaveOccurred())
-		items := strings.Split(strings.Trim(string(body), "\n"), "\n")
-		Expect(items).To(ConsistOf("data", "jobs", "packages"))
+		directories := strings.Split(strings.Trim(string(body), "\n"), "\n")
+		Expect(directories).To(ConsistOf("data", "jobs", "packages"))
+	})
+
+	It("is contained in a pid namespace", func() {
+		resp, err := client.Get(fmt.Sprintf("%s/processes", agentURI))
+		Expect(err).NotTo(HaveOccurred())
+		defer resp.Body.Close()
+
+		body, err := ioutil.ReadAll(resp.Body)
+		Expect(err).NotTo(HaveOccurred())
+		processes := strings.Split(strings.Trim(string(body), "\n"), "\n")
+
+		// We expect the test agent to be the only process with the root PID
+		Expect(processes).To(HaveLen(1))
+		Expect(processes).To(ConsistOf(MatchRegexp("1 /var/vcap/packages/crucible-test-agent/bin/crucible-test-agent.*")))
 	})
 })
 

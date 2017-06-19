@@ -99,6 +99,7 @@ func (a *runcAdapter) BuildSpec(jobName string, cfg *config.CrucibleConfig) (spe
 			Namespaces: []specs.LinuxNamespace{
 				{Type: "uts"},
 				{Type: "mount"},
+				{Type: "pid"},
 			},
 		},
 	}, nil

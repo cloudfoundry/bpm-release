@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func ListVarVcap(w http.ResponseWriter, r *http.Request) {
+func VarVcap(w http.ResponseWriter, r *http.Request) {
 	items, err := ioutil.ReadDir("/var/vcap")
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

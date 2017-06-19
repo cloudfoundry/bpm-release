@@ -206,7 +206,11 @@ var _ = Describe("RuncAdapter", func() {
 				"/proc/sysrq-trigger",
 			}))
 
-			Expect(spec.Linux.Namespaces).To(ConsistOf([]specs.LinuxNamespace{{Type: "uts"}, {Type: "mount"}}))
+			Expect(spec.Linux.Namespaces).To(ConsistOf(
+				specs.LinuxNamespace{Type: "uts"},
+				specs.LinuxNamespace{Type: "mount"},
+				specs.LinuxNamespace{Type: "pid"},
+			))
 		})
 
 		Context("when the user id lookup fails", func() {
