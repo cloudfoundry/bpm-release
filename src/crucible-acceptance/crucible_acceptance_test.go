@@ -66,6 +66,17 @@ var _ = Describe("CrucibleAcceptance", func() {
 
 		Expect(found).To(ConsistOf(expectedMountPaths))
 	})
+
+	It("only has access to data, jobs, and packages in /var/vcap", func() {
+		resp, err := client.Get(fmt.Sprintf("%s/var-vcap", agentURI))
+		Expect(err).NotTo(HaveOccurred())
+		defer resp.Body.Close()
+
+		body, err := ioutil.ReadAll(resp.Body)
+		Expect(err).NotTo(HaveOccurred())
+		items := strings.Split(strings.Trim(string(body), "\n"), "\n")
+		Expect(items).To(ConsistOf("data", "jobs", "packages"))
+	})
 })
 
 func containsString(list []string, item string) bool {

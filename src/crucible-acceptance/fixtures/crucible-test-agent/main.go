@@ -29,6 +29,7 @@ func main() {
 	http.HandleFunc("/whoami", handlers.Whoami)
 	http.HandleFunc("/hostname", handlers.Hostname)
 	http.HandleFunc("/mounts", handlers.Mounts)
+	http.HandleFunc("/var-vcap", handlers.ListVarVcap)
 	err := http.ListenAndServe(fmt.Sprintf(":%d", *port), nil)
 	if err != nil {
 		log.Fatal(err)
