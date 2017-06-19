@@ -1,0 +1,8 @@
+#!/bin/bash
+
+sudo docker run \
+  --privileged \
+  -v  $HOME/workspace/crucible:/crucible \
+  -e "GOPATH=/crucible" \
+  -it pcfsecurity/crucible-ci:latest \
+  /bin/bash -c 'export PATH=$PATH:$GOPATH/bin; /bin/bash'
