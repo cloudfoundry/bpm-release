@@ -45,7 +45,7 @@ var _ = Describe("CrucibleAcceptance", func() {
 		Expect(string(body)).To(Equal("crucible-test-agent\n"))
 	})
 
-	It("has the correct mounts", func() {
+	It("has the correct bosh mounts", func() {
 		resp, err := client.Get(fmt.Sprintf("%s/mounts", agentURI))
 		Expect(err).NotTo(HaveOccurred())
 		defer resp.Body.Close()
@@ -59,6 +59,28 @@ var _ = Describe("CrucibleAcceptance", func() {
 		var found []string
 		for _, mount := range mounts {
 			if strings.Contains(mount.path, "/var/vcap") {
+				found = append(found, mount.path)
+				Expect(mount.options).To(ContainElement("ro"), fmt.Sprintf("no read only permissions for %s", mount.path))
+			}
+		}
+
+		Expect(found).To(ConsistOf(expectedMountPaths))
+	})
+
+	It("has the correct read only system mounts", func() {
+		resp, err := client.Get(fmt.Sprintf("%s/mounts", agentURI))
+		Expect(err).NotTo(HaveOccurred())
+		defer resp.Body.Close()
+
+		body, err := ioutil.ReadAll(resp.Body)
+		Expect(err).NotTo(HaveOccurred())
+
+		mounts := parseMounts(string(body))
+
+		expectedMountPaths := []string{"/bin", "/etc", "/lib", "/lib64", "/usr"}
+		var found []string
+		for _, mount := range mounts {
+			if containsString(expectedMountPaths, mount.path) {
 				found = append(found, mount.path)
 				Expect(mount.options).To(ContainElement("ro"), fmt.Sprintf("no read only permissions for %s", mount.path))
 			}

@@ -64,7 +64,9 @@ func (a *runcAdapter) BuildSpec(jobName string, cfg *config.CrucibleConfig) (spe
 		NoNewPrivileges: true,
 	}
 
-	mounts := append(defaultMounts(), boshMounts(jobName)...)
+	mounts := defaultMounts()
+	mounts = append(mounts, boshMounts(jobName)...)
+	mounts = append(mounts, systemIdentityMounts()...)
 
 	return specs.Spec{
 		Version: specs.Version,
@@ -289,6 +291,11 @@ func defaultMounts() []specs.Mount {
 			Source:      "cgroup",
 			Options:     []string{"nosuid", "noexec", "nodev", "relatime", "ro"},
 		},
+	}
+}
+
+func systemIdentityMounts() []specs.Mount {
+	return []specs.Mount{
 		{
 			Destination: "/bin",
 			Type:        "bind",
