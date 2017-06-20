@@ -46,7 +46,7 @@ func (j *RuncJobLifecycle) StartJob() error {
 }
 
 func (j *RuncJobLifecycle) StopJob() error {
-	err := j.runcAdapter.StopContainer(j.jobName)
+	err := j.runcAdapter.DeleteContainer(j.jobName)
 	if err != nil {
 		return err
 	}

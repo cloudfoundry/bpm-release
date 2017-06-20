@@ -74,15 +74,15 @@ type FakeRuncAdapter struct {
 	runContainerReturnsOnCall map[int]struct {
 		result1 error
 	}
-	StopContainerStub        func(jobName string) error
-	stopContainerMutex       sync.RWMutex
-	stopContainerArgsForCall []struct {
+	DeleteContainerStub        func(jobName string) error
+	deleteContainerMutex       sync.RWMutex
+	deleteContainerArgsForCall []struct {
 		jobName string
 	}
-	stopContainerReturns struct {
+	deleteContainerReturns struct {
 		result1 error
 	}
-	stopContainerReturnsOnCall map[int]struct {
+	deleteContainerReturnsOnCall map[int]struct {
 		result1 error
 	}
 	DestroyBundleStub        func(bundlesRoot, jobName string) error
@@ -316,50 +316,50 @@ func (fake *FakeRuncAdapter) RunContainerReturnsOnCall(i int, result1 error) {
 	}{result1}
 }
 
-func (fake *FakeRuncAdapter) StopContainer(jobName string) error {
-	fake.stopContainerMutex.Lock()
-	ret, specificReturn := fake.stopContainerReturnsOnCall[len(fake.stopContainerArgsForCall)]
-	fake.stopContainerArgsForCall = append(fake.stopContainerArgsForCall, struct {
+func (fake *FakeRuncAdapter) DeleteContainer(jobName string) error {
+	fake.deleteContainerMutex.Lock()
+	ret, specificReturn := fake.deleteContainerReturnsOnCall[len(fake.deleteContainerArgsForCall)]
+	fake.deleteContainerArgsForCall = append(fake.deleteContainerArgsForCall, struct {
 		jobName string
 	}{jobName})
-	fake.recordInvocation("StopContainer", []interface{}{jobName})
-	fake.stopContainerMutex.Unlock()
-	if fake.StopContainerStub != nil {
-		return fake.StopContainerStub(jobName)
+	fake.recordInvocation("DeleteContainer", []interface{}{jobName})
+	fake.deleteContainerMutex.Unlock()
+	if fake.DeleteContainerStub != nil {
+		return fake.DeleteContainerStub(jobName)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	return fake.stopContainerReturns.result1
+	return fake.deleteContainerReturns.result1
 }
 
-func (fake *FakeRuncAdapter) StopContainerCallCount() int {
-	fake.stopContainerMutex.RLock()
-	defer fake.stopContainerMutex.RUnlock()
-	return len(fake.stopContainerArgsForCall)
+func (fake *FakeRuncAdapter) DeleteContainerCallCount() int {
+	fake.deleteContainerMutex.RLock()
+	defer fake.deleteContainerMutex.RUnlock()
+	return len(fake.deleteContainerArgsForCall)
 }
 
-func (fake *FakeRuncAdapter) StopContainerArgsForCall(i int) string {
-	fake.stopContainerMutex.RLock()
-	defer fake.stopContainerMutex.RUnlock()
-	return fake.stopContainerArgsForCall[i].jobName
+func (fake *FakeRuncAdapter) DeleteContainerArgsForCall(i int) string {
+	fake.deleteContainerMutex.RLock()
+	defer fake.deleteContainerMutex.RUnlock()
+	return fake.deleteContainerArgsForCall[i].jobName
 }
 
-func (fake *FakeRuncAdapter) StopContainerReturns(result1 error) {
-	fake.StopContainerStub = nil
-	fake.stopContainerReturns = struct {
+func (fake *FakeRuncAdapter) DeleteContainerReturns(result1 error) {
+	fake.DeleteContainerStub = nil
+	fake.deleteContainerReturns = struct {
 		result1 error
 	}{result1}
 }
 
-func (fake *FakeRuncAdapter) StopContainerReturnsOnCall(i int, result1 error) {
-	fake.StopContainerStub = nil
-	if fake.stopContainerReturnsOnCall == nil {
-		fake.stopContainerReturnsOnCall = make(map[int]struct {
+func (fake *FakeRuncAdapter) DeleteContainerReturnsOnCall(i int, result1 error) {
+	fake.DeleteContainerStub = nil
+	if fake.deleteContainerReturnsOnCall == nil {
+		fake.deleteContainerReturnsOnCall = make(map[int]struct {
 			result1 error
 		})
 	}
-	fake.stopContainerReturnsOnCall[i] = struct {
+	fake.deleteContainerReturnsOnCall[i] = struct {
 		result1 error
 	}{result1}
 }
@@ -424,8 +424,8 @@ func (fake *FakeRuncAdapter) Invocations() map[string][][]interface{} {
 	defer fake.createBundleMutex.RUnlock()
 	fake.runContainerMutex.RLock()
 	defer fake.runContainerMutex.RUnlock()
-	fake.stopContainerMutex.RLock()
-	defer fake.stopContainerMutex.RUnlock()
+	fake.deleteContainerMutex.RLock()
+	defer fake.deleteContainerMutex.RUnlock()
 	fake.destroyBundleMutex.RLock()
 	defer fake.destroyBundleMutex.RUnlock()
 	return fake.invocations

@@ -146,8 +146,8 @@ var _ = Describe("RuncJobLifecycle", func() {
 			err := runcLifecycle.StopJob()
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(fakeRuncAdapter.StopContainerCallCount()).To(Equal(1))
-			jobName := fakeRuncAdapter.StopContainerArgsForCall(0)
+			Expect(fakeRuncAdapter.DeleteContainerCallCount()).To(Equal(1))
+			jobName := fakeRuncAdapter.DeleteContainerArgsForCall(0)
 			Expect(jobName).To(Equal(expectedJobName))
 		})
 
@@ -164,7 +164,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 		Context("when stopping a container fails", func() {
 			It("returns an error", func() {
 				expectedErr := errors.New("an error")
-				fakeRuncAdapter.StopContainerReturns(expectedErr)
+				fakeRuncAdapter.DeleteContainerReturns(expectedErr)
 				err := runcLifecycle.StopJob()
 				Expect(err).To(Equal(expectedErr))
 			})
