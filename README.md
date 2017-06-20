@@ -59,3 +59,7 @@ changes.
 
 Not yet, please.
 
+You can start to read about the [runtime environment](docs/runtime.md) which
+Crucible provides to your job, the [configuration format](docs/config.md), and
+the [undefined behavior](docs/undefined.md) of the system.
+
