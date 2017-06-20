@@ -5,9 +5,14 @@ import (
 	"crucible/runcadapter"
 	"errors"
 	"fmt"
+	"time"
+
+	"code.cloudfoundry.org/clock"
 
 	"github.com/spf13/cobra"
 )
+
+const DEFAULT_STOP_TIMEOUT = 20 * time.Second
 
 func init() {
 	RootCmd.AddCommand(stopCommand)
@@ -34,14 +39,21 @@ func stop(cmd *cobra.Command, args []string) error {
 
 	userIDFinder := runcadapter.NewUserIDFinder()
 	runcAdapter := runcadapter.NewRuncAdapter(config.RuncPath(), userIDFinder)
+	clock := clock.NewClock()
 
 	jobLifecycle := runcadapter.NewRuncJobLifecycle(
 		runcAdapter,
+		clock,
 		jobName,
 		jobConfig,
 	)
 
-	return jobLifecycle.StopJob()
+	err = jobLifecycle.StopJob(DEFAULT_STOP_TIMEOUT)
+	if err != nil {
+		fmt.Fprintf(cmd.OutOrStderr(), "failed to stop job: %s\n", err.Error())
+	}
+
+	return jobLifecycle.RemoveJob()
 }
 
 // Validate that a job name is provided.

@@ -1,6 +1,8 @@
 package main_test
 
 import (
+	"time"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
@@ -24,6 +26,7 @@ var _ = SynchronizedBeforeSuite(func() []byte {
 	return []byte(cruciblePath)
 }, func(data []byte) {
 	cruciblePath = string(data)
+	SetDefaultEventuallyTimeout(2 * time.Second)
 })
 
 var _ = SynchronizedAfterSuite(func() {}, func() {

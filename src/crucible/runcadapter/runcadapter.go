@@ -23,6 +23,8 @@ type RuncAdapter interface {
 	BuildSpec(jobName string, jobConfig *config.CrucibleConfig) (specs.Spec, error)
 	CreateBundle(bundlesRoot, jobName string, jobSpec specs.Spec) (string, error)
 	RunContainer(pidDir, bundlePath, jobName string, stdout, stderr io.Writer) error
+	ContainerState(jobName string) (specs.State, error)
+	StopContainer(jobName string) error
 	DeleteContainer(jobName string) error
 	DestroyBundle(bundlesRoot, jobName string) error
 }
@@ -221,6 +223,37 @@ func (a *runcAdapter) RunContainer(pidDir, bundlePath, jobName string, stdout, s
 
 	runcCmd.Stdout = stdout
 	runcCmd.Stderr = stderr
+
+	return runcCmd.Run()
+}
+
+func (a *runcAdapter) ContainerState(jobName string) (specs.State, error) {
+	runcCmd := exec.Command(
+		a.runcPath,
+		"state",
+		jobName,
+	)
+
+	var state specs.State
+	data, err := runcCmd.CombinedOutput()
+	if err != nil {
+		return specs.State{}, err
+	}
+
+	err = json.Unmarshal(data, &state)
+	if err != nil {
+		return specs.State{}, err
+	}
+
+	return state, nil
+}
+
+func (a *runcAdapter) StopContainer(jobName string) error {
+	runcCmd := exec.Command(
+		a.runcPath,
+		"kill",
+		jobName,
+	)
 
 	return runcCmd.Run()
 }

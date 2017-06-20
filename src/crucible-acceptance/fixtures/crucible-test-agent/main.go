@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 )
 
 var port = flag.Int("port", -1, "port the server listens on")
@@ -34,8 +35,21 @@ func main() {
 	http.HandleFunc("/var-vcap-jobs", handlers.VarVcapJobs)
 	http.HandleFunc("/whoami", handlers.Whoami)
 
-	err := http.ListenAndServe(fmt.Sprintf(":%d", *port), nil)
-	if err != nil {
-		log.Fatal(err)
+	errChan := make(chan error)
+	signals := make(chan os.Signal)
+
+	signal.Notify(signals)
+
+	go func() {
+		errChan <- http.ListenAndServe(fmt.Sprintf(":%d", *port), nil)
+	}()
+
+	select {
+	case err := <-errChan:
+		if err != nil {
+			log.Fatal(err)
+		}
+	case sig := <-signals:
+		log.Fatalf("Signalled: %#v", sig)
 	}
 }

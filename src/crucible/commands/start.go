@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 
+	"code.cloudfoundry.org/clock"
+
 	"github.com/spf13/cobra"
 )
 
@@ -35,18 +37,20 @@ func start(cmd *cobra.Command, args []string) error {
 
 	userIDFinder := runcadapter.NewUserIDFinder()
 	runcAdapter := runcadapter.NewRuncAdapter(config.RuncPath(), userIDFinder)
+	clock := clock.NewClock()
 
 	jobLifecycle := runcadapter.NewRuncJobLifecycle(
 		runcAdapter,
+		clock,
 		jobName,
 		jobConfig,
 	)
 
 	err = jobLifecycle.StartJob()
 	if err != nil {
-		stopErr := jobLifecycle.StopJob()
-		if stopErr != nil {
-			fmt.Fprintf(cmd.OutOrStderr(), "failed to cleanup job: %s\n", stopErr.Error())
+		removeErr := jobLifecycle.RemoveJob()
+		if removeErr != nil {
+			fmt.Fprintf(cmd.OutOrStderr(), "failed to remove failed job: %s\n", removeErr.Error())
 		}
 
 		return err

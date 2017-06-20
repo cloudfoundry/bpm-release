@@ -2,25 +2,34 @@ package runcadapter
 
 import (
 	"crucible/config"
+	"errors"
 	"fmt"
+	"time"
+
+	"code.cloudfoundry.org/clock"
 )
 
+var TimeoutError = errors.New("failed to stop job within timeout")
+
 type RuncJobLifecycle struct {
-	runcAdapter  RuncAdapter
-	jobName      string
+	clock        clock.Clock
 	config       *config.CrucibleConfig
+	jobName      string
+	runcAdapter  RuncAdapter
 	userIDFinder UserIDFinder
 }
 
 func NewRuncJobLifecycle(
 	runcAdapter RuncAdapter,
+	clock clock.Clock,
 	jobName string,
 	config *config.CrucibleConfig,
 ) *RuncJobLifecycle {
 	return &RuncJobLifecycle{
-		runcAdapter: runcAdapter,
-		jobName:     jobName,
+		clock:       clock,
 		config:      config,
+		jobName:     jobName,
+		runcAdapter: runcAdapter,
 	}
 }
 
@@ -45,7 +54,42 @@ func (j *RuncJobLifecycle) StartJob() error {
 	return j.runcAdapter.RunContainer(pidDir, bundlePath, j.jobName, stdout, stderr)
 }
 
-func (j *RuncJobLifecycle) StopJob() error {
+func (j *RuncJobLifecycle) StopJob(exitTimeout time.Duration) error {
+	err := j.runcAdapter.StopContainer(j.jobName)
+	if err != nil {
+		return err
+	}
+
+	state, err := j.runcAdapter.ContainerState(j.jobName)
+	if err == nil {
+		if state.Status == "stopped" {
+			return nil
+		}
+	} else {
+		// TODO: Log Here
+	}
+
+	stateTicker := j.clock.NewTicker(1 * time.Second)
+	timeout := j.clock.NewTimer(exitTimeout)
+
+	for {
+		select {
+		case <-stateTicker.C():
+			state, err = j.runcAdapter.ContainerState(j.jobName)
+			if err == nil {
+				if state.Status == "stopped" {
+					return nil
+				}
+			} else {
+				// TODO: Log Here
+			}
+		case <-timeout.C():
+			return TimeoutError
+		}
+	}
+}
+
+func (j *RuncJobLifecycle) RemoveJob() error {
 	err := j.runcAdapter.DeleteContainer(j.jobName)
 	if err != nil {
 		return err

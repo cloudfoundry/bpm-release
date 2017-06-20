@@ -5,6 +5,7 @@ dependencies:
   - golang
 
 files:
+  - code.cloudfoundry.org/clock/*.go # gosub
   - crucible/*.go # gosub
   - crucible/commands/*.go # gosub
   - crucible/config/*.go # gosub

@@ -60,9 +60,12 @@ var _ = Describe("Crucible", func() {
 				Executable: "/bin/bash",
 				Args: []string{
 					"-c",
-					`echo Foo is $FOO &&
+					`trap "echo Signalled && kill -9 $child" SIGTERM;
+					 echo Foo is $FOO &&
 					  (>&2 echo "$FOO is Foo") &&
-					  sleep 10`,
+					  sleep 5 &
+					 child=$!;
+					 wait $child`,
 				},
 				Env: []string{"FOO=BAR"},
 			},
@@ -125,14 +128,6 @@ var _ = Describe("Crucible", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(pid).To(Equal(stateResponse.Pid))
 		})
-
-		var fileContents = func(path string) func() string {
-			return func() string {
-				data, err := ioutil.ReadFile(path)
-				Expect(err).NotTo(HaveOccurred())
-				return string(data)
-			}
-		}
 
 		It("redirects stdout and stderr to a standard location", func() {
 			Expect(stdoutFileLocation).NotTo(BeAnExistingFile())
@@ -233,6 +228,14 @@ var _ = Describe("Crucible", func() {
 			command.Env = append(command.Env, fmt.Sprintf("CRUCIBLE_BOSH_ROOT=%s", boshConfigPath))
 		})
 
+		It("signals the container with a SIGTERM", func() {
+			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+			Expect(err).ToNot(HaveOccurred())
+			Eventually(session).Should(gexec.Exit(0))
+
+			Eventually(fileContents(stdoutFileLocation)).Should(ContainSubstring("Signalled"))
+		})
+
 		It("removes the container and it's corresponding process", func() {
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).ToNot(HaveOccurred())
@@ -295,3 +298,11 @@ var _ = Describe("Crucible", func() {
 		})
 	})
 })
+
+func fileContents(path string) func() string {
+	return func() string {
+		data, err := ioutil.ReadFile(path)
+		Expect(err).NotTo(HaveOccurred())
+		return string(data)
+	}
+}

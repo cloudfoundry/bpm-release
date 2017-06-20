@@ -74,6 +74,30 @@ type FakeRuncAdapter struct {
 	runContainerReturnsOnCall map[int]struct {
 		result1 error
 	}
+	ContainerStateStub        func(jobName string) (specs.State, error)
+	containerStateMutex       sync.RWMutex
+	containerStateArgsForCall []struct {
+		jobName string
+	}
+	containerStateReturns struct {
+		result1 specs.State
+		result2 error
+	}
+	containerStateReturnsOnCall map[int]struct {
+		result1 specs.State
+		result2 error
+	}
+	StopContainerStub        func(jobName string) error
+	stopContainerMutex       sync.RWMutex
+	stopContainerArgsForCall []struct {
+		jobName string
+	}
+	stopContainerReturns struct {
+		result1 error
+	}
+	stopContainerReturnsOnCall map[int]struct {
+		result1 error
+	}
 	DeleteContainerStub        func(jobName string) error
 	deleteContainerMutex       sync.RWMutex
 	deleteContainerArgsForCall []struct {
@@ -316,6 +340,105 @@ func (fake *FakeRuncAdapter) RunContainerReturnsOnCall(i int, result1 error) {
 	}{result1}
 }
 
+func (fake *FakeRuncAdapter) ContainerState(jobName string) (specs.State, error) {
+	fake.containerStateMutex.Lock()
+	ret, specificReturn := fake.containerStateReturnsOnCall[len(fake.containerStateArgsForCall)]
+	fake.containerStateArgsForCall = append(fake.containerStateArgsForCall, struct {
+		jobName string
+	}{jobName})
+	fake.recordInvocation("ContainerState", []interface{}{jobName})
+	fake.containerStateMutex.Unlock()
+	if fake.ContainerStateStub != nil {
+		return fake.ContainerStateStub(jobName)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	return fake.containerStateReturns.result1, fake.containerStateReturns.result2
+}
+
+func (fake *FakeRuncAdapter) ContainerStateCallCount() int {
+	fake.containerStateMutex.RLock()
+	defer fake.containerStateMutex.RUnlock()
+	return len(fake.containerStateArgsForCall)
+}
+
+func (fake *FakeRuncAdapter) ContainerStateArgsForCall(i int) string {
+	fake.containerStateMutex.RLock()
+	defer fake.containerStateMutex.RUnlock()
+	return fake.containerStateArgsForCall[i].jobName
+}
+
+func (fake *FakeRuncAdapter) ContainerStateReturns(result1 specs.State, result2 error) {
+	fake.ContainerStateStub = nil
+	fake.containerStateReturns = struct {
+		result1 specs.State
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeRuncAdapter) ContainerStateReturnsOnCall(i int, result1 specs.State, result2 error) {
+	fake.ContainerStateStub = nil
+	if fake.containerStateReturnsOnCall == nil {
+		fake.containerStateReturnsOnCall = make(map[int]struct {
+			result1 specs.State
+			result2 error
+		})
+	}
+	fake.containerStateReturnsOnCall[i] = struct {
+		result1 specs.State
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeRuncAdapter) StopContainer(jobName string) error {
+	fake.stopContainerMutex.Lock()
+	ret, specificReturn := fake.stopContainerReturnsOnCall[len(fake.stopContainerArgsForCall)]
+	fake.stopContainerArgsForCall = append(fake.stopContainerArgsForCall, struct {
+		jobName string
+	}{jobName})
+	fake.recordInvocation("StopContainer", []interface{}{jobName})
+	fake.stopContainerMutex.Unlock()
+	if fake.StopContainerStub != nil {
+		return fake.StopContainerStub(jobName)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fake.stopContainerReturns.result1
+}
+
+func (fake *FakeRuncAdapter) StopContainerCallCount() int {
+	fake.stopContainerMutex.RLock()
+	defer fake.stopContainerMutex.RUnlock()
+	return len(fake.stopContainerArgsForCall)
+}
+
+func (fake *FakeRuncAdapter) StopContainerArgsForCall(i int) string {
+	fake.stopContainerMutex.RLock()
+	defer fake.stopContainerMutex.RUnlock()
+	return fake.stopContainerArgsForCall[i].jobName
+}
+
+func (fake *FakeRuncAdapter) StopContainerReturns(result1 error) {
+	fake.StopContainerStub = nil
+	fake.stopContainerReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeRuncAdapter) StopContainerReturnsOnCall(i int, result1 error) {
+	fake.StopContainerStub = nil
+	if fake.stopContainerReturnsOnCall == nil {
+		fake.stopContainerReturnsOnCall = make(map[int]struct {
+			result1 error
+		})
+	}
+	fake.stopContainerReturnsOnCall[i] = struct {
+		result1 error
+	}{result1}
+}
+
 func (fake *FakeRuncAdapter) DeleteContainer(jobName string) error {
 	fake.deleteContainerMutex.Lock()
 	ret, specificReturn := fake.deleteContainerReturnsOnCall[len(fake.deleteContainerArgsForCall)]
@@ -424,6 +547,10 @@ func (fake *FakeRuncAdapter) Invocations() map[string][][]interface{} {
 	defer fake.createBundleMutex.RUnlock()
 	fake.runContainerMutex.RLock()
 	defer fake.runContainerMutex.RUnlock()
+	fake.containerStateMutex.RLock()
+	defer fake.containerStateMutex.RUnlock()
+	fake.stopContainerMutex.RLock()
+	defer fake.stopContainerMutex.RUnlock()
 	fake.deleteContainerMutex.RLock()
 	defer fake.deleteContainerMutex.RUnlock()
 	fake.destroyBundleMutex.RLock()

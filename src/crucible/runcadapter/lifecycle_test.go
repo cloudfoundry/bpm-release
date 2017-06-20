@@ -7,6 +7,9 @@ import (
 	"errors"
 	"io/ioutil"
 	"os"
+	"time"
+
+	"code.cloudfoundry.org/clock/fakeclock"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -26,10 +29,14 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 		expectedStdout, expectedStderr *os.File
 
+		fakeClock *fakeclock.FakeClock
+
 		runcLifecycle *runcadapter.RuncJobLifecycle
 	)
 
 	BeforeEach(func() {
+		fakeClock = fakeclock.NewFakeClock(time.Now())
+
 		expectedJobName = "example"
 		jobConfig = &config.CrucibleConfig{
 			Process: &config.Process{
@@ -56,6 +63,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 		runcLifecycle = runcadapter.NewRuncJobLifecycle(
 			fakeRuncAdapter,
+			fakeClock,
 			expectedJobName,
 			jobConfig,
 		)
@@ -142,8 +150,149 @@ var _ = Describe("RuncJobLifecycle", func() {
 	})
 
 	Describe("StopJob", func() {
+		var exitTimeout time.Duration
+		BeforeEach(func() {
+			exitTimeout = 5 * time.Second
+
+			fakeRuncAdapter.ContainerStateReturns(specs.State{
+				Status: "stopped",
+			}, nil)
+		})
+
 		It("stops the container", func() {
-			err := runcLifecycle.StopJob()
+			err := runcLifecycle.StopJob(exitTimeout)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(fakeRuncAdapter.StopContainerCallCount()).To(Equal(1))
+			jobName := fakeRuncAdapter.StopContainerArgsForCall(0)
+			Expect(jobName).To(Equal(expectedJobName))
+
+			Expect(fakeRuncAdapter.ContainerStateCallCount()).To(Equal(1))
+			jobName = fakeRuncAdapter.ContainerStateArgsForCall(0)
+			Expect(jobName).To(Equal(expectedJobName))
+		})
+
+		Context("when the container does not stop immediately", func() {
+			var stopped chan struct{}
+			BeforeEach(func() {
+				stopped = make(chan struct{})
+
+				fakeRuncAdapter.ContainerStateStub = func(jobName string) (specs.State, error) {
+					select {
+					case <-stopped:
+						return specs.State{Status: "stopped"}, nil
+					default:
+						return specs.State{Status: "running"}, nil
+					}
+				}
+			})
+
+			It("polls the container state every second until it stops", func() {
+				errChan := make(chan error)
+				go func() {
+					defer GinkgoRecover()
+					errChan <- runcLifecycle.StopJob(exitTimeout)
+				}()
+
+				Eventually(fakeRuncAdapter.StopContainerCallCount).Should(Equal(1))
+				Expect(fakeRuncAdapter.StopContainerArgsForCall(0)).To(Equal(expectedJobName))
+
+				Eventually(fakeRuncAdapter.ContainerStateCallCount).Should(Equal(1))
+				Expect(fakeRuncAdapter.ContainerStateArgsForCall(0)).To(Equal(expectedJobName))
+
+				fakeClock.WaitForWatcherAndIncrement(1 * time.Second)
+
+				Eventually(fakeRuncAdapter.ContainerStateCallCount).Should(Equal(2))
+				Expect(fakeRuncAdapter.ContainerStateArgsForCall(1)).To(Equal(expectedJobName))
+
+				close(stopped)
+				fakeClock.WaitForWatcherAndIncrement(1 * time.Second)
+
+				Eventually(fakeRuncAdapter.ContainerStateCallCount).Should(Equal(3))
+				Expect(fakeRuncAdapter.ContainerStateArgsForCall(2)).To(Equal(expectedJobName))
+
+				Eventually(errChan).Should(Receive(BeNil()), "stop job did not exit in time")
+			})
+
+			Context("and the exit timeout has passed", func() {
+				It("forcefully removes the container", func() {
+					errChan := make(chan error)
+					go func() {
+						defer GinkgoRecover()
+						errChan <- runcLifecycle.StopJob(exitTimeout)
+					}()
+
+					Eventually(fakeRuncAdapter.StopContainerCallCount).Should(Equal(1))
+					Expect(fakeRuncAdapter.StopContainerArgsForCall(0)).To(Equal(expectedJobName))
+
+					Eventually(fakeRuncAdapter.ContainerStateCallCount).Should(Equal(1))
+					Expect(fakeRuncAdapter.ContainerStateArgsForCall(0)).To(Equal(expectedJobName))
+
+					fakeClock.WaitForWatcherAndIncrement(1 * time.Second)
+
+					Eventually(fakeRuncAdapter.ContainerStateCallCount).Should(Equal(2))
+					Expect(fakeRuncAdapter.ContainerStateArgsForCall(1)).To(Equal(expectedJobName))
+
+					fakeClock.WaitForWatcherAndIncrement(exitTimeout)
+
+					var actualError error
+					Eventually(errChan).Should(Receive(&actualError))
+					Expect(actualError).To(Equal(runcadapter.TimeoutError))
+				})
+			})
+		})
+
+		Context("when fetching the container state fails", func() {
+			BeforeEach(func() {
+				fakeRuncAdapter.ContainerStateReturns(specs.State{}, errors.New("boom"))
+			})
+
+			It("keeps attempting to fetch the state", func() {
+				errChan := make(chan error)
+				go func() {
+					defer GinkgoRecover()
+					errChan <- runcLifecycle.StopJob(exitTimeout)
+				}()
+
+				Eventually(fakeRuncAdapter.ContainerStateCallCount).Should(Equal(1))
+				Expect(fakeRuncAdapter.ContainerStateArgsForCall(0)).To(Equal(expectedJobName))
+
+				fakeClock.WaitForWatcherAndIncrement(1 * time.Second)
+
+				Eventually(fakeRuncAdapter.ContainerStateCallCount).Should(Equal(2))
+				Expect(fakeRuncAdapter.ContainerStateArgsForCall(1)).To(Equal(expectedJobName))
+
+				fakeClock.WaitForWatcherAndIncrement(1 * time.Second)
+
+				Eventually(fakeRuncAdapter.ContainerStateCallCount).Should(Equal(3))
+				Expect(fakeRuncAdapter.ContainerStateArgsForCall(2)).To(Equal(expectedJobName))
+
+				fakeClock.WaitForWatcherAndIncrement(exitTimeout)
+
+				var actualError error
+				Eventually(errChan).Should(Receive(&actualError))
+				Expect(actualError).To(Equal(runcadapter.TimeoutError))
+			})
+		})
+
+		Context("when stopping a container fails", func() {
+			var expectedErr error
+
+			BeforeEach(func() {
+				expectedErr = errors.New("an error")
+				fakeRuncAdapter.StopContainerReturns(expectedErr)
+			})
+
+			It("returns an error", func() {
+				err := runcLifecycle.StopJob(exitTimeout)
+				Expect(err).To(Equal(expectedErr))
+			})
+		})
+	})
+
+	Describe("RemoveJob", func() {
+		It("deletes the container", func() {
+			err := runcLifecycle.RemoveJob()
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(fakeRuncAdapter.DeleteContainerCallCount()).To(Equal(1))
@@ -152,7 +301,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 		})
 
 		It("destroys the bundle", func() {
-			err := runcLifecycle.StopJob()
+			err := runcLifecycle.RemoveJob()
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(fakeRuncAdapter.DestroyBundleCallCount()).To(Equal(1))
@@ -161,11 +310,16 @@ var _ = Describe("RuncJobLifecycle", func() {
 			Expect(jobName).To(Equal(expectedJobName))
 		})
 
-		Context("when stopping a container fails", func() {
-			It("returns an error", func() {
-				expectedErr := errors.New("an error")
+		Context("when deleting a container fails", func() {
+			var expectedErr error
+
+			BeforeEach(func() {
+				expectedErr = errors.New("an error")
 				fakeRuncAdapter.DeleteContainerReturns(expectedErr)
-				err := runcLifecycle.StopJob()
+			})
+
+			It("returns an error", func() {
+				err := runcLifecycle.RemoveJob()
 				Expect(err).To(Equal(expectedErr))
 			})
 		})
@@ -174,7 +328,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 			It("returns an error", func() {
 				expectedErr := errors.New("an error2")
 				fakeRuncAdapter.DestroyBundleReturns(expectedErr)
-				err := runcLifecycle.StopJob()
+				err := runcLifecycle.RemoveJob()
 				Expect(err).To(Equal(expectedErr))
 			})
 		})

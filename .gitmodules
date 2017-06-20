@@ -34,3 +34,7 @@
 	path = src/github.com/satori/go.uuid
 	url = https://github.com/satori/go.uuid
 	branch = master
+[submodule "src/code.cloudfoundry.org/clock"]
+	path = src/code.cloudfoundry.org/clock
+	url = https://github.com/cloudfoundry/clock
+	branch = master
