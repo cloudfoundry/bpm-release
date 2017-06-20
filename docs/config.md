@@ -24,6 +24,9 @@ processes:
     - 4
   env:
     - FOO=BAR
+
+sysctl:
+  net.ipv4.ip_local_port_range: "60000 64000"
 ```
 
 ## Example `monit` Configuration
