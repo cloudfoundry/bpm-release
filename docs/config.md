@@ -16,6 +16,10 @@ processes:
     - 2424
   env:
     - FOO=BAR
+  limits:
+    memory: 3G
+    processes: 10
+    open_files: 100
 
 - name: worker
   executable: /var/vcap/packages/program/bin/program-worker
@@ -24,6 +28,7 @@ processes:
     - 4
   env:
     - FOO=BAR
+  size: small
 
 sysctl:
   net.ipv4.ip_local_port_range: "60000 64000"
