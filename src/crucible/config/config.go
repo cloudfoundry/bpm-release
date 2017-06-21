@@ -40,10 +40,6 @@ func BoshRoot() string {
 	return boshRoot
 }
 
-func ConfigPath(jobName string) string {
-	return filepath.Join(BoshRoot(), "jobs", jobName, "config", "crucible.yml")
-}
-
 func RuncPath() string {
 	return filepath.Join(BoshRoot(), "packages", "runc", "bin", "runc")
 }

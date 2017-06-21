@@ -2,7 +2,6 @@ package config_test
 
 import (
 	"crucible/config"
-	"os"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -45,25 +44,6 @@ var _ = Describe("Config", func() {
 			It("returns an error", func() {
 				_, err := config.ParseConfig(configPath)
 				Expect(err).To(HaveOccurred())
-			})
-		})
-	})
-
-	Describe("ConfigPath", func() {
-		It("returns the default BOSH config path", func() {
-			path := config.ConfigPath("jim")
-			Expect(path).To(Equal("/var/vcap/jobs/jim/config/crucible.yml"))
-		})
-
-		Context("when the CRUCIBLE_BOSH_ROOT env var is set", func() {
-			It("returns the BOSH config path based from that root", func() {
-				originalVal := os.Getenv("CRUCIBLE_BOSH_ROOT")
-				Expect(os.Setenv("CRUCIBLE_BOSH_ROOT", "/home/cf")).To(Succeed())
-
-				path := config.ConfigPath("jim")
-				Expect(path).To(Equal("/home/cf/jobs/jim/config/crucible.yml"))
-
-				Expect(os.Setenv("CRUCIBLE_BOSH_ROOT", originalVal)).To(Succeed())
 			})
 		})
 	})
