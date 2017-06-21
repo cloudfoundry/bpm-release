@@ -6,32 +6,36 @@ any time.
 ## Job Configuration
 
 ``` yaml
-# job.yml
+# /var/vcap/jobs/job/config/server.yml
+name: server
 
-processes:
-- name: server
-  executable: /var/vcap/packages/program/bin/program-server
-  args:
-    - --port
-    - 2424
-  env:
-    - FOO=BAR
-  limits:
-    memory: 3G
-    processes: 10
-    open_files: 100
+executable: /var/vcap/packages/program/bin/program-server
 
-- name: worker
-  executable: /var/vcap/packages/program/bin/program-worker
-  args:
-    - --queues
-    - 4
-  env:
-    - FOO=BAR
-  size: small
+args:
+  - --port
+  - 2424
+
+env:
+  - FOO=BAR
+
+limits:
+  memory: 3G
+  processes: 10
+  open_files: 100
 
 sysctl:
   net.ipv4.ip_local_port_range: "60000 64000"
+```
+
+``` yaml
+# /var/vcap/jobs/job/config/worker.yml
+name: worker
+
+executable: /var/vcap/packages/program/bin/program-worker
+
+args:
+  - --queues
+  - 4
 ```
 
 ## Example `monit` Configuration
@@ -44,14 +48,23 @@ easier.
 
 ```
 check process job-server
-  with pidfile /var/vcap/sys/run/crucible/job-server.pid
-  start program "/var/vcap/packages/crucible/bin/crucible start job/server"
-  stop program "/var/vcap/packages/crucible/bin/crucible stop job/server"
+  with pidfile /var/vcap/sys/run/crucible/job/server.pid
+  start program "/var/vcap/packages/crucible/bin/crucible start -j job -c /var/vcap/jobs/job/config/server.yml"
+  stop program "/var/vcap/packages/crucible/bin/crucible stop -j job -c /var/vcap/jobs/job/config/server.yml"
   group vcap
 
 check process job-worker
-  with pidfile /var/vcap/sys/run/crucible/job-worker.pid
-  start program "/var/vcap/packages/crucible/bin/crucible start job/worker"
-  stop program "/var/vcap/packages/crucible/bin/crucible stop job/worker"
+  with pidfile /var/vcap/sys/run/crucible/job/worker.pid
+  start program "/var/vcap/packages/crucible/bin/crucible start -j job -c /var/vcap/jobs/job/config/worker.yml"
+  stop program "/var/vcap/packages/crucible/bin/crucible stop -j job -c /var/vcap/jobs/job/config/worker.yml"
   group vcap
+```
+
+## Setting Sysctl Kernel Parameters
+
+We recommend setting these parameters in your `pre-start` with the following command:
+
+```bash
+sysctl -e -w net.ipv4.tcp_fin_timeout 10
+sysctl -e -w net.ipv4.tcp_tw_reuse 1
 ```
