@@ -60,6 +60,8 @@ var _ = Describe("Crucible", func() {
 				Executable: "/bin/bash",
 				Args: []string{
 					"-c",
+					//This script traps the SIGTERM signal and kills the subsequent
+					//commands referenced by the PID in the $child variable
 					`trap "echo Signalled && kill -9 $child" SIGTERM;
 					 echo Foo is $FOO &&
 					  (>&2 echo "$FOO is Foo") &&
