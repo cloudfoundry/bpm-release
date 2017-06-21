@@ -20,10 +20,10 @@ import (
 
 var _ = Describe("RuncAdapter", func() {
 	var (
-		adapter          runcadapter.RuncAdapter
-		jobName          string
-		fakeUserIDFinder *runcadapterfakes.FakeUserIDFinder
-		jobSpec          specs.Spec
+		adapter           runcadapter.RuncAdapter
+		jobName, procName string
+		fakeUserIDFinder  *runcadapterfakes.FakeUserIDFinder
+		jobSpec           specs.Spec
 	)
 
 	BeforeEach(func() {
@@ -32,6 +32,7 @@ var _ = Describe("RuncAdapter", func() {
 
 		adapter = runcadapter.NewRuncAdapter("/var/vcap/packages/runc/bin/runc", fakeUserIDFinder)
 		jobName = "example"
+		procName = "server"
 	})
 
 	Describe("CreateJobPrerequisites", func() {
@@ -48,18 +49,18 @@ var _ = Describe("RuncAdapter", func() {
 		})
 
 		It("creates the job prerequisites", func() {
-			pidDir, stdout, stderr, err := adapter.CreateJobPrerequisites(systemRoot, jobName)
+			pidDir, stdout, stderr, err := adapter.CreateJobPrerequisites(systemRoot, jobName, procName)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(fakeUserIDFinder.LookupCallCount()).To(Equal(1))
 			Expect(fakeUserIDFinder.LookupArgsForCall(0)).To(Equal("vcap"))
 
 			logDir := filepath.Join(systemRoot, "sys", "log", jobName)
-			stdoutFileName := fmt.Sprintf("%s.out.log", jobName)
-			stderrFileName := fmt.Sprintf("%s.err.log", jobName)
+			expectedStdoutFileName := fmt.Sprintf("%s.out.log", procName)
+			expectedStderrFileName := fmt.Sprintf("%s.err.log", procName)
 
 			// PID Directory
-			Expect(pidDir).To(Equal(filepath.Join(systemRoot, "sys", "run", "crucible")))
+			Expect(pidDir).To(Equal(filepath.Join(systemRoot, "sys", "run", "crucible", jobName)))
 
 			// Log Directory
 			logDirInfo, err := os.Stat(logDir)
@@ -69,7 +70,7 @@ var _ = Describe("RuncAdapter", func() {
 			Expect(logDirInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
 
 			// Stdout Log File
-			Expect(stdout.Name()).To(Equal(filepath.Join(logDir, stdoutFileName)))
+			Expect(stdout.Name()).To(Equal(filepath.Join(logDir, expectedStdoutFileName)))
 			stdoutInfo, err := stdout.Stat()
 			Expect(err).NotTo(HaveOccurred())
 			Expect(stdoutInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0700)))
@@ -77,7 +78,7 @@ var _ = Describe("RuncAdapter", func() {
 			Expect(stdoutInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
 
 			// Stderr Log File
-			Expect(stderr.Name()).To(Equal(filepath.Join(logDir, stderrFileName)))
+			Expect(stderr.Name()).To(Equal(filepath.Join(logDir, expectedStderrFileName)))
 			stderrInfo, err := stderr.Stat()
 			Expect(err).NotTo(HaveOccurred())
 			Expect(stderrInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0700)))
@@ -85,7 +86,7 @@ var _ = Describe("RuncAdapter", func() {
 			Expect(stderrInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
 
 			// Data Directory
-			dataDir := filepath.Join(systemRoot, "data", jobName)
+			dataDir := filepath.Join(systemRoot, "data", jobName, procName)
 			dataDirInfo, err := os.Stat(dataDir)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(dataDirInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0700)))
@@ -99,7 +100,7 @@ var _ = Describe("RuncAdapter", func() {
 			})
 
 			It("returns an error", func() {
-				_, _, _, err := adapter.CreateJobPrerequisites(systemRoot, jobName)
+				_, _, _, err := adapter.CreateJobPrerequisites(systemRoot, jobName, procName)
 				Expect(err).To(HaveOccurred())
 			})
 		})
@@ -110,16 +111,15 @@ var _ = Describe("RuncAdapter", func() {
 
 		BeforeEach(func() {
 			cfg = &config.CrucibleConfig{
-				Process: &config.Process{
-					Executable: "/var/vcap/packages/example/bin/example",
-					Args: []string{
-						"foo",
-						"bar",
-					},
-					Env: []string{
-						"RAVE=true",
-						"ONE=two",
-					},
+				Name:       "server",
+				Executable: "/var/vcap/packages/example/bin/example",
+				Args: []string{
+					"foo",
+					"bar",
+				},
+				Env: []string{
+					"RAVE=true",
+					"ONE=two",
 				},
 			}
 		})
@@ -135,7 +135,7 @@ var _ = Describe("RuncAdapter", func() {
 				Arch: runtime.GOARCH,
 			}))
 
-			expectedProcessArgs := append([]string{cfg.Process.Executable}, cfg.Process.Args...)
+			expectedProcessArgs := append([]string{cfg.Executable}, cfg.Args...)
 			Expect(fakeUserIDFinder.LookupCallCount()).To(Equal(1))
 			Expect(fakeUserIDFinder.LookupArgsForCall(0)).To(Equal("vcap"))
 			Expect(spec.Process).To(Equal(&specs.Process{
@@ -147,7 +147,7 @@ var _ = Describe("RuncAdapter", func() {
 					Username: "vcap",
 				},
 				Args: expectedProcessArgs,
-				Env:  cfg.Process.Env,
+				Env:  cfg.Env,
 				Cwd:  "/",
 				Rlimits: []specs.LinuxRlimit{
 					{
@@ -160,7 +160,7 @@ var _ = Describe("RuncAdapter", func() {
 			}))
 
 			Expect(spec.Root).To(Equal(specs.Root{
-				Path: "/var/vcap/data/crucible/bundles/example/rootfs",
+				Path: "/var/vcap/data/crucible/bundles/example/server/rootfs",
 			}))
 
 			Expect(spec.Hostname).To(Equal("example"))
@@ -239,9 +239,9 @@ var _ = Describe("RuncAdapter", func() {
 					Options:     []string{"nosuid", "nodev", "rbind", "ro"},
 				},
 				{
-					Destination: "/var/vcap/data/example",
+					Destination: "/var/vcap/data/example/server",
 					Type:        "bind",
-					Source:      "/var/vcap/data/example",
+					Source:      "/var/vcap/data/example/server",
 					Options:     []string{"rbind", "rw"},
 				},
 				{
@@ -318,11 +318,10 @@ var _ = Describe("RuncAdapter", func() {
 
 		BeforeEach(func() {
 			jobConfig := &config.CrucibleConfig{
-				Process: &config.Process{
-					Executable: "/bin/sleep",
-					Args:       []string{"100"},
-					Env:        []string{"FOO=BAR"},
-				},
+				Name:       "sleeper-agent",
+				Executable: "/bin/sleep",
+				Args:       []string{"100"},
+				Env:        []string{"FOO=BAR"},
 			}
 
 			var err error
@@ -338,8 +337,10 @@ var _ = Describe("RuncAdapter", func() {
 		})
 
 		It("makes the bundle directory", func() {
-			bundlePath, err := adapter.CreateBundle(bundlesRoot, jobName, jobSpec)
+			bundlePath, err := adapter.CreateBundle(bundlesRoot, jobName, procName, jobSpec)
 			Expect(err).ToNot(HaveOccurred())
+
+			Expect(bundlePath).To(Equal(filepath.Join(bundlesRoot, jobName, procName)))
 
 			f, err := os.Stat(bundlePath)
 			Expect(err).ToNot(HaveOccurred())
@@ -348,7 +349,7 @@ var _ = Describe("RuncAdapter", func() {
 		})
 
 		It("makes an empty rootfs directory", func() {
-			bundlePath, err := adapter.CreateBundle(bundlesRoot, jobName, jobSpec)
+			bundlePath, err := adapter.CreateBundle(bundlesRoot, jobName, procName, jobSpec)
 			Expect(err).ToNot(HaveOccurred())
 
 			bundlefs := filepath.Join(bundlePath, "rootfs")
@@ -365,7 +366,7 @@ var _ = Describe("RuncAdapter", func() {
 		})
 
 		It("writes a config.json in the root bundle directory", func() {
-			bundlePath, err := adapter.CreateBundle(bundlesRoot, jobName, jobSpec)
+			bundlePath, err := adapter.CreateBundle(bundlesRoot, jobName, procName, jobSpec)
 			Expect(err).ToNot(HaveOccurred())
 
 			configPath := filepath.Join(bundlePath, "config.json")
@@ -383,19 +384,22 @@ var _ = Describe("RuncAdapter", func() {
 
 		Context("when creating the bundle directory fails", func() {
 			BeforeEach(func() {
-				_, err := os.Create(filepath.Join(bundlesRoot, jobName))
+				err := os.MkdirAll(filepath.Join(bundlesRoot, jobName), 0700)
+				Expect(err).NotTo(HaveOccurred())
+
+				_, err = os.Create(filepath.Join(bundlesRoot, jobName, procName))
 				Expect(err).NotTo(HaveOccurred())
 			})
 
 			It("returns the error", func() {
-				_, err := adapter.CreateBundle(bundlesRoot, jobName, jobSpec)
+				_, err := adapter.CreateBundle(bundlesRoot, jobName, procName, jobSpec)
 				Expect(err).To(HaveOccurred())
 			})
 		})
 
 		Context("when creating the rootfs directory fails", func() {
 			BeforeEach(func() {
-				bundlePath := filepath.Join(bundlesRoot, jobName)
+				bundlePath := filepath.Join(bundlesRoot, jobName, procName)
 				err := os.MkdirAll(bundlePath, 0700)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -404,7 +408,7 @@ var _ = Describe("RuncAdapter", func() {
 			})
 
 			It("returns the error", func() {
-				_, err := adapter.CreateBundle(bundlesRoot, jobName, jobSpec)
+				_, err := adapter.CreateBundle(bundlesRoot, jobName, procName, jobSpec)
 				Expect(err).To(HaveOccurred())
 			})
 		})
@@ -422,7 +426,7 @@ var _ = Describe("RuncAdapter", func() {
 				Version: "test-version",
 			}
 
-			bundlePath, err = adapter.CreateBundle(bundlesRoot, jobName, jobSpec)
+			bundlePath, err = adapter.CreateBundle(bundlesRoot, jobName, procName, jobSpec)
 			Expect(err).ToNot(HaveOccurred())
 		})
 
@@ -431,7 +435,7 @@ var _ = Describe("RuncAdapter", func() {
 		})
 
 		It("deletes the bundle", func() {
-			err := adapter.DestroyBundle(bundlesRoot, jobName)
+			err := adapter.DestroyBundle(bundlesRoot, jobName, procName)
 			Expect(err).ToNot(HaveOccurred())
 
 			_, err = os.Stat(bundlePath)

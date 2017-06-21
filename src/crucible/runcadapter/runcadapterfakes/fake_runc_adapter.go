@@ -12,11 +12,12 @@ import (
 )
 
 type FakeRuncAdapter struct {
-	CreateJobPrerequisitesStub        func(systemRoot, jobName string) (string, *os.File, *os.File, error)
+	CreateJobPrerequisitesStub        func(systemRoot, jobName, procName string) (string, *os.File, *os.File, error)
 	createJobPrerequisitesMutex       sync.RWMutex
 	createJobPrerequisitesArgsForCall []struct {
 		systemRoot string
 		jobName    string
+		procName   string
 	}
 	createJobPrerequisitesReturns struct {
 		result1 string
@@ -44,11 +45,12 @@ type FakeRuncAdapter struct {
 		result1 specs.Spec
 		result2 error
 	}
-	CreateBundleStub        func(bundlesRoot, jobName string, jobSpec specs.Spec) (string, error)
+	CreateBundleStub        func(bundlesRoot, jobName, procName string, jobSpec specs.Spec) (string, error)
 	createBundleMutex       sync.RWMutex
 	createBundleArgsForCall []struct {
 		bundlesRoot string
 		jobName     string
+		procName    string
 		jobSpec     specs.Spec
 	}
 	createBundleReturns struct {
@@ -59,14 +61,14 @@ type FakeRuncAdapter struct {
 		result1 string
 		result2 error
 	}
-	RunContainerStub        func(pidDir, bundlePath, jobName string, stdout, stderr io.Writer) error
+	RunContainerStub        func(pidFilePath, bundlePath, containerID string, stdout, stderr io.Writer) error
 	runContainerMutex       sync.RWMutex
 	runContainerArgsForCall []struct {
-		pidDir     string
-		bundlePath string
-		jobName    string
-		stdout     io.Writer
-		stderr     io.Writer
+		pidFilePath string
+		bundlePath  string
+		containerID string
+		stdout      io.Writer
+		stderr      io.Writer
 	}
 	runContainerReturns struct {
 		result1 error
@@ -74,10 +76,10 @@ type FakeRuncAdapter struct {
 	runContainerReturnsOnCall map[int]struct {
 		result1 error
 	}
-	ContainerStateStub        func(jobName string) (specs.State, error)
+	ContainerStateStub        func(containerID string) (specs.State, error)
 	containerStateMutex       sync.RWMutex
 	containerStateArgsForCall []struct {
-		jobName string
+		containerID string
 	}
 	containerStateReturns struct {
 		result1 specs.State
@@ -87,10 +89,10 @@ type FakeRuncAdapter struct {
 		result1 specs.State
 		result2 error
 	}
-	StopContainerStub        func(jobName string) error
+	StopContainerStub        func(containerID string) error
 	stopContainerMutex       sync.RWMutex
 	stopContainerArgsForCall []struct {
-		jobName string
+		containerID string
 	}
 	stopContainerReturns struct {
 		result1 error
@@ -98,10 +100,10 @@ type FakeRuncAdapter struct {
 	stopContainerReturnsOnCall map[int]struct {
 		result1 error
 	}
-	DeleteContainerStub        func(jobName string) error
+	DeleteContainerStub        func(containerID string) error
 	deleteContainerMutex       sync.RWMutex
 	deleteContainerArgsForCall []struct {
-		jobName string
+		containerID string
 	}
 	deleteContainerReturns struct {
 		result1 error
@@ -109,11 +111,12 @@ type FakeRuncAdapter struct {
 	deleteContainerReturnsOnCall map[int]struct {
 		result1 error
 	}
-	DestroyBundleStub        func(bundlesRoot, jobName string) error
+	DestroyBundleStub        func(bundlesRoot, jobName, procName string) error
 	destroyBundleMutex       sync.RWMutex
 	destroyBundleArgsForCall []struct {
 		bundlesRoot string
 		jobName     string
+		procName    string
 	}
 	destroyBundleReturns struct {
 		result1 error
@@ -125,17 +128,18 @@ type FakeRuncAdapter struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeRuncAdapter) CreateJobPrerequisites(systemRoot string, jobName string) (string, *os.File, *os.File, error) {
+func (fake *FakeRuncAdapter) CreateJobPrerequisites(systemRoot string, jobName string, procName string) (string, *os.File, *os.File, error) {
 	fake.createJobPrerequisitesMutex.Lock()
 	ret, specificReturn := fake.createJobPrerequisitesReturnsOnCall[len(fake.createJobPrerequisitesArgsForCall)]
 	fake.createJobPrerequisitesArgsForCall = append(fake.createJobPrerequisitesArgsForCall, struct {
 		systemRoot string
 		jobName    string
-	}{systemRoot, jobName})
-	fake.recordInvocation("CreateJobPrerequisites", []interface{}{systemRoot, jobName})
+		procName   string
+	}{systemRoot, jobName, procName})
+	fake.recordInvocation("CreateJobPrerequisites", []interface{}{systemRoot, jobName, procName})
 	fake.createJobPrerequisitesMutex.Unlock()
 	if fake.CreateJobPrerequisitesStub != nil {
-		return fake.CreateJobPrerequisitesStub(systemRoot, jobName)
+		return fake.CreateJobPrerequisitesStub(systemRoot, jobName, procName)
 	}
 	if specificReturn {
 		return ret.result1, ret.result2, ret.result3, ret.result4
@@ -149,10 +153,10 @@ func (fake *FakeRuncAdapter) CreateJobPrerequisitesCallCount() int {
 	return len(fake.createJobPrerequisitesArgsForCall)
 }
 
-func (fake *FakeRuncAdapter) CreateJobPrerequisitesArgsForCall(i int) (string, string) {
+func (fake *FakeRuncAdapter) CreateJobPrerequisitesArgsForCall(i int) (string, string, string) {
 	fake.createJobPrerequisitesMutex.RLock()
 	defer fake.createJobPrerequisitesMutex.RUnlock()
-	return fake.createJobPrerequisitesArgsForCall[i].systemRoot, fake.createJobPrerequisitesArgsForCall[i].jobName
+	return fake.createJobPrerequisitesArgsForCall[i].systemRoot, fake.createJobPrerequisitesArgsForCall[i].jobName, fake.createJobPrerequisitesArgsForCall[i].procName
 }
 
 func (fake *FakeRuncAdapter) CreateJobPrerequisitesReturns(result1 string, result2 *os.File, result3 *os.File, result4 error) {
@@ -235,18 +239,19 @@ func (fake *FakeRuncAdapter) BuildSpecReturnsOnCall(i int, result1 specs.Spec, r
 	}{result1, result2}
 }
 
-func (fake *FakeRuncAdapter) CreateBundle(bundlesRoot string, jobName string, jobSpec specs.Spec) (string, error) {
+func (fake *FakeRuncAdapter) CreateBundle(bundlesRoot string, jobName string, procName string, jobSpec specs.Spec) (string, error) {
 	fake.createBundleMutex.Lock()
 	ret, specificReturn := fake.createBundleReturnsOnCall[len(fake.createBundleArgsForCall)]
 	fake.createBundleArgsForCall = append(fake.createBundleArgsForCall, struct {
 		bundlesRoot string
 		jobName     string
+		procName    string
 		jobSpec     specs.Spec
-	}{bundlesRoot, jobName, jobSpec})
-	fake.recordInvocation("CreateBundle", []interface{}{bundlesRoot, jobName, jobSpec})
+	}{bundlesRoot, jobName, procName, jobSpec})
+	fake.recordInvocation("CreateBundle", []interface{}{bundlesRoot, jobName, procName, jobSpec})
 	fake.createBundleMutex.Unlock()
 	if fake.CreateBundleStub != nil {
-		return fake.CreateBundleStub(bundlesRoot, jobName, jobSpec)
+		return fake.CreateBundleStub(bundlesRoot, jobName, procName, jobSpec)
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
@@ -260,10 +265,10 @@ func (fake *FakeRuncAdapter) CreateBundleCallCount() int {
 	return len(fake.createBundleArgsForCall)
 }
 
-func (fake *FakeRuncAdapter) CreateBundleArgsForCall(i int) (string, string, specs.Spec) {
+func (fake *FakeRuncAdapter) CreateBundleArgsForCall(i int) (string, string, string, specs.Spec) {
 	fake.createBundleMutex.RLock()
 	defer fake.createBundleMutex.RUnlock()
-	return fake.createBundleArgsForCall[i].bundlesRoot, fake.createBundleArgsForCall[i].jobName, fake.createBundleArgsForCall[i].jobSpec
+	return fake.createBundleArgsForCall[i].bundlesRoot, fake.createBundleArgsForCall[i].jobName, fake.createBundleArgsForCall[i].procName, fake.createBundleArgsForCall[i].jobSpec
 }
 
 func (fake *FakeRuncAdapter) CreateBundleReturns(result1 string, result2 error) {
@@ -288,20 +293,20 @@ func (fake *FakeRuncAdapter) CreateBundleReturnsOnCall(i int, result1 string, re
 	}{result1, result2}
 }
 
-func (fake *FakeRuncAdapter) RunContainer(pidDir string, bundlePath string, jobName string, stdout io.Writer, stderr io.Writer) error {
+func (fake *FakeRuncAdapter) RunContainer(pidFilePath string, bundlePath string, containerID string, stdout io.Writer, stderr io.Writer) error {
 	fake.runContainerMutex.Lock()
 	ret, specificReturn := fake.runContainerReturnsOnCall[len(fake.runContainerArgsForCall)]
 	fake.runContainerArgsForCall = append(fake.runContainerArgsForCall, struct {
-		pidDir     string
-		bundlePath string
-		jobName    string
-		stdout     io.Writer
-		stderr     io.Writer
-	}{pidDir, bundlePath, jobName, stdout, stderr})
-	fake.recordInvocation("RunContainer", []interface{}{pidDir, bundlePath, jobName, stdout, stderr})
+		pidFilePath string
+		bundlePath  string
+		containerID string
+		stdout      io.Writer
+		stderr      io.Writer
+	}{pidFilePath, bundlePath, containerID, stdout, stderr})
+	fake.recordInvocation("RunContainer", []interface{}{pidFilePath, bundlePath, containerID, stdout, stderr})
 	fake.runContainerMutex.Unlock()
 	if fake.RunContainerStub != nil {
-		return fake.RunContainerStub(pidDir, bundlePath, jobName, stdout, stderr)
+		return fake.RunContainerStub(pidFilePath, bundlePath, containerID, stdout, stderr)
 	}
 	if specificReturn {
 		return ret.result1
@@ -318,7 +323,7 @@ func (fake *FakeRuncAdapter) RunContainerCallCount() int {
 func (fake *FakeRuncAdapter) RunContainerArgsForCall(i int) (string, string, string, io.Writer, io.Writer) {
 	fake.runContainerMutex.RLock()
 	defer fake.runContainerMutex.RUnlock()
-	return fake.runContainerArgsForCall[i].pidDir, fake.runContainerArgsForCall[i].bundlePath, fake.runContainerArgsForCall[i].jobName, fake.runContainerArgsForCall[i].stdout, fake.runContainerArgsForCall[i].stderr
+	return fake.runContainerArgsForCall[i].pidFilePath, fake.runContainerArgsForCall[i].bundlePath, fake.runContainerArgsForCall[i].containerID, fake.runContainerArgsForCall[i].stdout, fake.runContainerArgsForCall[i].stderr
 }
 
 func (fake *FakeRuncAdapter) RunContainerReturns(result1 error) {
@@ -340,16 +345,16 @@ func (fake *FakeRuncAdapter) RunContainerReturnsOnCall(i int, result1 error) {
 	}{result1}
 }
 
-func (fake *FakeRuncAdapter) ContainerState(jobName string) (specs.State, error) {
+func (fake *FakeRuncAdapter) ContainerState(containerID string) (specs.State, error) {
 	fake.containerStateMutex.Lock()
 	ret, specificReturn := fake.containerStateReturnsOnCall[len(fake.containerStateArgsForCall)]
 	fake.containerStateArgsForCall = append(fake.containerStateArgsForCall, struct {
-		jobName string
-	}{jobName})
-	fake.recordInvocation("ContainerState", []interface{}{jobName})
+		containerID string
+	}{containerID})
+	fake.recordInvocation("ContainerState", []interface{}{containerID})
 	fake.containerStateMutex.Unlock()
 	if fake.ContainerStateStub != nil {
-		return fake.ContainerStateStub(jobName)
+		return fake.ContainerStateStub(containerID)
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
@@ -366,7 +371,7 @@ func (fake *FakeRuncAdapter) ContainerStateCallCount() int {
 func (fake *FakeRuncAdapter) ContainerStateArgsForCall(i int) string {
 	fake.containerStateMutex.RLock()
 	defer fake.containerStateMutex.RUnlock()
-	return fake.containerStateArgsForCall[i].jobName
+	return fake.containerStateArgsForCall[i].containerID
 }
 
 func (fake *FakeRuncAdapter) ContainerStateReturns(result1 specs.State, result2 error) {
@@ -391,16 +396,16 @@ func (fake *FakeRuncAdapter) ContainerStateReturnsOnCall(i int, result1 specs.St
 	}{result1, result2}
 }
 
-func (fake *FakeRuncAdapter) StopContainer(jobName string) error {
+func (fake *FakeRuncAdapter) StopContainer(containerID string) error {
 	fake.stopContainerMutex.Lock()
 	ret, specificReturn := fake.stopContainerReturnsOnCall[len(fake.stopContainerArgsForCall)]
 	fake.stopContainerArgsForCall = append(fake.stopContainerArgsForCall, struct {
-		jobName string
-	}{jobName})
-	fake.recordInvocation("StopContainer", []interface{}{jobName})
+		containerID string
+	}{containerID})
+	fake.recordInvocation("StopContainer", []interface{}{containerID})
 	fake.stopContainerMutex.Unlock()
 	if fake.StopContainerStub != nil {
-		return fake.StopContainerStub(jobName)
+		return fake.StopContainerStub(containerID)
 	}
 	if specificReturn {
 		return ret.result1
@@ -417,7 +422,7 @@ func (fake *FakeRuncAdapter) StopContainerCallCount() int {
 func (fake *FakeRuncAdapter) StopContainerArgsForCall(i int) string {
 	fake.stopContainerMutex.RLock()
 	defer fake.stopContainerMutex.RUnlock()
-	return fake.stopContainerArgsForCall[i].jobName
+	return fake.stopContainerArgsForCall[i].containerID
 }
 
 func (fake *FakeRuncAdapter) StopContainerReturns(result1 error) {
@@ -439,16 +444,16 @@ func (fake *FakeRuncAdapter) StopContainerReturnsOnCall(i int, result1 error) {
 	}{result1}
 }
 
-func (fake *FakeRuncAdapter) DeleteContainer(jobName string) error {
+func (fake *FakeRuncAdapter) DeleteContainer(containerID string) error {
 	fake.deleteContainerMutex.Lock()
 	ret, specificReturn := fake.deleteContainerReturnsOnCall[len(fake.deleteContainerArgsForCall)]
 	fake.deleteContainerArgsForCall = append(fake.deleteContainerArgsForCall, struct {
-		jobName string
-	}{jobName})
-	fake.recordInvocation("DeleteContainer", []interface{}{jobName})
+		containerID string
+	}{containerID})
+	fake.recordInvocation("DeleteContainer", []interface{}{containerID})
 	fake.deleteContainerMutex.Unlock()
 	if fake.DeleteContainerStub != nil {
-		return fake.DeleteContainerStub(jobName)
+		return fake.DeleteContainerStub(containerID)
 	}
 	if specificReturn {
 		return ret.result1
@@ -465,7 +470,7 @@ func (fake *FakeRuncAdapter) DeleteContainerCallCount() int {
 func (fake *FakeRuncAdapter) DeleteContainerArgsForCall(i int) string {
 	fake.deleteContainerMutex.RLock()
 	defer fake.deleteContainerMutex.RUnlock()
-	return fake.deleteContainerArgsForCall[i].jobName
+	return fake.deleteContainerArgsForCall[i].containerID
 }
 
 func (fake *FakeRuncAdapter) DeleteContainerReturns(result1 error) {
@@ -487,17 +492,18 @@ func (fake *FakeRuncAdapter) DeleteContainerReturnsOnCall(i int, result1 error) 
 	}{result1}
 }
 
-func (fake *FakeRuncAdapter) DestroyBundle(bundlesRoot string, jobName string) error {
+func (fake *FakeRuncAdapter) DestroyBundle(bundlesRoot string, jobName string, procName string) error {
 	fake.destroyBundleMutex.Lock()
 	ret, specificReturn := fake.destroyBundleReturnsOnCall[len(fake.destroyBundleArgsForCall)]
 	fake.destroyBundleArgsForCall = append(fake.destroyBundleArgsForCall, struct {
 		bundlesRoot string
 		jobName     string
-	}{bundlesRoot, jobName})
-	fake.recordInvocation("DestroyBundle", []interface{}{bundlesRoot, jobName})
+		procName    string
+	}{bundlesRoot, jobName, procName})
+	fake.recordInvocation("DestroyBundle", []interface{}{bundlesRoot, jobName, procName})
 	fake.destroyBundleMutex.Unlock()
 	if fake.DestroyBundleStub != nil {
-		return fake.DestroyBundleStub(bundlesRoot, jobName)
+		return fake.DestroyBundleStub(bundlesRoot, jobName, procName)
 	}
 	if specificReturn {
 		return ret.result1
@@ -511,10 +517,10 @@ func (fake *FakeRuncAdapter) DestroyBundleCallCount() int {
 	return len(fake.destroyBundleArgsForCall)
 }
 
-func (fake *FakeRuncAdapter) DestroyBundleArgsForCall(i int) (string, string) {
+func (fake *FakeRuncAdapter) DestroyBundleArgsForCall(i int) (string, string, string) {
 	fake.destroyBundleMutex.RLock()
 	defer fake.destroyBundleMutex.RUnlock()
-	return fake.destroyBundleArgsForCall[i].bundlesRoot, fake.destroyBundleArgsForCall[i].jobName
+	return fake.destroyBundleArgsForCall[i].bundlesRoot, fake.destroyBundleArgsForCall[i].jobName, fake.destroyBundleArgsForCall[i].procName
 }
 
 func (fake *FakeRuncAdapter) DestroyBundleReturns(result1 error) {

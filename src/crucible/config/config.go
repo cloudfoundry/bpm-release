@@ -9,10 +9,7 @@ import (
 )
 
 type CrucibleConfig struct {
-	Process *Process `yaml:"process"`
-}
-
-type Process struct {
+	Name       string
 	Executable string   `yaml:"executable"`
 	Args       []string `yaml:"args"`
 	Env        []string `yaml:"env"`

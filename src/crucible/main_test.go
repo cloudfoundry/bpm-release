@@ -26,6 +26,9 @@ var _ = Describe("Crucible", func() {
 
 		boshConfigPath,
 		jobName,
+		procName,
+		containerID,
+		jobConfigPath,
 		stdoutFileLocation,
 		stderrFileLocation string
 	)
@@ -51,30 +54,33 @@ var _ = Describe("Crucible", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		jobName = fmt.Sprintf("crucible-test-%s", uuid.NewV4().String())
-		jobConfigPath := filepath.Join(boshConfigPath, "jobs", jobName, "config")
-		err = os.MkdirAll(jobConfigPath, 0755)
+		procName = "sleeper-agent"
+		containerID = fmt.Sprintf("%s-%s", jobName, procName)
+
+		jobConfigDir := filepath.Join(boshConfigPath, "jobs", jobName, "config")
+		err = os.MkdirAll(jobConfigDir, 0755)
 		Expect(err).NotTo(HaveOccurred())
 
 		jobConfig := config.CrucibleConfig{
-			Process: &config.Process{
-				Executable: "/bin/bash",
-				Args: []string{
-					"-c",
-					//This script traps the SIGTERM signal and kills the subsequent
-					//commands referenced by the PID in the $child variable
-					`trap "echo Signalled && kill -9 $child" SIGTERM;
+			Name:       procName,
+			Executable: "/bin/bash",
+			Args: []string{
+				"-c",
+				//This script traps the SIGTERM signal and kills the subsequent
+				//commands referenced by the PID in the $child variable
+				`trap "echo Signalled && kill -9 $child" SIGTERM;
 					 echo Foo is $FOO &&
 					  (>&2 echo "$FOO is Foo") &&
 					  sleep 5 &
 					 child=$!;
 					 wait $child`,
-				},
-				Env: []string{"FOO=BAR"},
 			},
+			Env: []string{"FOO=BAR"},
 		}
 
+		jobConfigPath = filepath.Join(jobConfigDir, "crucible.yml")
 		f, err := os.OpenFile(
-			filepath.Join(jobConfigPath, "crucible.yml"),
+			jobConfigPath,
 			os.O_RDWR|os.O_CREATE,
 			0644,
 		)
@@ -87,8 +93,8 @@ var _ = Describe("Crucible", func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(n).To(Equal(len(data)))
 
-		stdoutFileLocation = filepath.Join(boshConfigPath, "sys", "log", jobName, jobName+".out.log")
-		stderrFileLocation = filepath.Join(boshConfigPath, "sys", "log", jobName, jobName+".err.log")
+		stdoutFileLocation = filepath.Join(boshConfigPath, "sys", "log", jobName, procName+".out.log")
+		stderrFileLocation = filepath.Join(boshConfigPath, "sys", "log", jobName, procName+".err.log")
 	})
 
 	AfterEach(func() {
@@ -103,7 +109,7 @@ var _ = Describe("Crucible", func() {
 
 	Context("start", func() {
 		JustBeforeEach(func() {
-			command = exec.Command(cruciblePath, "start", jobName)
+			command = exec.Command(cruciblePath, "start", "-j", jobName, "-c", jobConfigPath)
 			command.Env = append(command.Env, fmt.Sprintf("CRUCIBLE_BOSH_ROOT=%s", boshConfigPath))
 		})
 
@@ -112,7 +118,7 @@ var _ = Describe("Crucible", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Eventually(session).Should(gexec.Exit(0))
 
-			cmd := exec.Command("runc", "state", jobName)
+			cmd := exec.Command("runc", "state", containerID)
 			data, err := cmd.Output()
 			Expect(err).NotTo(HaveOccurred())
 
@@ -120,10 +126,10 @@ var _ = Describe("Crucible", func() {
 			err = json.Unmarshal(data, &stateResponse)
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(stateResponse.ID).To(Equal(jobName))
+			Expect(stateResponse.ID).To(Equal(containerID))
 			Expect(stateResponse.Status).To(Equal("running"))
 
-			pidText, err := ioutil.ReadFile(filepath.Join(boshConfigPath, "sys", "run", "crucible", fmt.Sprintf("%s.pid", jobName)))
+			pidText, err := ioutil.ReadFile(filepath.Join(boshConfigPath, "sys", "run", "crucible", jobName, fmt.Sprintf("%s.pid", procName)))
 			Expect(err).NotTo(HaveOccurred())
 
 			pid, err := strconv.Atoi(string(pidText))
@@ -161,18 +167,17 @@ var _ = Describe("Crucible", func() {
 		})
 
 		Context("when the crucible configuration file does not exist", func() {
-			BeforeEach(func() {
-				jobName = "even-job"
-			})
-
 			It("exit with a non-zero exit code and prints an error", func() {
+				command = exec.Command(cruciblePath, "stop", "-j", jobName, "-c", "i am a bogus config path")
+				command.Env = append(command.Env, fmt.Sprintf("CRUCIBLE_BOSH_ROOT=%s", boshConfigPath))
+
 				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 				Expect(err).ShouldNot(HaveOccurred())
 				Eventually(session).Should(gexec.Exit(1))
 
 				Expect(session.Err).Should(gbytes.Say(
 					"Error: failed to load config at %s: ",
-					filepath.Join(boshConfigPath, "jobs", "even-job", "config", "crucible.yml"),
+					"i am a bogus config path",
 				))
 			})
 		})
@@ -186,13 +191,26 @@ var _ = Describe("Crucible", func() {
 				Expect(err).ShouldNot(HaveOccurred())
 				Eventually(session).Should(gexec.Exit(1))
 
-				Expect(session.Err).Should(gbytes.Say("must specify a job name"))
+				Expect(session.Err).Should(gbytes.Say("must specify a job"))
+			})
+		})
+
+		Context("when no config is specified", func() {
+			It("exits with a non-zero exit code and prints the usage", func() {
+				command = exec.Command(cruciblePath, "start", "-j", jobName)
+				command.Env = append(command.Env, fmt.Sprintf("CRUCIBLE_BOSH_ROOT=%s", boshConfigPath))
+
+				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+				Expect(err).ShouldNot(HaveOccurred())
+				Eventually(session).Should(gexec.Exit(1))
+
+				Expect(session.Err).Should(gbytes.Say("must specify a configuration file"))
 			})
 		})
 
 		Context("when starting the job fails", func() {
 			BeforeEach(func() {
-				start := exec.Command(cruciblePath, "start", jobName)
+				start := exec.Command(cruciblePath, "start", "-j", jobName, "-c", jobConfigPath)
 				start.Env = append(start.Env, fmt.Sprintf("CRUCIBLE_BOSH_ROOT=%s", boshConfigPath))
 
 				session, err := gexec.Start(start, GinkgoWriter, GinkgoWriter)
@@ -205,11 +223,11 @@ var _ = Describe("Crucible", func() {
 				Expect(err).ShouldNot(HaveOccurred())
 				Eventually(session).Should(gexec.Exit(1))
 
-				_, err = os.Open(filepath.Join(boshConfigPath, "data", "crucible", "bundles", jobName))
+				_, err = os.Open(filepath.Join(boshConfigPath, "data", "crucible", "bundles", jobName, procName))
 				Expect(err).To(HaveOccurred())
 				Expect(os.IsNotExist(err)).To(BeTrue())
 
-				cmd := exec.Command("runc", "state", jobName)
+				cmd := exec.Command("runc", "state", containerID)
 				Expect(cmd.Run()).To(HaveOccurred())
 			})
 		})
@@ -217,7 +235,7 @@ var _ = Describe("Crucible", func() {
 
 	Context("stop", func() {
 		BeforeEach(func() {
-			startCmd := exec.Command(cruciblePath, "start", jobName)
+			startCmd := exec.Command(cruciblePath, "start", "-j", jobName, "-c", jobConfigPath)
 			startCmd.Env = append(startCmd.Env, fmt.Sprintf("CRUCIBLE_BOSH_ROOT=%s", boshConfigPath))
 
 			session, err := gexec.Start(startCmd, GinkgoWriter, GinkgoWriter)
@@ -226,7 +244,7 @@ var _ = Describe("Crucible", func() {
 		})
 
 		JustBeforeEach(func() {
-			command = exec.Command(cruciblePath, "stop", jobName)
+			command = exec.Command(cruciblePath, "stop", "-j", jobName, "-c", jobConfigPath)
 			command.Env = append(command.Env, fmt.Sprintf("CRUCIBLE_BOSH_ROOT=%s", boshConfigPath))
 		})
 
@@ -243,7 +261,7 @@ var _ = Describe("Crucible", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Eventually(session).Should(gexec.Exit(0))
 
-			cmd := exec.Command("runc", "state", jobName)
+			cmd := exec.Command("runc", "state", containerID)
 			err = cmd.Run()
 			Expect(err).To(HaveOccurred())
 		})
@@ -253,7 +271,7 @@ var _ = Describe("Crucible", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Eventually(session).Should(gexec.Exit(0))
 
-			_, err = os.Open(filepath.Join(boshConfigPath, "data", "crucible", "bundles", jobName))
+			_, err = os.Open(filepath.Join(boshConfigPath, "data", "crucible", "bundles", jobName, procName))
 			Expect(err).To(HaveOccurred())
 			Expect(os.IsNotExist(err)).To(BeTrue())
 		})
@@ -267,29 +285,28 @@ var _ = Describe("Crucible", func() {
 				Expect(err).ShouldNot(HaveOccurred())
 				Eventually(session).Should(gexec.Exit(1))
 
-				Expect(session.Err).Should(gbytes.Say("must specify a job name"))
+				Expect(session.Err).Should(gbytes.Say("must specify a job"))
 			})
 		})
 
 		Context("when the crucible configuration file does not exist", func() {
-			BeforeEach(func() {
-				jobName = "even-job"
-			})
-
 			It("exit with a non-zero exit code and prints an error", func() {
+				command = exec.Command(cruciblePath, "stop", "-j", jobName, "-c", "i am a bogus config path")
+				command.Env = append(command.Env, fmt.Sprintf("CRUCIBLE_BOSH_ROOT=%s", boshConfigPath))
+
 				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 				Expect(err).ShouldNot(HaveOccurred())
 				Eventually(session).Should(gexec.Exit(1))
 
 				Expect(session.Err).Should(gbytes.Say(
 					"Error: failed to load config at %s: ",
-					filepath.Join(boshConfigPath, "jobs", "even-job", "config", "crucible.yml"),
+					"i am a bogus config path",
 				))
 			})
 		})
 	})
 
-	Context("when no arguments are provided", func() {
+	Context("when no flags are provided", func() {
 		It("exits with a non-zero exit code and prints the usage", func() {
 			command := exec.Command(cruciblePath)
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)

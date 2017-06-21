@@ -12,6 +12,8 @@ import (
 )
 
 func init() {
+	startCommand.Flags().StringVarP(&jobName, "job", "j", "", "The job name.")
+	startCommand.Flags().StringVarP(&configPath, "config", "c", "", "The path to the crucible configuration file.")
 	RootCmd.AddCommand(startCommand)
 }
 
@@ -22,17 +24,14 @@ var startCommand = &cobra.Command{
 	Use:   "start <job-name>",
 }
 
-func start(cmd *cobra.Command, args []string) error {
-	if err := validateStartArguments(args); err != nil {
+func start(cmd *cobra.Command, _ []string) error {
+	if err := validateStartFlags(jobName, configPath); err != nil {
 		return err
 	}
 
-	jobName := args[0]
-
-	jobConfigPath := config.ConfigPath(jobName)
-	jobConfig, err := config.ParseConfig(jobConfigPath)
+	jobConfig, err := config.ParseConfig(configPath)
 	if err != nil {
-		return fmt.Errorf("failed to load config at %s: %s", jobConfigPath, err.Error())
+		return fmt.Errorf("failed to load config at %s: %s", configPath, err.Error())
 	}
 
 	userIDFinder := runcadapter.NewUserIDFinder()
@@ -59,12 +58,13 @@ func start(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-// Validate that a job name is provided.
-// Not validating extra arguments is consitent with
-// other CLI behavior
-func validateStartArguments(args []string) error {
-	if len(args) < 1 {
-		return errors.New("must specify a job name")
+func validateStartFlags(jobName, configPath string) error {
+	if jobName == "" {
+		return errors.New("must specify a job")
+	}
+
+	if configPath == "" {
+		return errors.New("must specify a configuration file")
 	}
 
 	return nil

@@ -1,5 +1,5 @@
 check process crucible-test-agent
-  with pidfile /var/vcap/sys/run/crucible/crucible-test-agent.pid
-  start program "/var/vcap/packages/crucible/bin/crucible start crucible-test-agent"
-  stop program "/var/vcap/packages/crucible/bin/crucible stop crucible-test-agent"
+  with pidfile /var/vcap/sys/run/crucible/crucible-test-agent/server.pid
+  start program "/var/vcap/packages/crucible/bin/crucible start -j crucible-test-agent -c /var/vcap/jobs/crucible-test-agent/config/server.yml"
+  stop program "/var/vcap/packages/crucible/bin/crucible stop -j crucible-test-agent -c /var/vcap/jobs/crucible-test-agent/config/server.yml"
   group vcap

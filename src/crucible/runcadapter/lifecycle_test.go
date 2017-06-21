@@ -5,8 +5,10 @@ import (
 	"crucible/runcadapter"
 	"crucible/runcadapter/runcadapterfakes"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"time"
 
 	"code.cloudfoundry.org/clock/fakeclock"
@@ -24,6 +26,8 @@ var _ = Describe("RuncJobLifecycle", func() {
 		jobSpec   specs.Spec
 
 		expectedJobName,
+		expectedProcName,
+		expectedContainerID,
 		expectedBundlePath,
 		expectedPidDir string
 
@@ -38,10 +42,12 @@ var _ = Describe("RuncJobLifecycle", func() {
 		fakeClock = fakeclock.NewFakeClock(time.Now())
 
 		expectedJobName = "example"
+		expectedProcName = "server"
+		expectedContainerID = fmt.Sprintf("%s-%s", expectedJobName, expectedProcName)
+
 		jobConfig = &config.CrucibleConfig{
-			Process: &config.Process{
-				Executable: "/bin/sleep",
-			},
+			Executable: "/bin/sleep",
+			Name:       "server",
 		}
 		jobSpec = specs.Spec{
 			Version: "example-version",
@@ -54,7 +60,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 		fakeRuncAdapter.CreateBundleReturns(expectedBundlePath, nil)
 
 		var err error
-		expectedPidDir = "a pid dir"
+		expectedPidDir = "a-pid-dir"
 		expectedStdout, err = ioutil.TempFile("", "runc-lifecycle-stdout")
 		Expect(err).NotTo(HaveOccurred())
 		expectedStderr, err = ioutil.TempFile("", "runc-lifecycle-stderr")
@@ -85,21 +91,23 @@ var _ = Describe("RuncJobLifecycle", func() {
 			Expect(cfg).To(Equal(jobConfig))
 
 			Expect(fakeRuncAdapter.CreateBundleCallCount()).To(Equal(1))
-			bundleRoot, jobName, spec := fakeRuncAdapter.CreateBundleArgsForCall(0)
+			bundleRoot, jobName, procName, spec := fakeRuncAdapter.CreateBundleArgsForCall(0)
 			Expect(bundleRoot).To(Equal(config.BundlesRoot()))
 			Expect(jobName).To(Equal(expectedJobName))
+			Expect(procName).To(Equal(expectedProcName))
 			Expect(spec).To(Equal(jobSpec))
 
 			Expect(fakeRuncAdapter.CreateJobPrerequisitesCallCount()).To(Equal(1))
-			systemRoot, jobName := fakeRuncAdapter.CreateJobPrerequisitesArgsForCall(0)
+			systemRoot, jobName, procName := fakeRuncAdapter.CreateJobPrerequisitesArgsForCall(0)
 			Expect(systemRoot).To(Equal(config.BoshRoot()))
 			Expect(jobName).To(Equal(expectedJobName))
+			Expect(procName).To(Equal(expectedProcName))
 
 			Expect(fakeRuncAdapter.RunContainerCallCount()).To(Equal(1))
-			pidDir, bundlePath, jobName, stdout, stderr := fakeRuncAdapter.RunContainerArgsForCall(0)
-			Expect(pidDir).To(Equal(expectedPidDir))
+			pidFilePath, bundlePath, containerID, stdout, stderr := fakeRuncAdapter.RunContainerArgsForCall(0)
+			Expect(pidFilePath).To(Equal(filepath.Join(expectedPidDir, fmt.Sprintf("%s.pid", expectedProcName))))
 			Expect(bundlePath).To(Equal(expectedBundlePath))
-			Expect(jobName).To(Equal(expectedJobName))
+			Expect(containerID).To(Equal(expectedContainerID))
 			Expect(stdout).To(Equal(expectedStdout))
 			Expect(stderr).To(Equal(expectedStderr))
 		})
@@ -164,12 +172,12 @@ var _ = Describe("RuncJobLifecycle", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(fakeRuncAdapter.StopContainerCallCount()).To(Equal(1))
-			jobName := fakeRuncAdapter.StopContainerArgsForCall(0)
-			Expect(jobName).To(Equal(expectedJobName))
+			containerID := fakeRuncAdapter.StopContainerArgsForCall(0)
+			Expect(containerID).To(Equal(expectedContainerID))
 
 			Expect(fakeRuncAdapter.ContainerStateCallCount()).To(Equal(1))
-			jobName = fakeRuncAdapter.ContainerStateArgsForCall(0)
-			Expect(jobName).To(Equal(expectedJobName))
+			containerID = fakeRuncAdapter.ContainerStateArgsForCall(0)
+			Expect(containerID).To(Equal(expectedContainerID))
 		})
 
 		Context("when the container does not stop immediately", func() {
@@ -177,7 +185,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 			BeforeEach(func() {
 				stopped = make(chan struct{})
 
-				fakeRuncAdapter.ContainerStateStub = func(jobName string) (specs.State, error) {
+				fakeRuncAdapter.ContainerStateStub = func(containerID string) (specs.State, error) {
 					select {
 					case <-stopped:
 						return specs.State{Status: "stopped"}, nil
@@ -195,21 +203,21 @@ var _ = Describe("RuncJobLifecycle", func() {
 				}()
 
 				Eventually(fakeRuncAdapter.StopContainerCallCount).Should(Equal(1))
-				Expect(fakeRuncAdapter.StopContainerArgsForCall(0)).To(Equal(expectedJobName))
+				Expect(fakeRuncAdapter.StopContainerArgsForCall(0)).To(Equal(expectedContainerID))
 
 				Eventually(fakeRuncAdapter.ContainerStateCallCount).Should(Equal(1))
-				Expect(fakeRuncAdapter.ContainerStateArgsForCall(0)).To(Equal(expectedJobName))
+				Expect(fakeRuncAdapter.ContainerStateArgsForCall(0)).To(Equal(expectedContainerID))
 
 				fakeClock.WaitForWatcherAndIncrement(1 * time.Second)
 
 				Eventually(fakeRuncAdapter.ContainerStateCallCount).Should(Equal(2))
-				Expect(fakeRuncAdapter.ContainerStateArgsForCall(1)).To(Equal(expectedJobName))
+				Expect(fakeRuncAdapter.ContainerStateArgsForCall(1)).To(Equal(expectedContainerID))
 
 				close(stopped)
 				fakeClock.WaitForWatcherAndIncrement(1 * time.Second)
 
 				Eventually(fakeRuncAdapter.ContainerStateCallCount).Should(Equal(3))
-				Expect(fakeRuncAdapter.ContainerStateArgsForCall(2)).To(Equal(expectedJobName))
+				Expect(fakeRuncAdapter.ContainerStateArgsForCall(2)).To(Equal(expectedContainerID))
 
 				Eventually(errChan).Should(Receive(BeNil()), "stop job did not exit in time")
 			})
@@ -223,15 +231,15 @@ var _ = Describe("RuncJobLifecycle", func() {
 					}()
 
 					Eventually(fakeRuncAdapter.StopContainerCallCount).Should(Equal(1))
-					Expect(fakeRuncAdapter.StopContainerArgsForCall(0)).To(Equal(expectedJobName))
+					Expect(fakeRuncAdapter.StopContainerArgsForCall(0)).To(Equal(expectedContainerID))
 
 					Eventually(fakeRuncAdapter.ContainerStateCallCount).Should(Equal(1))
-					Expect(fakeRuncAdapter.ContainerStateArgsForCall(0)).To(Equal(expectedJobName))
+					Expect(fakeRuncAdapter.ContainerStateArgsForCall(0)).To(Equal(expectedContainerID))
 
 					fakeClock.WaitForWatcherAndIncrement(1 * time.Second)
 
 					Eventually(fakeRuncAdapter.ContainerStateCallCount).Should(Equal(2))
-					Expect(fakeRuncAdapter.ContainerStateArgsForCall(1)).To(Equal(expectedJobName))
+					Expect(fakeRuncAdapter.ContainerStateArgsForCall(1)).To(Equal(expectedContainerID))
 
 					fakeClock.WaitForWatcherAndIncrement(exitTimeout)
 
@@ -255,17 +263,17 @@ var _ = Describe("RuncJobLifecycle", func() {
 				}()
 
 				Eventually(fakeRuncAdapter.ContainerStateCallCount).Should(Equal(1))
-				Expect(fakeRuncAdapter.ContainerStateArgsForCall(0)).To(Equal(expectedJobName))
+				Expect(fakeRuncAdapter.ContainerStateArgsForCall(0)).To(Equal(expectedContainerID))
 
 				fakeClock.WaitForWatcherAndIncrement(1 * time.Second)
 
 				Eventually(fakeRuncAdapter.ContainerStateCallCount).Should(Equal(2))
-				Expect(fakeRuncAdapter.ContainerStateArgsForCall(1)).To(Equal(expectedJobName))
+				Expect(fakeRuncAdapter.ContainerStateArgsForCall(1)).To(Equal(expectedContainerID))
 
 				fakeClock.WaitForWatcherAndIncrement(1 * time.Second)
 
 				Eventually(fakeRuncAdapter.ContainerStateCallCount).Should(Equal(3))
-				Expect(fakeRuncAdapter.ContainerStateArgsForCall(2)).To(Equal(expectedJobName))
+				Expect(fakeRuncAdapter.ContainerStateArgsForCall(2)).To(Equal(expectedContainerID))
 
 				fakeClock.WaitForWatcherAndIncrement(exitTimeout)
 
@@ -296,8 +304,8 @@ var _ = Describe("RuncJobLifecycle", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(fakeRuncAdapter.DeleteContainerCallCount()).To(Equal(1))
-			jobName := fakeRuncAdapter.DeleteContainerArgsForCall(0)
-			Expect(jobName).To(Equal(expectedJobName))
+			containerID := fakeRuncAdapter.DeleteContainerArgsForCall(0)
+			Expect(containerID).To(Equal(expectedContainerID))
 		})
 
 		It("destroys the bundle", func() {
@@ -305,9 +313,10 @@ var _ = Describe("RuncJobLifecycle", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(fakeRuncAdapter.DestroyBundleCallCount()).To(Equal(1))
-			bundleRoot, jobName := fakeRuncAdapter.DestroyBundleArgsForCall(0)
+			bundleRoot, jobName, procName := fakeRuncAdapter.DestroyBundleArgsForCall(0)
 			Expect(bundleRoot).To(Equal(config.BundlesRoot()))
 			Expect(jobName).To(Equal(expectedJobName))
+			Expect(procName).To(Equal(expectedProcName))
 		})
 
 		Context("when deleting a container fails", func() {

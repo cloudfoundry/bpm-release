@@ -56,10 +56,10 @@ var _ = Describe("CrucibleAcceptance", func() {
 		mounts := parseMounts(string(body))
 
 		expectedMountPaths := map[string]string{
-			"/var/vcap/data/packages":            "ro",
-			"/var/vcap/data/crucible-test-agent": "rw",
-			"/var/vcap/jobs/crucible-test-agent": "ro",
-			"/var/vcap/packages":                 "ro",
+			"/var/vcap/data/packages":                   "ro",
+			"/var/vcap/data/crucible-test-agent/server": "rw",
+			"/var/vcap/jobs/crucible-test-agent":        "ro",
+			"/var/vcap/packages":                        "ro",
 		}
 
 		var found []string

@@ -2,7 +2,7 @@
 name: crucible-test-agent
 
 templates:
-  crucible.yml.erb: config/crucible.yml
+  server.yml.erb: config/server.yml
 
 packages:
 - crucible-test-agent

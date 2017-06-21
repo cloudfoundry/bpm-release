@@ -19,14 +19,14 @@ const ROOT_UID = 0
 //go:generate counterfeiter . RuncAdapter
 
 type RuncAdapter interface {
-	CreateJobPrerequisites(systemRoot, jobName string) (string, *os.File, *os.File, error)
+	CreateJobPrerequisites(systemRoot, jobName, procName string) (string, *os.File, *os.File, error)
 	BuildSpec(jobName string, jobConfig *config.CrucibleConfig) (specs.Spec, error)
-	CreateBundle(bundlesRoot, jobName string, jobSpec specs.Spec) (string, error)
-	RunContainer(pidDir, bundlePath, jobName string, stdout, stderr io.Writer) error
-	ContainerState(jobName string) (specs.State, error)
-	StopContainer(jobName string) error
-	DeleteContainer(jobName string) error
-	DestroyBundle(bundlesRoot, jobName string) error
+	CreateBundle(bundlesRoot, jobName, procName string, jobSpec specs.Spec) (string, error)
+	RunContainer(pidFilePath, bundlePath, containerID string, stdout, stderr io.Writer) error
+	ContainerState(containerID string) (specs.State, error)
+	StopContainer(containerID string) error
+	DeleteContainer(containerID string) error
+	DestroyBundle(bundlesRoot, jobName, procName string) error
 }
 
 type runcAdapter struct {
@@ -41,8 +41,8 @@ func NewRuncAdapter(runcPath string, userIDFinder UserIDFinder) RuncAdapter {
 	}
 }
 
-func (a *runcAdapter) CreateJobPrerequisites(systemRoot, jobName string) (string, *os.File, *os.File, error) {
-	cruciblePidDir := filepath.Join(systemRoot, "sys", "run", "crucible")
+func (a *runcAdapter) CreateJobPrerequisites(systemRoot, jobName, procName string) (string, *os.File, *os.File, error) {
+	cruciblePidDir := filepath.Join(systemRoot, "sys", "run", "crucible", jobName)
 	err := os.MkdirAll(cruciblePidDir, 0700)
 	if err != nil {
 		return "", nil, nil, err
@@ -54,8 +54,8 @@ func (a *runcAdapter) CreateJobPrerequisites(systemRoot, jobName string) (string
 	}
 
 	jobLogDir := filepath.Join(systemRoot, "sys", "log", jobName)
-	stdoutFileLocation := filepath.Join(jobLogDir, fmt.Sprintf("%s.out.log", jobName))
-	stderrFileLocation := filepath.Join(jobLogDir, fmt.Sprintf("%s.err.log", jobName))
+	stdoutFileLocation := filepath.Join(jobLogDir, fmt.Sprintf("%s.out.log", procName))
+	stderrFileLocation := filepath.Join(jobLogDir, fmt.Sprintf("%s.err.log", procName))
 
 	err = os.MkdirAll(jobLogDir, 0750)
 	if err != nil {
@@ -76,7 +76,7 @@ func (a *runcAdapter) CreateJobPrerequisites(systemRoot, jobName string) (string
 		return "", nil, nil, err
 	}
 
-	dataDir := filepath.Join(systemRoot, "data", jobName)
+	dataDir := filepath.Join(systemRoot, "data", jobName, procName)
 	err = os.MkdirAll(dataDir, 0700)
 	if err != nil {
 		return "", nil, nil, err
@@ -109,14 +109,14 @@ func (a *runcAdapter) BuildSpec(jobName string, cfg *config.CrucibleConfig) (spe
 		return specs.Spec{}, err
 	}
 
-	if cfg.Process == nil {
+	if cfg.Name == "" || cfg.Executable == "" {
 		return specs.Spec{}, errors.New("no process defined")
 	}
 
 	process := &specs.Process{
 		User: user,
-		Args: append([]string{cfg.Process.Executable}, cfg.Process.Args...),
-		Env:  cfg.Process.Env,
+		Args: append([]string{cfg.Executable}, cfg.Args...),
+		Env:  cfg.Env,
 		Cwd:  "/",
 		Rlimits: []specs.LinuxRlimit{
 			{
@@ -129,7 +129,7 @@ func (a *runcAdapter) BuildSpec(jobName string, cfg *config.CrucibleConfig) (spe
 	}
 
 	mounts := defaultMounts()
-	mounts = append(mounts, boshMounts(jobName)...)
+	mounts = append(mounts, boshMounts(jobName, cfg.Name)...)
 	mounts = append(mounts, systemIdentityMounts()...)
 
 	return specs.Spec{
@@ -140,7 +140,7 @@ func (a *runcAdapter) BuildSpec(jobName string, cfg *config.CrucibleConfig) (spe
 		},
 		Process: process,
 		Root: specs.Root{
-			Path: filepath.Join(config.BundlesRoot(), jobName, "rootfs"),
+			Path: filepath.Join(config.BundlesRoot(), jobName, cfg.Name, "rootfs"),
 		},
 		Hostname: jobName,
 		Mounts:   mounts,
@@ -171,8 +171,8 @@ func (a *runcAdapter) BuildSpec(jobName string, cfg *config.CrucibleConfig) (spe
 	}, nil
 }
 
-func (a *runcAdapter) CreateBundle(bundlesRoot, jobName string, jobSpec specs.Spec) (string, error) {
-	bundlePath := filepath.Join(bundlesRoot, jobName)
+func (a *runcAdapter) CreateBundle(bundlesRoot, jobName, procName string, jobSpec specs.Spec) (string, error) {
+	bundlePath := filepath.Join(bundlesRoot, jobName, procName)
 	err := os.MkdirAll(bundlePath, 0700)
 	if err != nil {
 		return "", err
@@ -211,14 +211,14 @@ func (a *runcAdapter) CreateBundle(bundlesRoot, jobName string, jobSpec specs.Sp
 	return bundlePath, nil
 }
 
-func (a *runcAdapter) RunContainer(pidDir, bundlePath, jobName string, stdout, stderr io.Writer) error {
+func (a *runcAdapter) RunContainer(pidFilePath, bundlePath, containerID string, stdout, stderr io.Writer) error {
 	runcCmd := exec.Command(
 		a.runcPath,
 		"run",
 		"--bundle", bundlePath,
-		"--pid-file", filepath.Join(pidDir, fmt.Sprintf("%s.pid", jobName)),
+		"--pid-file", pidFilePath,
 		"--detach",
-		jobName,
+		containerID,
 	)
 
 	runcCmd.Stdout = stdout
@@ -227,11 +227,11 @@ func (a *runcAdapter) RunContainer(pidDir, bundlePath, jobName string, stdout, s
 	return runcCmd.Run()
 }
 
-func (a *runcAdapter) ContainerState(jobName string) (specs.State, error) {
+func (a *runcAdapter) ContainerState(containerID string) (specs.State, error) {
 	runcCmd := exec.Command(
 		a.runcPath,
 		"state",
-		jobName,
+		containerID,
 	)
 
 	var state specs.State
@@ -248,37 +248,37 @@ func (a *runcAdapter) ContainerState(jobName string) (specs.State, error) {
 	return state, nil
 }
 
-func (a *runcAdapter) StopContainer(jobName string) error {
+func (a *runcAdapter) StopContainer(containerID string) error {
 	runcCmd := exec.Command(
 		a.runcPath,
 		"kill",
-		jobName,
+		containerID,
 	)
 
 	return runcCmd.Run()
 }
 
-func (a *runcAdapter) DeleteContainer(jobName string) error {
+func (a *runcAdapter) DeleteContainer(containerID string) error {
 	runcCmd := exec.Command(
 		a.runcPath,
 		"delete",
 		"-f",
-		jobName,
+		containerID,
 	)
 
 	return runcCmd.Run()
 }
 
-func (a *runcAdapter) DestroyBundle(bundlesRoot, jobName string) error {
-	return os.RemoveAll(filepath.Join(bundlesRoot, jobName))
+func (a *runcAdapter) DestroyBundle(bundlesRoot, jobName, procName string) error {
+	return os.RemoveAll(filepath.Join(bundlesRoot, jobName, procName))
 }
 
-func boshMounts(jobName string) []specs.Mount {
+func boshMounts(jobName, procName string) []specs.Mount {
 	return []specs.Mount{
 		{
-			Destination: filepath.Join(config.BoshRoot(), "data", jobName),
+			Destination: filepath.Join(config.BoshRoot(), "data", jobName, procName),
 			Type:        "bind",
-			Source:      filepath.Join(config.BoshRoot(), "data", jobName),
+			Source:      filepath.Join(config.BoshRoot(), "data", jobName, procName),
 			Options:     []string{"rbind", "rw"},
 		},
 		{

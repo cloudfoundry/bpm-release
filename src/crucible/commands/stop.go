@@ -15,6 +15,8 @@ import (
 const DEFAULT_STOP_TIMEOUT = 20 * time.Second
 
 func init() {
+	stopCommand.Flags().StringVarP(&jobName, "job", "j", "", "The job name.")
+	stopCommand.Flags().StringVarP(&configPath, "config", "c", "", "The path to the crucible configuration file.")
 	RootCmd.AddCommand(stopCommand)
 }
 
@@ -25,16 +27,14 @@ var stopCommand = &cobra.Command{
 	Use:   "stop <job-name>",
 }
 
-func stop(cmd *cobra.Command, args []string) error {
-	if err := validateStopArguments(args); err != nil {
+func stop(cmd *cobra.Command, _ []string) error {
+	if err := validateStopFlags(jobName, configPath); err != nil {
 		return err
 	}
 
-	jobName := args[0]
-	jobConfigPath := config.ConfigPath(jobName)
-	jobConfig, err := config.ParseConfig(jobConfigPath)
+	jobConfig, err := config.ParseConfig(configPath)
 	if err != nil {
-		return fmt.Errorf("failed to load config at %s: %s", jobConfigPath, err.Error())
+		return fmt.Errorf("failed to load config at %s: %s", configPath, err.Error())
 	}
 
 	userIDFinder := runcadapter.NewUserIDFinder()
@@ -56,12 +56,13 @@ func stop(cmd *cobra.Command, args []string) error {
 	return jobLifecycle.RemoveJob()
 }
 
-// Validate that a job name is provided.
-// Not validating extra arguments is consitent with
-// other CLI behavior
-func validateStopArguments(args []string) error {
-	if len(args) < 1 {
-		return errors.New("must specify a job name")
+func validateStopFlags(jobName, configPath string) error {
+	if jobName == "" {
+		return errors.New("must specify a job")
+	}
+
+	if configPath == "" {
+		return errors.New("must specify a configuration file")
 	}
 
 	return nil

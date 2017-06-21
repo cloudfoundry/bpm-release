@@ -6,6 +6,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var jobName, configPath string
+
 var RootCmd = &cobra.Command{
 	Long:          "A bosh process manager for starting and stopping release jobs",
 	RunE:          root,
