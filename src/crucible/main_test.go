@@ -289,6 +289,19 @@ var _ = Describe("Crucible", func() {
 			})
 		})
 
+		Context("when no config is specified", func() {
+			It("exits with a non-zero exit code and prints the usage", func() {
+				command = exec.Command(cruciblePath, "stop", "-j", jobName)
+				command.Env = append(command.Env, fmt.Sprintf("CRUCIBLE_BOSH_ROOT=%s", boshConfigPath))
+
+				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+				Expect(err).ShouldNot(HaveOccurred())
+				Eventually(session).Should(gexec.Exit(1))
+
+				Expect(session.Err).Should(gbytes.Say("must specify a configuration file"))
+			})
+		})
+
 		Context("when the crucible configuration file does not exist", func() {
 			It("exit with a non-zero exit code and prints an error", func() {
 				command = exec.Command(cruciblePath, "stop", "-j", jobName, "-c", "i am a bogus config path")

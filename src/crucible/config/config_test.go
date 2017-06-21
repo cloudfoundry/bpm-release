@@ -38,12 +38,58 @@ var _ = Describe("Config", func() {
 
 		Context("when the yaml is invalid", func() {
 			BeforeEach(func() {
+				configPath = "fixtures/example-invalid-yaml.yml"
+			})
+
+			It("returns an error", func() {
+				_, err := config.ParseConfig(configPath)
+				Expect(err).To(HaveOccurred())
+			})
+		})
+
+		Context("when the configuration is not valid", func() {
+			BeforeEach(func() {
 				configPath = "fixtures/example-invalid.yml"
 			})
 
 			It("returns an error", func() {
 				_, err := config.ParseConfig(configPath)
 				Expect(err).To(HaveOccurred())
+			})
+		})
+	})
+
+	Describe("Validate", func() {
+		var cfg *config.CrucibleConfig
+
+		BeforeEach(func() {
+			cfg = &config.CrucibleConfig{
+				Name:       "example",
+				Executable: "executable",
+			}
+		})
+
+		It("does not error on a valid config", func() {
+			Expect(cfg.Validate()).To(Succeed())
+		})
+
+		Context("when the config does not have a Name", func() {
+			BeforeEach(func() {
+				cfg.Name = ""
+			})
+
+			It("returns an error", func() {
+				Expect(cfg.Validate()).To(HaveOccurred())
+			})
+		})
+
+		Context("when the config does not have an Executable", func() {
+			BeforeEach(func() {
+				cfg.Executable = ""
+			})
+
+			It("returns an error", func() {
+				Expect(cfg.Validate()).To(HaveOccurred())
 			})
 		})
 	})

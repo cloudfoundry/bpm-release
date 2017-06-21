@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -21,14 +22,30 @@ func ParseConfig(configPath string) (*CrucibleConfig, error) {
 		return nil, err
 	}
 
-	cconf := CrucibleConfig{}
+	cfg := CrucibleConfig{}
 
-	err = yaml.Unmarshal(data, &cconf)
+	err = yaml.Unmarshal(data, &cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	return &cconf, nil
+	err = cfg.Validate()
+	if err != nil {
+		return nil, err
+	}
+
+	return &cfg, nil
+}
+
+func (c *CrucibleConfig) Validate() error {
+	if c.Name == "" {
+		return errors.New("invalid config: name")
+	}
+
+	if c.Executable == "" {
+		return errors.New("invalid config: executable")
+	}
+	return nil
 }
 
 func BoshRoot() string {

@@ -1,2 +1,7 @@
 ---
-{{
+args:
+  - --port=2424
+  - --host="localhost"
+env:
+  - FOO=BAR
+  - BAZ=BUZZ
