@@ -34,13 +34,17 @@ func start(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("failed to load config at %s: %s", configPath, err.Error())
 	}
 
+	runcClient := runcadapter.NewRuncClient(config.RuncPath())
+	runcAdapter := runcadapter.NewRuncAdapter()
 	userIDFinder := runcadapter.NewUserIDFinder()
-	runcAdapter := runcadapter.NewRuncAdapter(config.RuncPath(), userIDFinder)
 	clock := clock.NewClock()
 
 	jobLifecycle := runcadapter.NewRuncJobLifecycle(
+		runcClient,
 		runcAdapter,
+		userIDFinder,
 		clock,
+		config.BoshRoot(),
 		jobName,
 		jobConfig,
 	)

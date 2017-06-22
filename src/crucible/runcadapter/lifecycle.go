@@ -10,65 +10,81 @@ import (
 	"code.cloudfoundry.org/clock"
 )
 
+const VCAP_USER = "vcap"
+
 var TimeoutError = errors.New("failed to stop job within timeout")
 
 type RuncJobLifecycle struct {
 	clock        clock.Clock
-	config       *config.CrucibleConfig
+	cfg          *config.CrucibleConfig
 	jobName      string
+	runcClient   RuncClient
 	runcAdapter  RuncAdapter
+	systemRoot   string
 	userIDFinder UserIDFinder
 }
 
 func NewRuncJobLifecycle(
+	runcClient RuncClient,
 	runcAdapter RuncAdapter,
+	userIDFinder UserIDFinder,
 	clock clock.Clock,
+	systemRoot string,
 	jobName string,
-	config *config.CrucibleConfig,
+	cfg *config.CrucibleConfig,
 ) *RuncJobLifecycle {
 	return &RuncJobLifecycle{
-		clock:       clock,
-		config:      config,
-		jobName:     jobName,
-		runcAdapter: runcAdapter,
+		clock:        clock,
+		cfg:          cfg,
+		jobName:      jobName,
+		runcClient:   runcClient,
+		runcAdapter:  runcAdapter,
+		systemRoot:   systemRoot,
+		userIDFinder: userIDFinder,
 	}
 }
 
 func (j *RuncJobLifecycle) StartJob() error {
-	pidDir, stdout, stderr, err := j.runcAdapter.CreateJobPrerequisites(config.BoshRoot(), j.jobName, j.config.Name)
+	user, err := j.userIDFinder.Lookup(VCAP_USER)
+	if err != nil {
+		return err
+	}
+
+	pidDir, stdout, stderr, err := j.runcAdapter.CreateJobPrerequisites(j.systemRoot, j.jobName, j.cfg, user)
 	if err != nil {
 		return fmt.Errorf("failed to create system files: %s", err.Error())
 	}
 	defer stdout.Close()
 	defer stderr.Close()
 
-	spec, err := j.runcAdapter.BuildSpec(j.jobName, j.config)
-	if err != nil {
-		return err
-	}
+	spec := j.runcAdapter.BuildSpec(j.systemRoot, j.jobName, j.cfg, user)
 
-	bundlePath, err := j.runcAdapter.CreateBundle(config.BundlesRoot(), j.jobName, j.config.Name, spec)
+	err = j.runcClient.CreateBundle(j.bundlePath(), spec, user)
 	if err != nil {
 		return fmt.Errorf("bundle build failure: %s", err.Error())
 	}
 
-	return j.runcAdapter.RunContainer(
-		filepath.Join(pidDir, fmt.Sprintf("%s.pid", j.config.Name)),
-		bundlePath,
-		containerID(j.jobName, j.config.Name),
+	pidFilePath := filepath.Join(pidDir, fmt.Sprintf("%s.pid", j.cfg.Name))
+	cid := containerID(j.jobName, j.cfg.Name)
+
+	return j.runcClient.RunContainer(
+		pidFilePath,
+		j.bundlePath(),
+		cid,
 		stdout,
 		stderr,
 	)
 }
 
 func (j *RuncJobLifecycle) StopJob(exitTimeout time.Duration) error {
-	containerId := containerID(j.jobName, j.config.Name)
-	err := j.runcAdapter.StopContainer(containerId)
+	cid := containerID(j.jobName, j.cfg.Name)
+
+	err := j.runcClient.StopContainer(cid)
 	if err != nil {
 		return err
 	}
 
-	state, err := j.runcAdapter.ContainerState(containerId)
+	state, err := j.runcClient.ContainerState(cid)
 	if err == nil {
 		if state.Status == "stopped" {
 			return nil
@@ -83,7 +99,7 @@ func (j *RuncJobLifecycle) StopJob(exitTimeout time.Duration) error {
 	for {
 		select {
 		case <-stateTicker.C():
-			state, err = j.runcAdapter.ContainerState(containerId)
+			state, err = j.runcClient.ContainerState(cid)
 			if err == nil {
 				if state.Status == "stopped" {
 					return nil
@@ -98,16 +114,20 @@ func (j *RuncJobLifecycle) StopJob(exitTimeout time.Duration) error {
 }
 
 func (j *RuncJobLifecycle) RemoveJob() error {
-	containerId := containerID(j.jobName, j.config.Name)
+	cid := containerID(j.jobName, j.cfg.Name)
 
-	err := j.runcAdapter.DeleteContainer(containerId)
+	err := j.runcClient.DeleteContainer(cid)
 	if err != nil {
 		return err
 	}
 
-	return j.runcAdapter.DestroyBundle(config.BundlesRoot(), j.jobName, j.config.Name)
+	return j.runcClient.DestroyBundle(j.bundlePath())
 }
 
 func containerID(jobName, procName string) string {
 	return fmt.Sprintf("%s-%s", jobName, procName)
+}
+
+func (j *RuncJobLifecycle) bundlePath() string {
+	return filepath.Join(j.systemRoot, "data", "crucible", "bundles", j.jobName, j.cfg.Name)
 }

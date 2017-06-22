@@ -20,7 +20,9 @@ import (
 
 var _ = Describe("RuncJobLifecycle", func() {
 	var (
-		fakeRuncAdapter *runcadapterfakes.FakeRuncAdapter
+		fakeRuncAdapter  *runcadapterfakes.FakeRuncAdapter
+		fakeRuncClient   *runcadapterfakes.FakeRuncClient
+		fakeUserIDFinder *runcadapterfakes.FakeUserIDFinder
 
 		jobConfig *config.CrucibleConfig
 		jobSpec   specs.Spec
@@ -28,10 +30,12 @@ var _ = Describe("RuncJobLifecycle", func() {
 		expectedJobName,
 		expectedProcName,
 		expectedContainerID,
-		expectedBundlePath,
+		expectedSystemRoot,
 		expectedPidDir string
 
 		expectedStdout, expectedStderr *os.File
+
+		expectedUser specs.User
 
 		fakeClock *fakeclock.FakeClock
 
@@ -40,24 +44,12 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 	BeforeEach(func() {
 		fakeClock = fakeclock.NewFakeClock(time.Now())
-
-		expectedJobName = "example"
-		expectedProcName = "server"
-		expectedContainerID = fmt.Sprintf("%s-%s", expectedJobName, expectedProcName)
-
-		jobConfig = &config.CrucibleConfig{
-			Executable: "/bin/sleep",
-			Name:       "server",
-		}
-		jobSpec = specs.Spec{
-			Version: "example-version",
-		}
-
 		fakeRuncAdapter = &runcadapterfakes.FakeRuncAdapter{}
-		fakeRuncAdapter.BuildSpecReturns(jobSpec, nil)
+		fakeRuncClient = &runcadapterfakes.FakeRuncClient{}
+		fakeUserIDFinder = &runcadapterfakes.FakeUserIDFinder{}
 
-		expectedBundlePath = "a-bundle-path"
-		fakeRuncAdapter.CreateBundleReturns(expectedBundlePath, nil)
+		expectedUser = specs.User{Username: "vcap", UID: 300, GID: 400}
+		fakeUserIDFinder.LookupReturns(expectedUser, nil)
 
 		var err error
 		expectedPidDir = "a-pid-dir"
@@ -67,9 +59,27 @@ var _ = Describe("RuncJobLifecycle", func() {
 		Expect(err).NotTo(HaveOccurred())
 		fakeRuncAdapter.CreateJobPrerequisitesReturns(expectedPidDir, expectedStdout, expectedStderr, nil)
 
+		expectedJobName = "example"
+		expectedProcName = "server"
+		expectedContainerID = fmt.Sprintf("%s-%s", expectedJobName, expectedProcName)
+
+		jobConfig = &config.CrucibleConfig{
+			Name:       expectedProcName,
+			Executable: "/bin/sleep",
+		}
+		jobSpec = specs.Spec{
+			Version: "example-version",
+		}
+		fakeRuncAdapter.BuildSpecReturns(jobSpec)
+
+		expectedSystemRoot = "system-root"
+
 		runcLifecycle = runcadapter.NewRuncJobLifecycle(
+			fakeRuncClient,
 			fakeRuncAdapter,
+			fakeUserIDFinder,
 			fakeClock,
+			expectedSystemRoot,
 			expectedJobName,
 			jobConfig,
 		)
@@ -85,47 +95,41 @@ var _ = Describe("RuncJobLifecycle", func() {
 			err := runcLifecycle.StartJob()
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(fakeRuncAdapter.BuildSpecCallCount()).To(Equal(1))
-			jobName, cfg := fakeRuncAdapter.BuildSpecArgsForCall(0)
-			Expect(jobName).To(Equal(expectedJobName))
-			Expect(cfg).To(Equal(jobConfig))
-
-			Expect(fakeRuncAdapter.CreateBundleCallCount()).To(Equal(1))
-			bundleRoot, jobName, procName, spec := fakeRuncAdapter.CreateBundleArgsForCall(0)
-			Expect(bundleRoot).To(Equal(config.BundlesRoot()))
-			Expect(jobName).To(Equal(expectedJobName))
-			Expect(procName).To(Equal(expectedProcName))
-			Expect(spec).To(Equal(jobSpec))
+			Expect(fakeUserIDFinder.LookupCallCount()).To(Equal(1))
+			Expect(fakeUserIDFinder.LookupArgsForCall(0)).To(Equal(runcadapter.VCAP_USER))
 
 			Expect(fakeRuncAdapter.CreateJobPrerequisitesCallCount()).To(Equal(1))
-			systemRoot, jobName, procName := fakeRuncAdapter.CreateJobPrerequisitesArgsForCall(0)
-			Expect(systemRoot).To(Equal(config.BoshRoot()))
+			systemRoot, jobName, cfg, user := fakeRuncAdapter.CreateJobPrerequisitesArgsForCall(0)
+			Expect(systemRoot).To(Equal(expectedSystemRoot))
 			Expect(jobName).To(Equal(expectedJobName))
-			Expect(procName).To(Equal(expectedProcName))
+			Expect(cfg).To(Equal(jobConfig))
+			Expect(user).To(Equal(expectedUser))
 
-			Expect(fakeRuncAdapter.RunContainerCallCount()).To(Equal(1))
-			pidFilePath, bundlePath, containerID, stdout, stderr := fakeRuncAdapter.RunContainerArgsForCall(0)
+			Expect(fakeRuncAdapter.BuildSpecCallCount()).To(Equal(1))
+			systemRoot, jobName, cfg, user = fakeRuncAdapter.BuildSpecArgsForCall(0)
+			Expect(systemRoot).To(Equal(expectedSystemRoot))
+			Expect(jobName).To(Equal(expectedJobName))
+			Expect(cfg).To(Equal(jobConfig))
+			Expect(user).To(Equal(expectedUser))
+
+			Expect(fakeRuncClient.CreateBundleCallCount()).To(Equal(1))
+			bundlePath, spec, user := fakeRuncClient.CreateBundleArgsForCall(0)
+			Expect(bundlePath).To(Equal(filepath.Join(expectedSystemRoot, "data", "crucible", "bundles", expectedJobName, expectedProcName)))
+			Expect(spec).To(Equal(jobSpec))
+			Expect(user).To(Equal(expectedUser))
+
+			Expect(fakeRuncClient.RunContainerCallCount()).To(Equal(1))
+			pidFilePath, bundlePath, cid, stdout, stderr := fakeRuncClient.RunContainerArgsForCall(0)
 			Expect(pidFilePath).To(Equal(filepath.Join(expectedPidDir, fmt.Sprintf("%s.pid", expectedProcName))))
-			Expect(bundlePath).To(Equal(expectedBundlePath))
-			Expect(containerID).To(Equal(expectedContainerID))
+			Expect(bundlePath).To(Equal(filepath.Join(expectedSystemRoot, "data", "crucible", "bundles", expectedJobName, expectedProcName)))
+			Expect(cid).To(Equal(expectedContainerID))
 			Expect(stdout).To(Equal(expectedStdout))
 			Expect(stderr).To(Equal(expectedStderr))
 		})
 
-		Context("when building the spec fails", func() {
+		Context("when looking up the vcap user fails", func() {
 			BeforeEach(func() {
-				fakeRuncAdapter.BuildSpecReturns(specs.Spec{}, errors.New("boom!"))
-			})
-
-			It("returns an error", func() {
-				err := runcLifecycle.StartJob()
-				Expect(err).To(HaveOccurred())
-			})
-		})
-
-		Context("when building the bundle fails", func() {
-			BeforeEach(func() {
-				fakeRuncAdapter.CreateBundleReturns("", errors.New("boom!"))
+				fakeUserIDFinder.LookupReturns(specs.User{}, errors.New("boom"))
 			})
 
 			It("returns an error", func() {
@@ -145,9 +149,20 @@ var _ = Describe("RuncJobLifecycle", func() {
 			})
 		})
 
+		Context("when building the bundle fails", func() {
+			BeforeEach(func() {
+				fakeRuncClient.CreateBundleReturns(errors.New("boom!"))
+			})
+
+			It("returns an error", func() {
+				err := runcLifecycle.StartJob()
+				Expect(err).To(HaveOccurred())
+			})
+		})
+
 		Context("when running the container fails", func() {
 			BeforeEach(func() {
-				fakeRuncAdapter.RunContainerReturns(errors.New("boom!"))
+				fakeRuncClient.RunContainerReturns(errors.New("boom!"))
 			})
 
 			It("returns an error", func() {
@@ -159,10 +174,11 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 	Describe("StopJob", func() {
 		var exitTimeout time.Duration
+
 		BeforeEach(func() {
 			exitTimeout = 5 * time.Second
 
-			fakeRuncAdapter.ContainerStateReturns(specs.State{
+			fakeRuncClient.ContainerStateReturns(specs.State{
 				Status: "stopped",
 			}, nil)
 		})
@@ -171,12 +187,12 @@ var _ = Describe("RuncJobLifecycle", func() {
 			err := runcLifecycle.StopJob(exitTimeout)
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(fakeRuncAdapter.StopContainerCallCount()).To(Equal(1))
-			containerID := fakeRuncAdapter.StopContainerArgsForCall(0)
+			Expect(fakeRuncClient.StopContainerCallCount()).To(Equal(1))
+			containerID := fakeRuncClient.StopContainerArgsForCall(0)
 			Expect(containerID).To(Equal(expectedContainerID))
 
-			Expect(fakeRuncAdapter.ContainerStateCallCount()).To(Equal(1))
-			containerID = fakeRuncAdapter.ContainerStateArgsForCall(0)
+			Expect(fakeRuncClient.ContainerStateCallCount()).To(Equal(1))
+			containerID = fakeRuncClient.ContainerStateArgsForCall(0)
 			Expect(containerID).To(Equal(expectedContainerID))
 		})
 
@@ -185,7 +201,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 			BeforeEach(func() {
 				stopped = make(chan struct{})
 
-				fakeRuncAdapter.ContainerStateStub = func(containerID string) (specs.State, error) {
+				fakeRuncClient.ContainerStateStub = func(containerID string) (specs.State, error) {
 					select {
 					case <-stopped:
 						return specs.State{Status: "stopped"}, nil
@@ -202,22 +218,22 @@ var _ = Describe("RuncJobLifecycle", func() {
 					errChan <- runcLifecycle.StopJob(exitTimeout)
 				}()
 
-				Eventually(fakeRuncAdapter.StopContainerCallCount).Should(Equal(1))
-				Expect(fakeRuncAdapter.StopContainerArgsForCall(0)).To(Equal(expectedContainerID))
+				Eventually(fakeRuncClient.StopContainerCallCount).Should(Equal(1))
+				Expect(fakeRuncClient.StopContainerArgsForCall(0)).To(Equal(expectedContainerID))
 
-				Eventually(fakeRuncAdapter.ContainerStateCallCount).Should(Equal(1))
-				Expect(fakeRuncAdapter.ContainerStateArgsForCall(0)).To(Equal(expectedContainerID))
+				Eventually(fakeRuncClient.ContainerStateCallCount).Should(Equal(1))
+				Expect(fakeRuncClient.ContainerStateArgsForCall(0)).To(Equal(expectedContainerID))
 
 				fakeClock.WaitForWatcherAndIncrement(1 * time.Second)
 
-				Eventually(fakeRuncAdapter.ContainerStateCallCount).Should(Equal(2))
-				Expect(fakeRuncAdapter.ContainerStateArgsForCall(1)).To(Equal(expectedContainerID))
+				Eventually(fakeRuncClient.ContainerStateCallCount).Should(Equal(2))
+				Expect(fakeRuncClient.ContainerStateArgsForCall(1)).To(Equal(expectedContainerID))
 
 				close(stopped)
 				fakeClock.WaitForWatcherAndIncrement(1 * time.Second)
 
-				Eventually(fakeRuncAdapter.ContainerStateCallCount).Should(Equal(3))
-				Expect(fakeRuncAdapter.ContainerStateArgsForCall(2)).To(Equal(expectedContainerID))
+				Eventually(fakeRuncClient.ContainerStateCallCount).Should(Equal(3))
+				Expect(fakeRuncClient.ContainerStateArgsForCall(2)).To(Equal(expectedContainerID))
 
 				Eventually(errChan).Should(Receive(BeNil()), "stop job did not exit in time")
 			})
@@ -230,16 +246,16 @@ var _ = Describe("RuncJobLifecycle", func() {
 						errChan <- runcLifecycle.StopJob(exitTimeout)
 					}()
 
-					Eventually(fakeRuncAdapter.StopContainerCallCount).Should(Equal(1))
-					Expect(fakeRuncAdapter.StopContainerArgsForCall(0)).To(Equal(expectedContainerID))
+					Eventually(fakeRuncClient.StopContainerCallCount).Should(Equal(1))
+					Expect(fakeRuncClient.StopContainerArgsForCall(0)).To(Equal(expectedContainerID))
 
-					Eventually(fakeRuncAdapter.ContainerStateCallCount).Should(Equal(1))
-					Expect(fakeRuncAdapter.ContainerStateArgsForCall(0)).To(Equal(expectedContainerID))
+					Eventually(fakeRuncClient.ContainerStateCallCount).Should(Equal(1))
+					Expect(fakeRuncClient.ContainerStateArgsForCall(0)).To(Equal(expectedContainerID))
 
 					fakeClock.WaitForWatcherAndIncrement(1 * time.Second)
 
-					Eventually(fakeRuncAdapter.ContainerStateCallCount).Should(Equal(2))
-					Expect(fakeRuncAdapter.ContainerStateArgsForCall(1)).To(Equal(expectedContainerID))
+					Eventually(fakeRuncClient.ContainerStateCallCount).Should(Equal(2))
+					Expect(fakeRuncClient.ContainerStateArgsForCall(1)).To(Equal(expectedContainerID))
 
 					fakeClock.WaitForWatcherAndIncrement(exitTimeout)
 
@@ -252,7 +268,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 		Context("when fetching the container state fails", func() {
 			BeforeEach(func() {
-				fakeRuncAdapter.ContainerStateReturns(specs.State{}, errors.New("boom"))
+				fakeRuncClient.ContainerStateReturns(specs.State{}, errors.New("boom"))
 			})
 
 			It("keeps attempting to fetch the state", func() {
@@ -262,18 +278,18 @@ var _ = Describe("RuncJobLifecycle", func() {
 					errChan <- runcLifecycle.StopJob(exitTimeout)
 				}()
 
-				Eventually(fakeRuncAdapter.ContainerStateCallCount).Should(Equal(1))
-				Expect(fakeRuncAdapter.ContainerStateArgsForCall(0)).To(Equal(expectedContainerID))
+				Eventually(fakeRuncClient.ContainerStateCallCount).Should(Equal(1))
+				Expect(fakeRuncClient.ContainerStateArgsForCall(0)).To(Equal(expectedContainerID))
 
 				fakeClock.WaitForWatcherAndIncrement(1 * time.Second)
 
-				Eventually(fakeRuncAdapter.ContainerStateCallCount).Should(Equal(2))
-				Expect(fakeRuncAdapter.ContainerStateArgsForCall(1)).To(Equal(expectedContainerID))
+				Eventually(fakeRuncClient.ContainerStateCallCount).Should(Equal(2))
+				Expect(fakeRuncClient.ContainerStateArgsForCall(1)).To(Equal(expectedContainerID))
 
 				fakeClock.WaitForWatcherAndIncrement(1 * time.Second)
 
-				Eventually(fakeRuncAdapter.ContainerStateCallCount).Should(Equal(3))
-				Expect(fakeRuncAdapter.ContainerStateArgsForCall(2)).To(Equal(expectedContainerID))
+				Eventually(fakeRuncClient.ContainerStateCallCount).Should(Equal(3))
+				Expect(fakeRuncClient.ContainerStateArgsForCall(2)).To(Equal(expectedContainerID))
 
 				fakeClock.WaitForWatcherAndIncrement(exitTimeout)
 
@@ -288,7 +304,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 			BeforeEach(func() {
 				expectedErr = errors.New("an error")
-				fakeRuncAdapter.StopContainerReturns(expectedErr)
+				fakeRuncClient.StopContainerReturns(expectedErr)
 			})
 
 			It("returns an error", func() {
@@ -303,8 +319,8 @@ var _ = Describe("RuncJobLifecycle", func() {
 			err := runcLifecycle.RemoveJob()
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(fakeRuncAdapter.DeleteContainerCallCount()).To(Equal(1))
-			containerID := fakeRuncAdapter.DeleteContainerArgsForCall(0)
+			Expect(fakeRuncClient.DeleteContainerCallCount()).To(Equal(1))
+			containerID := fakeRuncClient.DeleteContainerArgsForCall(0)
 			Expect(containerID).To(Equal(expectedContainerID))
 		})
 
@@ -312,11 +328,9 @@ var _ = Describe("RuncJobLifecycle", func() {
 			err := runcLifecycle.RemoveJob()
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(fakeRuncAdapter.DestroyBundleCallCount()).To(Equal(1))
-			bundleRoot, jobName, procName := fakeRuncAdapter.DestroyBundleArgsForCall(0)
-			Expect(bundleRoot).To(Equal(config.BundlesRoot()))
-			Expect(jobName).To(Equal(expectedJobName))
-			Expect(procName).To(Equal(expectedProcName))
+			Expect(fakeRuncClient.DestroyBundleCallCount()).To(Equal(1))
+			bundlePath := fakeRuncClient.DestroyBundleArgsForCall(0)
+			Expect(bundlePath).To(Equal(filepath.Join(expectedSystemRoot, "data", "crucible", "bundles", expectedJobName, expectedProcName)))
 		})
 
 		Context("when deleting a container fails", func() {
@@ -324,7 +338,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 			BeforeEach(func() {
 				expectedErr = errors.New("an error")
-				fakeRuncAdapter.DeleteContainerReturns(expectedErr)
+				fakeRuncClient.DeleteContainerReturns(expectedErr)
 			})
 
 			It("returns an error", func() {
@@ -336,7 +350,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 		Context("when destroying a bundle fails", func() {
 			It("returns an error", func() {
 				expectedErr := errors.New("an error2")
-				fakeRuncAdapter.DestroyBundleReturns(expectedErr)
+				fakeRuncClient.DestroyBundleReturns(expectedErr)
 				err := runcLifecycle.RemoveJob()
 				Expect(err).To(Equal(expectedErr))
 			})
