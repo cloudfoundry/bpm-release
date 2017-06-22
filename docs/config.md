@@ -62,7 +62,8 @@ check process job-worker
 
 ## Setting Sysctl Kernel Parameters
 
-We recommend setting these parameters in your `pre-start` with the following command:
+We recommend setting these parameters in your `pre-start` with the following
+command:
 
 ```bash
 sysctl -e -w net.ipv4.tcp_fin_timeout 10
