@@ -22,9 +22,6 @@ limits:
   memory: 3G
   processes: 10
   open_files: 100
-
-sysctl:
-  net.ipv4.ip_local_port_range: "60000 64000"
 ```
 
 ``` yaml
