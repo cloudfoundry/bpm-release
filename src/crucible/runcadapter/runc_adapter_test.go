@@ -10,6 +10,8 @@ import (
 	"runtime"
 	"syscall"
 
+	"code.cloudfoundry.org/bytefmt"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
@@ -104,11 +106,15 @@ var _ = Describe("RuncAdapter", func() {
 					"RAVE=true",
 					"ONE=two",
 				},
+				Limits: &config.Limits{
+					Memory: "100G",
+				},
 			}
 		})
 
-		It("convert a crucible config into a runc spec", func() {
-			spec := adapter.BuildSpec(systemRoot, jobName, cfg, user)
+		It("converts a crucible config into a runc spec", func() {
+			spec, err := adapter.BuildSpec(systemRoot, jobName, cfg, user)
+			Expect(err).NotTo(HaveOccurred())
 
 			Expect(spec.Version).To(Equal(specs.Version))
 
@@ -264,6 +270,35 @@ var _ = Describe("RuncAdapter", func() {
 				specs.LinuxNamespace{Type: "mount"},
 				specs.LinuxNamespace{Type: "pid"},
 			))
+
+			expectedMemoryLimitInBytes, err := bytefmt.ToBytes("100G")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(spec.Linux.Resources.Memory).To(Equal(&specs.LinuxMemory{
+				Limit: &expectedMemoryLimitInBytes,
+			}))
+		})
+
+		Context("when the memory limit is invalid", func() {
+			BeforeEach(func() {
+				cfg.Limits.Memory = "invalid byte value"
+			})
+
+			It("returns an error", func() {
+				_, err := adapter.BuildSpec(systemRoot, jobName, cfg, user)
+				Expect(err).To(HaveOccurred())
+			})
+		})
+
+		Context("when the memory limit is invalid", func() {
+			BeforeEach(func() {
+				cfg.Limits = nil
+			})
+
+			It("does not set a memory limit", func() {
+				spec, err := adapter.BuildSpec(systemRoot, jobName, cfg, user)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(spec.Linux.Resources).To(BeNil())
+			})
 		})
 	})
 })

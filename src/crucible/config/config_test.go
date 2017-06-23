@@ -23,6 +23,7 @@ var _ = Describe("Config", func() {
 			Expect(cfg.Executable).To(Equal("/var/vcap/packages/program/bin/program-server"))
 			Expect(cfg.Args).To(ConsistOf("--port=2424", "--host=\"localhost\""))
 			Expect(cfg.Env).To(ConsistOf("FOO=BAR", "BAZ=BUZZ"))
+			Expect(cfg.Limits.Memory).To(Equal("100G"))
 		})
 
 		Context("when reading the file fails", func() {

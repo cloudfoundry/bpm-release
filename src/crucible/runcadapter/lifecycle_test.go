@@ -70,7 +70,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 		jobSpec = specs.Spec{
 			Version: "example-version",
 		}
-		fakeRuncAdapter.BuildSpecReturns(jobSpec)
+		fakeRuncAdapter.BuildSpecReturns(jobSpec, nil)
 
 		expectedSystemRoot = "system-root"
 
@@ -141,6 +141,17 @@ var _ = Describe("RuncJobLifecycle", func() {
 		Context("when creating the system files fails", func() {
 			BeforeEach(func() {
 				fakeRuncAdapter.CreateJobPrerequisitesReturns("", nil, nil, errors.New("boom"))
+			})
+
+			It("returns an error", func() {
+				err := runcLifecycle.StartJob()
+				Expect(err).To(HaveOccurred())
+			})
+		})
+
+		Context("when building the runc spec fails", func() {
+			BeforeEach(func() {
+				fakeRuncAdapter.BuildSpecReturns(specs.Spec{}, errors.New("boom"))
 			})
 
 			It("returns an error", func() {

@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"code.cloudfoundry.org/bytefmt"
+
 	yaml "gopkg.in/yaml.v2"
 
 	. "github.com/onsi/ginkgo"
@@ -31,7 +33,31 @@ var _ = Describe("Crucible", func() {
 		jobConfigPath,
 		stdoutFileLocation,
 		stderrFileLocation string
+
+		jobConfig *config.CrucibleConfig
 	)
+
+	var writeConfig = func(cfg *config.CrucibleConfig) {
+		jobConfigDir := filepath.Join(boshConfigPath, "jobs", jobName, "config")
+		err := os.MkdirAll(jobConfigDir, 0755)
+		Expect(err).NotTo(HaveOccurred())
+
+		jobConfigPath = filepath.Join(jobConfigDir, "crucible.yml")
+		Expect(os.RemoveAll(jobConfigPath)).To(Succeed())
+		f, err := os.OpenFile(
+			jobConfigPath,
+			os.O_RDWR|os.O_CREATE,
+			0644,
+		)
+		Expect(err).NotTo(HaveOccurred())
+
+		data, err := yaml.Marshal(cfg)
+		Expect(err).NotTo(HaveOccurred())
+
+		n, err := f.Write(data)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(n).To(Equal(len(data)))
+	}
 
 	BeforeEach(func() {
 		var err error
@@ -57,11 +83,7 @@ var _ = Describe("Crucible", func() {
 		procName = "sleeper-agent"
 		containerID = fmt.Sprintf("%s-%s", jobName, procName)
 
-		jobConfigDir := filepath.Join(boshConfigPath, "jobs", jobName, "config")
-		err = os.MkdirAll(jobConfigDir, 0755)
-		Expect(err).NotTo(HaveOccurred())
-
-		jobConfig := config.CrucibleConfig{
+		jobConfig = &config.CrucibleConfig{
 			Name:       procName,
 			Executable: "/bin/bash",
 			Args: []string{
@@ -78,34 +100,34 @@ var _ = Describe("Crucible", func() {
 			Env: []string{"FOO=BAR"},
 		}
 
-		jobConfigPath = filepath.Join(jobConfigDir, "crucible.yml")
-		f, err := os.OpenFile(
-			jobConfigPath,
-			os.O_RDWR|os.O_CREATE,
-			0644,
-		)
-		Expect(err).NotTo(HaveOccurred())
-
-		data, err := yaml.Marshal(jobConfig)
-		Expect(err).NotTo(HaveOccurred())
-
-		n, err := f.Write(data)
-		Expect(err).NotTo(HaveOccurred())
-		Expect(n).To(Equal(len(data)))
-
 		stdoutFileLocation = filepath.Join(boshConfigPath, "sys", "log", jobName, procName+".out.log")
 		stderrFileLocation = filepath.Join(boshConfigPath, "sys", "log", jobName, procName+".err.log")
+		writeConfig(jobConfig)
 	})
 
 	AfterEach(func() {
 		// using force, as we cannot delete a running container.
-		cmd := exec.Command("runc", "delete", "--force", jobName)
+		cmd := exec.Command("runc", "delete", "--force", containerID)
 		combinedOutput, err := cmd.CombinedOutput()
 		Expect(err).NotTo(HaveOccurred(), string(combinedOutput))
 
 		err = os.RemoveAll(boshConfigPath)
 		Expect(err).NotTo(HaveOccurred())
 	})
+
+	runcState := func(cid string) specs.State {
+		cmd := exec.Command("runc", "state", cid)
+		cmd.Stderr = GinkgoWriter
+
+		data, err := cmd.Output()
+		Expect(err).NotTo(HaveOccurred())
+
+		stateResponse := specs.State{}
+		err = json.Unmarshal(data, &stateResponse)
+		Expect(err).NotTo(HaveOccurred())
+
+		return stateResponse
+	}
 
 	Context("start", func() {
 		JustBeforeEach(func() {
@@ -118,23 +140,14 @@ var _ = Describe("Crucible", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Eventually(session).Should(gexec.Exit(0))
 
-			cmd := exec.Command("runc", "state", containerID)
-			data, err := cmd.Output()
-			Expect(err).NotTo(HaveOccurred())
-
-			stateResponse := specs.State{}
-			err = json.Unmarshal(data, &stateResponse)
-			Expect(err).NotTo(HaveOccurred())
-
-			Expect(stateResponse.ID).To(Equal(containerID))
-			Expect(stateResponse.Status).To(Equal("running"))
-
+			state := runcState(containerID)
+			Expect(state.Status).To(Equal("running"))
 			pidText, err := ioutil.ReadFile(filepath.Join(boshConfigPath, "sys", "run", "crucible", jobName, fmt.Sprintf("%s.pid", procName)))
 			Expect(err).NotTo(HaveOccurred())
 
 			pid, err := strconv.Atoi(string(pidText))
 			Expect(err).NotTo(HaveOccurred())
-			Expect(pid).To(Equal(stateResponse.Pid))
+			Expect(pid).To(Equal(state.Pid))
 		})
 
 		It("redirects stdout and stderr to a standard location", func() {
@@ -147,6 +160,66 @@ var _ = Describe("Crucible", func() {
 
 			Eventually(fileContents(stdoutFileLocation)).Should(Equal("Foo is BAR\n"))
 			Eventually(fileContents(stderrFileLocation)).Should(Equal("BAR is Foo\n"))
+		})
+
+		Context("resource limits", func() {
+			Context("memory", func() {
+				var limitInBytes uint64
+
+				BeforeEach(func() {
+					jobConfig.Executable = "/bin/bash"
+					jobConfig.Args = []string{
+						"-c",
+						// See https://codegolf.stackexchange.com/questions/24485/create-a-memory-leak-without-any-fork-bombs
+						`:(){ : $@$@;};: :`,
+					}
+
+					limit := "10M"
+					jobConfig.Limits = &config.Limits{
+						Memory: limit,
+					}
+
+					var err error
+					limitInBytes, err = bytefmt.ToBytes(limit)
+					Expect(err).NotTo(HaveOccurred())
+
+					writeConfig(jobConfig)
+				})
+
+				It("gets OOMed when it exceeds its memory limit", func() {
+					session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+					Expect(err).NotTo(HaveOccurred())
+					Eventually(session).Should(gexec.Exit(0))
+
+					Eventually(func() string {
+						return runcState(containerID).Status
+					}).Should(Equal("running"))
+
+					Eventually(func() uint64 {
+						eventsCmd := exec.Command("runc", "events", containerID, "--stats")
+						data, err := eventsCmd.CombinedOutput()
+						Expect(err).NotTo(HaveOccurred())
+
+						event := containerStatsEvent{}
+						err = json.Unmarshal(data, &event)
+						Expect(err).NotTo(HaveOccurred())
+
+						return event.Data.Memory.Usage.Usage
+					}).Should(BeNumerically("~", limitInBytes, 1000))
+
+					Consistently(func() uint64 {
+						eventsCmd := exec.Command("runc", "events", containerID, "--stats")
+						data, err := eventsCmd.CombinedOutput()
+						Expect(err).NotTo(HaveOccurred())
+
+						event := containerStatsEvent{}
+						err = json.Unmarshal(data, &event)
+						Expect(err).NotTo(HaveOccurred())
+
+						return event.Data.Memory.Usage.Usage
+					}).Should(BeNumerically("<=", limitInBytes))
+				})
+			})
 		})
 
 		Context("when the stdout and stderr files already exist", func() {
@@ -337,4 +410,28 @@ func fileContents(path string) func() string {
 		Expect(err).NotTo(HaveOccurred())
 		return string(data)
 	}
+}
+
+type containerStatsEvent struct {
+	Data containerStats `json:"data"`
+}
+
+type containerStats struct {
+	Memory memory `json:"memory"`
+}
+
+type memory struct {
+	Cache     uint64            `json:"cache,omitempty"`
+	Usage     memoryEntry       `json:"usage,omitempty"`
+	Swap      memoryEntry       `json:"swap,omitempty"`
+	Kernel    memoryEntry       `json:"kernel,omitempty"`
+	KernelTCP memoryEntry       `json:"kernelTCP,omitempty"`
+	Raw       map[string]uint64 `json:"raw,omitempty"`
+}
+
+type memoryEntry struct {
+	Limit   uint64 `json:"limit"`
+	Usage   uint64 `json:"usage,omitempty"`
+	Max     uint64 `json:"max,omitempty"`
+	Failcnt uint64 `json:"failcnt"`
 }

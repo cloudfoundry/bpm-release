@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"runtime"
 
+	"code.cloudfoundry.org/bytefmt"
+
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
@@ -16,7 +18,7 @@ const ROOT_UID = 0
 
 type RuncAdapter interface {
 	CreateJobPrerequisites(systemRoot, jobName string, cfg *config.CrucibleConfig, user specs.User) (string, *os.File, *os.File, error)
-	BuildSpec(systemRoot, jobName string, cfg *config.CrucibleConfig, user specs.User) specs.Spec
+	BuildSpec(systemRoot, jobName string, cfg *config.CrucibleConfig, user specs.User) (specs.Spec, error)
 }
 
 type runcAdapter struct{}
@@ -92,7 +94,7 @@ func (a *runcAdapter) BuildSpec(
 	jobName string,
 	cfg *config.CrucibleConfig,
 	user specs.User,
-) specs.Spec {
+) (specs.Spec, error) {
 	process := &specs.Process{
 		User: user,
 		Args: append([]string{cfg.Executable}, cfg.Args...),
@@ -112,6 +114,22 @@ func (a *runcAdapter) BuildSpec(
 	mounts = append(mounts, boshMounts(systemRoot, jobName, cfg.Name)...)
 	mounts = append(mounts, systemIdentityMounts()...)
 
+	var resources *specs.LinuxResources
+	if cfg.Limits != nil {
+		memLimit, err := bytefmt.ToBytes(cfg.Limits.Memory)
+		if err != nil {
+			return specs.Spec{}, err
+		}
+
+		falsePtr := false
+		resources = &specs.LinuxResources{
+			DisableOOMKiller: &falsePtr,
+			Memory: &specs.LinuxMemory{
+				Limit: &memLimit,
+			},
+		}
+	}
+
 	return specs.Spec{
 		Version: specs.Version,
 		Platform: specs.Platform{
@@ -125,7 +143,6 @@ func (a *runcAdapter) BuildSpec(
 		Hostname: jobName,
 		Mounts:   mounts,
 		Linux: &specs.Linux{
-			RootfsPropagation: "private",
 			MaskedPaths: []string{
 				"/proc/kcore",
 				"/proc/latency_stats",
@@ -133,6 +150,11 @@ func (a *runcAdapter) BuildSpec(
 				"/proc/timer_stats",
 				"/proc/sched_debug",
 				"/sys/firmware",
+			},
+			Namespaces: []specs.LinuxNamespace{
+				{Type: "uts"},
+				{Type: "mount"},
+				{Type: "pid"},
 			},
 			ReadonlyPaths: []string{
 				"/proc/asound",
@@ -142,13 +164,10 @@ func (a *runcAdapter) BuildSpec(
 				"/proc/sys",
 				"/proc/sysrq-trigger",
 			},
-			Namespaces: []specs.LinuxNamespace{
-				{Type: "uts"},
-				{Type: "mount"},
-				{Type: "pid"},
-			},
+			Resources:         resources,
+			RootfsPropagation: "private",
 		},
-	}
+	}, nil
 }
 
 func boshMounts(systemRoot, jobName, procName string) []specs.Mount {

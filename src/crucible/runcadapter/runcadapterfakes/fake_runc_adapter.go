@@ -31,7 +31,7 @@ type FakeRuncAdapter struct {
 		result3 *os.File
 		result4 error
 	}
-	BuildSpecStub        func(systemRoot, jobName string, cfg *config.CrucibleConfig, user specs.User) specs.Spec
+	BuildSpecStub        func(systemRoot, jobName string, cfg *config.CrucibleConfig, user specs.User) (specs.Spec, error)
 	buildSpecMutex       sync.RWMutex
 	buildSpecArgsForCall []struct {
 		systemRoot string
@@ -41,9 +41,11 @@ type FakeRuncAdapter struct {
 	}
 	buildSpecReturns struct {
 		result1 specs.Spec
+		result2 error
 	}
 	buildSpecReturnsOnCall map[int]struct {
 		result1 specs.Spec
+		result2 error
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
@@ -109,7 +111,7 @@ func (fake *FakeRuncAdapter) CreateJobPrerequisitesReturnsOnCall(i int, result1 
 	}{result1, result2, result3, result4}
 }
 
-func (fake *FakeRuncAdapter) BuildSpec(systemRoot string, jobName string, cfg *config.CrucibleConfig, user specs.User) specs.Spec {
+func (fake *FakeRuncAdapter) BuildSpec(systemRoot string, jobName string, cfg *config.CrucibleConfig, user specs.User) (specs.Spec, error) {
 	fake.buildSpecMutex.Lock()
 	ret, specificReturn := fake.buildSpecReturnsOnCall[len(fake.buildSpecArgsForCall)]
 	fake.buildSpecArgsForCall = append(fake.buildSpecArgsForCall, struct {
@@ -124,9 +126,9 @@ func (fake *FakeRuncAdapter) BuildSpec(systemRoot string, jobName string, cfg *c
 		return fake.BuildSpecStub(systemRoot, jobName, cfg, user)
 	}
 	if specificReturn {
-		return ret.result1
+		return ret.result1, ret.result2
 	}
-	return fake.buildSpecReturns.result1
+	return fake.buildSpecReturns.result1, fake.buildSpecReturns.result2
 }
 
 func (fake *FakeRuncAdapter) BuildSpecCallCount() int {
@@ -141,23 +143,26 @@ func (fake *FakeRuncAdapter) BuildSpecArgsForCall(i int) (string, string, *confi
 	return fake.buildSpecArgsForCall[i].systemRoot, fake.buildSpecArgsForCall[i].jobName, fake.buildSpecArgsForCall[i].cfg, fake.buildSpecArgsForCall[i].user
 }
 
-func (fake *FakeRuncAdapter) BuildSpecReturns(result1 specs.Spec) {
+func (fake *FakeRuncAdapter) BuildSpecReturns(result1 specs.Spec, result2 error) {
 	fake.BuildSpecStub = nil
 	fake.buildSpecReturns = struct {
 		result1 specs.Spec
-	}{result1}
+		result2 error
+	}{result1, result2}
 }
 
-func (fake *FakeRuncAdapter) BuildSpecReturnsOnCall(i int, result1 specs.Spec) {
+func (fake *FakeRuncAdapter) BuildSpecReturnsOnCall(i int, result1 specs.Spec, result2 error) {
 	fake.BuildSpecStub = nil
 	if fake.buildSpecReturnsOnCall == nil {
 		fake.buildSpecReturnsOnCall = make(map[int]struct {
 			result1 specs.Spec
+			result2 error
 		})
 	}
 	fake.buildSpecReturnsOnCall[i] = struct {
 		result1 specs.Spec
-	}{result1}
+		result2 error
+	}{result1, result2}
 }
 
 func (fake *FakeRuncAdapter) Invocations() map[string][][]interface{} {

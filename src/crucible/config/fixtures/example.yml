@@ -7,3 +7,5 @@ args:
 env:
   - FOO=BAR
   - BAZ=BUZZ
+limits:
+  memory: 100G

@@ -14,6 +14,11 @@ type CrucibleConfig struct {
 	Executable string   `yaml:"executable"`
 	Args       []string `yaml:"args"`
 	Env        []string `yaml:"env"`
+	Limits     *Limits  `yaml:"limits"`
+}
+
+type Limits struct {
+	Memory string `yaml:"memory"`
 }
 
 func ParseConfig(configPath string) (*CrucibleConfig, error) {

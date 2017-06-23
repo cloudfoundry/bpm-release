@@ -57,7 +57,10 @@ func (j *RuncJobLifecycle) StartJob() error {
 	defer stdout.Close()
 	defer stderr.Close()
 
-	spec := j.runcAdapter.BuildSpec(j.systemRoot, j.jobName, j.cfg, user)
+	spec, err := j.runcAdapter.BuildSpec(j.systemRoot, j.jobName, j.cfg, user)
+	if err != nil {
+		return err
+	}
 
 	err = j.runcClient.CreateBundle(j.bundlePath(), spec, user)
 	if err != nil {
