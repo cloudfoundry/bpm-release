@@ -22,6 +22,10 @@ limits:
   memory: 3G
   processes: 10
   open_files: 100
+
+volumes:
+- name: certificates
+- name: sockets
 ```
 
 ``` yaml
@@ -33,6 +37,9 @@ executable: /var/vcap/packages/program/bin/program-worker
 args:
   - --queues
   - 4
+
+volumes:
+- name: sockets
 ```
 
 ## Example `monit` Configuration
