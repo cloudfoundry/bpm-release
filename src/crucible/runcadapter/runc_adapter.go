@@ -126,6 +126,7 @@ func (a *runcAdapter) BuildSpec(
 			DisableOOMKiller: &falsePtr,
 			Memory: &specs.LinuxMemory{
 				Limit: &memLimit,
+				Swap:  &memLimit,
 			},
 		}
 	}

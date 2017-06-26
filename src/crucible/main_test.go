@@ -4,13 +4,13 @@ import (
 	"crucible/config"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
-
-	"code.cloudfoundry.org/bytefmt"
+	"time"
 
 	yaml "gopkg.in/yaml.v2"
 
@@ -164,27 +164,52 @@ var _ = Describe("Crucible", func() {
 
 		Context("resource limits", func() {
 			Context("memory", func() {
-				var limitInBytes uint64
-
 				BeforeEach(func() {
 					jobConfig.Executable = "/bin/bash"
 					jobConfig.Args = []string{
 						"-c",
 						// See https://codegolf.stackexchange.com/questions/24485/create-a-memory-leak-without-any-fork-bombs
-						`:(){ : $@$@;};: :`,
+						`start_memory_leak() { :(){ : $@$@;};: : ;};
+							trap "kill $child" SIGTERM;
+							sleep 100 &
+							child=$!;
+							wait $child;
+							start_memory_leak`,
 					}
 
-					limit := "10M"
+					limit := "4M"
 					jobConfig.Limits = &config.Limits{
 						Memory: limit,
 					}
 
-					var err error
-					limitInBytes, err = bytefmt.ToBytes(limit)
-					Expect(err).NotTo(HaveOccurred())
-
 					writeConfig(jobConfig)
 				})
+
+				streamOOMEvents := func(stdout io.Reader) chan event {
+					oomEvents := make(chan event)
+
+					decoder := json.NewDecoder(stdout)
+
+					go func() {
+						defer GinkgoRecover()
+						defer close(oomEvents)
+
+						for {
+							var actualEvent event
+							err := decoder.Decode(&actualEvent)
+							if err != nil {
+								return
+							}
+
+							if actualEvent.Type == "oom" {
+								oomEvents <- actualEvent
+							}
+							time.Sleep(100 * time.Millisecond)
+						}
+					}()
+
+					return oomEvents
+				}
 
 				It("gets OOMed when it exceeds its memory limit", func() {
 					session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
@@ -195,29 +220,19 @@ var _ = Describe("Crucible", func() {
 						return runcState(containerID).Status
 					}).Should(Equal("running"))
 
-					Eventually(func() uint64 {
-						eventsCmd := exec.Command("runc", "events", containerID, "--stats")
-						data, err := eventsCmd.CombinedOutput()
-						Expect(err).NotTo(HaveOccurred())
+					eventsCmd := exec.Command("runc", "events", containerID)
+					stdout, err := eventsCmd.StdoutPipe()
+					Expect(err).NotTo(HaveOccurred())
 
-						event := containerStatsEvent{}
-						err = json.Unmarshal(data, &event)
-						Expect(err).NotTo(HaveOccurred())
+					oomEventsChan := streamOOMEvents(stdout)
+					Expect(eventsCmd.Start()).To(Succeed())
 
-						return event.Data.Memory.Usage.Usage
-					}).Should(BeNumerically("~", limitInBytes, 1000))
+					Expect(exec.Command("runc", "kill", containerID).Run()).To(Succeed())
 
-					Consistently(func() uint64 {
-						eventsCmd := exec.Command("runc", "events", containerID, "--stats")
-						data, err := eventsCmd.CombinedOutput()
-						Expect(err).NotTo(HaveOccurred())
+					Eventually(oomEventsChan).Should(Receive())
 
-						event := containerStatsEvent{}
-						err = json.Unmarshal(data, &event)
-						Expect(err).NotTo(HaveOccurred())
-
-						return event.Data.Memory.Usage.Usage
-					}).Should(BeNumerically("<=", limitInBytes))
+					Expect(eventsCmd.Process.Kill()).To(Succeed())
+					Eventually(oomEventsChan).Should(BeClosed())
 				})
 			})
 		})
@@ -412,8 +427,10 @@ func fileContents(path string) func() string {
 	}
 }
 
-type containerStatsEvent struct {
+type event struct {
 	Data containerStats `json:"data"`
+	Type string         `json:"type"`
+	ID   string         `json:"id"`
 }
 
 type containerStats struct {

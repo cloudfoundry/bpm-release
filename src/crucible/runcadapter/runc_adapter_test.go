@@ -275,6 +275,7 @@ var _ = Describe("RuncAdapter", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(spec.Linux.Resources.Memory).To(Equal(&specs.LinuxMemory{
 				Limit: &expectedMemoryLimitInBytes,
+				Swap:  &expectedMemoryLimitInBytes,
 			}))
 		})
 
