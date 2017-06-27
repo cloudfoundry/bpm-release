@@ -116,9 +116,7 @@ func (a *runcAdapter) BuildSpec(
 				return specs.Spec{}, err
 			}
 
-			falsePtr := false
 			resources = &specs.LinuxResources{
-				DisableOOMKiller: &falsePtr,
 				Memory: &specs.LinuxMemory{
 					Limit: &memLimit,
 					Swap:  &memLimit,
