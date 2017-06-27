@@ -96,17 +96,11 @@ func (a *runcAdapter) BuildSpec(
 	user specs.User,
 ) (specs.Spec, error) {
 	process := &specs.Process{
-		User: user,
-		Args: append([]string{cfg.Executable}, cfg.Args...),
-		Env:  cfg.Env,
-		Cwd:  "/",
-		Rlimits: []specs.LinuxRlimit{
-			{
-				Type: "RLIMIT_NOFILE",
-				Hard: uint64(1024),
-				Soft: uint64(1024),
-			},
-		},
+		User:            user,
+		Args:            append([]string{cfg.Executable}, cfg.Args...),
+		Env:             cfg.Env,
+		Cwd:             "/",
+		Rlimits:         []specs.LinuxRlimit{},
 		NoNewPrivileges: true,
 	}
 

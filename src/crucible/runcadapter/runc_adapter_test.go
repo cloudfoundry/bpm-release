@@ -125,19 +125,13 @@ var _ = Describe("RuncAdapter", func() {
 
 			expectedProcessArgs := append([]string{cfg.Executable}, cfg.Args...)
 			Expect(spec.Process).To(Equal(&specs.Process{
-				Terminal:    false,
-				ConsoleSize: nil,
-				User:        user,
-				Args:        expectedProcessArgs,
-				Env:         cfg.Env,
-				Cwd:         "/",
-				Rlimits: []specs.LinuxRlimit{
-					{
-						Type: "RLIMIT_NOFILE",
-						Hard: uint64(1024),
-						Soft: uint64(1024),
-					},
-				},
+				Terminal:        false,
+				ConsoleSize:     nil,
+				User:            user,
+				Args:            expectedProcessArgs,
+				Env:             cfg.Env,
+				Cwd:             "/",
+				Rlimits:         []specs.LinuxRlimit{},
 				NoNewPrivileges: true,
 			}))
 
