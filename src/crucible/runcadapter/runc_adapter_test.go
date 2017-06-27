@@ -106,9 +106,6 @@ var _ = Describe("RuncAdapter", func() {
 					"RAVE=true",
 					"ONE=two",
 				},
-				Limits: &config.Limits{
-					Memory: "100G",
-				},
 			}
 		})
 
@@ -264,27 +261,75 @@ var _ = Describe("RuncAdapter", func() {
 				specs.LinuxNamespace{Type: "mount"},
 				specs.LinuxNamespace{Type: "pid"},
 			))
-
-			expectedMemoryLimitInBytes, err := bytefmt.ToBytes("100G")
-			Expect(err).NotTo(HaveOccurred())
-			Expect(spec.Linux.Resources.Memory).To(Equal(&specs.LinuxMemory{
-				Limit: &expectedMemoryLimitInBytes,
-				Swap:  &expectedMemoryLimitInBytes,
-			}))
 		})
 
-		Context("when the memory limit is invalid", func() {
+		Context("Limits", func() {
 			BeforeEach(func() {
-				cfg.Limits.Memory = "invalid byte value"
+				cfg.Limits = &config.Limits{}
 			})
 
-			It("returns an error", func() {
+			It("sets no limits by default", func() {
 				_, err := adapter.BuildSpec(systemRoot, jobName, cfg, user)
-				Expect(err).To(HaveOccurred())
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			Context("Memory", func() {
+				var expectedMemoryLimit string
+
+				BeforeEach(func() {
+					expectedMemoryLimit = "100G"
+					cfg.Limits.Memory = &expectedMemoryLimit
+				})
+
+				It("sets the memory limit on the container", func() {
+					spec, err := adapter.BuildSpec(systemRoot, jobName, cfg, user)
+					Expect(err).NotTo(HaveOccurred())
+
+					expectedMemoryLimitInBytes, err := bytefmt.ToBytes(expectedMemoryLimit)
+					Expect(err).NotTo(HaveOccurred())
+					Expect(spec.Linux.Resources.Memory).To(Equal(&specs.LinuxMemory{
+						Limit: &expectedMemoryLimitInBytes,
+						Swap:  &expectedMemoryLimitInBytes,
+					}))
+				})
+
+				Context("when the memory limit is invalid", func() {
+					BeforeEach(func() {
+						memoryLimit := "invalid byte value"
+						cfg.Limits.Memory = &memoryLimit
+					})
+
+					It("returns an error", func() {
+						_, err := adapter.BuildSpec(systemRoot, jobName, cfg, user)
+						Expect(err).To(HaveOccurred())
+					})
+				})
+			})
+
+			Context("OpenFiles", func() {
+				var expectedOpenFilesLimit uint64
+
+				BeforeEach(func() {
+					expectedOpenFilesLimit = 2444
+					cfg.Limits.OpenFiles = &expectedOpenFilesLimit
+				})
+
+				It("sets the rlimit on the process", func() {
+					spec, err := adapter.BuildSpec(systemRoot, jobName, cfg, user)
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(spec.Process.Rlimits).To(ConsistOf([]specs.LinuxRlimit{
+						{
+							Type: "RLIMIT_NOFILE",
+							Hard: uint64(expectedOpenFilesLimit),
+							Soft: uint64(expectedOpenFilesLimit),
+						},
+					}))
+				})
 			})
 		})
 
-		Context("when the memory limit is invalid", func() {
+		Context("when the limits configuration is not provided", func() {
 			BeforeEach(func() {
 				cfg.Limits = nil
 			})

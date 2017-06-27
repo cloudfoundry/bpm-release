@@ -18,7 +18,8 @@ type CrucibleConfig struct {
 }
 
 type Limits struct {
-	Memory string `yaml:"memory"`
+	Memory    *string `yaml:"memory"`
+	OpenFiles *uint64 `yaml:"open_files"`
 }
 
 func ParseConfig(configPath string) (*CrucibleConfig, error) {

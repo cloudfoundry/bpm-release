@@ -9,3 +9,4 @@ env:
   - BAZ=BUZZ
 limits:
   memory: 100G
+  open_files: 100

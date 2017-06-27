@@ -19,11 +19,14 @@ var _ = Describe("Config", func() {
 			cfg, err := config.ParseConfig(configPath)
 			Expect(err).NotTo(HaveOccurred())
 
+			expectedMemoryLimit := "100G"
+			expectedOpenFilesLimit := uint64(100)
 			Expect(cfg.Name).To(Equal("server"))
 			Expect(cfg.Executable).To(Equal("/var/vcap/packages/program/bin/program-server"))
 			Expect(cfg.Args).To(ConsistOf("--port=2424", "--host=\"localhost\""))
 			Expect(cfg.Env).To(ConsistOf("FOO=BAR", "BAZ=BUZZ"))
-			Expect(cfg.Limits.Memory).To(Equal("100G"))
+			Expect(cfg.Limits.Memory).To(Equal(&expectedMemoryLimit))
+			Expect(cfg.Limits.OpenFiles).To(Equal(&expectedOpenFilesLimit))
 		})
 
 		Context("when reading the file fails", func() {

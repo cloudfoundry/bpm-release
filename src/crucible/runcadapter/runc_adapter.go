@@ -110,18 +110,28 @@ func (a *runcAdapter) BuildSpec(
 
 	var resources *specs.LinuxResources
 	if cfg.Limits != nil {
-		memLimit, err := bytefmt.ToBytes(cfg.Limits.Memory)
-		if err != nil {
-			return specs.Spec{}, err
+		if cfg.Limits.Memory != nil {
+			memLimit, err := bytefmt.ToBytes(*cfg.Limits.Memory)
+			if err != nil {
+				return specs.Spec{}, err
+			}
+
+			falsePtr := false
+			resources = &specs.LinuxResources{
+				DisableOOMKiller: &falsePtr,
+				Memory: &specs.LinuxMemory{
+					Limit: &memLimit,
+					Swap:  &memLimit,
+				},
+			}
 		}
 
-		falsePtr := false
-		resources = &specs.LinuxResources{
-			DisableOOMKiller: &falsePtr,
-			Memory: &specs.LinuxMemory{
-				Limit: &memLimit,
-				Swap:  &memLimit,
-			},
+		if cfg.Limits.OpenFiles != nil {
+			process.Rlimits = append(process.Rlimits, specs.LinuxRlimit{
+				Type: "RLIMIT_NOFILE",
+				Hard: uint64(*cfg.Limits.OpenFiles),
+				Soft: uint64(*cfg.Limits.OpenFiles),
+			})
 		}
 	}
 

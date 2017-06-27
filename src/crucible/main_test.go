@@ -179,7 +179,7 @@ var _ = Describe("Crucible", func() {
 
 					limit := "4M"
 					jobConfig.Limits = &config.Limits{
-						Memory: limit,
+						Memory: &limit,
 					}
 
 					writeConfig(jobConfig)
@@ -233,6 +233,44 @@ var _ = Describe("Crucible", func() {
 
 					Expect(eventsCmd.Process.Kill()).To(Succeed())
 					Eventually(oomEventsChan).Should(BeClosed())
+				})
+			})
+
+			Context("open files", func() {
+				BeforeEach(func() {
+					jobConfig.Executable = "/bin/bash"
+					jobConfig.Args = []string{
+						"-c",
+						// See https://codegolf.stackexchange.com/questions/24485/create-a-memory-leak-without-any-fork-bombs
+						fmt.Sprintf(`file_dir=%s;
+						  start_file_leak() { for i in $(seq 1 20); do touch $file_dir/file-$i; done; tail -f $file_dir/* ;};
+							trap "kill $child" SIGTERM;
+							sleep 100 &
+							child=$!;
+							wait $child;
+							start_file_leak`, filepath.Join(boshConfigPath, "data", jobName, procName)),
+					}
+
+					limit := uint64(10)
+					jobConfig.Limits = &config.Limits{
+						OpenFiles: &limit,
+					}
+
+					writeConfig(jobConfig)
+				})
+
+				It("cannot open more files than permitted", func() {
+					session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+					Expect(err).NotTo(HaveOccurred())
+					Eventually(session).Should(gexec.Exit(0))
+
+					Eventually(func() string {
+						return runcState(containerID).Status
+					}).Should(Equal("running"))
+
+					Expect(exec.Command("runc", "kill", containerID).Run()).To(Succeed())
+
+					Eventually(fileContents(stderrFileLocation)).Should(ContainSubstring("Too many open files"))
 				})
 			})
 		})
