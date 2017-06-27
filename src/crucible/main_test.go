@@ -102,6 +102,7 @@ var _ = Describe("Crucible", func() {
 
 		stdoutFileLocation = filepath.Join(boshConfigPath, "sys", "log", jobName, procName+".out.log")
 		stderrFileLocation = filepath.Join(boshConfigPath, "sys", "log", jobName, procName+".err.log")
+
 		writeConfig(jobConfig)
 	})
 
@@ -110,6 +111,11 @@ var _ = Describe("Crucible", func() {
 		cmd := exec.Command("runc", "delete", "--force", containerID)
 		combinedOutput, err := cmd.CombinedOutput()
 		Expect(err).NotTo(HaveOccurred(), string(combinedOutput))
+
+		if CurrentGinkgoTestDescription().Failed {
+			fmt.Fprintf(GinkgoWriter, "STDOUT: %s\n", fileContents(stdoutFileLocation)())
+			fmt.Fprintf(GinkgoWriter, "STDERR: %s\n", fileContents(stderrFileLocation)())
+		}
 
 		err = os.RemoveAll(boshConfigPath)
 		Expect(err).NotTo(HaveOccurred())
