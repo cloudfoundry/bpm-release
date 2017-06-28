@@ -155,6 +155,7 @@ func (a *runcAdapter) BuildSpec(
 		Mounts:   mounts,
 		Linux: &specs.Linux{
 			MaskedPaths: []string{
+				"/etc/sv",
 				"/proc/kcore",
 				"/proc/latency_stats",
 				"/proc/timer_list",

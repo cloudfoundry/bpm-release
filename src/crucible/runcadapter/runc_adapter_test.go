@@ -239,6 +239,7 @@ var _ = Describe("RuncAdapter", func() {
 
 			Expect(spec.Linux.RootfsPropagation).To(Equal("private"))
 			Expect(spec.Linux.MaskedPaths).To(ConsistOf([]string{
+				"/etc/sv",
 				"/proc/kcore",
 				"/proc/latency_stats",
 				"/proc/timer_list",
