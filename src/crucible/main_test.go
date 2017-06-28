@@ -168,6 +168,26 @@ var _ = Describe("Crucible", func() {
 			Eventually(fileContents(stderrFileLocation)).Should(Equal("BAR is Foo\n"))
 		})
 
+		Context("capabilities", func() {
+			BeforeEach(func() {
+				jobConfig.Executable = "/bin/bash"
+				jobConfig.Args = []string{
+					"-c",
+					// See https://codegolf.stackexchange.com/questions/24485/create-a-memory-leak-without-any-fork-bombs
+					`cat /proc/1/status | grep CapEff`,
+				}
+
+				writeConfig(jobConfig)
+			})
+
+			It("has no effective capabilities", func() {
+				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+				Eventually(session).Should(gexec.Exit(0))
+				Eventually(fileContents(stdoutFileLocation)).Should(MatchRegexp("^\\s?CapEff:\\s?0000000000000000\\s?$"))
+			})
+		})
+
 		Context("resource limits", func() {
 			Context("memory", func() {
 				BeforeEach(func() {
