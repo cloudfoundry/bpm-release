@@ -63,3 +63,19 @@ You can start to read about the [runtime environment](docs/runtime.md) which
 Crucible provides to your job, the [configuration format](docs/config.md), and
 the [undefined behavior](docs/undefined.md) of the system.
 
+## Development
+
+Development is not currently supported on anything other than Linux, though running the docker based tests is possible on OSX.
+
+Dependencies required for local testing:
+* docker
+* golang
+
+The following steps should allow you to run the tests in a local docker container:
+```
+$ git clone git@github.com:pivotal-cf/crucible.git
+$ cd crucible
+$ direnv allow .envrc
+$ git submodule update --init --recursive
+$ ./scripts/test-with-docker 
+```
