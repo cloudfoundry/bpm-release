@@ -10,3 +10,4 @@ env:
 limits:
   memory: 100G
   open_files: 100
+  processes: 200
