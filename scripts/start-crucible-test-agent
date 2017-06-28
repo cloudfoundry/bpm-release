@@ -21,15 +21,13 @@ cp `which crucible-test-agent` /var/vcap/packages/crucible-test-agent/bin
 mkdir -p /var/vcap/jobs/crucible-test-agent/config/
 
 cat << EOF > /var/vcap/jobs/crucible-test-agent/config/crucible.yml
----
-process:
-  name: crucible-test-agent
-  executable: /var/vcap/packages/crucible-test-agent/bin/crucible-test-agent
-  args:
-    - --port
-    - 1337
-  env:
-    - CRUCIBLE=SWEET
+name: crucible-test-agent
+executable: /var/vcap/packages/crucible-test-agent/bin/crucible-test-agent
+args:
+  - --port
+  - 1337
+env:
+  - CRUCIBLE=SWEET
 EOF
 
-crucible start crucible-test-agent
+crucible start -j crucible-test-agent -c /var/vcap/jobs/crucible-test-agent/config/crucible.yml
