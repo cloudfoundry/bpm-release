@@ -32,7 +32,8 @@ var _ = Describe("Crucible", func() {
 		containerID,
 		jobConfigPath,
 		stdoutFileLocation,
-		stderrFileLocation string
+		stderrFileLocation,
+		crucibleLogFileLocation string
 
 		jobConfig *config.CrucibleConfig
 	)
@@ -100,8 +101,9 @@ var _ = Describe("Crucible", func() {
 			Env: []string{"FOO=BAR"},
 		}
 
-		stdoutFileLocation = filepath.Join(boshConfigPath, "sys", "log", jobName, procName+".out.log")
-		stderrFileLocation = filepath.Join(boshConfigPath, "sys", "log", jobName, procName+".err.log")
+		stdoutFileLocation = filepath.Join(boshConfigPath, "sys", "log", jobName, fmt.Sprintf("%s.out.log", procName))
+		stderrFileLocation = filepath.Join(boshConfigPath, "sys", "log", jobName, fmt.Sprintf("%s.err.log", procName))
+		crucibleLogFileLocation = filepath.Join(boshConfigPath, "sys", "log", jobName, "crucible.log")
 
 		writeConfig(jobConfig)
 	})
@@ -156,7 +158,7 @@ var _ = Describe("Crucible", func() {
 			Expect(pid).To(Equal(state.Pid))
 		})
 
-		It("redirects stdout and stderr to a standard location", func() {
+		It("redirects the processes stdout and stderr to a standard location", func() {
 			Expect(stdoutFileLocation).NotTo(BeAnExistingFile())
 			Expect(stderrFileLocation).NotTo(BeAnExistingFile())
 
@@ -166,6 +168,17 @@ var _ = Describe("Crucible", func() {
 
 			Eventually(fileContents(stdoutFileLocation)).Should(Equal("Foo is BAR\n"))
 			Eventually(fileContents(stderrFileLocation)).Should(Equal("BAR is Foo\n"))
+		})
+
+		It("logs crucible internal logs to a consistent location", func() {
+			Expect(crucibleLogFileLocation).NotTo(BeAnExistingFile())
+
+			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+			Eventually(session).Should(gexec.Exit(0))
+
+			Eventually(fileContents(crucibleLogFileLocation)).Should(ContainSubstring("crucible.start.starting"))
+			Eventually(fileContents(crucibleLogFileLocation)).Should(ContainSubstring("crucible.start.complete"))
 		})
 
 		Context("capabilities", func() {
@@ -363,11 +376,7 @@ var _ = Describe("Crucible", func() {
 				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 				Expect(err).ShouldNot(HaveOccurred())
 				Eventually(session).Should(gexec.Exit(1))
-
-				Expect(session.Err).Should(gbytes.Say(
-					"Error: failed to load config at %s: ",
-					"i am a bogus config path",
-				))
+				Expect(session.Err).Should(gbytes.Say("i am a bogus config path"))
 			})
 		})
 
@@ -465,6 +474,15 @@ var _ = Describe("Crucible", func() {
 			Expect(os.IsNotExist(err)).To(BeTrue())
 		})
 
+		It("logs crucible internal logs to a consistent location", func() {
+			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+			Eventually(session).Should(gexec.Exit(0))
+
+			Eventually(fileContents(crucibleLogFileLocation)).Should(ContainSubstring("crucible.stop.starting"))
+			Eventually(fileContents(crucibleLogFileLocation)).Should(ContainSubstring("crucible.stop.complete"))
+		})
+
 		Context("when the job name is not specified", func() {
 			It("exits with a non-zero exit code and prints the usage", func() {
 				command = exec.Command(cruciblePath, "stop")
@@ -499,11 +517,7 @@ var _ = Describe("Crucible", func() {
 				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 				Expect(err).ShouldNot(HaveOccurred())
 				Eventually(session).Should(gexec.Exit(1))
-
-				Expect(session.Err).Should(gbytes.Say(
-					"Error: failed to load config at %s: ",
-					"i am a bogus config path",
-				))
+				Expect(session.Err).Should(gbytes.Say("i am a bogus config path"))
 			})
 		})
 	})

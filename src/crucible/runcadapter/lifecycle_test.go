@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"code.cloudfoundry.org/clock/fakeclock"
+	"code.cloudfoundry.org/lager/lagertest"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -23,6 +24,8 @@ var _ = Describe("RuncJobLifecycle", func() {
 		fakeRuncAdapter  *runcadapterfakes.FakeRuncAdapter
 		fakeRuncClient   *runcadapterfakes.FakeRuncClient
 		fakeUserIDFinder *runcadapterfakes.FakeUserIDFinder
+
+		logger *lagertest.TestLogger
 
 		jobConfig *config.CrucibleConfig
 		jobSpec   specs.Spec
@@ -47,6 +50,8 @@ var _ = Describe("RuncJobLifecycle", func() {
 		fakeRuncAdapter = &runcadapterfakes.FakeRuncAdapter{}
 		fakeRuncClient = &runcadapterfakes.FakeRuncClient{}
 		fakeUserIDFinder = &runcadapterfakes.FakeUserIDFinder{}
+
+		logger = lagertest.NewTestLogger("lifecycle")
 
 		expectedUser = specs.User{Username: "vcap", UID: 300, GID: 400}
 		fakeUserIDFinder.LookupReturns(expectedUser, nil)
@@ -195,7 +200,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 		})
 
 		It("stops the container", func() {
-			err := runcLifecycle.StopJob(exitTimeout)
+			err := runcLifecycle.StopJob(logger, exitTimeout)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(fakeRuncClient.StopContainerCallCount()).To(Equal(1))
@@ -226,7 +231,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 				errChan := make(chan error)
 				go func() {
 					defer GinkgoRecover()
-					errChan <- runcLifecycle.StopJob(exitTimeout)
+					errChan <- runcLifecycle.StopJob(logger, exitTimeout)
 				}()
 
 				Eventually(fakeRuncClient.StopContainerCallCount).Should(Equal(1))
@@ -254,7 +259,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 					errChan := make(chan error)
 					go func() {
 						defer GinkgoRecover()
-						errChan <- runcLifecycle.StopJob(exitTimeout)
+						errChan <- runcLifecycle.StopJob(logger, exitTimeout)
 					}()
 
 					Eventually(fakeRuncClient.StopContainerCallCount).Should(Equal(1))
@@ -286,7 +291,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 				errChan := make(chan error)
 				go func() {
 					defer GinkgoRecover()
-					errChan <- runcLifecycle.StopJob(exitTimeout)
+					errChan <- runcLifecycle.StopJob(logger, exitTimeout)
 				}()
 
 				Eventually(fakeRuncClient.ContainerStateCallCount).Should(Equal(1))
@@ -319,7 +324,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 			})
 
 			It("returns an error", func() {
-				err := runcLifecycle.StopJob(exitTimeout)
+				err := runcLifecycle.StopJob(logger, exitTimeout)
 				Expect(err).To(Equal(expectedErr))
 			})
 		})

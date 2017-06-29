@@ -7,6 +7,8 @@ dependencies:
 files:
   - code.cloudfoundry.org/bytefmt/*.go # gosub
   - code.cloudfoundry.org/clock/*.go # gosub
+  - code.cloudfoundry.org/lager/*.go # gosub
+  - code.cloudfoundry.org/lager/lagerflags/*.go # gosub
   - crucible/*.go # gosub
   - crucible/commands/*.go # gosub
   - crucible/config/*.go # gosub

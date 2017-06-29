@@ -4,9 +4,9 @@ import (
 	"crucible/config"
 	"crucible/runcadapter"
 	"errors"
-	"fmt"
 
 	"code.cloudfoundry.org/clock"
+	"code.cloudfoundry.org/lager"
 
 	"github.com/spf13/cobra"
 )
@@ -18,21 +18,31 @@ func init() {
 }
 
 var startCommand = &cobra.Command{
-	Long:  "Starts a BOSH Process",
-	RunE:  start,
-	Short: "Starts a BOSH Process",
-	Use:   "start <job-name>",
+	Long:              "Starts a BOSH Process",
+	RunE:              start,
+	Short:             "Starts a BOSH Process",
+	Use:               "start <job-name>",
+	PersistentPreRunE: startPre,
 }
 
-func start(cmd *cobra.Command, _ []string) error {
+func startPre(cmd *cobra.Command, _ []string) error {
 	if err := validateStartFlags(jobName, configPath); err != nil {
 		return err
 	}
 
+	return setupCrucibleLogs(cmd, []string{})
+}
+
+func start(cmd *cobra.Command, _ []string) error {
 	jobConfig, err := config.ParseConfig(configPath)
 	if err != nil {
-		return fmt.Errorf("failed to load config at %s: %s", configPath, err.Error())
+		logger.Error("failed-to-parse-config", err)
+		return err
 	}
+
+	logger = logger.Session("start", lager.Data{"process": jobConfig.Name})
+	logger.Info("starting")
+	defer logger.Info("complete")
 
 	runcClient := runcadapter.NewRuncClient(config.RuncPath())
 	runcAdapter := runcadapter.NewRuncAdapter()
@@ -51,9 +61,11 @@ func start(cmd *cobra.Command, _ []string) error {
 
 	err = jobLifecycle.StartJob()
 	if err != nil {
+		logger.Error("failed-to-start", err)
+
 		removeErr := jobLifecycle.RemoveJob()
 		if removeErr != nil {
-			fmt.Fprintf(cmd.OutOrStderr(), "failed to remove failed job: %s\n", removeErr.Error())
+			logger.Error("failed-to-cleanup", removeErr)
 		}
 
 		return err

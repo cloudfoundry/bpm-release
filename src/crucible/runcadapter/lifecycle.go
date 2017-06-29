@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"code.cloudfoundry.org/clock"
+	"code.cloudfoundry.org/lager"
 )
 
 const VCAP_USER = "vcap"
@@ -79,7 +80,7 @@ func (j *RuncJobLifecycle) StartJob() error {
 	)
 }
 
-func (j *RuncJobLifecycle) StopJob(exitTimeout time.Duration) error {
+func (j *RuncJobLifecycle) StopJob(logger lager.Logger, exitTimeout time.Duration) error {
 	cid := containerID(j.jobName, j.cfg.Name)
 
 	err := j.runcClient.StopContainer(cid)
@@ -88,12 +89,12 @@ func (j *RuncJobLifecycle) StopJob(exitTimeout time.Duration) error {
 	}
 
 	state, err := j.runcClient.ContainerState(cid)
-	if err == nil {
+	if err != nil {
+		logger.Error("failed-to-fetch-state", err)
+	} else {
 		if state.Status == "stopped" {
 			return nil
 		}
-	} else {
-		// TODO: Log Here
 	}
 
 	stateTicker := j.clock.NewTicker(1 * time.Second)
@@ -103,12 +104,12 @@ func (j *RuncJobLifecycle) StopJob(exitTimeout time.Duration) error {
 		select {
 		case <-stateTicker.C():
 			state, err = j.runcClient.ContainerState(cid)
-			if err == nil {
+			if err != nil {
+				logger.Error("failed-to-fetch-state", err)
+			} else {
 				if state.Status == "stopped" {
 					return nil
 				}
-			} else {
-				// TODO: Log Here
 			}
 		case <-timeout.C():
 			return TimeoutError

@@ -4,10 +4,10 @@ import (
 	"crucible/config"
 	"crucible/runcadapter"
 	"errors"
-	"fmt"
 	"time"
 
 	"code.cloudfoundry.org/clock"
+	"code.cloudfoundry.org/lager"
 
 	"github.com/spf13/cobra"
 )
@@ -21,21 +21,31 @@ func init() {
 }
 
 var stopCommand = &cobra.Command{
-	Long:  "Stops a BOSH Process",
-	RunE:  stop,
-	Short: "Stops a BOSH Process",
-	Use:   "stop <job-name>",
+	Long:    "Stops a BOSH Process",
+	RunE:    stop,
+	Short:   "Stops a BOSH Process",
+	Use:     "stop <job-name>",
+	PreRunE: stopPre,
 }
 
-func stop(cmd *cobra.Command, _ []string) error {
+func stopPre(cmd *cobra.Command, _ []string) error {
 	if err := validateStopFlags(jobName, configPath); err != nil {
 		return err
 	}
 
+	return setupCrucibleLogs(cmd, []string{})
+}
+
+func stop(cmd *cobra.Command, _ []string) error {
 	jobConfig, err := config.ParseConfig(configPath)
 	if err != nil {
-		return fmt.Errorf("failed to load config at %s: %s", configPath, err.Error())
+		logger.Error("failed-to-parse-config", err)
+		return err
 	}
+
+	logger = logger.Session("stop", lager.Data{"process": jobConfig.Name})
+	logger.Info("starting")
+	defer logger.Info("complete")
 
 	runcClient := runcadapter.NewRuncClient(config.RuncPath())
 	runcAdapter := runcadapter.NewRuncAdapter()
@@ -52,9 +62,9 @@ func stop(cmd *cobra.Command, _ []string) error {
 		jobConfig,
 	)
 
-	err = jobLifecycle.StopJob(DEFAULT_STOP_TIMEOUT)
+	err = jobLifecycle.StopJob(logger, DEFAULT_STOP_TIMEOUT)
 	if err != nil {
-		fmt.Fprintf(cmd.OutOrStderr(), "failed to stop job: %s\n", err.Error())
+		logger.Error("failed-to-stop", err)
 	}
 
 	return jobLifecycle.RemoveJob()
