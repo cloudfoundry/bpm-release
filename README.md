@@ -72,10 +72,23 @@ Dependencies required for local testing:
 * golang
 
 The following steps should allow you to run the tests in a local docker container:
-```
-$ git clone git@github.com:pivotal-cf/crucible.git
-$ cd crucible
-$ direnv allow .envrc
-$ git submodule update --init --recursive
-$ ./scripts/test-with-docker 
-```
+
+* Enable swap accounting
+  ```
+  $ sudo sed -i 's/GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="swapaccount=1"/' /etc/default/grub 
+  $ sudo update-grub
+  ```
+  * Restart the machine
+* Clone the repo and submodules
+  ```
+  $ cd ~/workspace
+  $ git clone git@github.com:pivotal-cf/crucible.git
+  $ cd ~/workspace/crucible
+  $ git submodule update --init --recursive
+  ```
+* Enable `direnv` and run tests
+  ```
+  $ cd ~/workspace/crucible
+  $ direnv allow .envrc
+  $ ./scripts/test-with-docker 
+  ```
