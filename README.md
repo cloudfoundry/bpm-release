@@ -86,6 +86,10 @@ The following steps should allow you to run the tests in a local docker containe
   $ cd ~/workspace/crucible
   $ git submodule update --init --recursive
   ```
+* Install `counterfiter` for generating fakes
+  ```
+  $ cd && go get github.com/maxbrunsfeld/counterfeiter
+  ```
 * Enable `direnv` and run tests
   ```
   $ cd ~/workspace/crucible
