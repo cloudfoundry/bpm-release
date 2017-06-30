@@ -47,7 +47,7 @@ func stop(cmd *cobra.Command, _ []string) error {
 	logger.Info("starting")
 	defer logger.Info("complete")
 
-	runcClient := runcadapter.NewRuncClient(config.RuncPath())
+	runcClient := runcadapter.NewRuncClient(config.RuncPath(), config.RuncRoot())
 	runcAdapter := runcadapter.NewRuncAdapter()
 	userIDFinder := runcadapter.NewUserIDFinder()
 	clock := clock.NewClock()
@@ -58,16 +58,14 @@ func stop(cmd *cobra.Command, _ []string) error {
 		userIDFinder,
 		clock,
 		config.BoshRoot(),
-		jobName,
-		jobConfig,
 	)
 
-	err = jobLifecycle.StopJob(logger, DEFAULT_STOP_TIMEOUT)
+	err = jobLifecycle.StopJob(logger, jobName, jobConfig, DEFAULT_STOP_TIMEOUT)
 	if err != nil {
 		logger.Error("failed-to-stop", err)
 	}
 
-	return jobLifecycle.RemoveJob()
+	return jobLifecycle.RemoveJob(jobName, jobConfig)
 }
 
 func validateStopFlags(jobName, configPath string) error {

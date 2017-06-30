@@ -2,6 +2,7 @@ package runcadapter_test
 
 import (
 	"crucible/config"
+	"crucible/models"
 	"crucible/runcadapter"
 	"crucible/runcadapter/runcadapterfakes"
 	"errors"
@@ -85,8 +86,6 @@ var _ = Describe("RuncJobLifecycle", func() {
 			fakeUserIDFinder,
 			fakeClock,
 			expectedSystemRoot,
-			expectedJobName,
-			jobConfig,
 		)
 	})
 
@@ -97,7 +96,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 	Describe("StartJob", func() {
 		It("builds the runc spec, bundle, and runs the container", func() {
-			err := runcLifecycle.StartJob()
+			err := runcLifecycle.StartJob(expectedJobName, jobConfig)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(fakeUserIDFinder.LookupCallCount()).To(Equal(1))
@@ -138,7 +137,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 			})
 
 			It("returns an error", func() {
-				err := runcLifecycle.StartJob()
+				err := runcLifecycle.StartJob(expectedJobName, jobConfig)
 				Expect(err).To(HaveOccurred())
 			})
 		})
@@ -149,7 +148,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 			})
 
 			It("returns an error", func() {
-				err := runcLifecycle.StartJob()
+				err := runcLifecycle.StartJob(expectedJobName, jobConfig)
 				Expect(err).To(HaveOccurred())
 			})
 		})
@@ -160,7 +159,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 			})
 
 			It("returns an error", func() {
-				err := runcLifecycle.StartJob()
+				err := runcLifecycle.StartJob(expectedJobName, jobConfig)
 				Expect(err).To(HaveOccurred())
 			})
 		})
@@ -171,7 +170,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 			})
 
 			It("returns an error", func() {
-				err := runcLifecycle.StartJob()
+				err := runcLifecycle.StartJob(expectedJobName, jobConfig)
 				Expect(err).To(HaveOccurred())
 			})
 		})
@@ -182,7 +181,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 			})
 
 			It("returns an error", func() {
-				err := runcLifecycle.StartJob()
+				err := runcLifecycle.StartJob(expectedJobName, jobConfig)
 				Expect(err).To(HaveOccurred())
 			})
 		})
@@ -200,7 +199,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 		})
 
 		It("stops the container", func() {
-			err := runcLifecycle.StopJob(logger, exitTimeout)
+			err := runcLifecycle.StopJob(logger, expectedJobName, jobConfig, exitTimeout)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(fakeRuncClient.StopContainerCallCount()).To(Equal(1))
@@ -231,7 +230,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 				errChan := make(chan error)
 				go func() {
 					defer GinkgoRecover()
-					errChan <- runcLifecycle.StopJob(logger, exitTimeout)
+					errChan <- runcLifecycle.StopJob(logger, expectedJobName, jobConfig, exitTimeout)
 				}()
 
 				Eventually(fakeRuncClient.StopContainerCallCount).Should(Equal(1))
@@ -259,7 +258,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 					errChan := make(chan error)
 					go func() {
 						defer GinkgoRecover()
-						errChan <- runcLifecycle.StopJob(logger, exitTimeout)
+						errChan <- runcLifecycle.StopJob(logger, expectedJobName, jobConfig, exitTimeout)
 					}()
 
 					Eventually(fakeRuncClient.StopContainerCallCount).Should(Equal(1))
@@ -291,7 +290,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 				errChan := make(chan error)
 				go func() {
 					defer GinkgoRecover()
-					errChan <- runcLifecycle.StopJob(logger, exitTimeout)
+					errChan <- runcLifecycle.StopJob(logger, expectedJobName, jobConfig, exitTimeout)
 				}()
 
 				Eventually(fakeRuncClient.ContainerStateCallCount).Should(Equal(1))
@@ -324,7 +323,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 			})
 
 			It("returns an error", func() {
-				err := runcLifecycle.StopJob(logger, exitTimeout)
+				err := runcLifecycle.StopJob(logger, expectedJobName, jobConfig, exitTimeout)
 				Expect(err).To(Equal(expectedErr))
 			})
 		})
@@ -332,7 +331,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 	Describe("RemoveJob", func() {
 		It("deletes the container", func() {
-			err := runcLifecycle.RemoveJob()
+			err := runcLifecycle.RemoveJob(expectedJobName, jobConfig)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(fakeRuncClient.DeleteContainerCallCount()).To(Equal(1))
@@ -341,7 +340,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 		})
 
 		It("destroys the bundle", func() {
-			err := runcLifecycle.RemoveJob()
+			err := runcLifecycle.RemoveJob(expectedJobName, jobConfig)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(fakeRuncClient.DestroyBundleCallCount()).To(Equal(1))
@@ -358,7 +357,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 			})
 
 			It("returns an error", func() {
-				err := runcLifecycle.RemoveJob()
+				err := runcLifecycle.RemoveJob(expectedJobName, jobConfig)
 				Expect(err).To(Equal(expectedErr))
 			})
 		})
@@ -367,7 +366,50 @@ var _ = Describe("RuncJobLifecycle", func() {
 			It("returns an error", func() {
 				expectedErr := errors.New("an error2")
 				fakeRuncClient.DestroyBundleReturns(expectedErr)
-				err := runcLifecycle.RemoveJob()
+				err := runcLifecycle.RemoveJob(expectedJobName, jobConfig)
+				Expect(err).To(Equal(expectedErr))
+			})
+		})
+	})
+
+	Describe("ListJobs", func() {
+		It("calls the runc client", func() {
+			_, err := runcLifecycle.ListJobs()
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(fakeRuncClient.ListContainersCallCount()).To(Equal(1))
+		})
+
+		It("returns a list of crucible jobs", func() {
+			containerStates := []runcadapter.ContainerState{
+				{
+					ID:             "job-process-2",
+					InitProcessPid: 23456,
+					Status:         "created",
+				},
+				{
+					ID:             "job-process-1",
+					InitProcessPid: 34567,
+					Status:         "running",
+				},
+			}
+			fakeRuncClient.ListContainersReturns(containerStates, nil)
+
+			crucibleJobs, err := runcLifecycle.ListJobs()
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(crucibleJobs).To(ConsistOf([]models.Job{
+				{Name: "job-process-2", Pid: 23456, Status: "created"},
+				{Name: "job-process-1", Pid: 34567, Status: "running"},
+			}))
+		})
+
+		Context("when listing jobs fails", func() {
+			It("returns an error", func() {
+				expectedErr := errors.New("list jobs error")
+				fakeRuncClient.ListContainersReturns([]runcadapter.ContainerState{}, expectedErr)
+
+				_, err := runcLifecycle.ListJobs()
 				Expect(err).To(Equal(expectedErr))
 			})
 		})

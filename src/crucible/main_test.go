@@ -33,6 +33,7 @@ var _ = Describe("Crucible", func() {
 		jobConfigPath,
 		stdoutFileLocation,
 		stderrFileLocation,
+		runcRoot,
 		crucibleLogFileLocation string
 
 		jobConfig *config.CrucibleConfig
@@ -58,6 +59,11 @@ var _ = Describe("Crucible", func() {
 		n, err := f.Write(data)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(n).To(Equal(len(data)))
+	}
+
+	var runcCommand = func(args ...string) *exec.Cmd {
+		args = append([]string{runcRoot}, args...)
+		return exec.Command("runc", args...)
 	}
 
 	BeforeEach(func() {
@@ -106,11 +112,13 @@ var _ = Describe("Crucible", func() {
 		crucibleLogFileLocation = filepath.Join(boshConfigPath, "sys", "log", jobName, "crucible.log")
 
 		writeConfig(jobConfig)
+
+		runcRoot = fmt.Sprintf("--root=%s", filepath.Join(boshConfigPath, "data", "crucible", "runc"))
 	})
 
 	AfterEach(func() {
 		// using force, as we cannot delete a running container.
-		cmd := exec.Command("runc", "delete", "--force", containerID)
+		cmd := runcCommand("delete", "--force", containerID)
 		combinedOutput, err := cmd.CombinedOutput()
 		Expect(err).NotTo(HaveOccurred(), string(combinedOutput))
 
@@ -124,7 +132,7 @@ var _ = Describe("Crucible", func() {
 	})
 
 	runcState := func(cid string) specs.State {
-		cmd := exec.Command("runc", "state", cid)
+		cmd := runcCommand("state", cid)
 		cmd.Stderr = GinkgoWriter
 
 		data, err := cmd.Output()
@@ -259,14 +267,14 @@ var _ = Describe("Crucible", func() {
 						return runcState(containerID).Status
 					}).Should(Equal("running"))
 
-					eventsCmd := exec.Command("runc", "events", containerID)
+					eventsCmd := runcCommand("events", containerID)
 					stdout, err := eventsCmd.StdoutPipe()
 					Expect(err).NotTo(HaveOccurred())
 
 					oomEventsChan := streamOOMEvents(stdout)
 					Expect(eventsCmd.Start()).To(Succeed())
 
-					Expect(exec.Command("runc", "kill", containerID).Run()).To(Succeed())
+					Expect(runcCommand("kill", containerID).Run()).To(Succeed())
 
 					Eventually(oomEventsChan).Should(Receive())
 
@@ -307,7 +315,7 @@ var _ = Describe("Crucible", func() {
 						return runcState(containerID).Status
 					}).Should(Equal("running"))
 
-					Expect(exec.Command("runc", "kill", containerID).Run()).To(Succeed())
+					Expect(runcCommand("kill", containerID).Run()).To(Succeed())
 
 					Eventually(fileContents(stderrFileLocation)).Should(ContainSubstring("Too many open files"))
 				})
@@ -344,7 +352,7 @@ var _ = Describe("Crucible", func() {
 						return runcState(containerID).Status
 					}).Should(Equal("running"))
 
-					Expect(exec.Command("runc", "kill", containerID).Run()).To(Succeed())
+					Expect(runcCommand("kill", containerID).Run()).To(Succeed())
 
 					Eventually(fileContents(stderrFileLocation)).Should(ContainSubstring("fork: retry: Resource temporarily unavailable"))
 				})
@@ -425,8 +433,7 @@ var _ = Describe("Crucible", func() {
 				Expect(err).To(HaveOccurred())
 				Expect(os.IsNotExist(err)).To(BeTrue())
 
-				cmd := exec.Command("runc", "state", containerID)
-				Expect(cmd.Run()).To(HaveOccurred())
+				Expect(runcCommand("state", containerID).Run()).To(HaveOccurred())
 			})
 		})
 	})
@@ -459,9 +466,7 @@ var _ = Describe("Crucible", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Eventually(session).Should(gexec.Exit(0))
 
-			cmd := exec.Command("runc", "state", containerID)
-			err = cmd.Run()
-			Expect(err).To(HaveOccurred())
+			Expect(runcCommand("state", containerID).Run()).To(HaveOccurred())
 		})
 
 		It("removes the bundle directory", func() {
@@ -518,6 +523,59 @@ var _ = Describe("Crucible", func() {
 				Expect(err).ShouldNot(HaveOccurred())
 				Eventually(session).Should(gexec.Exit(1))
 				Expect(session.Err).Should(gbytes.Say("i am a bogus config path"))
+			})
+		})
+	})
+
+	Context("list", func() {
+		Context("with running and stopped containers", func() {
+			var otherJobName string
+
+			BeforeEach(func() {
+				startCmd := exec.Command(cruciblePath, "start", "-j", jobName, "-c", jobConfigPath)
+				startCmd.Env = append(startCmd.Env, fmt.Sprintf("CRUCIBLE_BOSH_ROOT=%s", boshConfigPath))
+
+				session, err := gexec.Start(startCmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).ShouldNot(HaveOccurred())
+				Eventually(session).Should(gexec.Exit(0))
+
+				otherJobName = "example-2"
+				Expect(os.MkdirAll(filepath.Join(boshConfigPath, "jobs", otherJobName, "config"), 0755)).NotTo(HaveOccurred())
+
+				startCmd = exec.Command(cruciblePath, "start", "-j", otherJobName, "-c", jobConfigPath)
+				startCmd.Env = append(startCmd.Env, fmt.Sprintf("CRUCIBLE_BOSH_ROOT=%s", boshConfigPath))
+
+				session, err = gexec.Start(startCmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).ShouldNot(HaveOccurred())
+				Eventually(session).Should(gexec.Exit(0))
+			})
+
+			It("lists the running jobs and their state", func() {
+				listCmd := exec.Command(cruciblePath, "list")
+				listCmd.Env = append(listCmd.Env, fmt.Sprintf("CRUCIBLE_BOSH_ROOT=%s", boshConfigPath))
+
+				session, err := gexec.Start(listCmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).ShouldNot(HaveOccurred())
+
+				state := runcState(containerID)
+				otherState := runcState(fmt.Sprintf("%s-%s", otherJobName, procName))
+
+				Eventually(session).Should(gexec.Exit(0))
+				Expect(session.Out).Should(gbytes.Say("Name\\s+Pid\\s+Status"))
+				Expect(session.Out).Should(gbytes.Say(fmt.Sprintf("%s\\s+%d\\s+%s", state.ID, state.Pid, state.Status)))
+				Expect(session.Out).Should(gbytes.Say(fmt.Sprintf("%s\\s+%d\\s+%s", otherState.ID, otherState.Pid, otherState.Status)))
+			})
+		})
+
+		Context("when no containers are running", func() {
+			It("prints no output", func() {
+				listCmd := exec.Command(cruciblePath, "list")
+
+				session, err := gexec.Start(listCmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).ShouldNot(HaveOccurred())
+
+				Eventually(session).Should(gexec.Exit(0))
+				Expect(session.Out).Should(gbytes.Say(""))
 			})
 		})
 	})

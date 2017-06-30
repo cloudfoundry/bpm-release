@@ -23,7 +23,10 @@ var _ = Describe("RuncClient", func() {
 
 	BeforeEach(func() {
 		user = specs.User{UID: 200, GID: 300, Username: "vcap"}
-		runcClient = runcadapter.NewRuncClient("/var/vcap/packages/runc/bin/runc")
+		runcClient = runcadapter.NewRuncClient(
+			"/var/vcap/packages/runc/bin/runc",
+			"/var/vcap/data/crucible/runc",
+		)
 	})
 
 	Context("CreateBundle", func() {

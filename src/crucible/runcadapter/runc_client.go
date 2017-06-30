@@ -16,18 +16,31 @@ type RuncClient interface {
 	CreateBundle(bundlePath string, jobSpec specs.Spec, user specs.User) error
 	RunContainer(pidFilePath, bundlePath, containerID string, stdout, stderr io.Writer) error
 	ContainerState(containerID string) (specs.State, error)
+	ListContainers() ([]ContainerState, error)
 	StopContainer(containerID string) error
 	DeleteContainer(containerID string) error
 	DestroyBundle(bundlePath string) error
 }
 
-type runcClient struct {
-	runcPath string
+// https://github.com/opencontainers/runc/blob/master/list.go#L24-L45
+type ContainerState struct {
+	// ID is the container ID
+	ID string `json:"id"`
+	// InitProcessPid is the init process id in the parent namespace
+	InitProcessPid int `json:"pid"`
+	// Status is the current status of the container, running, paused, ...
+	Status string `json:"status"`
 }
 
-func NewRuncClient(runcPath string) RuncClient {
+type runcClient struct {
+	runcPath string
+	runcRoot string
+}
+
+func NewRuncClient(runcPath, runcRoot string) RuncClient {
 	return &runcClient{
 		runcPath: runcPath,
+		runcRoot: runcRoot,
 	}
 }
 
@@ -63,6 +76,7 @@ func (*runcClient) CreateBundle(bundlePath string, jobSpec specs.Spec, user spec
 func (c *runcClient) RunContainer(pidFilePath, bundlePath, containerID string, stdout, stderr io.Writer) error {
 	runcCmd := exec.Command(
 		c.runcPath,
+		"--root", c.runcRoot,
 		"run",
 		"--bundle", bundlePath,
 		"--pid-file", pidFilePath,
@@ -79,6 +93,7 @@ func (c *runcClient) RunContainer(pidFilePath, bundlePath, containerID string, s
 func (c *runcClient) ContainerState(containerID string) (specs.State, error) {
 	runcCmd := exec.Command(
 		c.runcPath,
+		"--root", c.runcRoot,
 		"state",
 		containerID,
 	)
@@ -97,9 +112,32 @@ func (c *runcClient) ContainerState(containerID string) (specs.State, error) {
 	return state, nil
 }
 
+func (c *runcClient) ListContainers() ([]ContainerState, error) {
+	runcCmd := exec.Command(
+		c.runcPath,
+		"--root", c.runcRoot,
+		"list",
+		"--format", "json",
+	)
+
+	data, err := runcCmd.CombinedOutput()
+	if err != nil {
+		return []ContainerState{}, err
+	}
+
+	var containerStates []ContainerState
+	err = json.Unmarshal(data, &containerStates)
+	if err != nil {
+		return []ContainerState{}, err
+	}
+
+	return containerStates, nil
+}
+
 func (c *runcClient) StopContainer(containerID string) error {
 	runcCmd := exec.Command(
 		c.runcPath,
+		"--root", c.runcRoot,
 		"kill",
 		containerID,
 	)
@@ -110,6 +148,7 @@ func (c *runcClient) StopContainer(containerID string) error {
 func (c *runcClient) DeleteContainer(containerID string) error {
 	runcCmd := exec.Command(
 		c.runcPath,
+		"--root", c.runcRoot,
 		"delete",
 		"-f",
 		containerID,

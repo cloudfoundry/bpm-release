@@ -71,3 +71,7 @@ func RuncPath() string {
 func BundlesRoot() string {
 	return filepath.Join(BoshRoot(), "data", "crucible", "bundles")
 }
+
+func RuncRoot() string {
+	return filepath.Join(BoshRoot(), "data", "crucible", "runc")
+}

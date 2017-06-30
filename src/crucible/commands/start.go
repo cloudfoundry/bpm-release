@@ -44,7 +44,7 @@ func start(cmd *cobra.Command, _ []string) error {
 	logger.Info("starting")
 	defer logger.Info("complete")
 
-	runcClient := runcadapter.NewRuncClient(config.RuncPath())
+	runcClient := runcadapter.NewRuncClient(config.RuncPath(), config.RuncRoot())
 	runcAdapter := runcadapter.NewRuncAdapter()
 	userIDFinder := runcadapter.NewUserIDFinder()
 	clock := clock.NewClock()
@@ -55,15 +55,13 @@ func start(cmd *cobra.Command, _ []string) error {
 		userIDFinder,
 		clock,
 		config.BoshRoot(),
-		jobName,
-		jobConfig,
 	)
 
-	err = jobLifecycle.StartJob()
+	err = jobLifecycle.StartJob(jobName, jobConfig)
 	if err != nil {
 		logger.Error("failed-to-start", err)
 
-		removeErr := jobLifecycle.RemoveJob()
+		removeErr := jobLifecycle.RemoveJob(jobName, jobConfig)
 		if removeErr != nil {
 			logger.Error("failed-to-cleanup", removeErr)
 		}

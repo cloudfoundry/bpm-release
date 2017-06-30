@@ -22,7 +22,7 @@ var RootCmd = &cobra.Command{
 	Short:         "A bosh process manager for starting and stopping release jobs",
 	SilenceErrors: true,
 	Use:           "crucible",
-	ValidArgs:     []string{"start", "stop"},
+	ValidArgs:     []string{"start", "stop", "list"},
 }
 
 func root(cmd *cobra.Command, args []string) error {
