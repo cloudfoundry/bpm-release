@@ -77,8 +77,8 @@ The following steps should allow you to run the tests in a local docker containe
   ```
   $ sudo sed -i 's/GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="swapaccount=1"/' /etc/default/grub 
   $ sudo update-grub
+  $ sudo reboot
   ```
-  * Restart the machine
 * Clone the repo and submodules
   ```
   $ cd ~/workspace
