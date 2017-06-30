@@ -12,7 +12,7 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
-const ROOT_UID = 0
+const RootUID = 0
 
 //go:generate counterfeiter . RuncAdapter
 
@@ -48,7 +48,7 @@ func (a *runcAdapter) CreateJobPrerequisites(
 	if err != nil {
 		return "", nil, nil, err
 	}
-	err = os.Chown(jobLogDir, ROOT_UID, int(user.GID))
+	err = os.Chown(jobLogDir, RootUID, int(user.GID))
 	if err != nil {
 		return "", nil, nil, err
 	}

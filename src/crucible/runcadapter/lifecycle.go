@@ -12,7 +12,7 @@ import (
 	"code.cloudfoundry.org/lager"
 )
 
-const VCAP_USER = "vcap"
+const VcapUser = "vcap"
 
 var TimeoutError = errors.New("failed to stop job within timeout")
 
@@ -41,7 +41,7 @@ func NewRuncJobLifecycle(
 }
 
 func (j *RuncJobLifecycle) StartJob(jobName string, cfg *config.CrucibleConfig) error {
-	user, err := j.userIDFinder.Lookup(VCAP_USER)
+	user, err := j.userIDFinder.Lookup(VcapUser)
 	if err != nil {
 		return err
 	}

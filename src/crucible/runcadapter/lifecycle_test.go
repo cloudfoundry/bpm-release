@@ -100,7 +100,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(fakeUserIDFinder.LookupCallCount()).To(Equal(1))
-			Expect(fakeUserIDFinder.LookupArgsForCall(0)).To(Equal(runcadapter.VCAP_USER))
+			Expect(fakeUserIDFinder.LookupArgsForCall(0)).To(Equal(runcadapter.VcapUser))
 
 			Expect(fakeRuncAdapter.CreateJobPrerequisitesCallCount()).To(Equal(1))
 			systemRoot, jobName, cfg, user := fakeRuncAdapter.CreateJobPrerequisitesArgsForCall(0)

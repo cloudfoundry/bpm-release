@@ -41,7 +41,7 @@ func setupCrucibleLogs(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	usr, err := runcadapter.NewUserIDFinder().Lookup(runcadapter.VCAP_USER)
+	usr, err := runcadapter.NewUserIDFinder().Lookup(runcadapter.VcapUser)
 	if err != nil {
 		return err
 	}

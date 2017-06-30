@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const DEFAULT_STOP_TIMEOUT = 20 * time.Second
+const DefaultStopTimeout = 20 * time.Second
 
 func init() {
 	stopCommand.Flags().StringVarP(&jobName, "job", "j", "", "The job name.")
@@ -60,7 +60,7 @@ func stop(cmd *cobra.Command, _ []string) error {
 		config.BoshRoot(),
 	)
 
-	err = jobLifecycle.StopJob(logger, jobName, jobConfig, DEFAULT_STOP_TIMEOUT)
+	err = jobLifecycle.StopJob(logger, jobName, jobConfig, DefaultStopTimeout)
 	if err != nil {
 		logger.Error("failed-to-stop", err)
 	}
