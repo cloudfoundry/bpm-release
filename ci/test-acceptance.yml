@@ -4,9 +4,7 @@ platform: linux
 image_resource:
   type: docker-image
   source:
-    # repository: bosh/main-bosh-docker
-    repository: dpb587/bosh-main-bosh-docker
-    tag: scratch
+    repository: bosh/main-bosh-docker
 
 inputs:
 - name: crucible
