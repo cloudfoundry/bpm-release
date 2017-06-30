@@ -1,8 +1,11 @@
-package runcadapter
+package lifecycle
 
 import (
 	"crucible/config"
 	"crucible/models"
+	"crucible/runc/adapter"
+	"crucible/runc/client"
+	"crucible/usertools"
 	"errors"
 	"fmt"
 	"path/filepath"
@@ -12,36 +15,34 @@ import (
 	"code.cloudfoundry.org/lager"
 )
 
-const VcapUser = "vcap"
-
 var TimeoutError = errors.New("failed to stop job within timeout")
 
-type RuncJobLifecycle struct {
-	clock        clock.Clock
-	runcClient   RuncClient
-	runcAdapter  RuncAdapter
-	systemRoot   string
-	userIDFinder UserIDFinder
+type RuncLifecycle struct {
+	clock       clock.Clock
+	runcClient  client.RuncClient
+	runcAdapter adapter.RuncAdapter
+	systemRoot  string
+	userFinder  usertools.UserFinder
 }
 
-func NewRuncJobLifecycle(
-	runcClient RuncClient,
-	runcAdapter RuncAdapter,
-	userIDFinder UserIDFinder,
+func NewRuncLifecycle(
+	runcClient client.RuncClient,
+	runcAdapter adapter.RuncAdapter,
+	userFinder usertools.UserFinder,
 	clock clock.Clock,
 	systemRoot string,
-) *RuncJobLifecycle {
-	return &RuncJobLifecycle{
-		clock:        clock,
-		runcClient:   runcClient,
-		runcAdapter:  runcAdapter,
-		systemRoot:   systemRoot,
-		userIDFinder: userIDFinder,
+) *RuncLifecycle {
+	return &RuncLifecycle{
+		clock:       clock,
+		runcClient:  runcClient,
+		runcAdapter: runcAdapter,
+		systemRoot:  systemRoot,
+		userFinder:  userFinder,
 	}
 }
 
-func (j *RuncJobLifecycle) StartJob(jobName string, cfg *config.CrucibleConfig) error {
-	user, err := j.userIDFinder.Lookup(VcapUser)
+func (j *RuncLifecycle) StartJob(jobName string, cfg *config.CrucibleConfig) error {
+	user, err := j.userFinder.Lookup(usertools.VcapUser)
 	if err != nil {
 		return err
 	}
@@ -75,7 +76,7 @@ func (j *RuncJobLifecycle) StartJob(jobName string, cfg *config.CrucibleConfig) 
 	)
 }
 
-func (j *RuncJobLifecycle) ListJobs() ([]models.Job, error) {
+func (j *RuncLifecycle) ListJobs() ([]models.Job, error) {
 	containers, err := j.runcClient.ListContainers()
 	if err != nil {
 		return nil, err
@@ -94,7 +95,7 @@ func (j *RuncJobLifecycle) ListJobs() ([]models.Job, error) {
 	return jobs, nil
 }
 
-func (j *RuncJobLifecycle) StopJob(logger lager.Logger, jobName string, cfg *config.CrucibleConfig, exitTimeout time.Duration) error {
+func (j *RuncLifecycle) StopJob(logger lager.Logger, jobName string, cfg *config.CrucibleConfig, exitTimeout time.Duration) error {
 	cid := containerID(jobName, cfg.Name)
 
 	err := j.runcClient.StopContainer(cid)
@@ -131,7 +132,7 @@ func (j *RuncJobLifecycle) StopJob(logger lager.Logger, jobName string, cfg *con
 	}
 }
 
-func (j *RuncJobLifecycle) RemoveJob(jobName string, cfg *config.CrucibleConfig) error {
+func (j *RuncLifecycle) RemoveJob(jobName string, cfg *config.CrucibleConfig) error {
 	cid := containerID(jobName, cfg.Name)
 
 	err := j.runcClient.DeleteContainer(cid)
@@ -142,7 +143,7 @@ func (j *RuncJobLifecycle) RemoveJob(jobName string, cfg *config.CrucibleConfig)
 	return j.runcClient.DestroyBundle(j.bundlePath(jobName, cfg))
 }
 
-func (j *RuncJobLifecycle) bundlePath(jobName string, cfg *config.CrucibleConfig) string {
+func (j *RuncLifecycle) bundlePath(jobName string, cfg *config.CrucibleConfig) string {
 	return filepath.Join(j.systemRoot, "data", "crucible", "bundles", jobName, cfg.Name)
 }
 

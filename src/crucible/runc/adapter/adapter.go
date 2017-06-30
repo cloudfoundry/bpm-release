@@ -1,4 +1,4 @@
-package runcadapter
+package adapter
 
 import (
 	"crucible/config"

@@ -1,4 +1,4 @@
-package runcadapter
+package usertools
 
 import (
 	"errors"
@@ -8,18 +8,20 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
-//go:generate counterfeiter . UserIDFinder
-type UserIDFinder interface {
+const VcapUser = "vcap"
+
+//go:generate counterfeiter . UserFinder
+type UserFinder interface {
 	Lookup(username string) (specs.User, error)
 }
 
-type userIDFinder struct{}
+type userFinder struct{}
 
-func NewUserIDFinder() userIDFinder {
-	return userIDFinder{}
+func NewUserFinder() userFinder {
+	return userFinder{}
 }
 
-func (f userIDFinder) Lookup(username string) (specs.User, error) {
+func (f userFinder) Lookup(username string) (specs.User, error) {
 	u, err := user.Lookup(username)
 	if err != nil {
 		return specs.User{}, err

@@ -1,12 +1,8 @@
 package commands
 
 import (
-	"crucible/config"
 	"crucible/presenters"
-	"crucible/runcadapter"
 	"fmt"
-
-	"code.cloudfoundry.org/clock"
 
 	"github.com/spf13/cobra"
 )
@@ -23,20 +19,8 @@ var listCommandCommand = &cobra.Command{
 }
 
 func listContainers(cmd *cobra.Command, _ []string) error {
-	runcClient := runcadapter.NewRuncClient(config.RuncPath(), config.RuncRoot())
-	runcAdapter := runcadapter.NewRuncAdapter()
-	userIDFinder := runcadapter.NewUserIDFinder()
-	clock := clock.NewClock()
-
-	jobLifecycle := runcadapter.NewRuncJobLifecycle(
-		runcClient,
-		runcAdapter,
-		userIDFinder,
-		clock,
-		config.BoshRoot(),
-	)
-
-	jobs, err := jobLifecycle.ListJobs()
+	runcLifecycle := newRuncLifecycle()
+	jobs, err := runcLifecycle.ListJobs()
 	if err != nil {
 		fmt.Fprintf(cmd.OutOrStderr(), "failed to list jobs: %s\n", err.Error())
 		return err

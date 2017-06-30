@@ -1,7 +1,7 @@
-package runcadapter_test
+package client_test
 
 import (
-	"crucible/runcadapter"
+	"crucible/runc/client"
 	"encoding/json"
 	"io/ioutil"
 	"os"
@@ -15,7 +15,7 @@ import (
 
 var _ = Describe("RuncClient", func() {
 	var (
-		runcClient runcadapter.RuncClient
+		runcClient client.RuncClient
 		jobSpec    specs.Spec
 		bundlePath string
 		user       specs.User
@@ -23,7 +23,7 @@ var _ = Describe("RuncClient", func() {
 
 	BeforeEach(func() {
 		user = specs.User{UID: 200, GID: 300, Username: "vcap"}
-		runcClient = runcadapter.NewRuncClient(
+		runcClient = client.NewRuncClient(
 			"/var/vcap/packages/runc/bin/runc",
 			"/var/vcap/data/crucible/runc",
 		)

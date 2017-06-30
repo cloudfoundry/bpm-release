@@ -1,7 +1,7 @@
-package runcadapter_test
+package usertools_test
 
 import (
-	"crucible/runcadapter"
+	"crucible/usertools"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -9,15 +9,15 @@ import (
 )
 
 var _ = Describe("UserIDFinder", func() {
-	var userIDFinder runcadapter.UserIDFinder
+	var userFinder usertools.UserFinder
 
 	BeforeEach(func() {
-		userIDFinder = runcadapter.NewUserIDFinder()
+		userFinder = usertools.NewUserFinder()
 	})
 
 	Context("Lookup", func() {
 		It("returns a runc spec User", func() {
-			user, err := userIDFinder.Lookup("vcap")
+			user, err := userFinder.Lookup("vcap")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(user).To(Equal(specs.User{
 				UID:      2000,
@@ -28,7 +28,7 @@ var _ = Describe("UserIDFinder", func() {
 
 		Context("when the user lookup fails", func() {
 			It("returns an error", func() {
-				_, err := userIDFinder.Lookup("")
+				_, err := userFinder.Lookup("")
 				Expect(err).To(HaveOccurred())
 			})
 		})

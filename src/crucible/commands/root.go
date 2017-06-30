@@ -2,11 +2,15 @@ package commands
 
 import (
 	"crucible/config"
-	"crucible/runcadapter"
+	"crucible/runc/adapter"
+	"crucible/runc/client"
+	"crucible/runc/lifecycle"
+	"crucible/usertools"
 	"errors"
 	"os"
 	"path/filepath"
 
+	"code.cloudfoundry.org/clock"
 	"code.cloudfoundry.org/lager"
 	"code.cloudfoundry.org/lager/lagerflags"
 
@@ -15,6 +19,7 @@ import (
 
 var jobName, configPath string
 var logger lager.Logger
+var userFinder = usertools.NewUserFinder()
 
 var RootCmd = &cobra.Command{
 	Long:          "A bosh process manager for starting and stopping release jobs",
@@ -29,7 +34,7 @@ func root(cmd *cobra.Command, args []string) error {
 	return errors.New("Exit code 1")
 }
 
-func setupCrucibleLogs(cmd *cobra.Command, args []string) error {
+func setupCrucibleLogs() error {
 	crucibleLogFileLocation := filepath.Join(config.BoshRoot(), "sys", "log", jobName, "crucible.log")
 	err := os.MkdirAll(filepath.Join(config.BoshRoot(), "sys", "log", jobName), 0750)
 	if err != nil {
@@ -41,7 +46,7 @@ func setupCrucibleLogs(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	usr, err := runcadapter.NewUserIDFinder().Lookup(runcadapter.VcapUser)
+	usr, err := userFinder.Lookup(usertools.VcapUser)
 	if err != nil {
 		return err
 	}
@@ -54,5 +59,20 @@ func setupCrucibleLogs(cmd *cobra.Command, args []string) error {
 	logger, _ = lagerflags.NewFromConfig("crucible", lagerflags.DefaultLagerConfig())
 	logger.RegisterSink(lager.NewWriterSink(logFile, lager.INFO))
 	logger = logger.WithData(lager.Data{"job": jobName})
+
 	return nil
+}
+
+func newRuncLifecycle() *lifecycle.RuncLifecycle {
+	runcClient := client.NewRuncClient(config.RuncPath(), config.RuncRoot())
+	runcAdapter := adapter.NewRuncAdapter()
+	clock := clock.NewClock()
+
+	return lifecycle.NewRuncLifecycle(
+		runcClient,
+		runcAdapter,
+		userFinder,
+		clock,
+		config.BoshRoot(),
+	)
 }

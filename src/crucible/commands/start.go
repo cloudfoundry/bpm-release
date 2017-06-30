@@ -2,10 +2,8 @@ package commands
 
 import (
 	"crucible/config"
-	"crucible/runcadapter"
 	"errors"
 
-	"code.cloudfoundry.org/clock"
 	"code.cloudfoundry.org/lager"
 
 	"github.com/spf13/cobra"
@@ -30,7 +28,7 @@ func startPre(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	return setupCrucibleLogs(cmd, []string{})
+	return setupCrucibleLogs()
 }
 
 func start(cmd *cobra.Command, _ []string) error {
@@ -44,24 +42,12 @@ func start(cmd *cobra.Command, _ []string) error {
 	logger.Info("starting")
 	defer logger.Info("complete")
 
-	runcClient := runcadapter.NewRuncClient(config.RuncPath(), config.RuncRoot())
-	runcAdapter := runcadapter.NewRuncAdapter()
-	userIDFinder := runcadapter.NewUserIDFinder()
-	clock := clock.NewClock()
-
-	jobLifecycle := runcadapter.NewRuncJobLifecycle(
-		runcClient,
-		runcAdapter,
-		userIDFinder,
-		clock,
-		config.BoshRoot(),
-	)
-
-	err = jobLifecycle.StartJob(jobName, jobConfig)
+	runcLifecycle := newRuncLifecycle()
+	err = runcLifecycle.StartJob(jobName, jobConfig)
 	if err != nil {
 		logger.Error("failed-to-start", err)
 
-		removeErr := jobLifecycle.RemoveJob(jobName, jobConfig)
+		removeErr := runcLifecycle.RemoveJob(jobName, jobConfig)
 		if removeErr != nil {
 			logger.Error("failed-to-cleanup", removeErr)
 		}

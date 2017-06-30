@@ -1,10 +1,14 @@
-package runcadapter_test
+package lifecycle_test
 
 import (
 	"crucible/config"
 	"crucible/models"
-	"crucible/runcadapter"
-	"crucible/runcadapter/runcadapterfakes"
+	"crucible/runc/adapter/adapterfakes"
+	"crucible/runc/client"
+	"crucible/runc/client/clientfakes"
+	"crucible/runc/lifecycle"
+	"crucible/usertools"
+	"crucible/usertools/usertoolsfakes"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -22,9 +26,9 @@ import (
 
 var _ = Describe("RuncJobLifecycle", func() {
 	var (
-		fakeRuncAdapter  *runcadapterfakes.FakeRuncAdapter
-		fakeRuncClient   *runcadapterfakes.FakeRuncClient
-		fakeUserIDFinder *runcadapterfakes.FakeUserIDFinder
+		fakeRuncAdapter *adapterfakes.FakeRuncAdapter
+		fakeRuncClient  *clientfakes.FakeRuncClient
+		fakeUserFinder  *usertoolsfakes.FakeUserFinder
 
 		logger *lagertest.TestLogger
 
@@ -43,19 +47,19 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 		fakeClock *fakeclock.FakeClock
 
-		runcLifecycle *runcadapter.RuncJobLifecycle
+		runcLifecycle *lifecycle.RuncLifecycle
 	)
 
 	BeforeEach(func() {
 		fakeClock = fakeclock.NewFakeClock(time.Now())
-		fakeRuncAdapter = &runcadapterfakes.FakeRuncAdapter{}
-		fakeRuncClient = &runcadapterfakes.FakeRuncClient{}
-		fakeUserIDFinder = &runcadapterfakes.FakeUserIDFinder{}
+		fakeRuncAdapter = &adapterfakes.FakeRuncAdapter{}
+		fakeRuncClient = &clientfakes.FakeRuncClient{}
+		fakeUserFinder = &usertoolsfakes.FakeUserFinder{}
 
 		logger = lagertest.NewTestLogger("lifecycle")
 
 		expectedUser = specs.User{Username: "vcap", UID: 300, GID: 400}
-		fakeUserIDFinder.LookupReturns(expectedUser, nil)
+		fakeUserFinder.LookupReturns(expectedUser, nil)
 
 		var err error
 		expectedPidDir = "a-pid-dir"
@@ -80,10 +84,10 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 		expectedSystemRoot = "system-root"
 
-		runcLifecycle = runcadapter.NewRuncJobLifecycle(
+		runcLifecycle = lifecycle.NewRuncLifecycle(
 			fakeRuncClient,
 			fakeRuncAdapter,
-			fakeUserIDFinder,
+			fakeUserFinder,
 			fakeClock,
 			expectedSystemRoot,
 		)
@@ -99,8 +103,8 @@ var _ = Describe("RuncJobLifecycle", func() {
 			err := runcLifecycle.StartJob(expectedJobName, jobConfig)
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(fakeUserIDFinder.LookupCallCount()).To(Equal(1))
-			Expect(fakeUserIDFinder.LookupArgsForCall(0)).To(Equal(runcadapter.VcapUser))
+			Expect(fakeUserFinder.LookupCallCount()).To(Equal(1))
+			Expect(fakeUserFinder.LookupArgsForCall(0)).To(Equal(usertools.VcapUser))
 
 			Expect(fakeRuncAdapter.CreateJobPrerequisitesCallCount()).To(Equal(1))
 			systemRoot, jobName, cfg, user := fakeRuncAdapter.CreateJobPrerequisitesArgsForCall(0)
@@ -133,7 +137,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 		Context("when looking up the vcap user fails", func() {
 			BeforeEach(func() {
-				fakeUserIDFinder.LookupReturns(specs.User{}, errors.New("boom"))
+				fakeUserFinder.LookupReturns(specs.User{}, errors.New("boom"))
 			})
 
 			It("returns an error", func() {
@@ -276,7 +280,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 					var actualError error
 					Eventually(errChan).Should(Receive(&actualError))
-					Expect(actualError).To(Equal(runcadapter.TimeoutError))
+					Expect(actualError).To(Equal(lifecycle.TimeoutError))
 				})
 			})
 		})
@@ -310,7 +314,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 				var actualError error
 				Eventually(errChan).Should(Receive(&actualError))
-				Expect(actualError).To(Equal(runcadapter.TimeoutError))
+				Expect(actualError).To(Equal(lifecycle.TimeoutError))
 			})
 		})
 
@@ -381,7 +385,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 		})
 
 		It("returns a list of crucible jobs", func() {
-			containerStates := []runcadapter.ContainerState{
+			containerStates := []client.ContainerState{
 				{
 					ID:             "job-process-2",
 					InitProcessPid: 23456,
@@ -407,7 +411,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 		Context("when listing jobs fails", func() {
 			It("returns an error", func() {
 				expectedErr := errors.New("list jobs error")
-				fakeRuncClient.ListContainersReturns([]runcadapter.ContainerState{}, expectedErr)
+				fakeRuncClient.ListContainersReturns([]client.ContainerState{}, expectedErr)
 
 				_, err := runcLifecycle.ListJobs()
 				Expect(err).To(Equal(expectedErr))

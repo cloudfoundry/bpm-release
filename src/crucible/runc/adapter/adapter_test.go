@@ -1,8 +1,8 @@
-package runcadapter_test
+package adapter_test
 
 import (
 	"crucible/config"
-	"crucible/runcadapter"
+	"crucible/runc/adapter"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -19,7 +19,7 @@ import (
 
 var _ = Describe("RuncAdapter", func() {
 	var (
-		adapter runcadapter.RuncAdapter
+		runcAdapter adapter.RuncAdapter
 
 		jobName,
 		systemRoot string
@@ -28,7 +28,7 @@ var _ = Describe("RuncAdapter", func() {
 	)
 
 	BeforeEach(func() {
-		adapter = runcadapter.NewRuncAdapter()
+		runcAdapter = adapter.NewRuncAdapter()
 
 		jobName = "example"
 		jobConfig = &config.CrucibleConfig{
@@ -48,7 +48,7 @@ var _ = Describe("RuncAdapter", func() {
 
 	Describe("CreateJobPrerequisites", func() {
 		It("creates the job prerequisites", func() {
-			pidDir, stdout, stderr, err := adapter.CreateJobPrerequisites(systemRoot, jobName, jobConfig, user)
+			pidDir, stdout, stderr, err := runcAdapter.CreateJobPrerequisites(systemRoot, jobName, jobConfig, user)
 			Expect(err).NotTo(HaveOccurred())
 
 			logDir := filepath.Join(systemRoot, "sys", "log", jobName)
@@ -110,7 +110,7 @@ var _ = Describe("RuncAdapter", func() {
 		})
 
 		It("converts a crucible config into a runc spec", func() {
-			spec, err := adapter.BuildSpec(systemRoot, jobName, cfg, user)
+			spec, err := runcAdapter.BuildSpec(systemRoot, jobName, cfg, user)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(spec.Version).To(Equal(specs.Version))
@@ -270,7 +270,7 @@ var _ = Describe("RuncAdapter", func() {
 			})
 
 			It("sets no limits by default", func() {
-				_, err := adapter.BuildSpec(systemRoot, jobName, cfg, user)
+				_, err := runcAdapter.BuildSpec(systemRoot, jobName, cfg, user)
 				Expect(err).NotTo(HaveOccurred())
 			})
 
@@ -283,7 +283,7 @@ var _ = Describe("RuncAdapter", func() {
 				})
 
 				It("sets the memory limit on the container", func() {
-					spec, err := adapter.BuildSpec(systemRoot, jobName, cfg, user)
+					spec, err := runcAdapter.BuildSpec(systemRoot, jobName, cfg, user)
 					Expect(err).NotTo(HaveOccurred())
 
 					expectedMemoryLimitInBytes, err := bytefmt.ToBytes(expectedMemoryLimit)
@@ -301,7 +301,7 @@ var _ = Describe("RuncAdapter", func() {
 					})
 
 					It("returns an error", func() {
-						_, err := adapter.BuildSpec(systemRoot, jobName, cfg, user)
+						_, err := runcAdapter.BuildSpec(systemRoot, jobName, cfg, user)
 						Expect(err).To(HaveOccurred())
 					})
 				})
@@ -316,7 +316,7 @@ var _ = Describe("RuncAdapter", func() {
 				})
 
 				It("sets the rlimit on the process", func() {
-					spec, err := adapter.BuildSpec(systemRoot, jobName, cfg, user)
+					spec, err := runcAdapter.BuildSpec(systemRoot, jobName, cfg, user)
 					Expect(err).NotTo(HaveOccurred())
 
 					Expect(spec.Process.Rlimits).To(ConsistOf([]specs.LinuxRlimit{
@@ -338,7 +338,7 @@ var _ = Describe("RuncAdapter", func() {
 				})
 
 				It("sets the rlimit on the process", func() {
-					spec, err := adapter.BuildSpec(systemRoot, jobName, cfg, user)
+					spec, err := runcAdapter.BuildSpec(systemRoot, jobName, cfg, user)
 					Expect(err).NotTo(HaveOccurred())
 
 					Expect(spec.Process.Rlimits).To(ConsistOf([]specs.LinuxRlimit{
@@ -358,7 +358,7 @@ var _ = Describe("RuncAdapter", func() {
 			})
 
 			It("does not set a memory limit", func() {
-				spec, err := adapter.BuildSpec(systemRoot, jobName, cfg, user)
+				spec, err := runcAdapter.BuildSpec(systemRoot, jobName, cfg, user)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(spec.Linux.Resources).To(BeNil())
 			})

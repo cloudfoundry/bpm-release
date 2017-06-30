@@ -1,4 +1,4 @@
-package runcadapter_test
+package adapter_test
 
 import (
 	. "github.com/onsi/ginkgo"
@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestRuncadapter(t *testing.T) {
+func TestAdapter(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Runcadapter Suite")
+	RunSpecs(t, "Adapter Suite")
 }

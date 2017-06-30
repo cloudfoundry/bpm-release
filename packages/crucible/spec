@@ -14,7 +14,10 @@ files:
   - crucible/config/*.go # gosub
   - crucible/models/*.go # gosub
   - crucible/presenters/*.go # gosub
-  - crucible/runcadapter/*.go # gosub
+  - crucible/runc/adapter/*.go # gosub
+  - crucible/runc/client/*.go # gosub
+  - crucible/runc/lifecycle/*.go # gosub
+  - crucible/usertools/*.go # gosub
   - github.com/opencontainers/runtime-spec/specs-go/*.go # gosub
   - github.com/spf13/cobra/*.go # gosub
   - github.com/spf13/pflag/*.go # gosub

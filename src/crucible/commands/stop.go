@@ -2,11 +2,9 @@ package commands
 
 import (
 	"crucible/config"
-	"crucible/runcadapter"
 	"errors"
 	"time"
 
-	"code.cloudfoundry.org/clock"
 	"code.cloudfoundry.org/lager"
 
 	"github.com/spf13/cobra"
@@ -33,7 +31,7 @@ func stopPre(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	return setupCrucibleLogs(cmd, []string{})
+	return setupCrucibleLogs()
 }
 
 func stop(cmd *cobra.Command, _ []string) error {
@@ -47,25 +45,13 @@ func stop(cmd *cobra.Command, _ []string) error {
 	logger.Info("starting")
 	defer logger.Info("complete")
 
-	runcClient := runcadapter.NewRuncClient(config.RuncPath(), config.RuncRoot())
-	runcAdapter := runcadapter.NewRuncAdapter()
-	userIDFinder := runcadapter.NewUserIDFinder()
-	clock := clock.NewClock()
-
-	jobLifecycle := runcadapter.NewRuncJobLifecycle(
-		runcClient,
-		runcAdapter,
-		userIDFinder,
-		clock,
-		config.BoshRoot(),
-	)
-
-	err = jobLifecycle.StopJob(logger, jobName, jobConfig, DefaultStopTimeout)
+	runcLifecycle := newRuncLifecycle()
+	err = runcLifecycle.StopJob(logger, jobName, jobConfig, DefaultStopTimeout)
 	if err != nil {
 		logger.Error("failed-to-stop", err)
 	}
 
-	return jobLifecycle.RemoveJob(jobName, jobConfig)
+	return runcLifecycle.RemoveJob(jobName, jobConfig)
 }
 
 func validateStopFlags(jobName, configPath string) error {

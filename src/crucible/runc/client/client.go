@@ -1,4 +1,4 @@
-package runcadapter
+package client
 
 import (
 	"encoding/json"
