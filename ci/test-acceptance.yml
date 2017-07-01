@@ -7,8 +7,8 @@ image_resource:
     repository: bosh/main-bosh-docker
 
 inputs:
-- name: bpm
+- name: bpm-release
 - name: bosh-stemcell
 
 run:
-  path: bpm/scripts/test-acceptance
+  path: bpm-release/scripts/test-acceptance
