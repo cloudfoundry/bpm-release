@@ -1,7 +1,7 @@
 package lifecycle
 
 import (
-	"bpm/config"
+	"bpm/bpm"
 	"bpm/models"
 	"bpm/runc/adapter"
 	"bpm/runc/client"
@@ -41,7 +41,7 @@ func NewRuncLifecycle(
 	}
 }
 
-func (j *RuncLifecycle) StartJob(jobName string, cfg *config.BpmConfig) error {
+func (j *RuncLifecycle) StartJob(jobName string, cfg *bpm.Config) error {
 	user, err := j.userFinder.Lookup(usertools.VcapUser)
 	if err != nil {
 		return err
@@ -95,7 +95,7 @@ func (j *RuncLifecycle) ListJobs() ([]models.Job, error) {
 	return jobs, nil
 }
 
-func (j *RuncLifecycle) StopJob(logger lager.Logger, jobName string, cfg *config.BpmConfig, exitTimeout time.Duration) error {
+func (j *RuncLifecycle) StopJob(logger lager.Logger, jobName string, cfg *bpm.Config, exitTimeout time.Duration) error {
 	cid := containerID(jobName, cfg.Name)
 
 	err := j.runcClient.StopContainer(cid)
@@ -132,7 +132,7 @@ func (j *RuncLifecycle) StopJob(logger lager.Logger, jobName string, cfg *config
 	}
 }
 
-func (j *RuncLifecycle) RemoveJob(jobName string, cfg *config.BpmConfig) error {
+func (j *RuncLifecycle) RemoveJob(jobName string, cfg *bpm.Config) error {
 	cid := containerID(jobName, cfg.Name)
 
 	err := j.runcClient.DeleteContainer(cid)
@@ -143,7 +143,7 @@ func (j *RuncLifecycle) RemoveJob(jobName string, cfg *config.BpmConfig) error {
 	return j.runcClient.DestroyBundle(j.bundlePath(jobName, cfg))
 }
 
-func (j *RuncLifecycle) bundlePath(jobName string, cfg *config.BpmConfig) string {
+func (j *RuncLifecycle) bundlePath(jobName string, cfg *bpm.Config) string {
 	return filepath.Join(j.systemRoot, "data", "bpm", "bundles", jobName, cfg.Name)
 }
 

@@ -12,7 +12,7 @@ import (
 
 func TestBpm(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "bpm Suite")
+	RunSpecs(t, "Main Suite")
 }
 
 var (

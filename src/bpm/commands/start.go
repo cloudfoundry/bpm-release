@@ -1,7 +1,7 @@
 package commands
 
 import (
-	"bpm/config"
+	"bpm/bpm"
 	"errors"
 
 	"code.cloudfoundry.org/lager"
@@ -32,22 +32,22 @@ func startPre(cmd *cobra.Command, _ []string) error {
 }
 
 func start(cmd *cobra.Command, _ []string) error {
-	jobConfig, err := config.ParseConfig(configPath)
+	cfg, err := bpm.ParseConfig(configPath)
 	if err != nil {
 		logger.Error("failed-to-parse-config", err)
 		return err
 	}
 
-	logger = logger.Session("start", lager.Data{"process": jobConfig.Name})
+	logger = logger.Session("start", lager.Data{"process": cfg.Name})
 	logger.Info("starting")
 	defer logger.Info("complete")
 
 	runcLifecycle := newRuncLifecycle()
-	err = runcLifecycle.StartJob(jobName, jobConfig)
+	err = runcLifecycle.StartJob(jobName, cfg)
 	if err != nil {
 		logger.Error("failed-to-start", err)
 
-		removeErr := runcLifecycle.RemoveJob(jobName, jobConfig)
+		removeErr := runcLifecycle.RemoveJob(jobName, cfg)
 		if removeErr != nil {
 			logger.Error("failed-to-cleanup", removeErr)
 		}

@@ -1,4 +1,4 @@
-package config
+package bpm
 
 import (
 	"errors"
@@ -9,7 +9,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-type BpmConfig struct {
+type Config struct {
 	Name       string
 	Executable string   `yaml:"executable"`
 	Args       []string `yaml:"args"`
@@ -23,13 +23,13 @@ type Limits struct {
 	Processes *uint64 `yaml:"processes"`
 }
 
-func ParseConfig(configPath string) (*BpmConfig, error) {
+func ParseConfig(configPath string) (*Config, error) {
 	data, err := ioutil.ReadFile(configPath)
 	if err != nil {
 		return nil, err
 	}
 
-	cfg := BpmConfig{}
+	cfg := Config{}
 
 	err = yaml.Unmarshal(data, &cfg)
 	if err != nil {
@@ -44,7 +44,7 @@ func ParseConfig(configPath string) (*BpmConfig, error) {
 	return &cfg, nil
 }
 
-func (c *BpmConfig) Validate() error {
+func (c *Config) Validate() error {
 	if c.Name == "" {
 		return errors.New("invalid config: name")
 	}

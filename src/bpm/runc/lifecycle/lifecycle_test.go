@@ -1,7 +1,7 @@
 package lifecycle_test
 
 import (
-	"bpm/config"
+	"bpm/bpm"
 	"bpm/models"
 	"bpm/runc/adapter/adapterfakes"
 	"bpm/runc/client"
@@ -32,7 +32,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 		logger *lagertest.TestLogger
 
-		jobConfig *config.BpmConfig
+		jobConfig *bpm.Config
 		jobSpec   specs.Spec
 
 		expectedJobName,
@@ -73,7 +73,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 		expectedProcName = "server"
 		expectedContainerID = fmt.Sprintf("%s-%s", expectedJobName, expectedProcName)
 
-		jobConfig = &config.BpmConfig{
+		jobConfig = &bpm.Config{
 			Name:       expectedProcName,
 			Executable: "/bin/sleep",
 		}

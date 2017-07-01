@@ -1,7 +1,7 @@
 package main_test
 
 import (
-	"bpm/config"
+	"bpm/bpm"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -30,24 +30,24 @@ var _ = Describe("bpm", func() {
 		jobName,
 		procName,
 		containerID,
-		jobConfigPath,
+		cfgPath,
 		stdoutFileLocation,
 		stderrFileLocation,
 		runcRoot,
 		bpmLogFileLocation string
 
-		jobConfig *config.BpmConfig
+		cfg *bpm.Config
 	)
 
-	var writeConfig = func(cfg *config.BpmConfig) {
-		jobConfigDir := filepath.Join(boshConfigPath, "jobs", jobName, "config")
-		err := os.MkdirAll(jobConfigDir, 0755)
+	var writeConfig = func(cfg *bpm.Config) {
+		cfgDir := filepath.Join(boshConfigPath, "jobs", jobName, "config")
+		err := os.MkdirAll(cfgDir, 0755)
 		Expect(err).NotTo(HaveOccurred())
 
-		jobConfigPath = filepath.Join(jobConfigDir, "bpm.yml")
-		Expect(os.RemoveAll(jobConfigPath)).To(Succeed())
+		cfgPath = filepath.Join(cfgDir, "bpm.yml")
+		Expect(os.RemoveAll(cfgPath)).To(Succeed())
 		f, err := os.OpenFile(
-			jobConfigPath,
+			cfgPath,
 			os.O_RDWR|os.O_CREATE,
 			0644,
 		)
@@ -90,7 +90,7 @@ var _ = Describe("bpm", func() {
 		procName = "sleeper-agent"
 		containerID = fmt.Sprintf("%s-%s", jobName, procName)
 
-		jobConfig = &config.BpmConfig{
+		cfg = &bpm.Config{
 			Name:       procName,
 			Executable: "/bin/bash",
 			Args: []string{
@@ -111,7 +111,7 @@ var _ = Describe("bpm", func() {
 		stderrFileLocation = filepath.Join(boshConfigPath, "sys", "log", jobName, fmt.Sprintf("%s.err.log", procName))
 		bpmLogFileLocation = filepath.Join(boshConfigPath, "sys", "log", jobName, "bpm.log")
 
-		writeConfig(jobConfig)
+		writeConfig(cfg)
 
 		runcRoot = fmt.Sprintf("--root=%s", filepath.Join(boshConfigPath, "data", "bpm", "runc"))
 	})
@@ -145,7 +145,7 @@ var _ = Describe("bpm", func() {
 
 	Context("start", func() {
 		JustBeforeEach(func() {
-			command = exec.Command(bpmPath, "start", "-j", jobName, "-c", jobConfigPath)
+			command = exec.Command(bpmPath, "start", "-j", jobName, "-c", cfgPath)
 			command.Env = append(command.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
 		})
 
@@ -189,14 +189,14 @@ var _ = Describe("bpm", func() {
 
 		Context("capabilities", func() {
 			BeforeEach(func() {
-				jobConfig.Executable = "/bin/bash"
-				jobConfig.Args = []string{
+				cfg.Executable = "/bin/bash"
+				cfg.Args = []string{
 					"-c",
 					// See https://codegolf.stackexchange.com/questions/24485/create-a-memory-leak-without-any-fork-bombs
 					`cat /proc/1/status | grep CapEff`,
 				}
 
-				writeConfig(jobConfig)
+				writeConfig(cfg)
 			})
 
 			It("has no effective capabilities", func() {
@@ -210,8 +210,8 @@ var _ = Describe("bpm", func() {
 		Context("resource limits", func() {
 			Context("memory", func() {
 				BeforeEach(func() {
-					jobConfig.Executable = "/bin/bash"
-					jobConfig.Args = []string{
+					cfg.Executable = "/bin/bash"
+					cfg.Args = []string{
 						"-c",
 						// See https://codegolf.stackexchange.com/questions/24485/create-a-memory-leak-without-any-fork-bombs
 						`start_memory_leak() { :(){ : $@$@;};: : ;};
@@ -223,11 +223,11 @@ var _ = Describe("bpm", func() {
 					}
 
 					limit := "4M"
-					jobConfig.Limits = &config.Limits{
+					cfg.Limits = &bpm.Limits{
 						Memory: &limit,
 					}
 
-					writeConfig(jobConfig)
+					writeConfig(cfg)
 				})
 
 				streamOOMEvents := func(stdout io.Reader) chan event {
@@ -283,8 +283,8 @@ var _ = Describe("bpm", func() {
 
 			Context("open files", func() {
 				BeforeEach(func() {
-					jobConfig.Executable = "/bin/bash"
-					jobConfig.Args = []string{
+					cfg.Executable = "/bin/bash"
+					cfg.Args = []string{
 						"-c",
 						// See https://codegolf.stackexchange.com/questions/24485/create-a-memory-leak-without-any-fork-bombs
 						fmt.Sprintf(`file_dir=%s;
@@ -297,11 +297,11 @@ var _ = Describe("bpm", func() {
 					}
 
 					limit := uint64(10)
-					jobConfig.Limits = &config.Limits{
+					cfg.Limits = &bpm.Limits{
 						OpenFiles: &limit,
 					}
 
-					writeConfig(jobConfig)
+					writeConfig(cfg)
 				})
 
 				It("cannot open more files than permitted", func() {
@@ -321,8 +321,8 @@ var _ = Describe("bpm", func() {
 
 			Context("processes", func() {
 				BeforeEach(func() {
-					jobConfig.Executable = "/bin/bash"
-					jobConfig.Args = []string{
+					cfg.Executable = "/bin/bash"
+					cfg.Args = []string{
 						"-c",
 						// See https://codegolf.stackexchange.com/questions/24485/create-a-memory-leak-without-any-fork-bombs
 						` trap "kill $child" SIGTERM;
@@ -334,11 +334,11 @@ var _ = Describe("bpm", func() {
 					}
 
 					limit := uint64(1000)
-					jobConfig.Limits = &config.Limits{
+					cfg.Limits = &bpm.Limits{
 						Processes: &limit,
 					}
 
-					writeConfig(jobConfig)
+					writeConfig(cfg)
 				})
 
 				It("cannot create more processes than permitted", func() {
@@ -414,7 +414,7 @@ var _ = Describe("bpm", func() {
 
 		Context("when starting the job fails", func() {
 			BeforeEach(func() {
-				start := exec.Command(bpmPath, "start", "-j", jobName, "-c", jobConfigPath)
+				start := exec.Command(bpmPath, "start", "-j", jobName, "-c", cfgPath)
 				start.Env = append(start.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
 
 				session, err := gexec.Start(start, GinkgoWriter, GinkgoWriter)
@@ -438,7 +438,7 @@ var _ = Describe("bpm", func() {
 
 	Context("stop", func() {
 		BeforeEach(func() {
-			startCmd := exec.Command(bpmPath, "start", "-j", jobName, "-c", jobConfigPath)
+			startCmd := exec.Command(bpmPath, "start", "-j", jobName, "-c", cfgPath)
 			startCmd.Env = append(startCmd.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
 
 			session, err := gexec.Start(startCmd, GinkgoWriter, GinkgoWriter)
@@ -447,7 +447,7 @@ var _ = Describe("bpm", func() {
 		})
 
 		JustBeforeEach(func() {
-			command = exec.Command(bpmPath, "stop", "-j", jobName, "-c", jobConfigPath)
+			command = exec.Command(bpmPath, "stop", "-j", jobName, "-c", cfgPath)
 			command.Env = append(command.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
 		})
 
@@ -530,7 +530,7 @@ var _ = Describe("bpm", func() {
 			var otherJobName string
 
 			BeforeEach(func() {
-				startCmd := exec.Command(bpmPath, "start", "-j", jobName, "-c", jobConfigPath)
+				startCmd := exec.Command(bpmPath, "start", "-j", jobName, "-c", cfgPath)
 				startCmd.Env = append(startCmd.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
 
 				session, err := gexec.Start(startCmd, GinkgoWriter, GinkgoWriter)
@@ -540,7 +540,7 @@ var _ = Describe("bpm", func() {
 				otherJobName = "example-2"
 				Expect(os.MkdirAll(filepath.Join(boshConfigPath, "jobs", otherJobName, "config"), 0755)).NotTo(HaveOccurred())
 
-				startCmd = exec.Command(bpmPath, "start", "-j", otherJobName, "-c", jobConfigPath)
+				startCmd = exec.Command(bpmPath, "start", "-j", otherJobName, "-c", cfgPath)
 				startCmd.Env = append(startCmd.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
 
 				session, err = gexec.Start(startCmd, GinkgoWriter, GinkgoWriter)

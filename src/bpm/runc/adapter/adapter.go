@@ -1,7 +1,7 @@
 package adapter
 
 import (
-	"bpm/config"
+	"bpm/bpm"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -17,8 +17,8 @@ const RootUID = 0
 //go:generate counterfeiter . RuncAdapter
 
 type RuncAdapter interface {
-	CreateJobPrerequisites(systemRoot, jobName string, cfg *config.BpmConfig, user specs.User) (string, *os.File, *os.File, error)
-	BuildSpec(systemRoot, jobName string, cfg *config.BpmConfig, user specs.User) (specs.Spec, error)
+	CreateJobPrerequisites(systemRoot, jobName string, cfg *bpm.Config, user specs.User) (string, *os.File, *os.File, error)
+	BuildSpec(systemRoot, jobName string, cfg *bpm.Config, user specs.User) (specs.Spec, error)
 }
 
 type runcAdapter struct{}
@@ -30,7 +30,7 @@ func NewRuncAdapter() RuncAdapter {
 func (a *runcAdapter) CreateJobPrerequisites(
 	systemRoot string,
 	jobName string,
-	cfg *config.BpmConfig,
+	cfg *bpm.Config,
 	user specs.User,
 ) (string, *os.File, *os.File, error) {
 	bpmPidDir := filepath.Join(systemRoot, "sys", "run", "bpm", jobName)
@@ -92,7 +92,7 @@ func createFileFor(path string, uid, gid int) (*os.File, error) {
 func (a *runcAdapter) BuildSpec(
 	systemRoot string,
 	jobName string,
-	cfg *config.BpmConfig,
+	cfg *bpm.Config,
 	user specs.User,
 ) (specs.Spec, error) {
 	process := &specs.Process{
@@ -149,7 +149,7 @@ func (a *runcAdapter) BuildSpec(
 		},
 		Process: process,
 		Root: specs.Root{
-			Path: filepath.Join(config.BundlesRoot(), jobName, cfg.Name, "rootfs"),
+			Path: filepath.Join(bpm.BundlesRoot(), jobName, cfg.Name, "rootfs"),
 		},
 		Hostname: jobName,
 		Mounts:   mounts,

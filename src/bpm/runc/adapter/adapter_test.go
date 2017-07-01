@@ -1,7 +1,7 @@
 package adapter_test
 
 import (
-	"bpm/config"
+	"bpm/bpm"
 	"bpm/runc/adapter"
 	"fmt"
 	"io/ioutil"
@@ -23,15 +23,15 @@ var _ = Describe("RuncAdapter", func() {
 
 		jobName,
 		systemRoot string
-		jobConfig *config.BpmConfig
-		user      specs.User
+		cfg  *bpm.Config
+		user specs.User
 	)
 
 	BeforeEach(func() {
 		runcAdapter = adapter.NewRuncAdapter()
 
 		jobName = "example"
-		jobConfig = &config.BpmConfig{
+		cfg = &bpm.Config{
 			Name:       "server",
 			Executable: "executable",
 		}
@@ -48,12 +48,12 @@ var _ = Describe("RuncAdapter", func() {
 
 	Describe("CreateJobPrerequisites", func() {
 		It("creates the job prerequisites", func() {
-			pidDir, stdout, stderr, err := runcAdapter.CreateJobPrerequisites(systemRoot, jobName, jobConfig, user)
+			pidDir, stdout, stderr, err := runcAdapter.CreateJobPrerequisites(systemRoot, jobName, cfg, user)
 			Expect(err).NotTo(HaveOccurred())
 
 			logDir := filepath.Join(systemRoot, "sys", "log", jobName)
-			expectedStdoutFileName := fmt.Sprintf("%s.out.log", jobConfig.Name)
-			expectedStderrFileName := fmt.Sprintf("%s.err.log", jobConfig.Name)
+			expectedStdoutFileName := fmt.Sprintf("%s.out.log", cfg.Name)
+			expectedStderrFileName := fmt.Sprintf("%s.err.log", cfg.Name)
 
 			// PID Directory
 			Expect(pidDir).To(Equal(filepath.Join(systemRoot, "sys", "run", "bpm", jobName)))
@@ -82,7 +82,7 @@ var _ = Describe("RuncAdapter", func() {
 			Expect(stderrInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
 
 			// Data Directory
-			dataDir := filepath.Join(systemRoot, "data", jobName, jobConfig.Name)
+			dataDir := filepath.Join(systemRoot, "data", jobName, cfg.Name)
 			dataDirInfo, err := os.Stat(dataDir)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(dataDirInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0700)))
@@ -92,10 +92,10 @@ var _ = Describe("RuncAdapter", func() {
 	})
 
 	Describe("BuildSpec", func() {
-		var cfg *config.BpmConfig
+		var cfg *bpm.Config
 
 		BeforeEach(func() {
-			cfg = &config.BpmConfig{
+			cfg = &bpm.Config{
 				Name:       "server",
 				Executable: "/var/vcap/packages/example/bin/example",
 				Args: []string{
@@ -266,7 +266,7 @@ var _ = Describe("RuncAdapter", func() {
 
 		Context("Limits", func() {
 			BeforeEach(func() {
-				cfg.Limits = &config.Limits{}
+				cfg.Limits = &bpm.Limits{}
 			})
 
 			It("sets no limits by default", func() {

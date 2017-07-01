@@ -1,7 +1,7 @@
 package commands
 
 import (
-	"bpm/config"
+	"bpm/bpm"
 	"errors"
 	"time"
 
@@ -35,23 +35,23 @@ func stopPre(cmd *cobra.Command, _ []string) error {
 }
 
 func stop(cmd *cobra.Command, _ []string) error {
-	jobConfig, err := config.ParseConfig(configPath)
+	cfg, err := bpm.ParseConfig(configPath)
 	if err != nil {
 		logger.Error("failed-to-parse-config", err)
 		return err
 	}
 
-	logger = logger.Session("stop", lager.Data{"process": jobConfig.Name})
+	logger = logger.Session("stop", lager.Data{"process": cfg.Name})
 	logger.Info("starting")
 	defer logger.Info("complete")
 
 	runcLifecycle := newRuncLifecycle()
-	err = runcLifecycle.StopJob(logger, jobName, jobConfig, DefaultStopTimeout)
+	err = runcLifecycle.StopJob(logger, jobName, cfg, DefaultStopTimeout)
 	if err != nil {
 		logger.Error("failed-to-stop", err)
 	}
 
-	return runcLifecycle.RemoveJob(jobName, jobConfig)
+	return runcLifecycle.RemoveJob(jobName, cfg)
 }
 
 func validateStopFlags(jobName, configPath string) error {

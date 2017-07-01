@@ -1,7 +1,7 @@
 package commands
 
 import (
-	"bpm/config"
+	"bpm/bpm"
 	"bpm/runc/adapter"
 	"bpm/runc/client"
 	"bpm/runc/lifecycle"
@@ -35,8 +35,8 @@ func root(cmd *cobra.Command, args []string) error {
 }
 
 func setupBpmLogs() error {
-	bpmLogFileLocation := filepath.Join(config.BoshRoot(), "sys", "log", jobName, "bpm.log")
-	err := os.MkdirAll(filepath.Join(config.BoshRoot(), "sys", "log", jobName), 0750)
+	bpmLogFileLocation := filepath.Join(bpm.BoshRoot(), "sys", "log", jobName, "bpm.log")
+	err := os.MkdirAll(filepath.Join(bpm.BoshRoot(), "sys", "log", jobName), 0750)
 	if err != nil {
 		return err
 	}
@@ -64,7 +64,7 @@ func setupBpmLogs() error {
 }
 
 func newRuncLifecycle() *lifecycle.RuncLifecycle {
-	runcClient := client.NewRuncClient(config.RuncPath(), config.RuncRoot())
+	runcClient := client.NewRuncClient(bpm.RuncPath(), bpm.RuncRoot())
 	runcAdapter := adapter.NewRuncAdapter()
 	clock := clock.NewClock()
 
@@ -73,6 +73,6 @@ func newRuncLifecycle() *lifecycle.RuncLifecycle {
 		runcAdapter,
 		userFinder,
 		clock,
-		config.BoshRoot(),
+		bpm.BoshRoot(),
 	)
 }

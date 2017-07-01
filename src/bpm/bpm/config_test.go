@@ -1,7 +1,7 @@
-package config_test
+package bpm_test
 
 import (
-	"bpm/config"
+	"bpm/bpm"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -16,7 +16,7 @@ var _ = Describe("Config", func() {
 		})
 
 		It("parses a yaml file into a bpm config", func() {
-			cfg, err := config.ParseConfig(configPath)
+			cfg, err := bpm.ParseConfig(configPath)
 			Expect(err).NotTo(HaveOccurred())
 
 			expectedMemoryLimit := "100G"
@@ -37,7 +37,7 @@ var _ = Describe("Config", func() {
 			})
 
 			It("returns an error", func() {
-				_, err := config.ParseConfig(configPath)
+				_, err := bpm.ParseConfig(configPath)
 				Expect(err).To(HaveOccurred())
 			})
 		})
@@ -48,7 +48,7 @@ var _ = Describe("Config", func() {
 			})
 
 			It("returns an error", func() {
-				_, err := config.ParseConfig(configPath)
+				_, err := bpm.ParseConfig(configPath)
 				Expect(err).To(HaveOccurred())
 			})
 		})
@@ -59,17 +59,17 @@ var _ = Describe("Config", func() {
 			})
 
 			It("returns an error", func() {
-				_, err := config.ParseConfig(configPath)
+				_, err := bpm.ParseConfig(configPath)
 				Expect(err).To(HaveOccurred())
 			})
 		})
 	})
 
 	Describe("Validate", func() {
-		var cfg *config.BpmConfig
+		var cfg *bpm.Config
 
 		BeforeEach(func() {
-			cfg = &config.BpmConfig{
+			cfg = &bpm.Config{
 				Name:       "example",
 				Executable: "executable",
 			}

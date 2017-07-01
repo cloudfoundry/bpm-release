@@ -2,7 +2,7 @@
 package adapterfakes
 
 import (
-	"bpm/config"
+	"bpm/bpm"
 	"bpm/runc/adapter"
 	"os"
 	"sync"
@@ -11,12 +11,12 @@ import (
 )
 
 type FakeRuncAdapter struct {
-	CreateJobPrerequisitesStub        func(systemRoot, jobName string, cfg *config.BpmConfig, user specs.User) (string, *os.File, *os.File, error)
+	CreateJobPrerequisitesStub        func(systemRoot, jobName string, cfg *bpm.Config, user specs.User) (string, *os.File, *os.File, error)
 	createJobPrerequisitesMutex       sync.RWMutex
 	createJobPrerequisitesArgsForCall []struct {
 		systemRoot string
 		jobName    string
-		cfg        *config.BpmConfig
+		cfg        *bpm.Config
 		user       specs.User
 	}
 	createJobPrerequisitesReturns struct {
@@ -31,12 +31,12 @@ type FakeRuncAdapter struct {
 		result3 *os.File
 		result4 error
 	}
-	BuildSpecStub        func(systemRoot, jobName string, cfg *config.BpmConfig, user specs.User) (specs.Spec, error)
+	BuildSpecStub        func(systemRoot, jobName string, cfg *bpm.Config, user specs.User) (specs.Spec, error)
 	buildSpecMutex       sync.RWMutex
 	buildSpecArgsForCall []struct {
 		systemRoot string
 		jobName    string
-		cfg        *config.BpmConfig
+		cfg        *bpm.Config
 		user       specs.User
 	}
 	buildSpecReturns struct {
@@ -51,13 +51,13 @@ type FakeRuncAdapter struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeRuncAdapter) CreateJobPrerequisites(systemRoot string, jobName string, cfg *config.BpmConfig, user specs.User) (string, *os.File, *os.File, error) {
+func (fake *FakeRuncAdapter) CreateJobPrerequisites(systemRoot string, jobName string, cfg *bpm.Config, user specs.User) (string, *os.File, *os.File, error) {
 	fake.createJobPrerequisitesMutex.Lock()
 	ret, specificReturn := fake.createJobPrerequisitesReturnsOnCall[len(fake.createJobPrerequisitesArgsForCall)]
 	fake.createJobPrerequisitesArgsForCall = append(fake.createJobPrerequisitesArgsForCall, struct {
 		systemRoot string
 		jobName    string
-		cfg        *config.BpmConfig
+		cfg        *bpm.Config
 		user       specs.User
 	}{systemRoot, jobName, cfg, user})
 	fake.recordInvocation("CreateJobPrerequisites", []interface{}{systemRoot, jobName, cfg, user})
@@ -77,7 +77,7 @@ func (fake *FakeRuncAdapter) CreateJobPrerequisitesCallCount() int {
 	return len(fake.createJobPrerequisitesArgsForCall)
 }
 
-func (fake *FakeRuncAdapter) CreateJobPrerequisitesArgsForCall(i int) (string, string, *config.BpmConfig, specs.User) {
+func (fake *FakeRuncAdapter) CreateJobPrerequisitesArgsForCall(i int) (string, string, *bpm.Config, specs.User) {
 	fake.createJobPrerequisitesMutex.RLock()
 	defer fake.createJobPrerequisitesMutex.RUnlock()
 	return fake.createJobPrerequisitesArgsForCall[i].systemRoot, fake.createJobPrerequisitesArgsForCall[i].jobName, fake.createJobPrerequisitesArgsForCall[i].cfg, fake.createJobPrerequisitesArgsForCall[i].user
@@ -111,13 +111,13 @@ func (fake *FakeRuncAdapter) CreateJobPrerequisitesReturnsOnCall(i int, result1 
 	}{result1, result2, result3, result4}
 }
 
-func (fake *FakeRuncAdapter) BuildSpec(systemRoot string, jobName string, cfg *config.BpmConfig, user specs.User) (specs.Spec, error) {
+func (fake *FakeRuncAdapter) BuildSpec(systemRoot string, jobName string, cfg *bpm.Config, user specs.User) (specs.Spec, error) {
 	fake.buildSpecMutex.Lock()
 	ret, specificReturn := fake.buildSpecReturnsOnCall[len(fake.buildSpecArgsForCall)]
 	fake.buildSpecArgsForCall = append(fake.buildSpecArgsForCall, struct {
 		systemRoot string
 		jobName    string
-		cfg        *config.BpmConfig
+		cfg        *bpm.Config
 		user       specs.User
 	}{systemRoot, jobName, cfg, user})
 	fake.recordInvocation("BuildSpec", []interface{}{systemRoot, jobName, cfg, user})
@@ -137,7 +137,7 @@ func (fake *FakeRuncAdapter) BuildSpecCallCount() int {
 	return len(fake.buildSpecArgsForCall)
 }
 
-func (fake *FakeRuncAdapter) BuildSpecArgsForCall(i int) (string, string, *config.BpmConfig, specs.User) {
+func (fake *FakeRuncAdapter) BuildSpecArgsForCall(i int) (string, string, *bpm.Config, specs.User) {
 	fake.buildSpecMutex.RLock()
 	defer fake.buildSpecMutex.RUnlock()
 	return fake.buildSpecArgsForCall[i].systemRoot, fake.buildSpecArgsForCall[i].jobName, fake.buildSpecArgsForCall[i].cfg, fake.buildSpecArgsForCall[i].user
