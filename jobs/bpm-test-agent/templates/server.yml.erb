@@ -1,0 +1,11 @@
+name: server
+executable: /var/vcap/packages/bpm-test-agent/bin/bpm-test-agent
+args:
+  - --port
+  - 1337
+env:
+  - BPM=SWEET
+limits:
+  memory: 1G
+  open_files: 1024
+  processes: 1024

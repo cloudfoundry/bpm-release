@@ -38,8 +38,8 @@ function sync_package() {
   )
 }
 
-sync_package crucible -app crucible &
-sync_package crucible-test-agent -app crucible-acceptance/fixtures/crucible-test-agent &
+sync_package bpm -app bpm &
+sync_package bpm-test-agent -app bpm-acceptance/fixtures/bpm-test-agent &
 
 wait
 

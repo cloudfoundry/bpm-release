@@ -1,6 +1,6 @@
 # Runtime Environment
 
-Crucible is explicit about the interface that it provides to your job. If there
+bpm is explicit about the interface that it provides to your job. If there
 is anything in this specification which is unclear or non-specific then please
 let us know so that we can be explicit about the interface and guarantees
 provided.

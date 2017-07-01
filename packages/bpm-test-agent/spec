@@ -1,0 +1,9 @@
+---
+name: bpm-test-agent
+
+dependencies:
+  - golang
+
+files:
+  - bpm-acceptance/fixtures/bpm-test-agent/*.go # gosub
+  - bpm-acceptance/fixtures/bpm-test-agent/handlers/*.go # gosub

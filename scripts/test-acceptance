@@ -9,18 +9,18 @@ source /tmp/local-bosh/director/env
 bosh upload-stemcell bosh-stemcell/*.tgz
 
 bosh create-release \
-  --dir "$PWD/crucible/"
+  --dir "$PWD/bpm/"
 
 bosh upload-release \
-  --dir "$PWD/crucible/"
+  --dir "$PWD/bpm/"
 
-export BOSH_DEPLOYMENT=crucible
+export BOSH_DEPLOYMENT=bpm
 export BOSH_NON_INTERACTIVE=true
 
 bosh deploy \
-  "$PWD/crucible/example-manifests/bosh-lite-ci.yml"
+  "$PWD/bpm/example-manifests/bosh-lite-ci.yml"
 
-export GOPATH="$PWD/crucible"
+export GOPATH="$PWD/bpm"
 export PATH=$GOPATH/bin:$PATH
 
 go install github.com/onsi/ginkgo/ginkgo
@@ -31,6 +31,6 @@ go install github.com/onsi/ginkgo/ginkgo
 AGENT_HOST="${AGENT_HOST:-"10.245.0.2"}"
 agent_port=1337
 
-pushd "${GOPATH}/src/crucible-acceptance" > /dev/null
+pushd "${GOPATH}/src/bpm-acceptance" > /dev/null
   ginkgo -r -p -race -randomizeAllSpecs -- --agent-uri="http://${AGENT_HOST}:${agent_port}/"
 popd > /dev/null

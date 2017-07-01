@@ -1,0 +1,11 @@
+check process bpm-test-agent
+  with pidfile /var/vcap/sys/run/bpm/bpm-test-agent/server.pid
+  start program "/var/vcap/packages/bpm/bin/bpm start -j bpm-test-agent -c /var/vcap/jobs/bpm-test-agent/config/server.yml"
+  stop program "/var/vcap/packages/bpm/bin/bpm stop -j bpm-test-agent -c /var/vcap/jobs/bpm-test-agent/config/server.yml"
+  group vcap
+
+check process alt-bpm-test-agent
+  with pidfile /var/vcap/sys/run/bpm/bpm-test-agent/alt-server.pid
+  start program "/var/vcap/packages/bpm/bin/bpm start -j bpm-test-agent -c /var/vcap/jobs/bpm-test-agent/config/alt-server.yml"
+  stop program "/var/vcap/packages/bpm/bin/bpm stop -j bpm-test-agent -c /var/vcap/jobs/bpm-test-agent/config/alt-server.yml"
+  group vcap

@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-
-if ! echo $PATH | grep -q 'crucible'; then
-  export PATH=/var/vcap/packages/crucible/bin:$PATH
-fi
-
-if ! echo $PATH | grep -q 'runc'; then
-  export PATH=/var/vcap/packages/runc/bin:$PATH
-fi

@@ -1,0 +1,11 @@
+---
+name: bpm-test-agent
+
+templates:
+  server.yml.erb: config/server.yml
+  alt-server.yml.erb: config/alt-server.yml
+
+packages:
+- bpm-test-agent
+
+properties: {}

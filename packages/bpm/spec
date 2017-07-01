@@ -1,0 +1,24 @@
+---
+name: bpm
+
+dependencies:
+  - golang
+
+files:
+  - bpm/*.go # gosub
+  - bpm/commands/*.go # gosub
+  - bpm/config/*.go # gosub
+  - bpm/models/*.go # gosub
+  - bpm/presenters/*.go # gosub
+  - bpm/runc/adapter/*.go # gosub
+  - bpm/runc/client/*.go # gosub
+  - bpm/runc/lifecycle/*.go # gosub
+  - bpm/usertools/*.go # gosub
+  - code.cloudfoundry.org/bytefmt/*.go # gosub
+  - code.cloudfoundry.org/clock/*.go # gosub
+  - code.cloudfoundry.org/lager/*.go # gosub
+  - code.cloudfoundry.org/lager/lagerflags/*.go # gosub
+  - github.com/opencontainers/runtime-spec/specs-go/*.go # gosub
+  - github.com/spf13/cobra/*.go # gosub
+  - github.com/spf13/pflag/*.go # gosub
+  - gopkg.in/yaml.v2/*.go # gosub

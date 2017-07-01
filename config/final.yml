@@ -1,5 +1,5 @@
-name: crucible
+name: bpm
 blobstore:
   provider: s3
   options:
-    bucket_name: crucible-blobs
+    bucket_name: bpm-blobs

@@ -13,12 +13,9 @@ RUN \
 RUN apt-get update && apt-get -y install pkg-config
 
 # install runc
-RUN \
-  go get -u -v github.com/opencontainers/runc && \
-  cd $GOPATH/src/github.com/opencontainers/runc && \
-  git checkout v1.0.0-rc3 && \
-  make && \
-  make install
+RUN wget -O /bin/runc \
+  https://github.com/opencontainers/runc/releases/download/v1.0.0-rc3/runc-linux-amd64 && \
+  chmod +x /bin/runc
 
 # # add vcap user for test
 RUN \
@@ -29,11 +26,11 @@ RUN \
 RUN \
   mkdir -p /var/vcap/packages/runc/bin && \
   mkdir -p /var/vcap/data/packages && \
-  mkdir -p /var/vcap/data/crucible && \
+  mkdir -p /var/vcap/data/bpm && \
   mkdir -p /var/vcap/jobs/
 
 RUN \
-  ln -s /usr/local/sbin/runc /var/vcap/packages/runc/bin/runc
+  ln -s /bin/runc /var/vcap/packages/runc/bin/runc
 
 RUN \
   chown -R vcap:vcap /var/vcap

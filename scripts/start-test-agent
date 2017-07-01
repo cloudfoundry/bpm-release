@@ -1,0 +1,33 @@
+#/bin/bash
+
+absolute_path() {
+  (cd "$1" && pwd)
+}
+
+scripts_path=$(absolute_path "$(dirname "$0")" )
+
+export GOPATH=$scripts_path/..
+export PATH=$GOPATH/bin:$PATH
+
+${scripts_path}/mountgroups.sh
+
+go install bpm
+go install bpm-acceptance/fixtures/bpm-test-agent
+
+mkdir -p /var/vcap/packages/bpm-test-agent/bin
+
+cp `which bpm-test-agent` /var/vcap/packages/bpm-test-agent/bin
+
+mkdir -p /var/vcap/jobs/bpm-test-agent/config/
+
+cat << EOF > /var/vcap/jobs/bpm-test-agent/config/bpm.yml
+name: server
+executable: /var/vcap/packages/bpm-test-agent/bin/bpm-test-agent
+args:
+  - --port
+  - 1337
+env:
+  - BPM=SWEET
+EOF
+
+bpm start -j bpm-test-agent -c /var/vcap/jobs/bpm-test-agent/config/bpm.yml

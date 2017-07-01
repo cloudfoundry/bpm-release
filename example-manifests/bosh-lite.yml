@@ -1,22 +1,22 @@
 compilation:
   cloud_properties: {}
-  network: crucible
+  network: bpm
   reuse_compilation_vms: true
   workers: 3
 jobs:
 - instances: 1
-  name: crucible
-  resource_pool: crucible
+  name: bpm
+  resource_pool: bpm
   networks:
-  - name: crucible
+  - name: bpm
   templates:
-  - name: crucible
-    release: crucible
-  - name: crucible-test-agent
-    release: crucible
-name: crucible
+  - name: bpm
+    release: bpm
+  - name: bpm-test-agent
+    release: bpm
+name: bpm
 networks:
-- name: crucible
+- name: bpm
   subnets:
   - cloud_properties: {}
     gateway: 10.244.17.1
@@ -26,13 +26,13 @@ networks:
     static: []
   type: manual
 releases:
-- name: crucible
+- name: bpm
   version: latest
 resource_pools:
 - cloud_properties: {}
   env: {}
-  name: crucible
-  network: crucible
+  name: bpm
+  network: bpm
   stemcell:
     name: bosh-warden-boshlite-ubuntu-trusty-go_agent
     version: latest

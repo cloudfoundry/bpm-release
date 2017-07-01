@@ -1,21 +1,21 @@
-name: crucible
+name: bpm
 
 instance_groups:
-- name: crucible
+- name: bpm
   azs: [z1,z2,z3]
   instances: 1
   jobs:
-  - name: crucible
-    release: crucible
-  - name: crucible-test-agent
-    release: crucible
+  - name: bpm
+    release: bpm
+  - name: bpm-test-agent
+    release: bpm
   vm_type: default
   stemcell: default
   networks:
   - name: default
 
 releases:
-- name: crucible
+- name: bpm
   version: latest
 
 update:

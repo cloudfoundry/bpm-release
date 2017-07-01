@@ -44,7 +44,7 @@ volumes:
 
 ## Example `monit` Configuration
 
-Crucible still sits on top of `monit` as part of the current BOSH job API.
+bpm still sits on top of `monit` as part of the current BOSH job API.
 However, the contents of the `monit` file now become simpler and less variable.
 The amount of features used is minimized. BOSH would like to remove support
 for `monit` eventually and so reducing the exposed feature area will make this
@@ -52,15 +52,15 @@ easier.
 
 ```
 check process job-server
-  with pidfile /var/vcap/sys/run/crucible/job/server.pid
-  start program "/var/vcap/packages/crucible/bin/crucible start -j job -c /var/vcap/jobs/job/config/server.yml"
-  stop program "/var/vcap/packages/crucible/bin/crucible stop -j job -c /var/vcap/jobs/job/config/server.yml"
+  with pidfile /var/vcap/sys/run/bpm/job/server.pid
+  start program "/var/vcap/packages/bpm/bin/bpm start -j job -c /var/vcap/jobs/job/config/server.yml"
+  stop program "/var/vcap/packages/bpm/bin/bpm stop -j job -c /var/vcap/jobs/job/config/server.yml"
   group vcap
 
 check process job-worker
-  with pidfile /var/vcap/sys/run/crucible/job/worker.pid
-  start program "/var/vcap/packages/crucible/bin/crucible start -j job -c /var/vcap/jobs/job/config/worker.yml"
-  stop program "/var/vcap/packages/crucible/bin/crucible stop -j job -c /var/vcap/jobs/job/config/worker.yml"
+  with pidfile /var/vcap/sys/run/bpm/job/worker.pid
+  start program "/var/vcap/packages/bpm/bin/bpm start -j job -c /var/vcap/jobs/job/config/worker.yml"
+  stop program "/var/vcap/packages/bpm/bin/bpm stop -j job -c /var/vcap/jobs/job/config/worker.yml"
   group vcap
 ```
 

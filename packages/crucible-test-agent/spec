@@ -1,9 +1,0 @@
----
-name: crucible-test-agent
-
-dependencies:
-  - golang
-
-files:
-  - crucible-acceptance/fixtures/crucible-test-agent/*.go # gosub
-  - crucible-acceptance/fixtures/crucible-test-agent/handlers/*.go # gosub
