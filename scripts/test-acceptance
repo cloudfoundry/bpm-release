@@ -9,18 +9,18 @@ source /tmp/local-bosh/director/env
 bosh upload-stemcell bosh-stemcell/*.tgz
 
 bosh create-release \
-  --dir "$PWD/bpm/"
+  --dir "$PWD/bpm-release/"
 
 bosh upload-release \
-  --dir "$PWD/bpm/"
+  --dir "$PWD/bpm-release/"
 
 export BOSH_DEPLOYMENT=bpm
 export BOSH_NON_INTERACTIVE=true
 
 bosh deploy \
-  "$PWD/bpm/example-manifests/bosh-lite-ci.yml"
+  "$PWD/bpm-release/example-manifests/bosh-lite-ci.yml"
 
-export GOPATH="$PWD/bpm"
+export GOPATH="$PWD/bpm-release"
 export PATH=$GOPATH/bin:$PATH
 
 go install github.com/onsi/ginkgo/ginkgo
