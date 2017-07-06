@@ -26,11 +26,10 @@ import (
 
 var _ = Describe("Check", func() {
 	It("check for licenses successfully", func() {
-		files, err := bpmlicensecheck.Check(".")
-		Expect(err).NotTo(HaveOccurred())
-
 		gopath := os.Getenv("GOPATH")
 
+		files, err := bpmlicensecheck.Check(".")
+		Expect(err).NotTo(HaveOccurred())
 		for _, pkg := range packages {
 			newFiles, err := bpmlicensecheck.Check(filepath.Join(gopath, "src", pkg))
 			Expect(err).NotTo(HaveOccurred())

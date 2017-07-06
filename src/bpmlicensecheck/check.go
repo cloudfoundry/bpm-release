@@ -20,7 +20,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 )
 
 const copyrightHeader = "Copyright (C) 2017-Present Pivotal Software, Inc. All rights reserved."
@@ -31,49 +30,41 @@ var exceptions = []string{
 	".yml",
 }
 
-var mutex = &sync.Mutex{}
-var incompleteFiles []string
-
 func Check(directory string) ([]string, error) {
-	err := filepath.Walk(directory, checkForLicense)
+	var incompleteFiles []string
+
+	err := filepath.Walk(directory, func(path string, info os.FileInfo, err error) error {
+		if info.IsDir() {
+			return nil
+		}
+
+		for _, exception := range exceptions {
+			if strings.Contains(path, exception) {
+				return nil
+			}
+		}
+
+		f, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+
+		r := bufio.NewReader(f)
+		line, _, err := r.ReadLine()
+		if err != nil {
+			return err
+		}
+
+		if !strings.Contains(string(line), copyrightHeader) {
+			incompleteFiles = append(incompleteFiles, path)
+		}
+
+		return nil
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	mutex.Lock()
-	defer mutex.Unlock()
-
 	return incompleteFiles, nil
-}
-
-func checkForLicense(path string, info os.FileInfo, err error) error {
-	if info.IsDir() {
-		return nil
-	}
-
-	for _, exception := range exceptions {
-		if strings.Contains(path, exception) {
-			return nil
-		}
-	}
-
-	f, err := os.Open(path)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	r := bufio.NewReader(f)
-	line, _, err := r.ReadLine()
-	if err != nil {
-		return err
-	}
-
-	if !strings.Contains(string(line), copyrightHeader) {
-		mutex.Lock()
-		incompleteFiles = append(incompleteFiles, path)
-		mutex.Unlock()
-	}
-
-	return nil
 }
