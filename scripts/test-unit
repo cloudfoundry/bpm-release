@@ -13,7 +13,15 @@ export PATH=$GOPATH/bin:$PATH
 
 ${scripts_path}/mountgroups.sh
 
-pushd "${GOPATH}/src/bpm" > /dev/null
+pushd "${GOPATH}" > /dev/null
   go install github.com/onsi/ginkgo/ginkgo
-  ginkgo -r -p -race -randomizeAllSpecs "$@"
-popd > /dev/null
+
+  pushd "src/bpm" > /dev/null
+    ginkgo -r -p -race -randomizeAllSpecs "$@"
+  popd > /dev/null
+
+  pushd "src/bpmlicensecheck" > /dev/null
+    ginkgo -r -p -race -randomizeAllSpecs "$@" -- \
+      --packages="bpm,bpm-acceptance"
+  popd > /dev/null
+popd

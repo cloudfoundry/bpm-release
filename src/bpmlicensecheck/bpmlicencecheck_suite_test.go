@@ -13,13 +13,11 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 
-package bpm_acceptance_test
+package bpmlicensecheck_test
 
 import (
 	"flag"
-	"log"
-	"net/http"
-	"time"
+	"strings"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -27,27 +25,19 @@ import (
 	"testing"
 )
 
-func TestBpmAcceptance(t *testing.T) {
+func TestBpmlicencecheck(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "BpmAcceptance Suite")
+	RunSpecs(t, "Bpmlicencecheck Suite")
 }
 
 var (
-	agentURI string
-	client   *http.Client
+	packages []string
 )
 
 func init() {
-	flag.StringVar(&agentURI, "agent-uri", "", "http address of the bpm-test-agent")
+	var pkgs string
+	flag.StringVar(&pkgs, "packages", "", "packages to check")
 	flag.Parse()
 
-	if agentURI == "" {
-		log.Fatal("Agent URI must be provided")
-	}
+	packages = strings.Split(pkgs, ",")
 }
-
-var _ = BeforeSuite(func() {
-	client = &http.Client{
-		Timeout: 10 * time.Second,
-	}
-})

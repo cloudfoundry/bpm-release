@@ -13,41 +13,30 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 
-package bpm_acceptance_test
+package bpmlicensecheck_test
 
 import (
-	"flag"
-	"log"
-	"net/http"
-	"time"
+	"bpmlicensecheck"
+	"os"
+	"path/filepath"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-
-	"testing"
 )
 
-func TestBpmAcceptance(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "BpmAcceptance Suite")
-}
+var _ = Describe("Check", func() {
+	It("check for licenses successfully", func() {
+		files, err := bpmlicensecheck.Check(".")
+		Expect(err).NotTo(HaveOccurred())
 
-var (
-	agentURI string
-	client   *http.Client
-)
+		gopath := os.Getenv("GOPATH")
 
-func init() {
-	flag.StringVar(&agentURI, "agent-uri", "", "http address of the bpm-test-agent")
-	flag.Parse()
+		for _, pkg := range packages {
+			newFiles, err := bpmlicensecheck.Check(filepath.Join(gopath, "src", pkg))
+			Expect(err).NotTo(HaveOccurred())
+			files = append(files, newFiles...)
+		}
 
-	if agentURI == "" {
-		log.Fatal("Agent URI must be provided")
-	}
-}
-
-var _ = BeforeSuite(func() {
-	client = &http.Client{
-		Timeout: 10 * time.Second,
-	}
+		Expect(files).To(HaveLen(0))
+	})
 })
