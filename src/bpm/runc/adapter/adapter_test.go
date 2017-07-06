@@ -77,7 +77,7 @@ var _ = Describe("RuncAdapter", func() {
 			logDirInfo, err := os.Stat(logDir)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(logDirInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0750)))
-			Expect(logDirInfo.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(0)))
+			Expect(logDirInfo.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(200)))
 			Expect(logDirInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
 
 			// Stdout Log File
@@ -249,6 +249,12 @@ var _ = Describe("RuncAdapter", func() {
 					Type:        "bind",
 					Source:      filepath.Join(systemRoot, "packages"),
 					Options:     []string{"rbind", "ro"},
+				},
+				{
+					Destination: filepath.Join(systemRoot, "sys", "log", jobName),
+					Type:        "bind",
+					Source:      filepath.Join(systemRoot, "sys", "log", jobName),
+					Options:     []string{"rbind", "rw"},
 				},
 			}))
 

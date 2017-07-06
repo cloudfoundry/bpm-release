@@ -27,8 +27,6 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
-const RootUID = 0
-
 //go:generate counterfeiter . RuncAdapter
 
 type RuncAdapter interface {
@@ -63,7 +61,7 @@ func (a *runcAdapter) CreateJobPrerequisites(
 	if err != nil {
 		return "", nil, nil, err
 	}
-	err = os.Chown(jobLogDir, RootUID, int(user.GID))
+	err = os.Chown(jobLogDir, int(user.UID), int(user.GID))
 	if err != nil {
 		return "", nil, nil, err
 	}
@@ -222,6 +220,12 @@ func boshMounts(systemRoot, jobName, procName string) []specs.Mount {
 			Type:        "bind",
 			Source:      filepath.Join(systemRoot, "packages"),
 			Options:     []string{"rbind", "ro"},
+		},
+		{
+			Destination: filepath.Join(systemRoot, "sys", "log", jobName),
+			Type:        "bind",
+			Source:      filepath.Join(systemRoot, "sys", "log", jobName),
+			Options:     []string{"rbind", "rw"},
 		},
 	}
 }

@@ -54,15 +54,15 @@ var _ = Describe("bpm", func() {
 		cfg *bpm.Config
 	)
 
-	var writeConfig = func(cfg *bpm.Config) {
+	var writeConfig = func(jobName string, cfg *bpm.Config) string {
 		cfgDir := filepath.Join(boshConfigPath, "jobs", jobName, "config")
 		err := os.MkdirAll(cfgDir, 0755)
 		Expect(err).NotTo(HaveOccurred())
 
-		cfgPath = filepath.Join(cfgDir, "bpm.yml")
-		Expect(os.RemoveAll(cfgPath)).To(Succeed())
+		path := filepath.Join(cfgDir, "bpm.yml")
+		Expect(os.RemoveAll(path)).To(Succeed())
 		f, err := os.OpenFile(
-			cfgPath,
+			path,
 			os.O_RDWR|os.O_CREATE,
 			0644,
 		)
@@ -74,11 +74,33 @@ var _ = Describe("bpm", func() {
 		n, err := f.Write(data)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(n).To(Equal(len(data)))
+
+		return path
 	}
 
 	var runcCommand = func(args ...string) *exec.Cmd {
 		args = append([]string{runcRoot}, args...)
 		return exec.Command("runc", args...)
+	}
+
+	var newDefaultConfig = func(jobName, procName string) *bpm.Config {
+		return &bpm.Config{
+			Name:       procName,
+			Executable: "/bin/bash",
+			Args: []string{
+				"-c",
+				//This script traps the SIGTERM signal and kills the subsequent
+				//commands referenced by the PID in the $child variable
+				fmt.Sprintf(`trap "echo Signalled && kill -9 $child" SIGTERM;
+					 echo Foo is $FOO &&
+					  (>&2 echo "$FOO is Foo") &&
+					  (echo "Dear Diary, Today I measured my beats per minute." > %s/sys/log/%s/foo.log) &&
+					  sleep 5 &
+					 child=$!;
+					 wait $child`, boshConfigPath, jobName),
+			},
+			Env: []string{"FOO=BAR"},
+		}
 	}
 
 	BeforeEach(func() {
@@ -104,43 +126,30 @@ var _ = Describe("bpm", func() {
 		jobName = fmt.Sprintf("bpm-test-%s", uuid.NewV4().String())
 		procName = "sleeper-agent"
 		containerID = fmt.Sprintf("%s-%s", jobName, procName)
-
-		cfg = &bpm.Config{
-			Name:       procName,
-			Executable: "/bin/bash",
-			Args: []string{
-				"-c",
-				//This script traps the SIGTERM signal and kills the subsequent
-				//commands referenced by the PID in the $child variable
-				`trap "echo Signalled && kill -9 $child" SIGTERM;
-					 echo Foo is $FOO &&
-					  (>&2 echo "$FOO is Foo") &&
-					  sleep 5 &
-					 child=$!;
-					 wait $child`,
-			},
-			Env: []string{"FOO=BAR"},
-		}
+		cfg = newDefaultConfig(jobName, procName)
 
 		stdoutFileLocation = filepath.Join(boshConfigPath, "sys", "log", jobName, fmt.Sprintf("%s.out.log", procName))
 		stderrFileLocation = filepath.Join(boshConfigPath, "sys", "log", jobName, fmt.Sprintf("%s.err.log", procName))
 		bpmLogFileLocation = filepath.Join(boshConfigPath, "sys", "log", jobName, "bpm.log")
 
-		writeConfig(cfg)
+		cfgPath = writeConfig(jobName, cfg)
 
 		runcRoot = fmt.Sprintf("--root=%s", filepath.Join(boshConfigPath, "data", "bpm", "runc"))
 	})
 
 	AfterEach(func() {
 		// using force, as we cannot delete a running container.
-		runcCommand("delete", "--force", containerID).Run() // TODO: Assert on error when runc is updated to 1.0.0-rc4+
+		err := runcCommand("delete", "--force", containerID).Run() // TODO: Assert on error when runc is updated to 1.0.0-rc4+
+		if err != nil {
+			fmt.Fprintf(GinkgoWriter, "WARNING: Failed to cleanup container: %s\n", err.Error())
+		}
 
 		if CurrentGinkgoTestDescription().Failed {
 			fmt.Fprintf(GinkgoWriter, "STDOUT: %s\n", fileContents(stdoutFileLocation)())
 			fmt.Fprintf(GinkgoWriter, "STDERR: %s\n", fileContents(stderrFileLocation)())
 		}
 
-		err := os.RemoveAll(boshConfigPath)
+		err = os.RemoveAll(boshConfigPath)
 		Expect(err).NotTo(HaveOccurred())
 	})
 
@@ -191,6 +200,16 @@ var _ = Describe("bpm", func() {
 			Eventually(fileContents(stderrFileLocation)).Should(Equal("BAR is Foo\n"))
 		})
 
+		It("exposes the internal log directory for writing", func() {
+			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+			Eventually(session).Should(gexec.Exit(0))
+
+			exampleLogLocation := filepath.Join(boshConfigPath, "sys", "log", jobName, "foo.log")
+			Eventually(exampleLogLocation).Should(BeAnExistingFile())
+			Eventually(fileContents(exampleLogLocation)).Should(Equal("Dear Diary, Today I measured my beats per minute.\n"))
+		})
+
 		It("logs bpm internal logs to a consistent location", func() {
 			Expect(bpmLogFileLocation).NotTo(BeAnExistingFile())
 
@@ -211,7 +230,7 @@ var _ = Describe("bpm", func() {
 					`cat /proc/1/status | grep CapEff`,
 				}
 
-				writeConfig(cfg)
+				cfgPath = writeConfig(jobName, cfg)
 			})
 
 			It("has no effective capabilities", func() {
@@ -242,7 +261,7 @@ var _ = Describe("bpm", func() {
 						Memory: &limit,
 					}
 
-					writeConfig(cfg)
+					cfgPath = writeConfig(jobName, cfg)
 				})
 
 				streamOOMEvents := func(stdout io.Reader) chan event {
@@ -316,7 +335,7 @@ var _ = Describe("bpm", func() {
 						OpenFiles: &limit,
 					}
 
-					writeConfig(cfg)
+					cfgPath = writeConfig(jobName, cfg)
 				})
 
 				It("cannot open more files than permitted", func() {
@@ -353,7 +372,7 @@ var _ = Describe("bpm", func() {
 						Processes: &limit,
 					}
 
-					writeConfig(cfg)
+					cfgPath = writeConfig(jobName, cfg)
 				})
 
 				It("cannot create more processes than permitted", func() {
@@ -554,8 +573,10 @@ var _ = Describe("bpm", func() {
 
 				otherJobName = "example-2"
 				Expect(os.MkdirAll(filepath.Join(boshConfigPath, "jobs", otherJobName, "config"), 0755)).NotTo(HaveOccurred())
+				otherCfg := newDefaultConfig(otherJobName, procName)
+				otherCfgPath := writeConfig(otherJobName, otherCfg)
 
-				startCmd = exec.Command(bpmPath, "start", "-j", otherJobName, "-c", cfgPath)
+				startCmd = exec.Command(bpmPath, "start", "-j", otherJobName, "-c", otherCfgPath)
 				startCmd.Env = append(startCmd.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
 
 				session, err = gexec.Start(startCmd, GinkgoWriter, GinkgoWriter)
