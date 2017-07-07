@@ -191,12 +191,6 @@ var _ = Describe("RuncAdapter", func() {
 					Options:     []string{"nosuid", "noexec", "nodev", "ro"},
 				},
 				{
-					Destination: "/sys/fs/cgroup",
-					Type:        "cgroup",
-					Source:      "cgroup",
-					Options:     []string{"nosuid", "noexec", "nodev", "relatime", "ro"},
-				},
-				{
 					Destination: "/bin",
 					Type:        "bind",
 					Source:      "/bin",
