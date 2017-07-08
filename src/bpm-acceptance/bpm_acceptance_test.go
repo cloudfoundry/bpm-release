@@ -75,6 +75,7 @@ var _ = Describe("BpmAcceptance", func() {
 			"/var/vcap/data/bpm-test-agent/server": "rw",
 			"/var/vcap/jobs/bpm-test-agent":        "ro",
 			"/var/vcap/packages":                   "ro",
+			"/var/vcap/sys/log/bpm-test-agent":     "rw",
 		}
 
 		var found []string
@@ -88,7 +89,7 @@ var _ = Describe("BpmAcceptance", func() {
 			}
 		}
 
-		Expect(found).To(HaveLen(4), fmt.Sprintf("missing mounts, actual: %#v, expected: %#v", found, expectedMountPaths))
+		Expect(found).To(HaveLen(5), fmt.Sprintf("missing mounts, actual: %#v, expected: %#v", found, expectedMountPaths))
 	})
 
 	It("has the correct read only system mounts", func() {
@@ -113,7 +114,7 @@ var _ = Describe("BpmAcceptance", func() {
 		Expect(found).To(ConsistOf(expectedMountPaths))
 	})
 
-	It("only has access to data, jobs, and packages in /var/vcap", func() {
+	It("only has access to data, jobs, sys, and packages in /var/vcap", func() {
 		resp, err := client.Get(fmt.Sprintf("%s/var-vcap", agentURI))
 		Expect(err).NotTo(HaveOccurred())
 		defer resp.Body.Close()
@@ -121,7 +122,7 @@ var _ = Describe("BpmAcceptance", func() {
 		body, err := ioutil.ReadAll(resp.Body)
 		Expect(err).NotTo(HaveOccurred())
 		directories := strings.Split(strings.Trim(string(body), "\n"), "\n")
-		Expect(directories).To(ConsistOf("data", "jobs", "packages"))
+		Expect(directories).To(ConsistOf("data", "jobs", "packages", "sys"))
 	})
 
 	It("only has access to its own data directory", func() {
