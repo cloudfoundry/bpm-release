@@ -62,15 +62,16 @@ type FakeRuncClient struct {
 		result1 []client.ContainerState
 		result2 error
 	}
-	StopContainerStub        func(containerID string) error
-	stopContainerMutex       sync.RWMutex
-	stopContainerArgsForCall []struct {
+	SignalContainerStub        func(containerID string, signal client.Signal) error
+	signalContainerMutex       sync.RWMutex
+	signalContainerArgsForCall []struct {
 		containerID string
+		signal      client.Signal
 	}
-	stopContainerReturns struct {
+	signalContainerReturns struct {
 		result1 error
 	}
-	stopContainerReturnsOnCall map[int]struct {
+	signalContainerReturnsOnCall map[int]struct {
 		result1 error
 	}
 	DeleteContainerStub        func(containerID string) error
@@ -295,50 +296,51 @@ func (fake *FakeRuncClient) ListContainersReturnsOnCall(i int, result1 []client.
 	}{result1, result2}
 }
 
-func (fake *FakeRuncClient) StopContainer(containerID string) error {
-	fake.stopContainerMutex.Lock()
-	ret, specificReturn := fake.stopContainerReturnsOnCall[len(fake.stopContainerArgsForCall)]
-	fake.stopContainerArgsForCall = append(fake.stopContainerArgsForCall, struct {
+func (fake *FakeRuncClient) SignalContainer(containerID string, signal client.Signal) error {
+	fake.signalContainerMutex.Lock()
+	ret, specificReturn := fake.signalContainerReturnsOnCall[len(fake.signalContainerArgsForCall)]
+	fake.signalContainerArgsForCall = append(fake.signalContainerArgsForCall, struct {
 		containerID string
-	}{containerID})
-	fake.recordInvocation("StopContainer", []interface{}{containerID})
-	fake.stopContainerMutex.Unlock()
-	if fake.StopContainerStub != nil {
-		return fake.StopContainerStub(containerID)
+		signal      client.Signal
+	}{containerID, signal})
+	fake.recordInvocation("SignalContainer", []interface{}{containerID, signal})
+	fake.signalContainerMutex.Unlock()
+	if fake.SignalContainerStub != nil {
+		return fake.SignalContainerStub(containerID, signal)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	return fake.stopContainerReturns.result1
+	return fake.signalContainerReturns.result1
 }
 
-func (fake *FakeRuncClient) StopContainerCallCount() int {
-	fake.stopContainerMutex.RLock()
-	defer fake.stopContainerMutex.RUnlock()
-	return len(fake.stopContainerArgsForCall)
+func (fake *FakeRuncClient) SignalContainerCallCount() int {
+	fake.signalContainerMutex.RLock()
+	defer fake.signalContainerMutex.RUnlock()
+	return len(fake.signalContainerArgsForCall)
 }
 
-func (fake *FakeRuncClient) StopContainerArgsForCall(i int) string {
-	fake.stopContainerMutex.RLock()
-	defer fake.stopContainerMutex.RUnlock()
-	return fake.stopContainerArgsForCall[i].containerID
+func (fake *FakeRuncClient) SignalContainerArgsForCall(i int) (string, client.Signal) {
+	fake.signalContainerMutex.RLock()
+	defer fake.signalContainerMutex.RUnlock()
+	return fake.signalContainerArgsForCall[i].containerID, fake.signalContainerArgsForCall[i].signal
 }
 
-func (fake *FakeRuncClient) StopContainerReturns(result1 error) {
-	fake.StopContainerStub = nil
-	fake.stopContainerReturns = struct {
+func (fake *FakeRuncClient) SignalContainerReturns(result1 error) {
+	fake.SignalContainerStub = nil
+	fake.signalContainerReturns = struct {
 		result1 error
 	}{result1}
 }
 
-func (fake *FakeRuncClient) StopContainerReturnsOnCall(i int, result1 error) {
-	fake.StopContainerStub = nil
-	if fake.stopContainerReturnsOnCall == nil {
-		fake.stopContainerReturnsOnCall = make(map[int]struct {
+func (fake *FakeRuncClient) SignalContainerReturnsOnCall(i int, result1 error) {
+	fake.SignalContainerStub = nil
+	if fake.signalContainerReturnsOnCall == nil {
+		fake.signalContainerReturnsOnCall = make(map[int]struct {
 			result1 error
 		})
 	}
-	fake.stopContainerReturnsOnCall[i] = struct {
+	fake.signalContainerReturnsOnCall[i] = struct {
 		result1 error
 	}{result1}
 }
@@ -450,8 +452,8 @@ func (fake *FakeRuncClient) Invocations() map[string][][]interface{} {
 	defer fake.containerStateMutex.RUnlock()
 	fake.listContainersMutex.RLock()
 	defer fake.listContainersMutex.RUnlock()
-	fake.stopContainerMutex.RLock()
-	defer fake.stopContainerMutex.RUnlock()
+	fake.signalContainerMutex.RLock()
+	defer fake.signalContainerMutex.RUnlock()
 	fake.deleteContainerMutex.RLock()
 	defer fake.deleteContainerMutex.RUnlock()
 	fake.destroyBundleMutex.RLock()

@@ -25,6 +25,24 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
+type Signal int
+
+const (
+	Term Signal = iota
+	Quit
+)
+
+func (s Signal) String() string {
+	switch s {
+	case Term:
+		return "TERM"
+	case Quit:
+		return "QUIT"
+	default:
+		return "unknown"
+	}
+}
+
 //go:generate counterfeiter . RuncClient
 
 type RuncClient interface {
@@ -32,7 +50,7 @@ type RuncClient interface {
 	RunContainer(pidFilePath, bundlePath, containerID string, stdout, stderr io.Writer) error
 	ContainerState(containerID string) (specs.State, error)
 	ListContainers() ([]ContainerState, error)
-	StopContainer(containerID string) error
+	SignalContainer(containerID string, signal Signal) error
 	DeleteContainer(containerID string) error
 	DestroyBundle(bundlePath string) error
 }
@@ -149,12 +167,13 @@ func (c *runcClient) ListContainers() ([]ContainerState, error) {
 	return containerStates, nil
 }
 
-func (c *runcClient) StopContainer(containerID string) error {
+func (c *runcClient) SignalContainer(containerID string, signal Signal) error {
 	runcCmd := exec.Command(
 		c.runcPath,
 		"--root", c.runcRoot,
 		"kill",
 		containerID,
+		signal.String(),
 	)
 
 	return runcCmd.Run()

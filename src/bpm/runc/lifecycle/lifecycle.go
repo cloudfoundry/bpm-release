@@ -127,7 +127,7 @@ func (j *RuncLifecycle) ListJobs() ([]models.Job, error) {
 func (j *RuncLifecycle) StopJob(logger lager.Logger, jobName string, cfg *bpm.Config, exitTimeout time.Duration) error {
 	cid := containerID(jobName, cfg.Name)
 
-	err := j.runcClient.StopContainer(cid)
+	err := j.runcClient.SignalContainer(cid, client.Term)
 	if err != nil {
 		return err
 	}
@@ -156,6 +156,11 @@ func (j *RuncLifecycle) StopJob(logger lager.Logger, jobName string, cfg *bpm.Co
 				}
 			}
 		case <-timeout.C():
+			err := j.runcClient.SignalContainer(cid, client.Quit)
+			if err != nil {
+				logger.Error("failed-to-sigquit", err)
+			}
+
 			return TimeoutError
 		}
 	}

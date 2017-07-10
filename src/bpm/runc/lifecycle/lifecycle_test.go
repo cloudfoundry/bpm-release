@@ -221,13 +221,14 @@ var _ = Describe("RuncJobLifecycle", func() {
 			err := runcLifecycle.StopJob(logger, expectedJobName, jobConfig, exitTimeout)
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(fakeRuncClient.StopContainerCallCount()).To(Equal(1))
-			containerID := fakeRuncClient.StopContainerArgsForCall(0)
-			Expect(containerID).To(Equal(expectedContainerID))
+			Eventually(fakeRuncClient.SignalContainerCallCount).Should(Equal(1))
+			cid, signal := fakeRuncClient.SignalContainerArgsForCall(0)
+			Expect(cid).To(Equal(expectedContainerID))
+			Expect(signal).To(Equal(client.Term))
 
 			Expect(fakeRuncClient.ContainerStateCallCount()).To(Equal(1))
-			containerID = fakeRuncClient.ContainerStateArgsForCall(0)
-			Expect(containerID).To(Equal(expectedContainerID))
+			cid = fakeRuncClient.ContainerStateArgsForCall(0)
+			Expect(cid).To(Equal(expectedContainerID))
 		})
 
 		Context("when the container does not stop immediately", func() {
@@ -252,8 +253,10 @@ var _ = Describe("RuncJobLifecycle", func() {
 					errChan <- runcLifecycle.StopJob(logger, expectedJobName, jobConfig, exitTimeout)
 				}()
 
-				Eventually(fakeRuncClient.StopContainerCallCount).Should(Equal(1))
-				Expect(fakeRuncClient.StopContainerArgsForCall(0)).To(Equal(expectedContainerID))
+				Eventually(fakeRuncClient.SignalContainerCallCount).Should(Equal(1))
+				cid, signal := fakeRuncClient.SignalContainerArgsForCall(0)
+				Expect(cid).To(Equal(expectedContainerID))
+				Expect(signal).To(Equal(client.Term))
 
 				Eventually(fakeRuncClient.ContainerStateCallCount).Should(Equal(1))
 				Expect(fakeRuncClient.ContainerStateArgsForCall(0)).To(Equal(expectedContainerID))
@@ -273,15 +276,17 @@ var _ = Describe("RuncJobLifecycle", func() {
 			})
 
 			Context("and the exit timeout has passed", func() {
-				It("forcefully removes the container", func() {
+				It("sends a SIGQUIT and returns a timeout error", func() {
 					errChan := make(chan error)
 					go func() {
 						defer GinkgoRecover()
 						errChan <- runcLifecycle.StopJob(logger, expectedJobName, jobConfig, exitTimeout)
 					}()
 
-					Eventually(fakeRuncClient.StopContainerCallCount).Should(Equal(1))
-					Expect(fakeRuncClient.StopContainerArgsForCall(0)).To(Equal(expectedContainerID))
+					Eventually(fakeRuncClient.SignalContainerCallCount).Should(Equal(1))
+					cid, signal := fakeRuncClient.SignalContainerArgsForCall(0)
+					Expect(cid).To(Equal(expectedContainerID))
+					Expect(signal).To(Equal(client.Term))
 
 					Eventually(fakeRuncClient.ContainerStateCallCount).Should(Equal(1))
 					Expect(fakeRuncClient.ContainerStateArgsForCall(0)).To(Equal(expectedContainerID))
@@ -296,6 +301,11 @@ var _ = Describe("RuncJobLifecycle", func() {
 					var actualError error
 					Eventually(errChan).Should(Receive(&actualError))
 					Expect(actualError).To(Equal(lifecycle.TimeoutError))
+
+					Expect(fakeRuncClient.SignalContainerCallCount()).Should(Equal(2))
+					cid, signal = fakeRuncClient.SignalContainerArgsForCall(1)
+					Expect(cid).To(Equal(expectedContainerID))
+					Expect(signal).To(Equal(client.Quit))
 				})
 			})
 		})
@@ -338,7 +348,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 			BeforeEach(func() {
 				expectedErr = errors.New("an error")
-				fakeRuncClient.StopContainerReturns(expectedErr)
+				fakeRuncClient.SignalContainerReturns(expectedErr)
 			})
 
 			It("returns an error", func() {

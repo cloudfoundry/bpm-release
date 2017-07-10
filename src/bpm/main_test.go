@@ -716,7 +716,7 @@ var _ = Describe("bpm", func() {
 		})
 	})
 
-	Context("when no flags are provided", func() {
+	Context("when no arguments are provided", func() {
 		It("exits with a non-zero exit code and prints the usage", func() {
 			command := exec.Command(bpmPath)
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
