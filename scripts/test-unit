@@ -15,8 +15,10 @@ ${scripts_path}/mountgroups.sh
 
 pushd "${GOPATH}" > /dev/null
   go install github.com/onsi/ginkgo/ginkgo
+  go get -u github.com/maxbrunsfeld/counterfeiter
 
   pushd "src/bpm" > /dev/null
+    go generate ./...
     ginkgo -r -p -race -randomizeAllSpecs "$@"
   popd > /dev/null
 
