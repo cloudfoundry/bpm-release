@@ -36,7 +36,7 @@ var stopCommand = &cobra.Command{
 	Long:    "Stops a BOSH Process",
 	RunE:    stop,
 	Short:   "Stops a BOSH Process",
-	Use:     "stop <job-name>",
+	Use:     "stop",
 	PreRunE: stopPre,
 }
 

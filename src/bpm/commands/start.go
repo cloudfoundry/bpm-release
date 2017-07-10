@@ -33,7 +33,7 @@ var startCommand = &cobra.Command{
 	Long:              "Starts a BOSH Process",
 	RunE:              start,
 	Short:             "Starts a BOSH Process",
-	Use:               "start <job-name>",
+	Use:               "start",
 	PersistentPreRunE: startPre,
 }
 

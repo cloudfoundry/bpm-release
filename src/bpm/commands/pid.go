@@ -33,7 +33,7 @@ var pidCommand = &cobra.Command{
 	Long:              "Displays the PID for a given job",
 	RunE:              pidForJob,
 	Short:             "PID for job",
-	Use:               "pid -j <job-name> -c <path-to-config>",
+	Use:               "pid",
 	PersistentPreRunE: pidPre,
 }
 
