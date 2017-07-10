@@ -18,12 +18,10 @@ package lifecycle_test
 import (
 	"bpm/bpm"
 	"bpm/models"
-	"bpm/runc/adapter/adapterfakes"
 	"bpm/runc/client"
-	"bpm/runc/client/clientfakes"
 	"bpm/runc/lifecycle"
+	"bpm/runc/lifecycle/lifecyclefakes"
 	"bpm/usertools"
-	"bpm/usertools/usertoolsfakes"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -41,9 +39,9 @@ import (
 
 var _ = Describe("RuncJobLifecycle", func() {
 	var (
-		fakeRuncAdapter *adapterfakes.FakeRuncAdapter
-		fakeRuncClient  *clientfakes.FakeRuncClient
-		fakeUserFinder  *usertoolsfakes.FakeUserFinder
+		fakeRuncAdapter *lifecyclefakes.FakeRuncAdapter
+		fakeRuncClient  *lifecyclefakes.FakeRuncClient
+		fakeUserFinder  *lifecyclefakes.FakeUserFinder
 
 		logger *lagertest.TestLogger
 
@@ -67,9 +65,9 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 	BeforeEach(func() {
 		fakeClock = fakeclock.NewFakeClock(time.Now())
-		fakeRuncAdapter = &adapterfakes.FakeRuncAdapter{}
-		fakeRuncClient = &clientfakes.FakeRuncClient{}
-		fakeUserFinder = &usertoolsfakes.FakeUserFinder{}
+		fakeRuncAdapter = &lifecyclefakes.FakeRuncAdapter{}
+		fakeRuncClient = &lifecyclefakes.FakeRuncClient{}
+		fakeUserFinder = &lifecyclefakes.FakeUserFinder{}
 
 		logger = lagertest.NewTestLogger("lifecycle")
 

@@ -24,7 +24,7 @@ import (
 )
 
 var _ = Describe("UserIDFinder", func() {
-	var userFinder usertools.UserFinder
+	var userFinder *usertools.UserFinder
 
 	BeforeEach(func() {
 		userFinder = usertools.NewUserFinder()

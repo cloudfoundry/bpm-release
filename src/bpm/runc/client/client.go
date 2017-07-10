@@ -43,18 +43,6 @@ func (s Signal) String() string {
 	}
 }
 
-//go:generate counterfeiter . RuncClient
-
-type RuncClient interface {
-	CreateBundle(bundlePath string, jobSpec specs.Spec, user specs.User) error
-	RunContainer(pidFilePath, bundlePath, containerID string, stdout, stderr io.Writer) error
-	ContainerState(containerID string) (specs.State, error)
-	ListContainers() ([]ContainerState, error)
-	SignalContainer(containerID string, signal Signal) error
-	DeleteContainer(containerID string) error
-	DestroyBundle(bundlePath string) error
-}
-
 // https://github.com/opencontainers/runc/blob/master/list.go#L24-L45
 type ContainerState struct {
 	// ID is the container ID
@@ -65,19 +53,19 @@ type ContainerState struct {
 	Status string `json:"status"`
 }
 
-type runcClient struct {
+type RuncClient struct {
 	runcPath string
 	runcRoot string
 }
 
-func NewRuncClient(runcPath, runcRoot string) RuncClient {
-	return &runcClient{
+func NewRuncClient(runcPath, runcRoot string) *RuncClient {
+	return &RuncClient{
 		runcPath: runcPath,
 		runcRoot: runcRoot,
 	}
 }
 
-func (*runcClient) CreateBundle(bundlePath string, jobSpec specs.Spec, user specs.User) error {
+func (*RuncClient) CreateBundle(bundlePath string, jobSpec specs.Spec, user specs.User) error {
 	err := os.MkdirAll(bundlePath, 0700)
 	if err != nil {
 		return err
@@ -106,7 +94,7 @@ func (*runcClient) CreateBundle(bundlePath string, jobSpec specs.Spec, user spec
 	return enc.Encode(&jobSpec)
 }
 
-func (c *runcClient) RunContainer(pidFilePath, bundlePath, containerID string, stdout, stderr io.Writer) error {
+func (c *RuncClient) RunContainer(pidFilePath, bundlePath, containerID string, stdout, stderr io.Writer) error {
 	runcCmd := exec.Command(
 		c.runcPath,
 		"--root", c.runcRoot,
@@ -123,7 +111,7 @@ func (c *runcClient) RunContainer(pidFilePath, bundlePath, containerID string, s
 	return runcCmd.Run()
 }
 
-func (c *runcClient) ContainerState(containerID string) (specs.State, error) {
+func (c *RuncClient) ContainerState(containerID string) (specs.State, error) {
 	runcCmd := exec.Command(
 		c.runcPath,
 		"--root", c.runcRoot,
@@ -145,7 +133,7 @@ func (c *runcClient) ContainerState(containerID string) (specs.State, error) {
 	return state, nil
 }
 
-func (c *runcClient) ListContainers() ([]ContainerState, error) {
+func (c *RuncClient) ListContainers() ([]ContainerState, error) {
 	runcCmd := exec.Command(
 		c.runcPath,
 		"--root", c.runcRoot,
@@ -167,7 +155,7 @@ func (c *runcClient) ListContainers() ([]ContainerState, error) {
 	return containerStates, nil
 }
 
-func (c *runcClient) SignalContainer(containerID string, signal Signal) error {
+func (c *RuncClient) SignalContainer(containerID string, signal Signal) error {
 	runcCmd := exec.Command(
 		c.runcPath,
 		"--root", c.runcRoot,
@@ -179,7 +167,7 @@ func (c *runcClient) SignalContainer(containerID string, signal Signal) error {
 	return runcCmd.Run()
 }
 
-func (c *runcClient) DeleteContainer(containerID string) error {
+func (c *RuncClient) DeleteContainer(containerID string) error {
 	runcCmd := exec.Command(
 		c.runcPath,
 		"--root", c.runcRoot,
@@ -191,6 +179,6 @@ func (c *runcClient) DeleteContainer(containerID string) error {
 	return runcCmd.Run()
 }
 
-func (*runcClient) DestroyBundle(bundlePath string) error {
+func (*RuncClient) DestroyBundle(bundlePath string) error {
 	return os.RemoveAll(bundlePath)
 }

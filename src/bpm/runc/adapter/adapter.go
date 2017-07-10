@@ -27,20 +27,13 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
-//go:generate counterfeiter . RuncAdapter
+type RuncAdapter struct{}
 
-type RuncAdapter interface {
-	CreateJobPrerequisites(systemRoot, jobName string, cfg *bpm.Config, user specs.User) (string, *os.File, *os.File, error)
-	BuildSpec(systemRoot, jobName string, cfg *bpm.Config, user specs.User) (specs.Spec, error)
+func NewRuncAdapter() *RuncAdapter {
+	return &RuncAdapter{}
 }
 
-type runcAdapter struct{}
-
-func NewRuncAdapter() RuncAdapter {
-	return &runcAdapter{}
-}
-
-func (a *runcAdapter) CreateJobPrerequisites(
+func (a *RuncAdapter) CreateJobPrerequisites(
 	systemRoot string,
 	jobName string,
 	cfg *bpm.Config,
@@ -102,7 +95,7 @@ func createFileFor(path string, uid, gid int) (*os.File, error) {
 	return f, nil
 }
 
-func (a *runcAdapter) BuildSpec(
+func (a *RuncAdapter) BuildSpec(
 	systemRoot string,
 	jobName string,
 	cfg *bpm.Config,

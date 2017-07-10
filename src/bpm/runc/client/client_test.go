@@ -30,7 +30,7 @@ import (
 
 var _ = Describe("RuncClient", func() {
 	var (
-		runcClient client.RuncClient
+		runcClient *client.RuncClient
 		jobSpec    specs.Spec
 		bundlePath string
 		user       specs.User

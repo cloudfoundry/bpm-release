@@ -18,13 +18,16 @@ package lifecycle
 import (
 	"bpm/bpm"
 	"bpm/models"
-	"bpm/runc/adapter"
 	"bpm/runc/client"
 	"bpm/usertools"
 	"errors"
 	"fmt"
+	"io"
+	"os"
 	"path/filepath"
 	"time"
+
+	specs "github.com/opencontainers/runtime-spec/specs-go"
 
 	"code.cloudfoundry.org/clock"
 	"code.cloudfoundry.org/lager"
@@ -32,18 +35,43 @@ import (
 
 var TimeoutError = errors.New("failed to stop job within timeout")
 
+//go:generate counterfeiter . UserFinder
+
+type UserFinder interface {
+	Lookup(username string) (specs.User, error)
+}
+
+//go:generate counterfeiter . RuncAdapter
+
+type RuncAdapter interface {
+	CreateJobPrerequisites(systemRoot, jobName string, cfg *bpm.Config, user specs.User) (string, *os.File, *os.File, error)
+	BuildSpec(systemRoot, jobName string, cfg *bpm.Config, user specs.User) (specs.Spec, error)
+}
+
+//go:generate counterfeiter . RuncClient
+
+type RuncClient interface {
+	CreateBundle(bundlePath string, jobSpec specs.Spec, user specs.User) error
+	RunContainer(pidFilePath, bundlePath, containerID string, stdout, stderr io.Writer) error
+	ContainerState(containerID string) (specs.State, error)
+	ListContainers() ([]client.ContainerState, error)
+	SignalContainer(containerID string, signal client.Signal) error
+	DeleteContainer(containerID string) error
+	DestroyBundle(bundlePath string) error
+}
+
 type RuncLifecycle struct {
 	clock       clock.Clock
-	runcClient  client.RuncClient
-	runcAdapter adapter.RuncAdapter
+	runcClient  RuncClient
+	runcAdapter RuncAdapter
 	systemRoot  string
-	userFinder  usertools.UserFinder
+	userFinder  UserFinder
 }
 
 func NewRuncLifecycle(
-	runcClient client.RuncClient,
-	runcAdapter adapter.RuncAdapter,
-	userFinder usertools.UserFinder,
+	runcClient RuncClient,
+	runcAdapter RuncAdapter,
+	userFinder UserFinder,
 	clock clock.Clock,
 	systemRoot string,
 ) *RuncLifecycle {

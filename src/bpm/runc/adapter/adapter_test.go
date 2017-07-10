@@ -34,7 +34,7 @@ import (
 
 var _ = Describe("RuncAdapter", func() {
 	var (
-		runcAdapter adapter.RuncAdapter
+		runcAdapter *adapter.RuncAdapter
 
 		jobName,
 		systemRoot string

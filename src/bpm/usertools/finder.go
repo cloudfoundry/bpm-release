@@ -25,18 +25,13 @@ import (
 
 const VcapUser = "vcap"
 
-//go:generate counterfeiter . UserFinder
-type UserFinder interface {
-	Lookup(username string) (specs.User, error)
+type UserFinder struct{}
+
+func NewUserFinder() *UserFinder {
+	return &UserFinder{}
 }
 
-type userFinder struct{}
-
-func NewUserFinder() userFinder {
-	return userFinder{}
-}
-
-func (f userFinder) Lookup(username string) (specs.User, error) {
+func (f *UserFinder) Lookup(username string) (specs.User, error) {
 	u, err := user.Lookup(username)
 	if err != nil {
 		return specs.User{}, err
