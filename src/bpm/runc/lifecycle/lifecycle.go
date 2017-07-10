@@ -91,6 +91,20 @@ func (j *RuncLifecycle) StartJob(jobName string, cfg *bpm.Config) error {
 	)
 }
 
+func (j *RuncLifecycle) GetJob(jobName string, cfg *bpm.Config) (models.Job, error) {
+	cid := containerID(jobName, cfg.Name)
+	container, err := j.runcClient.ContainerState(cid)
+	if err != nil {
+		return models.Job{}, err
+	}
+
+	return models.Job{
+		Name:   container.ID,
+		Pid:    container.Pid,
+		Status: container.Status,
+	}, nil
+}
+
 func (j *RuncLifecycle) ListJobs() ([]models.Job, error) {
 	containers, err := j.runcClient.ListContainers()
 	if err != nil {

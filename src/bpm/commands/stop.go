@@ -17,7 +17,6 @@ package commands
 
 import (
 	"bpm/bpm"
-	"errors"
 	"time"
 
 	"code.cloudfoundry.org/lager"
@@ -42,7 +41,7 @@ var stopCommand = &cobra.Command{
 }
 
 func stopPre(cmd *cobra.Command, _ []string) error {
-	if err := validateStopFlags(jobName, configPath); err != nil {
+	if err := validateJobandConfigFlags(); err != nil {
 		return err
 	}
 
@@ -67,16 +66,4 @@ func stop(cmd *cobra.Command, _ []string) error {
 	}
 
 	return runcLifecycle.RemoveJob(jobName, cfg)
-}
-
-func validateStopFlags(jobName, configPath string) error {
-	if jobName == "" {
-		return errors.New("must specify a job")
-	}
-
-	if configPath == "" {
-		return errors.New("must specify a configuration file")
-	}
-
-	return nil
 }

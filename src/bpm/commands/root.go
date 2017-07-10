@@ -34,6 +34,7 @@ import (
 
 var jobName, configPath string
 var logger lager.Logger
+
 var userFinder = usertools.NewUserFinder()
 
 var RootCmd = &cobra.Command{
@@ -47,6 +48,18 @@ var RootCmd = &cobra.Command{
 
 func root(cmd *cobra.Command, args []string) error {
 	return errors.New("Exit code 1")
+}
+
+func validateJobandConfigFlags() error {
+	if jobName == "" {
+		return errors.New("must specify a job")
+	}
+
+	if configPath == "" {
+		return errors.New("must specify a configuration file")
+	}
+
+	return nil
 }
 
 func setupBpmLogs() error {

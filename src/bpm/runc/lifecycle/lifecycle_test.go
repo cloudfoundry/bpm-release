@@ -433,4 +433,33 @@ var _ = Describe("RuncJobLifecycle", func() {
 			})
 		})
 	})
+
+	Describe("GetJob", func() {
+		BeforeEach(func() {
+			fakeRuncClient.ContainerStateReturns(specs.State{ID: expectedContainerID, Pid: 1234, Status: "running"}, nil)
+		})
+
+		It("fetches the container state and translates it into a job", func() {
+			job, err := runcLifecycle.GetJob(expectedJobName, jobConfig)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(fakeRuncClient.ContainerStateCallCount()).To(Equal(1))
+			Expect(fakeRuncClient.ContainerStateArgsForCall(0)).To(Equal(expectedContainerID))
+			Expect(job).To(Equal(models.Job{
+				Name:   expectedContainerID,
+				Pid:    1234,
+				Status: "running",
+			}))
+		})
+
+		Context("when fetching the container state fails", func() {
+			BeforeEach(func() {
+				fakeRuncClient.ContainerStateReturns(specs.State{}, errors.New("boom!"))
+			})
+
+			It("returns an error", func() {
+				_, err := runcLifecycle.GetJob(expectedJobName, jobConfig)
+				Expect(err).To(HaveOccurred())
+			})
+		})
+	})
 })
