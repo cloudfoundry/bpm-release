@@ -8,6 +8,8 @@ absolute_path() {
 
 scripts_path=$(absolute_path "$(dirname "$0")" )
 
+go get -u github.com/maxbrunsfeld/counterfeiter
+
 export GOPATH=$scripts_path/..
 export PATH=$GOPATH/bin:$PATH
 
@@ -15,7 +17,6 @@ ${scripts_path}/mountgroups.sh
 
 pushd "${GOPATH}" > /dev/null
   go install github.com/onsi/ginkgo/ginkgo
-  go get -u github.com/maxbrunsfeld/counterfeiter
 
   pushd "src/bpm" > /dev/null
     go generate ./...
