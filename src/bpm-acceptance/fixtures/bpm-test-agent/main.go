@@ -23,9 +23,13 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
 )
 
-var port = flag.Int("port", -1, "port the server listens on")
+var (
+	port          = flag.Int("port", -1, "port the server listens on")
+	ignoreSignals = flag.Bool("ignore-signals", false, "ignore all signals")
+)
 
 func main() {
 	flag.Parse()
@@ -53,18 +57,27 @@ func main() {
 	errChan := make(chan error)
 	signals := make(chan os.Signal)
 
-	signal.Notify(signals)
+	signal.Notify(signals, syscall.SIGTERM)
 
 	go func() {
 		errChan <- http.ListenAndServe(fmt.Sprintf(":%d", *port), nil)
 	}()
 
-	select {
-	case err := <-errChan:
-		if err != nil {
-			log.Fatal(err)
+	for {
+		select {
+		case err := <-errChan:
+			if err != nil {
+				log.Fatal(err)
+			}
+		case sig := <-signals:
+			if exitOnSignal() {
+				log.Fatalf("Signalled: %#v", sig)
+			}
+			log.Printf("Ignoring Signal: %#v\n", sig)
 		}
-	case sig := <-signals:
-		log.Fatalf("Signalled: %#v", sig)
 	}
+}
+
+func exitOnSignal() bool {
+	return !*ignoreSignals
 }
