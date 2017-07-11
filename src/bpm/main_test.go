@@ -114,13 +114,13 @@ var _ = Describe("bpm", func() {
 		err = os.MkdirAll(filepath.Join(boshConfigPath, "data", "packages"), 0755)
 		Expect(err).NotTo(HaveOccurred())
 
-		err = os.MkdirAll(filepath.Join(boshConfigPath, "packages", "runc", "bin"), 0755)
+		err = os.MkdirAll(filepath.Join(boshConfigPath, "packages", "bpm", "bin"), 0755)
 		Expect(err).NotTo(HaveOccurred())
 
 		runcPath, err := exec.LookPath("runc")
 		Expect(err).NotTo(HaveOccurred())
 
-		err = os.Link(runcPath, filepath.Join(boshConfigPath, "packages", "runc", "bin", "runc"))
+		err = os.Link(runcPath, filepath.Join(boshConfigPath, "packages", "bpm", "bin", "runc"))
 		Expect(err).NotTo(HaveOccurred())
 
 		jobName = fmt.Sprintf("bpm-test-%s", uuid.NewV4().String())

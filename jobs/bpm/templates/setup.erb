@@ -3,7 +3,3 @@
 if ! echo $PATH | grep -q 'bpm'; then
   export PATH=/var/vcap/packages/bpm/bin:$PATH
 fi
-
-if ! echo $PATH | grep -q 'runc'; then
-  export PATH=/var/vcap/packages/runc/bin:$PATH
-fi

@@ -80,7 +80,7 @@ func BoshRoot() string {
 }
 
 func RuncPath() string {
-	return filepath.Join(BoshRoot(), "packages", "runc", "bin", "runc")
+	return filepath.Join(BoshRoot(), "packages", "bpm", "bin", "runc")
 }
 
 func BundlesRoot() string {
