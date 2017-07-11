@@ -716,6 +716,105 @@ var _ = Describe("bpm", func() {
 		})
 	})
 
+	Context("trace", func() {
+		var traceCmd *exec.Cmd
+
+		BeforeEach(func() {
+			path := os.Getenv("PATH")
+
+			traceCmd = exec.Command(bpmPath, "trace", "-j", jobName, "-c", cfgPath)
+			traceCmd.Env = append(traceCmd.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
+			traceCmd.Env = append(traceCmd.Env, fmt.Sprintf("PATH=%s", path))
+
+			startCmd := exec.Command(bpmPath, "start", "-j", jobName, "-c", cfgPath)
+			startCmd.Env = append(startCmd.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
+
+			session, err := gexec.Start(startCmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).ShouldNot(HaveOccurred())
+			Eventually(session).Should(gexec.Exit(0))
+		})
+
+		It("streams the output of a reasonable strace command", func() {
+			session, err := gexec.Start(traceCmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).ShouldNot(HaveOccurred())
+			Eventually(session.Err).Should(gbytes.Say("wait4"))
+		})
+
+		Context("when the container is stopped", func() {
+			BeforeEach(func() {
+				Expect(runcCommand("kill", containerID, "KILL").Run()).To(Succeed())
+				Eventually(func() string {
+					return runcState(containerID).Status
+				}).Should(Equal("stopped"))
+			})
+
+			It("returns an error", func() {
+				session, err := gexec.Start(traceCmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).ShouldNot(HaveOccurred())
+
+				Eventually(session).Should(gexec.Exit(1))
+				Expect(session.Err).Should(gbytes.Say("Error: no pid for job"))
+			})
+		})
+
+		Context("when the containers does not exist", func() {
+			BeforeEach(func() {
+				stopCmd := exec.Command(bpmPath, "stop", "-j", jobName, "-c", cfgPath)
+				stopCmd.Env = append(stopCmd.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
+
+				session, err := gexec.Start(stopCmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).ShouldNot(HaveOccurred())
+				Eventually(session).Should(gexec.Exit(0))
+			})
+
+			It("returns an error", func() {
+				session, err := gexec.Start(traceCmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).ShouldNot(HaveOccurred())
+
+				Eventually(session).Should(gexec.Exit(1))
+				Expect(session.Err).Should(gbytes.Say("Error: failed to get job:"))
+			})
+		})
+
+		Context("when the bpm configuration file does not exist", func() {
+			It("exit with a non-zero exit code and prints an error", func() {
+				command = exec.Command(bpmPath, "trace", "-j", jobName, "-c", "i am a bogus config path")
+				command.Env = append(command.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
+
+				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+				Expect(err).ShouldNot(HaveOccurred())
+				Eventually(session).Should(gexec.Exit(1))
+				Expect(session.Err).Should(gbytes.Say("i am a bogus config path"))
+			})
+		})
+
+		Context("when no job name is specified", func() {
+			It("exits with a non-zero exit code and prints the usage", func() {
+				command = exec.Command(bpmPath, "trace")
+				command.Env = append(command.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
+
+				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+				Expect(err).ShouldNot(HaveOccurred())
+				Eventually(session).Should(gexec.Exit(1))
+
+				Expect(session.Err).Should(gbytes.Say("must specify a job"))
+			})
+		})
+
+		Context("when no config is specified", func() {
+			It("exits with a non-zero exit code and prints the usage", func() {
+				command = exec.Command(bpmPath, "trace", "-j", jobName)
+				command.Env = append(command.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
+
+				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+				Expect(err).ShouldNot(HaveOccurred())
+				Eventually(session).Should(gexec.Exit(1))
+
+				Expect(session.Err).Should(gbytes.Say("must specify a configuration file"))
+			})
+		})
+	})
+
 	Context("when no arguments are provided", func() {
 		It("exits with a non-zero exit code and prints the usage", func() {
 			command := exec.Command(bpmPath)

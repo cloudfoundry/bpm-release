@@ -10,7 +10,7 @@ RUN \
   make && \
   make install
 
-RUN apt-get update && apt-get -y install pkg-config
+RUN apt-get update && apt-get -y install pkg-config strace
 
 # install runc
 RUN wget -O /bin/runc \
