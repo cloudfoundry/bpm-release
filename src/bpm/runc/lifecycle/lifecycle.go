@@ -53,6 +53,7 @@ type RuncAdapter interface {
 type RuncClient interface {
 	CreateBundle(bundlePath string, jobSpec specs.Spec, user specs.User) error
 	RunContainer(pidFilePath, bundlePath, containerID string, stdout, stderr io.Writer) error
+	Exec(containerID, command string, stdin io.Reader, stdout, stderr io.Writer) error
 	ContainerState(containerID string) (specs.State, error)
 	ListContainers() ([]client.ContainerState, error)
 	SignalContainer(containerID string, signal client.Signal) error
@@ -131,6 +132,11 @@ func (j *RuncLifecycle) GetJob(jobName string, cfg *bpm.Config) (models.Job, err
 		Pid:    container.Pid,
 		Status: container.Status,
 	}, nil
+}
+
+func (j *RuncLifecycle) OpenShell(jobName string, cfg *bpm.Config, stdin io.Reader, stdout, stderr io.Writer) error {
+	cid := containerID(jobName, cfg.Name)
+	return j.runcClient.Exec(cid, "/bin/bash", stdin, stdout, stderr)
 }
 
 func (j *RuncLifecycle) ListJobs() ([]models.Job, error) {

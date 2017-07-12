@@ -46,3 +46,7 @@
 	path = src/code.cloudfoundry.org/lager
 	url = https://github.com/cloudfoundry/lager
 	branch = master
+[submodule "src/github.com/kr/pty"]
+	path = src/github.com/kr/pty
+	url = https://github.com/kr/pty
+	branch = master

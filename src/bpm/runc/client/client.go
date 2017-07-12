@@ -111,6 +111,22 @@ func (c *RuncClient) RunContainer(pidFilePath, bundlePath, containerID string, s
 	return runcCmd.Run()
 }
 
+func (c *RuncClient) Exec(containerID, command string, stdin io.Reader, stdout, stderr io.Writer) error {
+	runcCmd := exec.Command(
+		c.runcPath,
+		"--root", c.runcRoot,
+		"exec",
+		containerID,
+		command,
+	)
+
+	runcCmd.Stdin = stdin
+	runcCmd.Stdout = stdout
+	runcCmd.Stderr = stderr
+
+	return runcCmd.Run()
+}
+
 func (c *RuncClient) ContainerState(containerID string) (specs.State, error) {
 	runcCmd := exec.Command(
 		c.runcPath,

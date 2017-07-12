@@ -25,10 +25,12 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strconv"
+	"syscall"
 	"time"
 
 	yaml "gopkg.in/yaml.v2"
 
+	"github.com/kr/pty"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
@@ -804,6 +806,113 @@ var _ = Describe("bpm", func() {
 		Context("when no config is specified", func() {
 			It("exits with a non-zero exit code and prints the usage", func() {
 				command = exec.Command(bpmPath, "trace", "-j", jobName)
+				command.Env = append(command.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
+
+				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+				Expect(err).ShouldNot(HaveOccurred())
+				Eventually(session).Should(gexec.Exit(1))
+
+				Expect(session.Err).Should(gbytes.Say("must specify a configuration file"))
+			})
+		})
+	})
+
+	Context("shell", func() {
+		var shellCmd *exec.Cmd
+
+		BeforeEach(func() {
+			path := os.Getenv("PATH")
+
+			shellCmd = exec.Command(bpmPath, "shell", "-j", jobName, "-c", cfgPath)
+			shellCmd.Env = append(shellCmd.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
+			shellCmd.Env = append(shellCmd.Env, fmt.Sprintf("PATH=%s", path))
+
+			startCmd := exec.Command(bpmPath, "start", "-j", jobName, "-c", cfgPath)
+			startCmd.Env = append(startCmd.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
+
+			session, err := gexec.Start(startCmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).ShouldNot(HaveOccurred())
+			Eventually(session).Should(gexec.Exit(0))
+		})
+
+		It("attaches to a shell running inside the container", func() {
+			// Read this for more info http://www.linusakesson.net/programming/tty
+			pty, tty, err := pty.Open()
+			Expect(err).ShouldNot(HaveOccurred())
+			defer pty.Close()
+
+			shellCmd.Stdin = tty
+			shellCmd.Stdout = tty
+			shellCmd.Stderr = tty
+
+			shellCmd.SysProcAttr = &syscall.SysProcAttr{
+				Setctty: true,
+				Setsid:  true,
+			}
+
+			session, err := gexec.Start(shellCmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).ShouldNot(HaveOccurred())
+
+			tty.Close()
+
+			_, err = pty.Write([]byte("/bin/hostname\n"))
+			Expect(err).ShouldNot(HaveOccurred())
+
+			Eventually(session.Out).Should(gbytes.Say(jobName))
+
+			_, err = pty.Write([]byte("exit\n"))
+			Expect(err).ShouldNot(HaveOccurred())
+
+			Eventually(session).Should(gexec.Exit(0))
+		})
+
+		Context("when the containers does not exist", func() {
+			BeforeEach(func() {
+				stopCmd := exec.Command(bpmPath, "stop", "-j", jobName, "-c", cfgPath)
+				stopCmd.Env = append(stopCmd.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
+
+				session, err := gexec.Start(stopCmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).ShouldNot(HaveOccurred())
+				Eventually(session).Should(gexec.Exit(0))
+			})
+
+			It("returns an error", func() {
+				session, err := gexec.Start(shellCmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).ShouldNot(HaveOccurred())
+
+				Eventually(session).Should(gexec.Exit(1))
+				Expect(session.Err).Should(gbytes.Say("does not exist"))
+			})
+		})
+
+		Context("when the bpm configuration file does not exist", func() {
+			It("exit with a non-zero exit code and prints an error", func() {
+				command = exec.Command(bpmPath, "shell", "-j", jobName, "-c", "i am a bogus config path")
+				command.Env = append(command.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
+
+				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+				Expect(err).ShouldNot(HaveOccurred())
+				Eventually(session).Should(gexec.Exit(1))
+				Expect(session.Err).Should(gbytes.Say("i am a bogus config path"))
+			})
+		})
+
+		Context("when no job name is specified", func() {
+			It("exits with a non-zero exit code and prints the usage", func() {
+				command = exec.Command(bpmPath, "shell")
+				command.Env = append(command.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
+
+				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+				Expect(err).ShouldNot(HaveOccurred())
+				Eventually(session).Should(gexec.Exit(1))
+
+				Expect(session.Err).Should(gbytes.Say("must specify a job"))
+			})
+		})
+
+		Context("when no config is specified", func() {
+			It("exits with a non-zero exit code and prints the usage", func() {
+				command = exec.Command(bpmPath, "shell", "-j", jobName)
 				command.Env = append(command.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
 
 				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
