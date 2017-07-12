@@ -35,7 +35,6 @@ type Config struct {
 type Limits struct {
 	Memory    *string `yaml:"memory"`
 	OpenFiles *uint64 `yaml:"open_files"`
-	Processes *uint64 `yaml:"processes"`
 }
 
 func ParseConfig(configPath string) (*Config, error) {

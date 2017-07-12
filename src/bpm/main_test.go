@@ -354,43 +354,6 @@ var _ = Describe("bpm", func() {
 					Eventually(fileContents(stderrFileLocation)).Should(ContainSubstring("Too many open files"))
 				})
 			})
-
-			Context("processes", func() {
-				BeforeEach(func() {
-					cfg.Executable = "/bin/bash"
-					cfg.Args = []string{
-						"-c",
-						// See https://codegolf.stackexchange.com/questions/24485/create-a-memory-leak-without-any-fork-bombs
-						` trap "kill $child" SIGTERM;
-							sleep 100 &
-							child=$!;
-							wait $child;
-							for i in $(seq 1 999); do sleep 100 & done;
-							wait`,
-					}
-
-					limit := uint64(1000)
-					cfg.Limits = &bpm.Limits{
-						Processes: &limit,
-					}
-
-					cfgPath = writeConfig(jobName, cfg)
-				})
-
-				It("cannot create more processes than permitted", func() {
-					session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
-					Expect(err).NotTo(HaveOccurred())
-					Eventually(session).Should(gexec.Exit(0))
-
-					Eventually(func() string {
-						return runcState(containerID).Status
-					}).Should(Equal("running"))
-
-					Expect(runcCommand("kill", containerID).Run()).To(Succeed())
-
-					Eventually(fileContents(stderrFileLocation)).Should(ContainSubstring("fork: retry: Resource temporarily unavailable"))
-				})
-			})
 		})
 
 		Context("when the stdout and stderr files already exist", func() {

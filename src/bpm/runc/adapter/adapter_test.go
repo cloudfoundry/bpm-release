@@ -343,28 +343,6 @@ var _ = Describe("RuncAdapter", func() {
 					}))
 				})
 			})
-
-			Context("Processes", func() {
-				var expectedProcessLimit uint64
-
-				BeforeEach(func() {
-					expectedProcessLimit = 4356
-					cfg.Limits.Processes = &expectedProcessLimit
-				})
-
-				It("sets the rlimit on the process", func() {
-					spec, err := runcAdapter.BuildSpec(systemRoot, jobName, cfg, user)
-					Expect(err).NotTo(HaveOccurred())
-
-					Expect(spec.Process.Rlimits).To(ConsistOf([]specs.LinuxRlimit{
-						{
-							Type: "RLIMIT_NPROC",
-							Hard: uint64(expectedProcessLimit),
-							Soft: uint64(expectedProcessLimit),
-						},
-					}))
-				})
-			})
 		})
 
 		Context("when the limits configuration is not provided", func() {

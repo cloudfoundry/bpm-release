@@ -137,14 +137,6 @@ func (a *RuncAdapter) BuildSpec(
 				Soft: uint64(*cfg.Limits.OpenFiles),
 			})
 		}
-
-		if cfg.Limits.Processes != nil {
-			process.Rlimits = append(process.Rlimits, specs.LinuxRlimit{
-				Type: "RLIMIT_NPROC",
-				Hard: uint64(*cfg.Limits.Processes),
-				Soft: uint64(*cfg.Limits.Processes),
-			})
-		}
 	}
 
 	return specs.Spec{
