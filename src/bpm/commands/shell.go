@@ -46,6 +46,8 @@ func shell(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
+	cmd.SilenceUsage = true
+
 	runcLifecycle := newRuncLifecycle()
 	return runcLifecycle.OpenShell(jobName, cfg, os.Stdin, cmd.OutOrStdout(), cmd.OutOrStderr())
 }

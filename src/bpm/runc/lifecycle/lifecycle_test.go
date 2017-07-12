@@ -34,6 +34,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/gbytes"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
@@ -466,6 +467,39 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 			It("returns an error", func() {
 				_, err := runcLifecycle.GetJob(expectedJobName, jobConfig)
+				Expect(err).To(HaveOccurred())
+			})
+		})
+	})
+
+	Describe("OpenShell", func() {
+		var expectedStdin *gbytes.Buffer
+
+		BeforeEach(func() {
+			fakeRuncClient.ExecReturns(nil)
+			expectedStdin = gbytes.BufferWithBytes([]byte("stdin"))
+		})
+
+		It("execs /bin/bash inside the container", func() {
+			err := runcLifecycle.OpenShell(expectedJobName, jobConfig, expectedStdin, expectedStdout, expectedStderr)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(fakeRuncClient.ExecCallCount()).To(Equal(1))
+			cid, command, stdin, stdout, stderr := fakeRuncClient.ExecArgsForCall(0)
+			Expect(cid).To(Equal(expectedContainerID))
+			Expect(command).To(Equal("/bin/bash"))
+			Expect(stdin).To(Equal(expectedStdin))
+			Expect(stdout).To(Equal(expectedStdout))
+			Expect(stderr).To(Equal(expectedStderr))
+		})
+
+		Context("when the exec command fails", func() {
+			BeforeEach(func() {
+				fakeRuncClient.ExecReturns(errors.New("boom!"))
+			})
+
+			It("returns an error", func() {
+				err := runcLifecycle.OpenShell(expectedJobName, jobConfig, expectedStdin, expectedStdout, expectedStderr)
 				Expect(err).To(HaveOccurred())
 			})
 		})

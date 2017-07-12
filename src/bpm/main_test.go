@@ -781,15 +781,31 @@ var _ = Describe("bpm", func() {
 	})
 
 	Context("shell", func() {
-		var shellCmd *exec.Cmd
+		var (
+			shellCmd   *exec.Cmd
+			ptyF, ttyF *os.File
+		)
 
 		BeforeEach(func() {
 			path := os.Getenv("PATH")
+
+			// Read this for more info http://www.linusakesson.net/programming/tty
+			var err error
+			ptyF, ttyF, err = pty.Open()
+			Expect(err).ShouldNot(HaveOccurred())
 
 			shellCmd = exec.Command(bpmPath, "shell", "-j", jobName, "-c", cfgPath)
 			shellCmd.Env = append(shellCmd.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
 			shellCmd.Env = append(shellCmd.Env, fmt.Sprintf("PATH=%s", path))
 			shellCmd.Env = append(shellCmd.Env, "TERM=xterm-256color")
+
+			shellCmd.Stdin = ttyF
+			shellCmd.Stdout = ttyF
+			shellCmd.Stderr = ttyF
+			shellCmd.SysProcAttr = &syscall.SysProcAttr{
+				Setctty: true,
+				Setsid:  true,
+			}
 
 			startCmd := exec.Command(bpmPath, "start", "-j", jobName, "-c", cfgPath)
 			startCmd.Env = append(startCmd.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
@@ -799,39 +815,43 @@ var _ = Describe("bpm", func() {
 			Eventually(session).Should(gexec.Exit(0))
 		})
 
+		AfterEach(func() {
+			Expect(ptyF.Close()).To(Succeed())
+		})
+
 		It("attaches to a shell running inside the container", func() {
-			// Read this for more info http://www.linusakesson.net/programming/tty
-			pty, tty, err := pty.Open()
-			Expect(err).ShouldNot(HaveOccurred())
-			defer pty.Close()
-
-			shellCmd.Stdin = tty
-			shellCmd.Stdout = tty
-			shellCmd.Stderr = tty
-
-			shellCmd.SysProcAttr = &syscall.SysProcAttr{
-				Setctty: true,
-				Setsid:  true,
-			}
-
 			session, err := gexec.Start(shellCmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
+			Expect(ttyF.Close()).NotTo(HaveOccurred())
 
-			Expect(tty.Close()).NotTo(HaveOccurred())
-
-			_, err = pty.Write([]byte("/bin/hostname\n"))
+			_, err = ptyF.Write([]byte("/bin/hostname\n"))
 			Expect(err).ShouldNot(HaveOccurred())
 			Eventually(session.Out).Should(gbytes.Say(jobName))
 
 			// Validate TERM variable is set
-			_, err = pty.Write([]byte("/bin/echo $TERM\n"))
+			_, err = ptyF.Write([]byte("/bin/echo $TERM\n"))
 			Expect(err).ShouldNot(HaveOccurred())
 			Eventually(session.Out).Should(gbytes.Say("xterm-256color"))
 
-			_, err = pty.Write([]byte("exit\n"))
+			_, err = ptyF.Write([]byte("exit\n"))
 			Expect(err).ShouldNot(HaveOccurred())
 
 			Eventually(session).Should(gexec.Exit(0))
+		})
+
+		It("does not print the usage on invalid commands", func() {
+			session, err := gexec.Start(shellCmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(ttyF.Close()).NotTo(HaveOccurred())
+
+			_, err = ptyF.Write([]byte("this is not a valid command\n"))
+			Expect(err).ShouldNot(HaveOccurred())
+
+			_, err = ptyF.Write([]byte("exit\n"))
+			Expect(err).ShouldNot(HaveOccurred())
+
+			Consistently(session.Out).ShouldNot(gbytes.Say("Usage:"))
+			Consistently(session.Err).ShouldNot(gbytes.Say("Usage:"))
 		})
 
 		Context("when the containers does not exist", func() {
