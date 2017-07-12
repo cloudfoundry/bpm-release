@@ -17,6 +17,7 @@ package client
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -111,11 +112,15 @@ func (c *RuncClient) RunContainer(pidFilePath, bundlePath, containerID string, s
 	return runcCmd.Run()
 }
 
+// This function assumes you are launching an interactive shell.
+// We should improve the interface to mirror `runc exec` more generally.
 func (c *RuncClient) Exec(containerID, command string, stdin io.Reader, stdout, stderr io.Writer) error {
 	runcCmd := exec.Command(
 		c.runcPath,
 		"--root", c.runcRoot,
 		"exec",
+		"--tty",
+		"--env", fmt.Sprintf("TERM=%s", os.Getenv("TERM")),
 		containerID,
 		command,
 	)

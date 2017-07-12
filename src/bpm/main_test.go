@@ -826,6 +826,7 @@ var _ = Describe("bpm", func() {
 			shellCmd = exec.Command(bpmPath, "shell", "-j", jobName, "-c", cfgPath)
 			shellCmd.Env = append(shellCmd.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
 			shellCmd.Env = append(shellCmd.Env, fmt.Sprintf("PATH=%s", path))
+			shellCmd.Env = append(shellCmd.Env, "TERM=xterm-256color")
 
 			startCmd := exec.Command(bpmPath, "start", "-j", jobName, "-c", cfgPath)
 			startCmd.Env = append(startCmd.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
@@ -853,12 +854,16 @@ var _ = Describe("bpm", func() {
 			session, err := gexec.Start(shellCmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
 
-			tty.Close()
+			Expect(tty.Close()).NotTo(HaveOccurred())
 
 			_, err = pty.Write([]byte("/bin/hostname\n"))
 			Expect(err).ShouldNot(HaveOccurred())
-
 			Eventually(session.Out).Should(gbytes.Say(jobName))
+
+			// Validate TERM variable is set
+			_, err = pty.Write([]byte("/bin/echo $TERM\n"))
+			Expect(err).ShouldNot(HaveOccurred())
+			Eventually(session.Out).Should(gbytes.Say("xterm-256color"))
 
 			_, err = pty.Write([]byte("exit\n"))
 			Expect(err).ShouldNot(HaveOccurred())
