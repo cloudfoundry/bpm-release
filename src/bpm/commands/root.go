@@ -69,7 +69,7 @@ func setupBpmLogs() error {
 		return err
 	}
 
-	logFile, err := os.OpenFile(bpmLogFileLocation, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0700)
+	logFile, err := os.OpenFile(bpmLogFileLocation, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0600)
 	if err != nil {
 		return err
 	}

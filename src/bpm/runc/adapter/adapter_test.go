@@ -84,7 +84,7 @@ var _ = Describe("RuncAdapter", func() {
 			Expect(stdout.Name()).To(Equal(filepath.Join(logDir, expectedStdoutFileName)))
 			stdoutInfo, err := stdout.Stat()
 			Expect(err).NotTo(HaveOccurred())
-			Expect(stdoutInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0700)))
+			Expect(stdoutInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0600)))
 			Expect(stdoutInfo.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(200)))
 			Expect(stdoutInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
 
@@ -92,7 +92,7 @@ var _ = Describe("RuncAdapter", func() {
 			Expect(stderr.Name()).To(Equal(filepath.Join(logDir, expectedStderrFileName)))
 			stderrInfo, err := stderr.Stat()
 			Expect(err).NotTo(HaveOccurred())
-			Expect(stderrInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0700)))
+			Expect(stderrInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0600)))
 			Expect(stderrInfo.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(200)))
 			Expect(stderrInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
 

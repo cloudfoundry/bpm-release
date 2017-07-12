@@ -82,7 +82,7 @@ func (a *RuncAdapter) CreateJobPrerequisites(
 }
 
 func createFileFor(path string, uid, gid int) (*os.File, error) {
-	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0700)
+	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0600)
 	if err != nil {
 		return nil, err
 	}
