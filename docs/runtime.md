@@ -13,10 +13,11 @@ job to only say it has completed deploying after it has started up. You do not
 need to manage any PID files yourself.
 
 On shutdown your job will receive a `SIGTERM`. You then have 20 seconds to
-shutdown your application before it will be forcibly terminated. If you require
-longer than this then you should use a [drain script][drain] for your server.
-The drain script should put your server in such a state that it can shutdown
-within 20 seconds.
+shutdown your application before it will be sent `SIGQUIT` to dump the stack
+(this is default behavior in the Go and Java runtimes) before being forcibly
+terminated. If you require longer than this then you should use a [drain
+script][drain] for your server.  The drain script should put your server in
+such a state that it can shutdown within 20 seconds.
 
 [post-start]: https://bosh.io/docs/post-start.html
 [drain]: https://bosh.io/docs/drain.html
