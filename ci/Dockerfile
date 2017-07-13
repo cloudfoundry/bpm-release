@@ -24,13 +24,13 @@ RUN \
 
 # # add required bosh directories for test
 RUN \
-  mkdir -p /var/vcap/packages/runc/bin && \
+  mkdir -p /var/vcap/packages/bpm/bin && \
   mkdir -p /var/vcap/data/packages && \
   mkdir -p /var/vcap/data/bpm && \
   mkdir -p /var/vcap/jobs/
 
 RUN \
-  ln -s /bin/runc /var/vcap/packages/runc/bin/runc
+  ln -s /bin/runc /var/vcap/packages/bpm/bin/runc
 
 RUN \
   chown -R vcap:vcap /var/vcap
