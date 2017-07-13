@@ -25,6 +25,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -352,6 +353,49 @@ var _ = Describe("bpm", func() {
 					Expect(runcCommand("kill", containerID).Run()).To(Succeed())
 
 					Eventually(fileContents(stderrFileLocation)).Should(ContainSubstring("Too many open files"))
+				})
+			})
+		})
+
+		Context("namespaces", func() {
+			Context("ipc", func() {
+				var messageQueueId int
+
+				BeforeEach(func() {
+					ipcCmd := exec.Command("ipcmk", "-Q")
+					output, err := ipcCmd.CombinedOutput()
+					Expect(err).NotTo(HaveOccurred())
+
+					parts := strings.Split(string(output), ":")
+					Expect(parts).To(HaveLen(2))
+					messageQueueId, err = strconv.Atoi(strings.Trim(parts[1], " \n"))
+					Expect(err).NotTo(HaveOccurred())
+
+					cfg.Args = []string{
+						"-c",
+						fmt.Sprintf(`
+						ipcs -q -i %d;
+						sleep 5
+						`, messageQueueId),
+					}
+
+					writeConfig(jobName, cfg)
+				})
+
+				AfterEach(func() {
+					ipcCmd := exec.Command("ipcrm", "-q", strconv.Itoa(messageQueueId))
+					output, err := ipcCmd.CombinedOutput()
+					Expect(err).NotTo(HaveOccurred(), string(output))
+				})
+
+				It("it can only see message queues in its own namespace", func() {
+					session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+					Expect(err).NotTo(HaveOccurred())
+					Eventually(session).Should(gexec.Exit(0))
+
+					Eventually(fileContents(stderrFileLocation)).Should(
+						ContainSubstring(fmt.Sprintf("ipcs: id %d not found", messageQueueId)),
+					)
 				})
 			})
 		})

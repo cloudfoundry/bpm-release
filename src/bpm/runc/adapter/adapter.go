@@ -156,15 +156,16 @@ func (a *RuncAdapter) BuildSpec(
 				"/etc/sv",
 				"/proc/kcore",
 				"/proc/latency_stats",
+				"/proc/sched_debug",
 				"/proc/timer_list",
 				"/proc/timer_stats",
-				"/proc/sched_debug",
 				"/sys/firmware",
 			},
 			Namespaces: []specs.LinuxNamespace{
-				{Type: "uts"},
+				{Type: "ipc"},
 				{Type: "mount"},
 				{Type: "pid"},
+				{Type: "uts"},
 			},
 			ReadonlyPaths: []string{
 				"/proc/asound",

@@ -273,9 +273,10 @@ var _ = Describe("RuncAdapter", func() {
 			}))
 
 			Expect(spec.Linux.Namespaces).To(ConsistOf(
-				specs.LinuxNamespace{Type: "uts"},
+				specs.LinuxNamespace{Type: "ipc"},
 				specs.LinuxNamespace{Type: "mount"},
 				specs.LinuxNamespace{Type: "pid"},
+				specs.LinuxNamespace{Type: "uts"},
 			))
 		})
 
