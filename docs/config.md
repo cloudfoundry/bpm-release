@@ -6,9 +6,7 @@ any time.
 ## Job Configuration
 
 ``` yaml
-# /var/vcap/jobs/job/config/server.yml
-name: server
-
+# /var/vcap/jobs/job/config/bpm/job.yml
 executable: /var/vcap/packages/program/bin/program-server
 
 args:
@@ -29,9 +27,7 @@ volumes:
 ```
 
 ``` yaml
-# /var/vcap/jobs/job/config/worker.yml
-name: worker
-
+# /var/vcap/jobs/job/config/bpm/worker.yml
 executable: /var/vcap/packages/program/bin/program-worker
 
 args:
@@ -51,16 +47,16 @@ for `monit` eventually and so reducing the exposed feature area will make this
 easier.
 
 ```
-check process job-server
-  with pidfile /var/vcap/sys/run/bpm/job/server.pid
-  start program "/var/vcap/packages/bpm/bin/bpm start -j job -c /var/vcap/jobs/job/config/server.yml"
-  stop program "/var/vcap/packages/bpm/bin/bpm stop -j job -c /var/vcap/jobs/job/config/server.yml"
+check process job
+  with pidfile /var/vcap/sys/run/bpm/job/job.pid
+  start program "/var/vcap/packages/bpm/bin/bpm start job"
+  stop program "/var/vcap/packages/bpm/bin/bpm stop job"
   group vcap
 
 check process job-worker
   with pidfile /var/vcap/sys/run/bpm/job/worker.pid
-  start program "/var/vcap/packages/bpm/bin/bpm start -j job -c /var/vcap/jobs/job/config/worker.yml"
-  stop program "/var/vcap/packages/bpm/bin/bpm stop -j job -c /var/vcap/jobs/job/config/worker.yml"
+  start program "/var/vcap/packages/bpm/bin/bpm start -j job -p worker"
+  stop program "/var/vcap/packages/bpm/bin/bpm stop -j job -p worker"
   group vcap
 ```
 

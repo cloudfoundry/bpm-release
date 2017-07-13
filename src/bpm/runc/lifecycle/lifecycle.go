@@ -44,8 +44,8 @@ type UserFinder interface {
 //go:generate counterfeiter . RuncAdapter
 
 type RuncAdapter interface {
-	CreateJobPrerequisites(systemRoot, jobName string, cfg *bpm.Config, user specs.User) (string, *os.File, *os.File, error)
-	BuildSpec(systemRoot, jobName string, cfg *bpm.Config, user specs.User) (specs.Spec, error)
+	CreateJobPrerequisites(systemRoot, jobName, procName string, user specs.User) (string, *os.File, *os.File, error)
+	BuildSpec(systemRoot, jobName, procName string, cfg *bpm.Config, user specs.User) (specs.Spec, error)
 }
 
 //go:generate counterfeiter . RuncClient
@@ -85,43 +85,44 @@ func NewRuncLifecycle(
 	}
 }
 
-func (j *RuncLifecycle) StartJob(jobName string, cfg *bpm.Config) error {
+func (j *RuncLifecycle) StartJob(jobName, procName string, cfg *bpm.Config) error {
 	user, err := j.userFinder.Lookup(usertools.VcapUser)
 	if err != nil {
 		return err
 	}
 
-	pidDir, stdout, stderr, err := j.runcAdapter.CreateJobPrerequisites(j.systemRoot, jobName, cfg, user)
+	pidDir, stdout, stderr, err := j.runcAdapter.CreateJobPrerequisites(j.systemRoot, jobName, procName, user)
 	if err != nil {
 		return fmt.Errorf("failed to create system files: %s", err.Error())
 	}
 	defer stdout.Close()
 	defer stderr.Close()
 
-	spec, err := j.runcAdapter.BuildSpec(j.systemRoot, jobName, cfg, user)
+	spec, err := j.runcAdapter.BuildSpec(j.systemRoot, jobName, procName, cfg, user)
 	if err != nil {
 		return err
 	}
 
-	err = j.runcClient.CreateBundle(j.bundlePath(jobName, cfg), spec, user)
+	bundlePath := j.bundlePath(jobName, procName)
+	err = j.runcClient.CreateBundle(bundlePath, spec, user)
 	if err != nil {
 		return fmt.Errorf("bundle build failure: %s", err.Error())
 	}
 
-	pidFilePath := filepath.Join(pidDir, fmt.Sprintf("%s.pid", cfg.Name))
-	cid := containerID(jobName, cfg.Name)
+	pidFilePath := filepath.Join(pidDir, fmt.Sprintf("%s.pid", procName))
+	cid := containerID(jobName, procName)
 
 	return j.runcClient.RunContainer(
 		pidFilePath,
-		j.bundlePath(jobName, cfg),
+		bundlePath,
 		cid,
 		stdout,
 		stderr,
 	)
 }
 
-func (j *RuncLifecycle) GetJob(jobName string, cfg *bpm.Config) (models.Job, error) {
-	cid := containerID(jobName, cfg.Name)
+func (j *RuncLifecycle) GetJob(jobName, procName string) (models.Job, error) {
+	cid := containerID(jobName, procName)
 	container, err := j.runcClient.ContainerState(cid)
 	if err != nil {
 		return models.Job{}, err
@@ -134,8 +135,8 @@ func (j *RuncLifecycle) GetJob(jobName string, cfg *bpm.Config) (models.Job, err
 	}, nil
 }
 
-func (j *RuncLifecycle) OpenShell(jobName string, cfg *bpm.Config, stdin io.Reader, stdout, stderr io.Writer) error {
-	cid := containerID(jobName, cfg.Name)
+func (j *RuncLifecycle) OpenShell(jobName, procName string, stdin io.Reader, stdout, stderr io.Writer) error {
+	cid := containerID(jobName, procName)
 	return j.runcClient.Exec(cid, "/bin/bash", stdin, stdout, stderr)
 }
 
@@ -158,8 +159,8 @@ func (j *RuncLifecycle) ListJobs() ([]models.Job, error) {
 	return jobs, nil
 }
 
-func (j *RuncLifecycle) StopJob(logger lager.Logger, jobName string, cfg *bpm.Config, exitTimeout time.Duration) error {
-	cid := containerID(jobName, cfg.Name)
+func (j *RuncLifecycle) StopJob(logger lager.Logger, jobName, procName string, exitTimeout time.Duration) error {
+	cid := containerID(jobName, procName)
 
 	err := j.runcClient.SignalContainer(cid, client.Term)
 	if err != nil {
@@ -200,21 +201,25 @@ func (j *RuncLifecycle) StopJob(logger lager.Logger, jobName string, cfg *bpm.Co
 	}
 }
 
-func (j *RuncLifecycle) RemoveJob(jobName string, cfg *bpm.Config) error {
-	cid := containerID(jobName, cfg.Name)
+func (j *RuncLifecycle) RemoveJob(jobName, procName string) error {
+	cid := containerID(jobName, procName)
 
 	err := j.runcClient.DeleteContainer(cid)
 	if err != nil {
 		return err
 	}
 
-	return j.runcClient.DestroyBundle(j.bundlePath(jobName, cfg))
+	return j.runcClient.DestroyBundle(j.bundlePath(jobName, procName))
 }
 
-func (j *RuncLifecycle) bundlePath(jobName string, cfg *bpm.Config) string {
-	return filepath.Join(j.systemRoot, "data", "bpm", "bundles", jobName, cfg.Name)
+func (j *RuncLifecycle) bundlePath(jobName, procName string) string {
+	return filepath.Join(j.systemRoot, "data", "bpm", "bundles", jobName, procName)
 }
 
 func containerID(jobName, procName string) string {
+	if jobName == procName {
+		return jobName
+	}
+
 	return fmt.Sprintf("%s-%s", jobName, procName)
 }

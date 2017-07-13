@@ -37,6 +37,7 @@ var _ = Describe("RuncAdapter", func() {
 		runcAdapter *adapter.RuncAdapter
 
 		jobName,
+		procName,
 		systemRoot string
 		cfg  *bpm.Config
 		user specs.User
@@ -46,8 +47,8 @@ var _ = Describe("RuncAdapter", func() {
 		runcAdapter = adapter.NewRuncAdapter()
 
 		jobName = "example"
+		procName = "server"
 		cfg = &bpm.Config{
-			Name:       "server",
 			Executable: "executable",
 		}
 		user = specs.User{UID: 200, GID: 300, Username: "vcap"}
@@ -63,12 +64,12 @@ var _ = Describe("RuncAdapter", func() {
 
 	Describe("CreateJobPrerequisites", func() {
 		It("creates the job prerequisites", func() {
-			pidDir, stdout, stderr, err := runcAdapter.CreateJobPrerequisites(systemRoot, jobName, cfg, user)
+			pidDir, stdout, stderr, err := runcAdapter.CreateJobPrerequisites(systemRoot, jobName, procName, user)
 			Expect(err).NotTo(HaveOccurred())
 
 			logDir := filepath.Join(systemRoot, "sys", "log", jobName)
-			expectedStdoutFileName := fmt.Sprintf("%s.out.log", cfg.Name)
-			expectedStderrFileName := fmt.Sprintf("%s.err.log", cfg.Name)
+			expectedStdoutFileName := fmt.Sprintf("%s.out.log", procName)
+			expectedStderrFileName := fmt.Sprintf("%s.err.log", procName)
 
 			// PID Directory
 			Expect(pidDir).To(Equal(filepath.Join(systemRoot, "sys", "run", "bpm", jobName)))
@@ -97,7 +98,7 @@ var _ = Describe("RuncAdapter", func() {
 			Expect(stderrInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
 
 			// Data Directory
-			dataDir := filepath.Join(systemRoot, "data", jobName, cfg.Name)
+			dataDir := filepath.Join(systemRoot, "data", jobName, procName)
 			dataDirInfo, err := os.Stat(dataDir)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(dataDirInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0700)))
@@ -111,7 +112,6 @@ var _ = Describe("RuncAdapter", func() {
 
 		BeforeEach(func() {
 			cfg = &bpm.Config{
-				Name:       "server",
 				Executable: "/var/vcap/packages/example/bin/example",
 				Args: []string{
 					"foo",
@@ -125,7 +125,7 @@ var _ = Describe("RuncAdapter", func() {
 		})
 
 		It("converts a bpm config into a runc spec", func() {
-			spec, err := runcAdapter.BuildSpec(systemRoot, jobName, cfg, user)
+			spec, err := runcAdapter.BuildSpec(systemRoot, jobName, procName, cfg, user)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(spec.Version).To(Equal(specs.Version))
@@ -286,7 +286,7 @@ var _ = Describe("RuncAdapter", func() {
 			})
 
 			It("sets no limits by default", func() {
-				_, err := runcAdapter.BuildSpec(systemRoot, jobName, cfg, user)
+				_, err := runcAdapter.BuildSpec(systemRoot, jobName, procName, cfg, user)
 				Expect(err).NotTo(HaveOccurred())
 			})
 
@@ -299,7 +299,7 @@ var _ = Describe("RuncAdapter", func() {
 				})
 
 				It("sets the memory limit on the container", func() {
-					spec, err := runcAdapter.BuildSpec(systemRoot, jobName, cfg, user)
+					spec, err := runcAdapter.BuildSpec(systemRoot, jobName, procName, cfg, user)
 					Expect(err).NotTo(HaveOccurred())
 
 					expectedMemoryLimitInBytes, err := bytefmt.ToBytes(expectedMemoryLimit)
@@ -317,7 +317,7 @@ var _ = Describe("RuncAdapter", func() {
 					})
 
 					It("returns an error", func() {
-						_, err := runcAdapter.BuildSpec(systemRoot, jobName, cfg, user)
+						_, err := runcAdapter.BuildSpec(systemRoot, jobName, procName, cfg, user)
 						Expect(err).To(HaveOccurred())
 					})
 				})
@@ -332,7 +332,7 @@ var _ = Describe("RuncAdapter", func() {
 				})
 
 				It("sets the rlimit on the process", func() {
-					spec, err := runcAdapter.BuildSpec(systemRoot, jobName, cfg, user)
+					spec, err := runcAdapter.BuildSpec(systemRoot, jobName, procName, cfg, user)
 					Expect(err).NotTo(HaveOccurred())
 
 					Expect(spec.Process.Rlimits).To(ConsistOf([]specs.LinuxRlimit{
@@ -352,7 +352,7 @@ var _ = Describe("RuncAdapter", func() {
 			})
 
 			It("does not set a memory limit", func() {
-				spec, err := runcAdapter.BuildSpec(systemRoot, jobName, cfg, user)
+				spec, err := runcAdapter.BuildSpec(systemRoot, jobName, procName, cfg, user)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(spec.Linux.Resources).To(BeNil())
 			})

@@ -71,11 +71,11 @@ var _ = Describe("BpmAcceptance", func() {
 		mounts := parseMounts(string(body))
 
 		expectedMountPaths := map[string]string{
-			"/var/vcap/data/packages":              "ro",
-			"/var/vcap/data/bpm-test-agent/server": "rw",
-			"/var/vcap/jobs/bpm-test-agent":        "ro",
-			"/var/vcap/packages":                   "ro",
-			"/var/vcap/sys/log/bpm-test-agent":     "rw",
+			"/var/vcap/data/packages":                      "ro",
+			"/var/vcap/data/bpm-test-agent/bpm-test-agent": "rw",
+			"/var/vcap/jobs/bpm-test-agent":                "ro",
+			"/var/vcap/packages":                           "ro",
+			"/var/vcap/sys/log/bpm-test-agent":             "rw",
 		}
 
 		var found []string

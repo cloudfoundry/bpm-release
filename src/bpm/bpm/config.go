@@ -25,7 +25,6 @@ import (
 )
 
 type Config struct {
-	Name       string
 	Executable string   `yaml:"executable"`
 	Args       []string `yaml:"args"`
 	Env        []string `yaml:"env"`
@@ -59,13 +58,10 @@ func ParseConfig(configPath string) (*Config, error) {
 }
 
 func (c *Config) Validate() error {
-	if c.Name == "" {
-		return errors.New("invalid config: name")
-	}
-
 	if c.Executable == "" {
 		return errors.New("invalid config: executable")
 	}
+
 	return nil
 }
 

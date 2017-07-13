@@ -33,17 +33,12 @@ func NewRuncAdapter() *RuncAdapter {
 	return &RuncAdapter{}
 }
 
-func (a *RuncAdapter) CreateJobPrerequisites(
-	systemRoot string,
-	jobName string,
-	cfg *bpm.Config,
-	user specs.User,
-) (string, *os.File, *os.File, error) {
+func (a *RuncAdapter) CreateJobPrerequisites(systemRoot, jobName, procName string, user specs.User) (string, *os.File, *os.File, error) {
 	bpmPidDir := filepath.Join(systemRoot, "sys", "run", "bpm", jobName)
 	jobLogDir := filepath.Join(systemRoot, "sys", "log", jobName)
-	stdoutFileLocation := filepath.Join(jobLogDir, fmt.Sprintf("%s.out.log", cfg.Name))
-	stderrFileLocation := filepath.Join(jobLogDir, fmt.Sprintf("%s.err.log", cfg.Name))
-	dataDir := filepath.Join(systemRoot, "data", jobName, cfg.Name)
+	stdoutFileLocation := filepath.Join(jobLogDir, fmt.Sprintf("%s.out.log", procName))
+	stderrFileLocation := filepath.Join(jobLogDir, fmt.Sprintf("%s.err.log", procName))
+	dataDir := filepath.Join(systemRoot, "data", jobName, procName)
 
 	err := os.MkdirAll(bpmPidDir, 0700)
 	if err != nil {
@@ -96,8 +91,7 @@ func createFileFor(path string, uid, gid int) (*os.File, error) {
 }
 
 func (a *RuncAdapter) BuildSpec(
-	systemRoot string,
-	jobName string,
+	systemRoot, jobName, procName string,
 	cfg *bpm.Config,
 	user specs.User,
 ) (specs.Spec, error) {
@@ -111,7 +105,7 @@ func (a *RuncAdapter) BuildSpec(
 	}
 
 	mounts := defaultMounts()
-	mounts = append(mounts, boshMounts(systemRoot, jobName, cfg.Name)...)
+	mounts = append(mounts, boshMounts(systemRoot, jobName, procName)...)
 	mounts = append(mounts, systemIdentityMounts()...)
 
 	var resources *specs.LinuxResources
@@ -147,7 +141,7 @@ func (a *RuncAdapter) BuildSpec(
 		},
 		Process: process,
 		Root: specs.Root{
-			Path: filepath.Join(bpm.BundlesRoot(), jobName, cfg.Name, "rootfs"),
+			Path: filepath.Join(bpm.BundlesRoot(), jobName, procName, "rootfs"),
 		},
 		Hostname: jobName,
 		Mounts:   mounts,

@@ -18,14 +18,11 @@ package commands
 import (
 	"bpm/bpm"
 
-	"code.cloudfoundry.org/lager"
-
 	"github.com/spf13/cobra"
 )
 
 func init() {
-	startCommand.Flags().StringVarP(&jobName, "job", "j", "", "The job name.")
-	startCommand.Flags().StringVarP(&configPath, "config", "c", "", "The path to the bpm configuration file.")
+	startCommand.Flags().StringVarP(&processName, "process", "p", "", "The optional process name.")
 	RootCmd.AddCommand(startCommand)
 }
 
@@ -33,12 +30,12 @@ var startCommand = &cobra.Command{
 	Long:              "Starts a BOSH Process",
 	RunE:              start,
 	Short:             "Starts a BOSH Process",
-	Use:               "start",
+	Use:               "start <job-name>",
 	PersistentPreRunE: startPre,
 }
 
-func startPre(cmd *cobra.Command, _ []string) error {
-	if err := validateJobandConfigFlags(); err != nil {
+func startPre(cmd *cobra.Command, args []string) error {
+	if err := validateInput(args); err != nil {
 		return err
 	}
 
@@ -52,16 +49,16 @@ func start(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	logger = logger.Session("start", lager.Data{"process": cfg.Name})
+	logger = logger.Session("start")
 	logger.Info("starting")
 	defer logger.Info("complete")
 
 	runcLifecycle := newRuncLifecycle()
-	err = runcLifecycle.StartJob(jobName, cfg)
+	err = runcLifecycle.StartJob(jobName, processName, cfg)
 	if err != nil {
 		logger.Error("failed-to-start", err)
 
-		removeErr := runcLifecycle.RemoveJob(jobName, cfg)
+		removeErr := runcLifecycle.RemoveJob(jobName, processName)
 		if removeErr != nil {
 			logger.Error("failed-to-cleanup", removeErr)
 		}

@@ -46,7 +46,6 @@ var _ = Describe("bpm", func() {
 
 		boshConfigPath,
 		jobName,
-		procName,
 		containerID,
 		cfgPath,
 		stdoutFileLocation,
@@ -57,12 +56,12 @@ var _ = Describe("bpm", func() {
 		cfg *bpm.Config
 	)
 
-	var writeConfig = func(jobName string, cfg *bpm.Config) string {
-		cfgDir := filepath.Join(boshConfigPath, "jobs", jobName, "config")
+	var writeConfig = func(jobName, procName string, cfg *bpm.Config) string {
+		cfgDir := filepath.Join(boshConfigPath, "jobs", jobName, "config", "bpm")
 		err := os.MkdirAll(cfgDir, 0755)
 		Expect(err).NotTo(HaveOccurred())
 
-		path := filepath.Join(cfgDir, "bpm.yml")
+		path := filepath.Join(cfgDir, fmt.Sprintf("%s.yml", procName))
 		Expect(os.RemoveAll(path)).To(Succeed())
 		f, err := os.OpenFile(
 			path,
@@ -86,9 +85,8 @@ var _ = Describe("bpm", func() {
 		return exec.Command("runc", args...)
 	}
 
-	var newDefaultConfig = func(jobName, procName string) *bpm.Config {
+	var newDefaultConfig = func(jobName string) *bpm.Config {
 		return &bpm.Config{
-			Name:       procName,
 			Executable: "/bin/bash",
 			Args: []string{
 				"-c",
@@ -127,15 +125,14 @@ var _ = Describe("bpm", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		jobName = fmt.Sprintf("bpm-test-%s", uuid.NewV4().String())
-		procName = "sleeper-agent"
-		containerID = fmt.Sprintf("%s-%s", jobName, procName)
-		cfg = newDefaultConfig(jobName, procName)
+		containerID = jobName
+		cfg = newDefaultConfig(jobName)
 
-		stdoutFileLocation = filepath.Join(boshConfigPath, "sys", "log", jobName, fmt.Sprintf("%s.out.log", procName))
-		stderrFileLocation = filepath.Join(boshConfigPath, "sys", "log", jobName, fmt.Sprintf("%s.err.log", procName))
+		stdoutFileLocation = filepath.Join(boshConfigPath, "sys", "log", jobName, fmt.Sprintf("%s.out.log", jobName))
+		stderrFileLocation = filepath.Join(boshConfigPath, "sys", "log", jobName, fmt.Sprintf("%s.err.log", jobName))
 		bpmLogFileLocation = filepath.Join(boshConfigPath, "sys", "log", jobName, "bpm.log")
 
-		cfgPath = writeConfig(jobName, cfg)
+		cfgPath = writeConfig(jobName, jobName, cfg)
 
 		runcRoot = fmt.Sprintf("--root=%s", filepath.Join(boshConfigPath, "data", "bpm", "runc"))
 	})
@@ -172,7 +169,7 @@ var _ = Describe("bpm", func() {
 
 	Context("start", func() {
 		JustBeforeEach(func() {
-			command = exec.Command(bpmPath, "start", "-j", jobName, "-c", cfgPath)
+			command = exec.Command(bpmPath, "start", jobName)
 			command.Env = append(command.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
 		})
 
@@ -183,7 +180,7 @@ var _ = Describe("bpm", func() {
 
 			state := runcState(containerID)
 			Expect(state.Status).To(Equal("running"))
-			pidText, err := ioutil.ReadFile(filepath.Join(boshConfigPath, "sys", "run", "bpm", jobName, fmt.Sprintf("%s.pid", procName)))
+			pidText, err := ioutil.ReadFile(filepath.Join(boshConfigPath, "sys", "run", "bpm", jobName, fmt.Sprintf("%s.pid", jobName)))
 			Expect(err).NotTo(HaveOccurred())
 
 			pid, err := strconv.Atoi(string(pidText))
@@ -224,6 +221,49 @@ var _ = Describe("bpm", func() {
 			Eventually(fileContents(bpmLogFileLocation)).Should(ContainSubstring("bpm.start.complete"))
 		})
 
+		Context("when the process flag is specified", func() {
+			var procName string
+
+			BeforeEach(func() {
+				procName = "server"
+				containerID = fmt.Sprintf("%s-%s", jobName, procName)
+
+				stdoutFileLocation = filepath.Join(boshConfigPath, "sys", "log", jobName, fmt.Sprintf("%s.out.log", procName))
+				stderrFileLocation = filepath.Join(boshConfigPath, "sys", "log", jobName, fmt.Sprintf("%s.err.log", procName))
+
+				cfg := newDefaultConfig(jobName)
+				cfg.Args = []string{
+					"-c",
+					`echo "alternate config out" && echo "alternate config err" 1>&2 && sleep 5`,
+				}
+
+				writeConfig(jobName, procName, cfg)
+			})
+
+			JustBeforeEach(func() {
+				command = exec.Command(bpmPath, "start", jobName, "-p", procName)
+				command.Env = append(command.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
+			})
+
+			It("runs the process specified in the corresponding configuration file", func() {
+				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+				Eventually(session).Should(gexec.Exit(0))
+
+				state := runcState(containerID)
+				Expect(state.Status).To(Equal("running"))
+				pidText, err := ioutil.ReadFile(filepath.Join(boshConfigPath, "sys", "run", "bpm", jobName, fmt.Sprintf("%s.pid", procName)))
+				Expect(err).NotTo(HaveOccurred())
+
+				pid, err := strconv.Atoi(string(pidText))
+				Expect(err).NotTo(HaveOccurred())
+				Expect(pid).To(Equal(state.Pid))
+
+				Eventually(fileContents(stdoutFileLocation)).Should(Equal("alternate config out\n"))
+				Eventually(fileContents(stderrFileLocation)).Should(Equal("alternate config err\n"))
+			})
+		})
+
 		Context("capabilities", func() {
 			BeforeEach(func() {
 				cfg.Executable = "/bin/bash"
@@ -233,7 +273,7 @@ var _ = Describe("bpm", func() {
 					`cat /proc/1/status | grep CapEff`,
 				}
 
-				cfgPath = writeConfig(jobName, cfg)
+				cfgPath = writeConfig(jobName, jobName, cfg)
 			})
 
 			It("has no effective capabilities", func() {
@@ -264,7 +304,7 @@ var _ = Describe("bpm", func() {
 						Memory: &limit,
 					}
 
-					cfgPath = writeConfig(jobName, cfg)
+					cfgPath = writeConfig(jobName, jobName, cfg)
 				})
 
 				streamOOMEvents := func(stdout io.Reader) chan event {
@@ -330,7 +370,7 @@ var _ = Describe("bpm", func() {
 							sleep 100 &
 							child=$!;
 							wait $child;
-							start_file_leak`, filepath.Join(boshConfigPath, "data", jobName, procName)),
+							start_file_leak`, filepath.Join(boshConfigPath, "data", jobName, jobName)),
 					}
 
 					limit := uint64(10)
@@ -338,7 +378,7 @@ var _ = Describe("bpm", func() {
 						OpenFiles: &limit,
 					}
 
-					cfgPath = writeConfig(jobName, cfg)
+					cfgPath = writeConfig(jobName, jobName, cfg)
 				})
 
 				It("cannot open more files than permitted", func() {
@@ -379,7 +419,7 @@ var _ = Describe("bpm", func() {
 						`, messageQueueId),
 					}
 
-					writeConfig(jobName, cfg)
+					writeConfig(jobName, jobName, cfg)
 				})
 
 				AfterEach(func() {
@@ -418,14 +458,19 @@ var _ = Describe("bpm", func() {
 		})
 
 		Context("when the bpm configuration file does not exist", func() {
+			BeforeEach(func() {
+				err := os.RemoveAll(cfgPath)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
 			It("exit with a non-zero exit code and prints an error", func() {
-				command = exec.Command(bpmPath, "stop", "-j", jobName, "-c", "i am a bogus config path")
+				command = exec.Command(bpmPath, "start", jobName)
 				command.Env = append(command.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
 
 				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 				Expect(err).ShouldNot(HaveOccurred())
 				Eventually(session).Should(gexec.Exit(1))
-				Expect(session.Err).Should(gbytes.Say("i am a bogus config path"))
+				Expect(session.Err).Should(gbytes.Say(fmt.Sprintf("%s.yml", jobName)))
 			})
 		})
 
@@ -442,22 +487,9 @@ var _ = Describe("bpm", func() {
 			})
 		})
 
-		Context("when no config is specified", func() {
-			It("exits with a non-zero exit code and prints the usage", func() {
-				command = exec.Command(bpmPath, "start", "-j", jobName)
-				command.Env = append(command.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
-
-				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
-				Expect(err).ShouldNot(HaveOccurred())
-				Eventually(session).Should(gexec.Exit(1))
-
-				Expect(session.Err).Should(gbytes.Say("must specify a configuration file"))
-			})
-		})
-
 		Context("when starting the job fails", func() {
 			BeforeEach(func() {
-				start := exec.Command(bpmPath, "start", "-j", jobName, "-c", cfgPath)
+				start := exec.Command(bpmPath, "start", jobName)
 				start.Env = append(start.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
 
 				session, err := gexec.Start(start, GinkgoWriter, GinkgoWriter)
@@ -470,7 +502,7 @@ var _ = Describe("bpm", func() {
 				Expect(err).ShouldNot(HaveOccurred())
 				Eventually(session).Should(gexec.Exit(1))
 
-				_, err = os.Open(filepath.Join(boshConfigPath, "data", "bpm", "bundles", jobName, procName))
+				_, err = os.Open(filepath.Join(boshConfigPath, "data", "bpm", "bundles", jobName, jobName))
 				Expect(err).To(HaveOccurred())
 				Expect(os.IsNotExist(err)).To(BeTrue())
 
@@ -481,7 +513,7 @@ var _ = Describe("bpm", func() {
 
 	Context("stop", func() {
 		BeforeEach(func() {
-			startCmd := exec.Command(bpmPath, "start", "-j", jobName, "-c", cfgPath)
+			startCmd := exec.Command(bpmPath, "start", jobName)
 			startCmd.Env = append(startCmd.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
 
 			session, err := gexec.Start(startCmd, GinkgoWriter, GinkgoWriter)
@@ -490,7 +522,7 @@ var _ = Describe("bpm", func() {
 		})
 
 		JustBeforeEach(func() {
-			command = exec.Command(bpmPath, "stop", "-j", jobName, "-c", cfgPath)
+			command = exec.Command(bpmPath, "stop", jobName)
 			command.Env = append(command.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
 		})
 
@@ -515,7 +547,7 @@ var _ = Describe("bpm", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Eventually(session).Should(gexec.Exit(0))
 
-			_, err = os.Open(filepath.Join(boshConfigPath, "data", "bpm", "bundles", jobName, procName))
+			_, err = os.Open(filepath.Join(boshConfigPath, "data", "bpm", "bundles", jobName, jobName))
 			Expect(err).To(HaveOccurred())
 			Expect(os.IsNotExist(err)).To(BeTrue())
 		})
@@ -541,39 +573,14 @@ var _ = Describe("bpm", func() {
 				Expect(session.Err).Should(gbytes.Say("must specify a job"))
 			})
 		})
-
-		Context("when no config is specified", func() {
-			It("exits with a non-zero exit code and prints the usage", func() {
-				command = exec.Command(bpmPath, "stop", "-j", jobName)
-				command.Env = append(command.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
-
-				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
-				Expect(err).ShouldNot(HaveOccurred())
-				Eventually(session).Should(gexec.Exit(1))
-
-				Expect(session.Err).Should(gbytes.Say("must specify a configuration file"))
-			})
-		})
-
-		Context("when the bpm configuration file does not exist", func() {
-			It("exit with a non-zero exit code and prints an error", func() {
-				command = exec.Command(bpmPath, "stop", "-j", jobName, "-c", "i am a bogus config path")
-				command.Env = append(command.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
-
-				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
-				Expect(err).ShouldNot(HaveOccurred())
-				Eventually(session).Should(gexec.Exit(1))
-				Expect(session.Err).Should(gbytes.Say("i am a bogus config path"))
-			})
-		})
 	})
 
 	Context("list", func() {
 		Context("with running and stopped containers", func() {
-			var otherJobName string
+			var otherJobName, otherProcName string
 
 			BeforeEach(func() {
-				startCmd := exec.Command(bpmPath, "start", "-j", jobName, "-c", cfgPath)
+				startCmd := exec.Command(bpmPath, "start", jobName)
 				startCmd.Env = append(startCmd.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
 
 				session, err := gexec.Start(startCmd, GinkgoWriter, GinkgoWriter)
@@ -581,11 +588,11 @@ var _ = Describe("bpm", func() {
 				Eventually(session).Should(gexec.Exit(0))
 
 				otherJobName = "example-2"
-				Expect(os.MkdirAll(filepath.Join(boshConfigPath, "jobs", otherJobName, "config"), 0755)).NotTo(HaveOccurred())
-				otherCfg := newDefaultConfig(otherJobName, procName)
-				otherCfgPath := writeConfig(otherJobName, otherCfg)
+				otherProcName = "server"
+				otherCfg := newDefaultConfig(otherJobName)
+				writeConfig(otherJobName, otherProcName, otherCfg)
 
-				startCmd = exec.Command(bpmPath, "start", "-j", otherJobName, "-c", otherCfgPath)
+				startCmd = exec.Command(bpmPath, "start", otherJobName, "-p", otherProcName)
 				startCmd.Env = append(startCmd.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
 
 				session, err = gexec.Start(startCmd, GinkgoWriter, GinkgoWriter)
@@ -601,7 +608,7 @@ var _ = Describe("bpm", func() {
 				Expect(err).ShouldNot(HaveOccurred())
 
 				state := runcState(containerID)
-				otherState := runcState(fmt.Sprintf("%s-%s", otherJobName, procName))
+				otherState := runcState(fmt.Sprintf("%s-%s", otherJobName, otherProcName))
 
 				Eventually(session).Should(gexec.Exit(0))
 				Expect(session.Out).Should(gbytes.Say("Name\\s+Pid\\s+Status"))
@@ -628,10 +635,10 @@ var _ = Describe("bpm", func() {
 		var pidCmd *exec.Cmd
 
 		BeforeEach(func() {
-			pidCmd = exec.Command(bpmPath, "pid", "-j", jobName, "-c", cfgPath)
+			pidCmd = exec.Command(bpmPath, "pid", jobName)
 			pidCmd.Env = append(pidCmd.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
 
-			startCmd := exec.Command(bpmPath, "start", "-j", jobName, "-c", cfgPath)
+			startCmd := exec.Command(bpmPath, "start", jobName)
 			startCmd.Env = append(startCmd.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
 
 			session, err := gexec.Start(startCmd, GinkgoWriter, GinkgoWriter)
@@ -669,7 +676,7 @@ var _ = Describe("bpm", func() {
 
 		Context("when the containers does not exist", func() {
 			BeforeEach(func() {
-				stopCmd := exec.Command(bpmPath, "stop", "-j", jobName, "-c", cfgPath)
+				stopCmd := exec.Command(bpmPath, "stop", jobName)
 				stopCmd.Env = append(stopCmd.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
 
 				session, err := gexec.Start(stopCmd, GinkgoWriter, GinkgoWriter)
@@ -686,18 +693,6 @@ var _ = Describe("bpm", func() {
 			})
 		})
 
-		Context("when the bpm configuration file does not exist", func() {
-			It("exit with a non-zero exit code and prints an error", func() {
-				command = exec.Command(bpmPath, "pid", "-j", jobName, "-c", "i am a bogus config path")
-				command.Env = append(command.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
-
-				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
-				Expect(err).ShouldNot(HaveOccurred())
-				Eventually(session).Should(gexec.Exit(1))
-				Expect(session.Err).Should(gbytes.Say("i am a bogus config path"))
-			})
-		})
-
 		Context("when no job name is specified", func() {
 			It("exits with a non-zero exit code and prints the usage", func() {
 				command = exec.Command(bpmPath, "pid")
@@ -710,19 +705,6 @@ var _ = Describe("bpm", func() {
 				Expect(session.Err).Should(gbytes.Say("must specify a job"))
 			})
 		})
-
-		Context("when no config is specified", func() {
-			It("exits with a non-zero exit code and prints the usage", func() {
-				command = exec.Command(bpmPath, "pid", "-j", jobName)
-				command.Env = append(command.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
-
-				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
-				Expect(err).ShouldNot(HaveOccurred())
-				Eventually(session).Should(gexec.Exit(1))
-
-				Expect(session.Err).Should(gbytes.Say("must specify a configuration file"))
-			})
-		})
 	})
 
 	Context("trace", func() {
@@ -731,11 +713,11 @@ var _ = Describe("bpm", func() {
 		BeforeEach(func() {
 			path := os.Getenv("PATH")
 
-			traceCmd = exec.Command(bpmPath, "trace", "-j", jobName, "-c", cfgPath)
+			traceCmd = exec.Command(bpmPath, "trace", jobName)
 			traceCmd.Env = append(traceCmd.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
 			traceCmd.Env = append(traceCmd.Env, fmt.Sprintf("PATH=%s", path))
 
-			startCmd := exec.Command(bpmPath, "start", "-j", jobName, "-c", cfgPath)
+			startCmd := exec.Command(bpmPath, "start", jobName)
 			startCmd.Env = append(startCmd.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
 
 			session, err := gexec.Start(startCmd, GinkgoWriter, GinkgoWriter)
@@ -768,7 +750,7 @@ var _ = Describe("bpm", func() {
 
 		Context("when the containers does not exist", func() {
 			BeforeEach(func() {
-				stopCmd := exec.Command(bpmPath, "stop", "-j", jobName, "-c", cfgPath)
+				stopCmd := exec.Command(bpmPath, "stop", jobName)
 				stopCmd.Env = append(stopCmd.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
 
 				session, err := gexec.Start(stopCmd, GinkgoWriter, GinkgoWriter)
@@ -785,18 +767,6 @@ var _ = Describe("bpm", func() {
 			})
 		})
 
-		Context("when the bpm configuration file does not exist", func() {
-			It("exit with a non-zero exit code and prints an error", func() {
-				command = exec.Command(bpmPath, "trace", "-j", jobName, "-c", "i am a bogus config path")
-				command.Env = append(command.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
-
-				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
-				Expect(err).ShouldNot(HaveOccurred())
-				Eventually(session).Should(gexec.Exit(1))
-				Expect(session.Err).Should(gbytes.Say("i am a bogus config path"))
-			})
-		})
-
 		Context("when no job name is specified", func() {
 			It("exits with a non-zero exit code and prints the usage", func() {
 				command = exec.Command(bpmPath, "trace")
@@ -807,19 +777,6 @@ var _ = Describe("bpm", func() {
 				Eventually(session).Should(gexec.Exit(1))
 
 				Expect(session.Err).Should(gbytes.Say("must specify a job"))
-			})
-		})
-
-		Context("when no config is specified", func() {
-			It("exits with a non-zero exit code and prints the usage", func() {
-				command = exec.Command(bpmPath, "trace", "-j", jobName)
-				command.Env = append(command.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
-
-				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
-				Expect(err).ShouldNot(HaveOccurred())
-				Eventually(session).Should(gexec.Exit(1))
-
-				Expect(session.Err).Should(gbytes.Say("must specify a configuration file"))
 			})
 		})
 	})
@@ -838,7 +795,7 @@ var _ = Describe("bpm", func() {
 			ptyF, ttyF, err = pty.Open()
 			Expect(err).ShouldNot(HaveOccurred())
 
-			shellCmd = exec.Command(bpmPath, "shell", "-j", jobName, "-c", cfgPath)
+			shellCmd = exec.Command(bpmPath, "shell", jobName)
 			shellCmd.Env = append(shellCmd.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
 			shellCmd.Env = append(shellCmd.Env, fmt.Sprintf("PATH=%s", path))
 			shellCmd.Env = append(shellCmd.Env, "TERM=xterm-256color")
@@ -851,7 +808,7 @@ var _ = Describe("bpm", func() {
 				Setsid:  true,
 			}
 
-			startCmd := exec.Command(bpmPath, "start", "-j", jobName, "-c", cfgPath)
+			startCmd := exec.Command(bpmPath, "start", jobName)
 			startCmd.Env = append(startCmd.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
 
 			session, err := gexec.Start(startCmd, GinkgoWriter, GinkgoWriter)
@@ -898,9 +855,9 @@ var _ = Describe("bpm", func() {
 			Consistently(session.Err).ShouldNot(gbytes.Say("Usage:"))
 		})
 
-		Context("when the containers does not exist", func() {
+		Context("when the container does not exist", func() {
 			BeforeEach(func() {
-				stopCmd := exec.Command(bpmPath, "stop", "-j", jobName, "-c", cfgPath)
+				stopCmd := exec.Command(bpmPath, "stop", jobName)
 				stopCmd.Env = append(stopCmd.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
 
 				session, err := gexec.Start(stopCmd, GinkgoWriter, GinkgoWriter)
@@ -917,18 +874,6 @@ var _ = Describe("bpm", func() {
 			})
 		})
 
-		Context("when the bpm configuration file does not exist", func() {
-			It("exit with a non-zero exit code and prints an error", func() {
-				command = exec.Command(bpmPath, "shell", "-j", jobName, "-c", "i am a bogus config path")
-				command.Env = append(command.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
-
-				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
-				Expect(err).ShouldNot(HaveOccurred())
-				Eventually(session).Should(gexec.Exit(1))
-				Expect(session.Err).Should(gbytes.Say("i am a bogus config path"))
-			})
-		})
-
 		Context("when no job name is specified", func() {
 			It("exits with a non-zero exit code and prints the usage", func() {
 				command = exec.Command(bpmPath, "shell")
@@ -939,19 +884,6 @@ var _ = Describe("bpm", func() {
 				Eventually(session).Should(gexec.Exit(1))
 
 				Expect(session.Err).Should(gbytes.Say("must specify a job"))
-			})
-		})
-
-		Context("when no config is specified", func() {
-			It("exits with a non-zero exit code and prints the usage", func() {
-				command = exec.Command(bpmPath, "shell", "-j", jobName)
-				command.Env = append(command.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
-
-				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
-				Expect(err).ShouldNot(HaveOccurred())
-				Eventually(session).Should(gexec.Exit(1))
-
-				Expect(session.Err).Should(gbytes.Say("must specify a configuration file"))
 			})
 		})
 	})

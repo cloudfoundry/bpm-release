@@ -16,7 +16,6 @@
 package commands
 
 import (
-	"bpm/bpm"
 	"errors"
 	"fmt"
 	"os"
@@ -37,8 +36,7 @@ traces a BOSH Process
 `
 
 func init() {
-	traceCommand.Flags().StringVarP(&jobName, "job", "j", "", "The job name.")
-	traceCommand.Flags().StringVarP(&configPath, "config", "c", "", "The path to the bpm configuration file.")
+	traceCommand.Flags().StringVarP(&processName, "process", "p", "", "The optional process name.")
 	RootCmd.AddCommand(traceCommand)
 }
 
@@ -46,22 +44,17 @@ var traceCommand = &cobra.Command{
 	Long:              longText,
 	RunE:              trace,
 	Short:             "traces a BOSH Process",
-	Use:               "trace",
+	Use:               "trace <job-name>",
 	PersistentPreRunE: tracePre,
 }
 
-func tracePre(cmd *cobra.Command, _ []string) error {
-	return validateJobandConfigFlags()
+func tracePre(cmd *cobra.Command, args []string) error {
+	return validateInput(args)
 }
 
 func trace(cmd *cobra.Command, _ []string) error {
-	cfg, err := bpm.ParseConfig(configPath)
-	if err != nil {
-		return err
-	}
-
 	runcLifecycle := newRuncLifecycle()
-	job, err := runcLifecycle.GetJob(jobName, cfg)
+	job, err := runcLifecycle.GetJob(jobName, processName)
 	if err != nil {
 		return fmt.Errorf("failed to get job: %s", err.Error())
 	}

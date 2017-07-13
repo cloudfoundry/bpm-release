@@ -18,16 +18,18 @@ mkdir -p /var/vcap/packages/bpm-test-agent/bin
 
 cp `which bpm-test-agent` /var/vcap/packages/bpm-test-agent/bin
 
-mkdir -p /var/vcap/jobs/bpm-test-agent/config/
+mkdir -p /var/vcap/jobs/bpm-test-agent/config/bpm/
 
-cat << EOF > /var/vcap/jobs/bpm-test-agent/config/bpm.yml
-name: server
+cat << EOF > /var/vcap/jobs/bpm-test-agent/config/bpm/bpm-test-agent.yml
 executable: /var/vcap/packages/bpm-test-agent/bin/bpm-test-agent
 args:
   - --port
   - 1337
 env:
   - BPM=SWEET
+limits:
+  memory: 1G
+  open_files: 1024
 EOF
 
-bpm start -j bpm-test-agent -c /var/vcap/jobs/bpm-test-agent/config/bpm.yml
+bpm start bpm-test-agent

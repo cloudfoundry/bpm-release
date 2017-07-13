@@ -16,10 +16,7 @@
 package commands
 
 import (
-	"bpm/bpm"
 	"time"
-
-	"code.cloudfoundry.org/lager"
 
 	"github.com/spf13/cobra"
 )
@@ -27,8 +24,7 @@ import (
 const DefaultStopTimeout = 20 * time.Second
 
 func init() {
-	stopCommand.Flags().StringVarP(&jobName, "job", "j", "", "The job name.")
-	stopCommand.Flags().StringVarP(&configPath, "config", "c", "", "The path to the bpm configuration file.")
+	stopCommand.Flags().StringVarP(&processName, "process", "p", "", "The optional process name.")
 	RootCmd.AddCommand(stopCommand)
 }
 
@@ -36,12 +32,12 @@ var stopCommand = &cobra.Command{
 	Long:    "Stops a BOSH Process",
 	RunE:    stop,
 	Short:   "Stops a BOSH Process",
-	Use:     "stop",
+	Use:     "stop <job-name>",
 	PreRunE: stopPre,
 }
 
-func stopPre(cmd *cobra.Command, _ []string) error {
-	if err := validateJobandConfigFlags(); err != nil {
+func stopPre(cmd *cobra.Command, args []string) error {
+	if err := validateInput(args); err != nil {
 		return err
 	}
 
@@ -49,21 +45,15 @@ func stopPre(cmd *cobra.Command, _ []string) error {
 }
 
 func stop(cmd *cobra.Command, _ []string) error {
-	cfg, err := bpm.ParseConfig(configPath)
-	if err != nil {
-		logger.Error("failed-to-parse-config", err)
-		return err
-	}
-
-	logger = logger.Session("stop", lager.Data{"process": cfg.Name})
+	logger = logger.Session("stop")
 	logger.Info("starting")
 	defer logger.Info("complete")
 
 	runcLifecycle := newRuncLifecycle()
-	err = runcLifecycle.StopJob(logger, jobName, cfg, DefaultStopTimeout)
+	err := runcLifecycle.StopJob(logger, jobName, processName, DefaultStopTimeout)
 	if err != nil {
 		logger.Error("failed-to-stop", err)
 	}
 
-	return runcLifecycle.RemoveJob(jobName, cfg)
+	return runcLifecycle.RemoveJob(jobName, processName)
 }

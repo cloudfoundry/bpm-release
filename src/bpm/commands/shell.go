@@ -16,15 +16,13 @@
 package commands
 
 import (
-	"bpm/bpm"
 	"os"
 
 	"github.com/spf13/cobra"
 )
 
 func init() {
-	shellCommand.Flags().StringVarP(&jobName, "job", "j", "", "The job name.")
-	shellCommand.Flags().StringVarP(&configPath, "config", "c", "", "The path to the bpm configuration file.")
+	shellCommand.Flags().StringVarP(&processName, "process", "p", "", "The optional process name.")
 	RootCmd.AddCommand(shellCommand)
 }
 
@@ -32,22 +30,17 @@ var shellCommand = &cobra.Command{
 	Long:              "start a shell inside the process container",
 	RunE:              shell,
 	Short:             "start a shell inside the process container",
-	Use:               "shell",
+	Use:               "shell <job-name>",
 	PersistentPreRunE: shellPre,
 }
 
-func shellPre(cmd *cobra.Command, _ []string) error {
-	return validateJobandConfigFlags()
+func shellPre(cmd *cobra.Command, args []string) error {
+	return validateInput(args)
 }
 
 func shell(cmd *cobra.Command, _ []string) error {
-	cfg, err := bpm.ParseConfig(configPath)
-	if err != nil {
-		return err
-	}
-
 	cmd.SilenceUsage = true
 
 	runcLifecycle := newRuncLifecycle()
-	return runcLifecycle.OpenShell(jobName, cfg, os.Stdin, cmd.OutOrStdout(), cmd.OutOrStderr())
+	return runcLifecycle.OpenShell(jobName, processName, os.Stdin, cmd.OutOrStdout(), cmd.OutOrStderr())
 }

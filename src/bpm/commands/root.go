@@ -22,6 +22,7 @@ import (
 	"bpm/runc/lifecycle"
 	"bpm/usertools"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -32,7 +33,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var jobName, configPath string
+var jobName, processName, configPath string
 var logger lager.Logger
 
 var userFinder = usertools.NewUserFinder()
@@ -50,14 +51,22 @@ func root(cmd *cobra.Command, args []string) error {
 	return errors.New("Exit code 1")
 }
 
-func validateJobandConfigFlags() error {
-	if jobName == "" {
+func validateInput(args []string) error {
+	if len(args) < 1 {
 		return errors.New("must specify a job")
 	}
 
-	if configPath == "" {
-		return errors.New("must specify a configuration file")
+	jobName = args[0]
+
+	if processName == "" {
+		processName = jobName
 	}
+
+	configPath = filepath.Join(
+		bpm.BoshRoot(),
+		"jobs", jobName, "config", "bpm",
+		fmt.Sprintf("%s.yml", processName),
+	)
 
 	return nil
 }
@@ -86,7 +95,7 @@ func setupBpmLogs() error {
 
 	logger, _ = lagerflags.NewFromConfig("bpm", lagerflags.DefaultLagerConfig())
 	logger.RegisterSink(lager.NewWriterSink(logFile, lager.INFO))
-	logger = logger.WithData(lager.Data{"job": jobName})
+	logger = logger.WithData(lager.Data{"job": jobName, "process": processName})
 
 	return nil
 }

@@ -36,7 +36,6 @@ var _ = Describe("Config", func() {
 
 			expectedMemoryLimit := "100G"
 			expectedOpenFilesLimit := uint64(100)
-			Expect(cfg.Name).To(Equal("server"))
 			Expect(cfg.Executable).To(Equal("/var/vcap/packages/program/bin/program-server"))
 			Expect(cfg.Args).To(ConsistOf("--port=2424", "--host=\"localhost\""))
 			Expect(cfg.Env).To(ConsistOf("FOO=BAR", "BAZ=BUZZ"))
@@ -83,23 +82,12 @@ var _ = Describe("Config", func() {
 
 		BeforeEach(func() {
 			cfg = &bpm.Config{
-				Name:       "example",
 				Executable: "executable",
 			}
 		})
 
 		It("does not error on a valid config", func() {
 			Expect(cfg.Validate()).To(Succeed())
-		})
-
-		Context("when the config does not have a Name", func() {
-			BeforeEach(func() {
-				cfg.Name = ""
-			})
-
-			It("returns an error", func() {
-				Expect(cfg.Validate()).To(HaveOccurred())
-			})
 		})
 
 		Context("when the config does not have an Executable", func() {
