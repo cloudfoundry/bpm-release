@@ -55,8 +55,8 @@ check process job
 
 check process job-worker
   with pidfile /var/vcap/sys/run/bpm/job/worker.pid
-  start program "/var/vcap/packages/bpm/bin/bpm start -j job -p worker"
-  stop program "/var/vcap/packages/bpm/bin/bpm stop -j job -p worker"
+  start program "/var/vcap/packages/bpm/bin/bpm start job -p worker"
+  stop program "/var/vcap/packages/bpm/bin/bpm stop job -p worker"
   group vcap
 ```
 
