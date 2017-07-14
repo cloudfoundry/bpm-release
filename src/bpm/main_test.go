@@ -226,7 +226,7 @@ var _ = Describe("bpm", func() {
 
 			BeforeEach(func() {
 				procName = "server"
-				containerID = fmt.Sprintf("%s-%s", jobName, procName)
+				containerID = fmt.Sprintf("%s.%s", jobName, procName)
 
 				stdoutFileLocation = filepath.Join(boshConfigPath, "sys", "log", jobName, fmt.Sprintf("%s.out.log", procName))
 				stderrFileLocation = filepath.Join(boshConfigPath, "sys", "log", jobName, fmt.Sprintf("%s.err.log", procName))
@@ -608,7 +608,7 @@ var _ = Describe("bpm", func() {
 				Expect(err).ShouldNot(HaveOccurred())
 
 				state := runcState(containerID)
-				otherState := runcState(fmt.Sprintf("%s-%s", otherJobName, otherProcName))
+				otherState := runcState(fmt.Sprintf("%s.%s", otherJobName, otherProcName))
 
 				Eventually(session).Should(gexec.Exit(0))
 				Expect(session.Out).Should(gbytes.Say("Name\\s+Pid\\s+Status"))

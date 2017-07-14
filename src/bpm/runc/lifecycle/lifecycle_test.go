@@ -85,7 +85,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 		expectedJobName = "example"
 		expectedProcName = "server"
-		expectedContainerID = fmt.Sprintf("%s-%s", expectedJobName, expectedProcName)
+		expectedContainerID = fmt.Sprintf("%s.%s", expectedJobName, expectedProcName)
 
 		jobConfig = &bpm.Config{
 			Executable: "/bin/sleep",

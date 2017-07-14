@@ -221,5 +221,5 @@ func containerID(jobName, procName string) string {
 		return jobName
 	}
 
-	return fmt.Sprintf("%s-%s", jobName, procName)
+	return fmt.Sprintf("%s.%s", jobName, procName)
 }
