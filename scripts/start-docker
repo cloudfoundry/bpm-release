@@ -6,6 +6,8 @@ absolute_path() {
 
 scripts_path=$(absolute_path "$(dirname "$0")" )
 
+sudo docker pull pcfsecurity/bpm-ci:latest
+
 sudo docker run \
   --privileged \
   -v  ${scripts_path}/..:/bpm \
