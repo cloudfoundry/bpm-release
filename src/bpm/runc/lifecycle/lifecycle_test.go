@@ -228,17 +228,16 @@ var _ = Describe("RuncJobLifecycle", func() {
 		})
 
 		It("stops the container", func() {
-			err := runcLifecycle.StopJob(logger, expectedJobName, expectedProcName, exitTimeout)
-			Expect(err).NotTo(HaveOccurred())
+			errChan := make(chan error)
+			go func() {
+				defer GinkgoRecover()
+				errChan <- runcLifecycle.StopJob(logger, expectedJobName, expectedProcName, exitTimeout)
+			}()
 
 			Eventually(fakeRuncClient.SignalContainerCallCount).Should(Equal(1))
 			cid, signal := fakeRuncClient.SignalContainerArgsForCall(0)
 			Expect(cid).To(Equal(expectedContainerID))
 			Expect(signal).To(Equal(client.Term))
-
-			Expect(fakeRuncClient.ContainerStateCallCount()).To(Equal(1))
-			cid = fakeRuncClient.ContainerStateArgsForCall(0)
-			Expect(cid).To(Equal(expectedContainerID))
 		})
 
 		Context("when the container does not stop immediately", func() {
@@ -257,6 +256,26 @@ var _ = Describe("RuncJobLifecycle", func() {
 				}
 			})
 
+			It("gives the container a grace period of 5 seconds", func() {
+				errChan := make(chan error)
+				go func() {
+					defer GinkgoRecover()
+					errChan <- runcLifecycle.StopJob(logger, expectedJobName, expectedProcName, exitTimeout)
+				}()
+
+				Eventually(fakeRuncClient.SignalContainerCallCount).Should(Equal(1))
+				cid, signal := fakeRuncClient.SignalContainerArgsForCall(0)
+				Expect(cid).To(Equal(expectedContainerID))
+				Expect(signal).To(Equal(client.Term))
+
+				Eventually(fakeRuncClient.ContainerStateCallCount).Should(Equal(0))
+
+				fakeClock.WaitForWatcherAndIncrement(5 * time.Second)
+
+				Eventually(fakeRuncClient.ContainerStateCallCount).Should(Equal(1))
+				Expect(fakeRuncClient.ContainerStateArgsForCall(0)).To(Equal(expectedContainerID))
+			})
+
 			It("polls the container state every second until it stops", func() {
 				errChan := make(chan error)
 				go func() {
@@ -268,6 +287,8 @@ var _ = Describe("RuncJobLifecycle", func() {
 				cid, signal := fakeRuncClient.SignalContainerArgsForCall(0)
 				Expect(cid).To(Equal(expectedContainerID))
 				Expect(signal).To(Equal(client.Term))
+
+				fakeClock.WaitForWatcherAndIncrement(5 * time.Second)
 
 				Eventually(fakeRuncClient.ContainerStateCallCount).Should(Equal(1))
 				Expect(fakeRuncClient.ContainerStateArgsForCall(0)).To(Equal(expectedContainerID))
@@ -298,6 +319,8 @@ var _ = Describe("RuncJobLifecycle", func() {
 					cid, signal := fakeRuncClient.SignalContainerArgsForCall(0)
 					Expect(cid).To(Equal(expectedContainerID))
 					Expect(signal).To(Equal(client.Term))
+
+					fakeClock.WaitForWatcherAndIncrement(5 * time.Second)
 
 					Eventually(fakeRuncClient.ContainerStateCallCount).Should(Equal(1))
 					Expect(fakeRuncClient.ContainerStateArgsForCall(0)).To(Equal(expectedContainerID))
@@ -332,6 +355,8 @@ var _ = Describe("RuncJobLifecycle", func() {
 					defer GinkgoRecover()
 					errChan <- runcLifecycle.StopJob(logger, expectedJobName, expectedProcName, exitTimeout)
 				}()
+
+				fakeClock.WaitForWatcherAndIncrement(5 * time.Second)
 
 				Eventually(fakeRuncClient.ContainerStateCallCount).Should(Equal(1))
 				Expect(fakeRuncClient.ContainerStateArgsForCall(0)).To(Equal(expectedContainerID))

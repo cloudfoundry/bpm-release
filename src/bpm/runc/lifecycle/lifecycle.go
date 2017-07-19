@@ -167,6 +167,9 @@ func (j *RuncLifecycle) StopJob(logger lager.Logger, jobName, procName string, e
 		return err
 	}
 
+	grace := j.clock.NewTimer(5 * time.Second)
+	<-grace.C()
+
 	state, err := j.runcClient.ContainerState(cid)
 	if err != nil {
 		logger.Error("failed-to-fetch-state", err)
