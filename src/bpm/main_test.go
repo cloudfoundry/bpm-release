@@ -527,8 +527,6 @@ var _ = Describe("bpm", func() {
 		})
 
 		It("signals the container with a SIGTERM", func() {
-			SetDefaultEventuallyTimeout(6 * time.Second)
-
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).ToNot(HaveOccurred())
 			Eventually(session).Should(gexec.Exit(0))
@@ -537,8 +535,6 @@ var _ = Describe("bpm", func() {
 		})
 
 		It("removes the container and it's corresponding process", func() {
-			SetDefaultEventuallyTimeout(6 * time.Second)
-
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).ToNot(HaveOccurred())
 			Eventually(session).Should(gexec.Exit(0))
@@ -547,8 +543,6 @@ var _ = Describe("bpm", func() {
 		})
 
 		It("removes the bundle directory", func() {
-			SetDefaultEventuallyTimeout(6 * time.Second)
-
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 			Eventually(session).Should(gexec.Exit(0))
@@ -559,8 +553,6 @@ var _ = Describe("bpm", func() {
 		})
 
 		It("logs bpm internal logs to a consistent location", func() {
-			SetDefaultEventuallyTimeout(6 * time.Second)
-
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 			Eventually(session).Should(gexec.Exit(0))
@@ -684,7 +676,6 @@ var _ = Describe("bpm", func() {
 
 		Context("when the containers does not exist", func() {
 			BeforeEach(func() {
-				SetDefaultEventuallyTimeout(6 * time.Second)
 
 				stopCmd := exec.Command(bpmPath, "stop", jobName)
 				stopCmd.Env = append(stopCmd.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
@@ -760,7 +751,6 @@ var _ = Describe("bpm", func() {
 
 		Context("when the containers does not exist", func() {
 			BeforeEach(func() {
-				SetDefaultEventuallyTimeout(6 * time.Second)
 
 				stopCmd := exec.Command(bpmPath, "stop", jobName)
 				stopCmd.Env = append(stopCmd.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
@@ -869,7 +859,6 @@ var _ = Describe("bpm", func() {
 
 		Context("when the container does not exist", func() {
 			BeforeEach(func() {
-				SetDefaultEventuallyTimeout(6 * time.Second)
 
 				stopCmd := exec.Command(bpmPath, "stop", jobName)
 				stopCmd.Env = append(stopCmd.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))

@@ -33,6 +33,11 @@ import (
 	"code.cloudfoundry.org/lager"
 )
 
+const (
+	ContainerSigQuitGracePeriod = 5 * time.Second
+	ContainerStatePollInterval  = 1 * time.Second
+)
+
 var TimeoutError = errors.New("failed to stop job within timeout")
 
 //go:generate counterfeiter . UserFinder
@@ -167,9 +172,6 @@ func (j *RuncLifecycle) StopJob(logger lager.Logger, jobName, procName string, e
 		return err
 	}
 
-	grace := j.clock.NewTimer(5 * time.Second)
-	<-grace.C()
-
 	state, err := j.runcClient.ContainerState(cid)
 	if err != nil {
 		logger.Error("failed-to-fetch-state", err)
@@ -179,7 +181,7 @@ func (j *RuncLifecycle) StopJob(logger lager.Logger, jobName, procName string, e
 		}
 	}
 
-	stateTicker := j.clock.NewTicker(1 * time.Second)
+	stateTicker := j.clock.NewTicker(ContainerStatePollInterval)
 	timeout := j.clock.NewTimer(exitTimeout)
 
 	for {
@@ -199,6 +201,7 @@ func (j *RuncLifecycle) StopJob(logger lager.Logger, jobName, procName string, e
 				logger.Error("failed-to-sigquit", err)
 			}
 
+			j.clock.Sleep(ContainerSigQuitGracePeriod)
 			return TimeoutError
 		}
 	}
