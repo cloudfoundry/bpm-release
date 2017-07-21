@@ -39,7 +39,6 @@ var _ = Describe("RuncAdapter", func() {
 		jobName,
 		procName,
 		systemRoot string
-		cfg  *bpm.Config
 		user specs.User
 	)
 
@@ -48,9 +47,6 @@ var _ = Describe("RuncAdapter", func() {
 
 		jobName = "example"
 		procName = "server"
-		cfg = &bpm.Config{
-			Executable: "executable",
-		}
 		user = specs.User{UID: 200, GID: 300, Username: "vcap"}
 
 		var err error
@@ -341,6 +337,27 @@ var _ = Describe("RuncAdapter", func() {
 							Hard: uint64(expectedOpenFilesLimit),
 							Soft: uint64(expectedOpenFilesLimit),
 						},
+					}))
+				})
+			})
+
+			Context("Pids", func() {
+				var pidLimit int64
+
+				BeforeEach(func() {
+					pidLimit = int64(30)
+					cfg.Limits.Processes = &pidLimit
+				})
+
+				It("sets a PidLimit on the container", func() {
+					spec, err := runcAdapter.BuildSpec(systemRoot, jobName, procName, cfg, user)
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(spec.Linux).NotTo(BeNil())
+					Expect(spec.Linux.Resources).NotTo(BeNil())
+					Expect(spec.Linux.Resources.Pids).NotTo(BeNil())
+					Expect(*spec.Linux.Resources.Pids).To(Equal(specs.LinuxPids{
+						Limit: pidLimit,
 					}))
 				})
 			})

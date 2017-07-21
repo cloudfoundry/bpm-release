@@ -110,17 +110,23 @@ func (a *RuncAdapter) BuildSpec(
 
 	var resources *specs.LinuxResources
 	if cfg.Limits != nil {
+		resources = &specs.LinuxResources{}
+
 		if cfg.Limits.Memory != nil {
 			memLimit, err := bytefmt.ToBytes(*cfg.Limits.Memory)
 			if err != nil {
 				return specs.Spec{}, err
 			}
 
-			resources = &specs.LinuxResources{
-				Memory: &specs.LinuxMemory{
-					Limit: &memLimit,
-					Swap:  &memLimit,
-				},
+			resources.Memory = &specs.LinuxMemory{
+				Limit: &memLimit,
+				Swap:  &memLimit,
+			}
+		}
+
+		if cfg.Limits.Processes != nil {
+			resources.Pids = &specs.LinuxPids{
+				Limit: *cfg.Limits.Processes,
 			}
 		}
 
