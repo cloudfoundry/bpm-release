@@ -59,7 +59,7 @@ type RuncClient interface {
 	CreateBundle(bundlePath string, jobSpec specs.Spec, user specs.User) error
 	RunContainer(pidFilePath, bundlePath, containerID string, stdout, stderr io.Writer) error
 	Exec(containerID, command string, stdin io.Reader, stdout, stderr io.Writer) error
-	ContainerState(containerID string) (specs.State, error)
+	ContainerState(containerID string) (*specs.State, error)
 	ListContainers() ([]client.ContainerState, error)
 	SignalContainer(containerID string, signal client.Signal) error
 	DeleteContainer(containerID string) error
@@ -126,14 +126,22 @@ func (j *RuncLifecycle) StartJob(jobName, procName string, cfg *bpm.Config) erro
 	)
 }
 
-func (j *RuncLifecycle) GetJob(jobName, procName string) (models.Job, error) {
+// GetJob returns the following:
+// - job, nil if the job is running (and no errors were encountered)
+// - nil,nil if the job is not running and there is no other error
+// - nil,error if there is any other error getting the job beyond it not running
+func (j *RuncLifecycle) GetJob(jobName, procName string) (*models.Job, error) {
 	cid := containerID(jobName, procName)
 	container, err := j.runcClient.ContainerState(cid)
 	if err != nil {
-		return models.Job{}, err
+		return nil, err
 	}
 
-	return models.Job{
+	if container == nil {
+		return nil, nil
+	}
+
+	return &models.Job{
 		Name:   container.ID,
 		Pid:    container.Pid,
 		Status: container.Status,

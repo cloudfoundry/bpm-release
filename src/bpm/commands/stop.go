@@ -16,6 +16,8 @@
 package commands
 
 import (
+	"bpm/bpm"
+	"fmt"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -45,12 +47,28 @@ func stopPre(cmd *cobra.Command, args []string) error {
 }
 
 func stop(cmd *cobra.Command, _ []string) error {
+	_, err := bpm.ParseConfig(configPath)
+	if err != nil {
+		return fmt.Errorf("failed to get job: %s", err.Error())
+	}
+
 	logger = logger.Session("stop")
 	logger.Info("starting")
 	defer logger.Info("complete")
 
 	runcLifecycle := newRuncLifecycle()
-	err := runcLifecycle.StopJob(logger, jobName, processName, DefaultStopTimeout)
+	job, err := runcLifecycle.GetJob(jobName, processName)
+	if err != nil {
+		logger.Error("failed-to-get-job", err)
+		return err
+	}
+
+	if job == nil {
+		logger.Info("job-already-stopped")
+		return nil
+	}
+
+	err = runcLifecycle.StopJob(logger, jobName, processName, DefaultStopTimeout)
 	if err != nil {
 		logger.Error("failed-to-stop", err)
 	}

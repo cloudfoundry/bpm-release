@@ -22,6 +22,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
@@ -132,7 +133,12 @@ func (c *RuncClient) Exec(containerID, command string, stdin io.Reader, stdout, 
 	return runcCmd.Run()
 }
 
-func (c *RuncClient) ContainerState(containerID string) (specs.State, error) {
+// ContainerState returns the following:
+// - state, nil if the job is running,and no errors were encountered.
+// - nil,nil if the container state is not running and no other errors were encountered
+// - nil,error if there is any other error getting the container state
+//   (e.g. the container is running but in an unreachable state)
+func (c *RuncClient) ContainerState(containerID string) (*specs.State, error) {
 	runcCmd := exec.Command(
 		c.runcPath,
 		"--root", c.runcRoot,
@@ -143,15 +149,23 @@ func (c *RuncClient) ContainerState(containerID string) (specs.State, error) {
 	var state specs.State
 	data, err := runcCmd.CombinedOutput()
 	if err != nil {
-		return specs.State{}, err
+		return nil, decodeContainerStateErr(data, err)
 	}
 
 	err = json.Unmarshal(data, &state)
 	if err != nil {
-		return specs.State{}, err
+		return nil, err
 	}
 
-	return state, nil
+	return &state, nil
+}
+
+func decodeContainerStateErr(b []byte, err error) error {
+	r := regexp.MustCompile(`^\s*container "[^"]*" does not exist\s*$`)
+	if r.MatchString(string(b)) {
+		return nil
+	}
+	return err
 }
 
 func (c *RuncClient) ListContainers() ([]ContainerState, error) {

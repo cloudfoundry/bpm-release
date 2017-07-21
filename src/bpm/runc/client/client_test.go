@@ -44,7 +44,7 @@ var _ = Describe("RuncClient", func() {
 		)
 	})
 
-	Context("CreateBundle", func() {
+	Describe("CreateBundle", func() {
 		var bundlesRoot string
 
 		BeforeEach(func() {
@@ -135,7 +135,7 @@ var _ = Describe("RuncClient", func() {
 		})
 	})
 
-	Context("DestroyBundle", func() {
+	Describe("DestroyBundle", func() {
 		var bundlePath string
 
 		BeforeEach(func() {
@@ -163,6 +163,87 @@ var _ = Describe("RuncClient", func() {
 			_, err = os.Stat(bundlePath)
 			Expect(err).To(HaveOccurred())
 			Expect(os.IsNotExist(err)).To(BeTrue())
+		})
+	})
+
+	Describe("ContainerState", func() {
+		var (
+			tempDir      string
+			fakeRuncPath string
+		)
+
+		BeforeEach(func() {
+			var err error
+			tempDir, err = ioutil.TempDir("", "")
+			Expect(err).NotTo(HaveOccurred())
+
+			fakeRuncPath = filepath.Join(tempDir, "fakeRunc")
+
+			runcClient = client.NewRuncClient(fakeRuncPath, "/path/to/things")
+		})
+
+		AfterEach(func() {
+			err := os.RemoveAll(tempDir)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		Context("when the error message indicates the container is not running", func() {
+			BeforeEach(func() {
+				contents := []byte(`#!/bin/sh
+echo -n 'container "foo" does not exist'
+exit 1
+`)
+
+				err := ioutil.WriteFile(fakeRuncPath, contents, os.ModePerm)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			It("returns nil,nil", func() {
+				state, err := runcClient.ContainerState("foo")
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(state).To(BeNil())
+			})
+
+			Context("when the error message contains spaces", func() {
+				BeforeEach(func() {
+					// Note the echo also purposefully prints a newline as well as spaces
+					contents := []byte(`#!/bin/sh
+echo '         container "foo" does not exist     '
+exit 1
+`)
+
+					err := ioutil.WriteFile(fakeRuncPath, contents, os.ModePerm)
+					Expect(err).NotTo(HaveOccurred())
+				})
+
+				It("strips spaces from the error message", func() {
+					state, err := runcClient.ContainerState("foo")
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(state).To(BeNil())
+				})
+			})
+		})
+
+		Context("when the error message contains other information", func() {
+			BeforeEach(func() {
+				contents := []byte(`#!/bin/sh
+echo -n 'some unrelated error'
+exit 1
+`)
+
+				err := ioutil.WriteFile(fakeRuncPath, contents, os.ModePerm)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			It("returns nil,nil", func() {
+				state, err := runcClient.ContainerState("foo")
+				Expect(err).To(HaveOccurred())
+
+				Expect(state).To(BeNil())
+			})
+
 		})
 	})
 })

@@ -16,6 +16,7 @@
 package commands
 
 import (
+	"bpm/bpm"
 	"errors"
 	"fmt"
 
@@ -40,10 +41,19 @@ func pidPre(cmd *cobra.Command, args []string) error {
 }
 
 func pidForJob(cmd *cobra.Command, _ []string) error {
+	_, err := bpm.ParseConfig(configPath)
+	if err != nil {
+		return fmt.Errorf("failed to get job: %s", err.Error())
+	}
+
 	runcLifecycle := newRuncLifecycle()
 	job, err := runcLifecycle.GetJob(jobName, processName)
 	if err != nil {
 		return fmt.Errorf("failed to get job: %s", err.Error())
+	}
+
+	if job == nil {
+		return errors.New("job is not running")
 	}
 
 	if job.Pid <= 0 {

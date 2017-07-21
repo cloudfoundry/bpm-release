@@ -534,7 +534,7 @@ var _ = Describe("bpm", func() {
 			Eventually(fileContents(stdoutFileLocation)).Should(ContainSubstring("Signalled"))
 		})
 
-		It("removes the container and it's corresponding process", func() {
+		It("removes the container and its corresponding process", func() {
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).ToNot(HaveOccurred())
 			Eventually(session).Should(gexec.Exit(0))
@@ -571,6 +571,37 @@ var _ = Describe("bpm", func() {
 				Eventually(session).Should(gexec.Exit(1))
 
 				Expect(session.Err).Should(gbytes.Say("must specify a job"))
+			})
+		})
+
+		Context("when the job is already stopped", func() {
+			It("returns successfully", func() {
+				firstSession, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+				Expect(err).ShouldNot(HaveOccurred())
+				Eventually(firstSession).Should(gexec.Exit(0))
+
+				secondCommand := exec.Command(bpmPath, "stop", jobName)
+				secondCommand.Env = append(secondCommand.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
+
+				secondSession, err := gexec.Start(secondCommand, GinkgoWriter, GinkgoWriter)
+				Expect(err).ShouldNot(HaveOccurred())
+
+				Eventually(secondSession).Should(gexec.Exit(0))
+				Expect(secondSession.Out).Should(gbytes.Say("job-already-stopped"))
+			})
+		})
+
+		Context("when an invalid job/process name is specified", func() {
+			BeforeEach(func() {
+				jobName = "some-bad-job-name"
+			})
+
+			It("returns an error", func() {
+				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+				Expect(err).ShouldNot(HaveOccurred())
+
+				Eventually(session).Should(gexec.Exit(1))
+				Expect(session.Err).Should(gbytes.Say("Error: failed to get job:"))
 			})
 		})
 	})
@@ -674,15 +705,32 @@ var _ = Describe("bpm", func() {
 			})
 		})
 
-		Context("when the containers does not exist", func() {
+		Context("when the container does not exist", func() {
 			BeforeEach(func() {
-
 				stopCmd := exec.Command(bpmPath, "stop", jobName)
 				stopCmd.Env = append(stopCmd.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
 
 				session, err := gexec.Start(stopCmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).ShouldNot(HaveOccurred())
 				Eventually(session).Should(gexec.Exit(0))
+			})
+
+			It("returns an error", func() {
+				session, err := gexec.Start(pidCmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).ShouldNot(HaveOccurred())
+
+				Eventually(session).Should(gexec.Exit(1))
+				Expect(session.Err).Should(gbytes.Say("Error: job is not running"))
+			})
+		})
+
+		Context("when an invalid job/process name is specified", func() {
+			BeforeEach(func() {
+				path := os.Getenv("PATH")
+
+				pidCmd = exec.Command(bpmPath, "pid", "some-bad-job-name")
+				pidCmd.Env = append(pidCmd.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
+				pidCmd.Env = append(pidCmd.Env, fmt.Sprintf("PATH=%s", path))
 			})
 
 			It("returns an error", func() {
@@ -749,15 +797,32 @@ var _ = Describe("bpm", func() {
 			})
 		})
 
-		Context("when the containers does not exist", func() {
+		Context("when the container does not exist", func() {
 			BeforeEach(func() {
-
 				stopCmd := exec.Command(bpmPath, "stop", jobName)
 				stopCmd.Env = append(stopCmd.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
 
 				session, err := gexec.Start(stopCmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).ShouldNot(HaveOccurred())
 				Eventually(session).Should(gexec.Exit(0))
+			})
+
+			It("returns an error", func() {
+				session, err := gexec.Start(traceCmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).ShouldNot(HaveOccurred())
+
+				Eventually(session).Should(gexec.Exit(1))
+				Expect(session.Err).Should(gbytes.Say("Error: job is not running"))
+			})
+		})
+
+		Context("when an invalid job/process name is specified", func() {
+			BeforeEach(func() {
+				path := os.Getenv("PATH")
+
+				traceCmd = exec.Command(bpmPath, "trace", "some-bad-job-name")
+				traceCmd.Env = append(traceCmd.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
+				traceCmd.Env = append(traceCmd.Env, fmt.Sprintf("PATH=%s", path))
 			})
 
 			It("returns an error", func() {

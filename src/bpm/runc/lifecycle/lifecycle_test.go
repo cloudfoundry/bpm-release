@@ -222,7 +222,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 		BeforeEach(func() {
 			exitTimeout = 5 * time.Second
 
-			fakeRuncClient.ContainerStateReturns(specs.State{
+			fakeRuncClient.ContainerStateReturns(&specs.State{
 				Status: "stopped",
 			}, nil)
 		})
@@ -246,12 +246,12 @@ var _ = Describe("RuncJobLifecycle", func() {
 			BeforeEach(func() {
 				stopped = make(chan struct{})
 
-				fakeRuncClient.ContainerStateStub = func(containerID string) (specs.State, error) {
+				fakeRuncClient.ContainerStateStub = func(containerID string) (*specs.State, error) {
 					select {
 					case <-stopped:
-						return specs.State{Status: "stopped"}, nil
+						return &specs.State{Status: "stopped"}, nil
 					default:
-						return specs.State{Status: "running"}, nil
+						return &specs.State{Status: "running"}, nil
 					}
 				}
 			})
@@ -324,7 +324,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 		Context("when fetching the container state fails", func() {
 			BeforeEach(func() {
-				fakeRuncClient.ContainerStateReturns(specs.State{}, errors.New("boom"))
+				fakeRuncClient.ContainerStateReturns(nil, errors.New("boom"))
 			})
 
 			It("keeps attempting to fetch the state", func() {
@@ -476,7 +476,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 	Describe("GetJob", func() {
 		BeforeEach(func() {
-			fakeRuncClient.ContainerStateReturns(specs.State{ID: expectedContainerID, Pid: 1234, Status: "running"}, nil)
+			fakeRuncClient.ContainerStateReturns(&specs.State{ID: expectedContainerID, Pid: 1234, Status: "running"}, nil)
 		})
 
 		It("fetches the container state and translates it into a job", func() {
@@ -484,7 +484,8 @@ var _ = Describe("RuncJobLifecycle", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(fakeRuncClient.ContainerStateCallCount()).To(Equal(1))
 			Expect(fakeRuncClient.ContainerStateArgsForCall(0)).To(Equal(expectedContainerID))
-			Expect(job).To(Equal(models.Job{
+			Expect(job).NotTo(BeNil())
+			Expect(*job).To(Equal(models.Job{
 				Name:   expectedContainerID,
 				Pid:    1234,
 				Status: "running",
@@ -501,9 +502,22 @@ var _ = Describe("RuncJobLifecycle", func() {
 			})
 		})
 
+		Context("when fetching the container state returns nil state", func() {
+			BeforeEach(func() {
+				fakeRuncClient.ContainerStateReturns(nil, nil)
+			})
+
+			It("returns nil,nil", func() {
+				job, err := runcLifecycle.GetJob(expectedJobName, expectedProcName)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(job).To(BeNil())
+			})
+		})
+
 		Context("when fetching the container state fails", func() {
 			BeforeEach(func() {
-				fakeRuncClient.ContainerStateReturns(specs.State{}, errors.New("boom!"))
+				fakeRuncClient.ContainerStateReturns(nil, errors.New("boom!"))
 			})
 
 			It("returns an error", func() {
