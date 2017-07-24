@@ -16,14 +16,16 @@
 package main
 
 import (
-	"bpm-acceptance/fixtures/bpm-test-agent/handlers"
 	"flag"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
+	"runtime/pprof"
 	"syscall"
+
+	"bpm-acceptance/fixtures/bpm-test-agent/handlers"
 )
 
 var (
@@ -54,30 +56,34 @@ func main() {
 	http.HandleFunc("/var-vcap-jobs", handlers.VarVcapJobs)
 	http.HandleFunc("/whoami", handlers.Whoami)
 
-	errChan := make(chan error)
 	signals := make(chan os.Signal)
+	signal.Notify(signals)
 
-	signal.Notify(signals, syscall.SIGTERM)
+	go handleSignals(signals)
 
-	go func() {
-		errChan <- http.ListenAndServe(fmt.Sprintf(":%d", *port), nil)
-	}()
-
-	for {
-		select {
-		case err := <-errChan:
-			if err != nil {
-				log.Fatal(err)
-			}
-		case sig := <-signals:
-			if exitOnSignal() {
-				log.Fatalf("Signalled: %#v", sig)
-			}
-			log.Printf("Ignoring Signal: %#v\n", sig)
-		}
+	addr := fmt.Sprintf(":%d", *port)
+	if err := http.ListenAndServe(addr, nil); err != nil {
+		log.Fatalln(err)
 	}
 }
 
-func exitOnSignal() bool {
-	return !*ignoreSignals
+func handleSignals(signals chan os.Signal) {
+	for sig := range signals {
+		if *ignoreSignals {
+			log.Printf("ignoring signal: %#v\n", sig)
+			continue
+		}
+
+		switch sig {
+		case syscall.SIGTERM:
+			os.Exit(0)
+		case syscall.SIGQUIT:
+			// Ignore the error here because if it occurs then there's nothing we can
+			// do. We've already failed writing something to standard error!
+			_ = pprof.Lookup("goroutine").WriteTo(os.Stderr, 1)
+			os.Exit(0)
+		default:
+			log.Printf("unhandled signal: %#v\n", sig)
+		}
+	}
 }
