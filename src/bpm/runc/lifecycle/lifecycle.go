@@ -189,8 +189,9 @@ func (j *RuncLifecycle) StopJob(logger lager.Logger, jobName, procName string, e
 		}
 	}
 
-	stateTicker := j.clock.NewTicker(ContainerStatePollInterval)
 	timeout := j.clock.NewTimer(exitTimeout)
+	stateTicker := j.clock.NewTicker(ContainerStatePollInterval)
+	defer stateTicker.Stop()
 
 	for {
 		select {
