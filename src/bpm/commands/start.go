@@ -27,11 +27,12 @@ func init() {
 }
 
 var startCommand = &cobra.Command{
-	Long:              "Starts a BOSH Process",
-	RunE:              start,
-	Short:             "Starts a BOSH Process",
-	Use:               "start <job-name>",
-	PersistentPreRunE: startPre,
+	Long:               "Starts a BOSH Process",
+	RunE:               start,
+	Short:              "Starts a BOSH Process",
+	Use:                "start <job-name>",
+	PersistentPreRunE:  startPre,
+	PersistentPostRunE: startPost,
 }
 
 func startPre(cmd *cobra.Command, args []string) error {
@@ -39,19 +40,26 @@ func startPre(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	return setupBpmLogs()
+	if err := setupBpmLogs("start"); err != nil {
+		return err
+	}
+
+	return acquireLifecycleLock()
+}
+
+func startPost(cmd *cobra.Command, args []string) error {
+	return releaseLifecycleLock()
 }
 
 func start(cmd *cobra.Command, _ []string) error {
+	logger.Info("starting")
+	defer logger.Info("complete")
+
 	cfg, err := bpm.ParseConfig(configPath)
 	if err != nil {
 		logger.Error("failed-to-parse-config", err)
 		return err
 	}
-
-	logger = logger.Session("start")
-	logger.Info("starting")
-	defer logger.Info("complete")
 
 	runcLifecycle := newRuncLifecycle()
 	err = runcLifecycle.StartJob(jobName, processName, cfg)

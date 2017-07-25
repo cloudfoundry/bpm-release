@@ -240,12 +240,10 @@ var _ = Describe("bpm", func() {
 				writeConfig(jobName, procName, cfg)
 			})
 
-			JustBeforeEach(func() {
+			It("runs the process specified in the corresponding configuration file", func() {
 				command = exec.Command(bpmPath, "start", jobName, "-p", procName)
 				command.Env = append(command.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
-			})
 
-			It("runs the process specified in the corresponding configuration file", func() {
 				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 				Eventually(session).Should(gexec.Exit(0))
@@ -269,7 +267,6 @@ var _ = Describe("bpm", func() {
 				cfg.Executable = "/bin/bash"
 				cfg.Args = []string{
 					"-c",
-					// See https://codegolf.stackexchange.com/questions/24485/create-a-memory-leak-without-any-fork-bombs
 					`cat /proc/1/status | grep CapEff`,
 				}
 
@@ -363,7 +360,6 @@ var _ = Describe("bpm", func() {
 					cfg.Executable = "/bin/bash"
 					cfg.Args = []string{
 						"-c",
-						// See https://codegolf.stackexchange.com/questions/24485/create-a-memory-leak-without-any-fork-bombs
 						fmt.Sprintf(`file_dir=%s;
 						  start_file_leak() { for i in $(seq 1 20); do touch $file_dir/file-$i; done; tail -f $file_dir/* ;};
 							trap "kill $child" SIGTERM;
@@ -401,7 +397,6 @@ var _ = Describe("bpm", func() {
 					cfg.Executable = "/bin/bash"
 					cfg.Args = []string{
 						"-c",
-						// See https://codegolf.stackexchange.com/questions/24485/create-a-memory-leak-without-any-fork-bombs
 						` trap "kill $child" SIGTERM;
                     sleep 100 &
                     child=$!;
@@ -991,6 +986,51 @@ var _ = Describe("bpm", func() {
 
 				Expect(session.Err).Should(gbytes.Say("must specify a job"))
 			})
+		})
+	})
+
+	Context("start stop parallelization", func() {
+		BeforeEach(func() {
+			cfg.Executable = "/bin/bash"
+			cfg.Args = []string{
+				"-c",
+				`trap "kill $child" SIGUSR1;
+				 sleep 100 &
+				 child=$!;
+				 wait $child;`,
+			}
+
+			cfgPath = writeConfig(jobName, jobName, cfg)
+		})
+
+		JustBeforeEach(func() {
+			command = exec.Command(bpmPath, "start", jobName)
+			command.Env = append(command.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
+
+			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+			Expect(err).ShouldNot(HaveOccurred())
+			Eventually(session).Should(gexec.Exit(0))
+		})
+
+		It("serializes calls to start and stop", func() {
+			stopCmd := exec.Command(bpmPath, "stop", jobName)
+			stopCmd.Env = append(stopCmd.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
+
+			stopSesh, err := gexec.Start(stopCmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).ShouldNot(HaveOccurred())
+			Consistently(stopSesh).ShouldNot(gexec.Exit())
+
+			startCmd := exec.Command(bpmPath, "start", jobName)
+			startCmd.Env = append(startCmd.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
+
+			startSesh, err := gexec.Start(startCmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).ShouldNot(HaveOccurred())
+			Consistently(startSesh).ShouldNot(gexec.Exit())
+
+			Expect(runcCommand("kill", containerID, "USR1").Run()).To(Succeed())
+
+			Eventually(stopSesh).Should(gexec.Exit(0))
+			Eventually(startSesh).Should(gexec.Exit(0))
 		})
 	})
 

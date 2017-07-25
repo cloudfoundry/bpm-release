@@ -22,4 +22,6 @@ files:
   - github.com/opencontainers/runtime-spec/specs-go/*.go # gosub
   - github.com/spf13/cobra/*.go # gosub
   - github.com/spf13/pflag/*.go # gosub
+  - golang.org/x/sys/unix/*.go # gosub
+  - golang.org/x/sys/unix/*.s # gosub
   - gopkg.in/yaml.v2/*.go # gosub

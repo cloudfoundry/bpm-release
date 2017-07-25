@@ -31,11 +31,12 @@ func init() {
 }
 
 var stopCommand = &cobra.Command{
-	Long:    "Stops a BOSH Process",
-	RunE:    stop,
-	Short:   "Stops a BOSH Process",
-	Use:     "stop <job-name>",
-	PreRunE: stopPre,
+	Long:               "Stops a BOSH Process",
+	RunE:               stop,
+	Short:              "Stops a BOSH Process",
+	Use:                "stop <job-name>",
+	PersistentPreRunE:  stopPre,
+	PersistentPostRunE: stopPost,
 }
 
 func stopPre(cmd *cobra.Command, args []string) error {
@@ -43,18 +44,25 @@ func stopPre(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	return setupBpmLogs()
+	if err := setupBpmLogs("stop"); err != nil {
+		return err
+	}
+
+	return acquireLifecycleLock()
+}
+
+func stopPost(cmd *cobra.Command, args []string) error {
+	return releaseLifecycleLock()
 }
 
 func stop(cmd *cobra.Command, _ []string) error {
+	logger.Info("starting")
+	defer logger.Info("complete")
+
 	_, err := bpm.ParseConfig(configPath)
 	if err != nil {
 		return fmt.Errorf("failed to get job: %s", err.Error())
 	}
-
-	logger = logger.Session("stop")
-	logger.Info("starting")
-	defer logger.Info("complete")
 
 	runcLifecycle := newRuncLifecycle()
 	job, err := runcLifecycle.GetJob(jobName, processName)

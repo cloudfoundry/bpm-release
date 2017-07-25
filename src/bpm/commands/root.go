@@ -26,6 +26,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"golang.org/x/sys/unix"
+
 	"code.cloudfoundry.org/clock"
 	"code.cloudfoundry.org/lager"
 	"code.cloudfoundry.org/lager/lagerflags"
@@ -71,7 +73,7 @@ func validateInput(args []string) error {
 	return nil
 }
 
-func setupBpmLogs() error {
+func setupBpmLogs(sessionName string) error {
 	bpmLogFileLocation := filepath.Join(bpm.BoshRoot(), "sys", "log", jobName, "bpm.log")
 	err := os.MkdirAll(filepath.Join(bpm.BoshRoot(), "sys", "log", jobName), 0750)
 	if err != nil {
@@ -96,6 +98,50 @@ func setupBpmLogs() error {
 	logger, _ = lagerflags.NewFromConfig("bpm", lagerflags.DefaultLagerConfig())
 	logger.RegisterSink(lager.NewWriterSink(logFile, lager.INFO))
 	logger = logger.WithData(lager.Data{"job": jobName, "process": processName})
+	logger = logger.Session(sessionName)
+
+	return nil
+}
+
+func acquireLifecycleLock() error {
+	l := logger.Session("acquiring-lifecycle-lock")
+	l.Info("starting")
+	defer l.Info("complete")
+
+	bpmPidDir := filepath.Join(bpm.BoshRoot(), "sys", "run", "bpm", jobName)
+	err := os.MkdirAll(bpmPidDir, 0700)
+	if err != nil {
+		l.Error("failed-to-create-lock-dir", err)
+		return err
+	}
+
+	lockFile := filepath.Join(bpmPidDir, fmt.Sprintf("%s.lock", processName))
+	f, err := os.OpenFile(lockFile, os.O_CREATE|os.O_RDWR, 0600)
+	if err != nil {
+		l.Error("failed-to-create-lock-file", err)
+		return err
+	}
+
+	err = unix.Flock(int(f.Fd()), unix.LOCK_EX)
+	if err != nil {
+		l.Error("failed-to-acquire-lock", err)
+		return err
+	}
+
+	return nil
+}
+
+func releaseLifecycleLock() error {
+	l := logger.Session("releasing-lifecycle-lock")
+	l.Info("starting")
+	defer l.Info("complete")
+
+	lockFile := filepath.Join(bpm.BoshRoot(), "sys", "run", "bpm", jobName, fmt.Sprintf("%s.lock", processName))
+	err := os.RemoveAll(lockFile)
+	if err != nil {
+		l.Error("failed-to-remove-lock-file", err)
+		return err
+	}
 
 	return nil
 }
