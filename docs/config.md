@@ -67,10 +67,13 @@ check process job-worker
 
 ## Setting Sysctl Kernel Parameters
 
-We recommend setting these parameters in your `pre-start` with the following
-command:
+We recommend setting these parameters in your BOSH `pre-start` with the
+following command:
 
 ```bash
 sysctl -e -w net.ipv4.tcp_fin_timeout 10
 sysctl -e -w net.ipv4.tcp_tw_reuse 1
 ```
+
+You could set these in your bpm `pre_start` but since these affect the entire
+host and not just the contained job we like to keep them separate.
