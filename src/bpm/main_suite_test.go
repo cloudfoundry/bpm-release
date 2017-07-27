@@ -16,6 +16,7 @@
 package main_test
 
 import (
+	"os"
 	"time"
 
 	. "github.com/onsi/ginkgo"
@@ -30,12 +31,17 @@ func TestBpm(t *testing.T) {
 	RunSpecs(t, "Main Suite")
 }
 
+const bpmTmpDir = "/bpmtmp"
+
 var (
 	bpmPath string
 )
 
 var _ = SynchronizedBeforeSuite(func() []byte {
 	bpmPath, err := gexec.Build("bpm")
+	Expect(err).NotTo(HaveOccurred())
+
+	err = os.MkdirAll(bpmTmpDir, 0755)
 	Expect(err).NotTo(HaveOccurred())
 
 	return []byte(bpmPath)
@@ -45,5 +51,8 @@ var _ = SynchronizedBeforeSuite(func() []byte {
 })
 
 var _ = SynchronizedAfterSuite(func() {}, func() {
+	err := os.RemoveAll(bpmTmpDir)
+	Expect(err).NotTo(HaveOccurred())
+
 	gexec.CleanupBuildArtifacts()
 })

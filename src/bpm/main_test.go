@@ -106,7 +106,8 @@ var _ = Describe("bpm", func() {
 
 	BeforeEach(func() {
 		var err error
-		boshConfigPath, err = ioutil.TempDir("", "bpm-main-test")
+
+		boshConfigPath, err = ioutil.TempDir(bpmTmpDir, "bpm-main-test")
 		Expect(err).NotTo(HaveOccurred())
 
 		err = os.MkdirAll(filepath.Join(boshConfigPath, "packages"), 0755)

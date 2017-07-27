@@ -110,6 +110,14 @@ var _ = Describe("RuncAdapter", func() {
 			Expect(dataDirInfo.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(200)))
 			Expect(dataDirInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
 
+			// TMP Directory
+			tmpDir := filepath.Join(systemRoot, "data", jobName, "tmp")
+			tmpDirInfo, err := os.Stat(tmpDir)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(tmpDirInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0700)))
+			Expect(tmpDirInfo.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(200)))
+			Expect(tmpDirInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
+
 			//Volumes
 			for _, vol := range cfg.Volumes {
 				volDirInfo, err := os.Stat(vol)
@@ -157,7 +165,7 @@ var _ = Describe("RuncAdapter", func() {
 				ConsoleSize:     nil,
 				User:            user,
 				Args:            expectedProcessArgs,
-				Env:             cfg.Env,
+				Env:             append(cfg.Env, fmt.Sprintf("TMPDIR=%s", filepath.Join(systemRoot, "data", jobName, "tmp"))),
 				Cwd:             "/",
 				Rlimits:         []specs.LinuxRlimit{},
 				NoNewPrivileges: true,
@@ -276,6 +284,12 @@ var _ = Describe("RuncAdapter", func() {
 					Destination: "/path/to/volume/2",
 					Type:        "bind",
 					Source:      "/path/to/volume/2",
+					Options:     []string{"rbind", "rw"},
+				},
+				{
+					Destination: "/tmp",
+					Type:        "bind",
+					Source:      filepath.Join(systemRoot, "data", "example", "tmp"),
 					Options:     []string{"rbind", "rw"},
 				},
 			}))
