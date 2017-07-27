@@ -28,6 +28,7 @@ var exceptions = []string{
 	".gitignore",
 	"fake_",
 	".yml",
+	"tags",
 }
 
 func Check(directory string) ([]string, error) {
