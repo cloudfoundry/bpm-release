@@ -12,7 +12,7 @@
     name: bpm
     version: latest
 
-# Enable for Route Emitter
+# Enable for Diego Cell
 - type: replace
   path: /instance_groups/name=diego-cell/jobs/-
   value:
@@ -23,7 +23,11 @@
   path: /instance_groups/name=diego-cell/jobs/name=route_emitter/properties/bpm?/enabled?
   value: true
 
-# Enable for BBS and Locket
+- type: replace
+  path: /instance_groups/name=diego-cell/jobs/name=rep/properties/bpm?/enabled?
+  value: true
+
+# Enable for Diego API
 - type: replace
   path: /instance_groups/name=diego-api/jobs/-
   value:
