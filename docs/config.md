@@ -37,7 +37,10 @@ args:
 - 4
 
 volumes:
-- name: sockets
+- name: /var/vcap/data/sockets
+
+hooks:
+  pre_start: /var/vcap/jobs/job/bin/initialize
 ```
 
 ## Example `monit` Configuration
