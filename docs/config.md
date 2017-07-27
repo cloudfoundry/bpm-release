@@ -24,6 +24,9 @@ limits:
 volumes:
 - name: certificates
 - name: sockets
+
+hooks:
+  pre_start: /var/vcap/job/program/bin/bpm-pre-start
 ```
 
 ``` yaml

@@ -29,12 +29,17 @@ type Config struct {
 	Args       []string `yaml:"args"`
 	Env        []string `yaml:"env"`
 	Limits     *Limits  `yaml:"limits"`
+	Hooks      *Hooks   `yaml:"hooks"`
 }
 
 type Limits struct {
 	Memory    *string `yaml:"memory"`
 	OpenFiles *uint64 `yaml:"open_files"`
 	Processes *int64  `yaml:"processes"`
+}
+
+type Hooks struct {
+	PreStart string `yaml:"pre_start"`
 }
 
 func ParseConfig(configPath string) (*Config, error) {

@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"time"
 
@@ -44,6 +45,12 @@ var TimeoutError = errors.New("failed to stop job within timeout")
 
 type UserFinder interface {
 	Lookup(username string) (specs.User, error)
+}
+
+//go:generate counterfeiter . CommandRunner
+
+type CommandRunner interface {
+	Run(*exec.Cmd) error
 }
 
 //go:generate counterfeiter . RuncAdapter
@@ -67,26 +74,29 @@ type RuncClient interface {
 }
 
 type RuncLifecycle struct {
-	clock       clock.Clock
-	runcClient  RuncClient
-	runcAdapter RuncAdapter
-	systemRoot  string
-	userFinder  UserFinder
+	clock         clock.Clock
+	commandRunner CommandRunner
+	runcAdapter   RuncAdapter
+	runcClient    RuncClient
+	systemRoot    string
+	userFinder    UserFinder
 }
 
 func NewRuncLifecycle(
 	runcClient RuncClient,
 	runcAdapter RuncAdapter,
 	userFinder UserFinder,
+	commandRunner CommandRunner,
 	clock clock.Clock,
 	systemRoot string,
 ) *RuncLifecycle {
 	return &RuncLifecycle{
-		clock:       clock,
-		runcClient:  runcClient,
-		runcAdapter: runcAdapter,
-		systemRoot:  systemRoot,
-		userFinder:  userFinder,
+		clock:         clock,
+		runcClient:    runcClient,
+		runcAdapter:   runcAdapter,
+		systemRoot:    systemRoot,
+		userFinder:    userFinder,
+		commandRunner: commandRunner,
 	}
 }
 
@@ -116,6 +126,17 @@ func (j *RuncLifecycle) StartJob(jobName, procName string, cfg *bpm.Config) erro
 
 	pidFilePath := filepath.Join(pidDir, fmt.Sprintf("%s.pid", procName))
 	cid := containerID(jobName, procName)
+
+	if cfg.Hooks != nil {
+		preStartCmd := exec.Command("/bin/bash", "-c", cfg.Hooks.PreStart)
+		preStartCmd.Stdout = stdout
+		preStartCmd.Stderr = stderr
+
+		err := j.commandRunner.Run(preStartCmd)
+		if err != nil {
+			return fmt.Errorf("prestart hook failed: %s", err.Error())
+		}
+	}
 
 	return j.runcClient.RunContainer(
 		pidFilePath,
@@ -238,3 +259,8 @@ func containerID(jobName, procName string) string {
 
 	return fmt.Sprintf("%s.%s", jobName, procName)
 }
+
+type commandRunner struct{}
+
+func NewCommandRunner() CommandRunner          { return &commandRunner{} }
+func (*commandRunner) Run(cmd *exec.Cmd) error { return cmd.Run() }

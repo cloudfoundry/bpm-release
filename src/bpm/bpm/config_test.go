@@ -41,6 +41,7 @@ var _ = Describe("Config", func() {
 			Expect(cfg.Env).To(ConsistOf("FOO=BAR", "BAZ=BUZZ"))
 			Expect(cfg.Limits.Memory).To(Equal(&expectedMemoryLimit))
 			Expect(cfg.Limits.OpenFiles).To(Equal(&expectedOpenFilesLimit))
+			Expect(cfg.Hooks.PreStart).To(Equal("/var/vcap/jobs/program/bin/pre"))
 		})
 
 		Context("when reading the file fails", func() {

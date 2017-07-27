@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"time"
 
@@ -40,9 +41,10 @@ import (
 
 var _ = Describe("RuncJobLifecycle", func() {
 	var (
-		fakeRuncAdapter *lifecyclefakes.FakeRuncAdapter
-		fakeRuncClient  *lifecyclefakes.FakeRuncClient
-		fakeUserFinder  *lifecyclefakes.FakeUserFinder
+		fakeRuncAdapter   *lifecyclefakes.FakeRuncAdapter
+		fakeRuncClient    *lifecyclefakes.FakeRuncClient
+		fakeUserFinder    *lifecyclefakes.FakeUserFinder
+		fakeCommandRunner *lifecyclefakes.FakeCommandRunner
 
 		logger *lagertest.TestLogger
 
@@ -69,6 +71,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 		fakeRuncAdapter = &lifecyclefakes.FakeRuncAdapter{}
 		fakeRuncClient = &lifecyclefakes.FakeRuncClient{}
 		fakeUserFinder = &lifecyclefakes.FakeUserFinder{}
+		fakeCommandRunner = &lifecyclefakes.FakeCommandRunner{}
 
 		logger = lagertest.NewTestLogger("lifecycle")
 
@@ -101,6 +104,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 			fakeRuncClient,
 			fakeRuncAdapter,
 			fakeUserFinder,
+			fakeCommandRunner,
 			fakeClock,
 			expectedSystemRoot,
 		)
@@ -147,6 +151,37 @@ var _ = Describe("RuncJobLifecycle", func() {
 			Expect(cid).To(Equal(expectedContainerID))
 			Expect(stdout).To(Equal(expectedStdout))
 			Expect(stderr).To(Equal(expectedStderr))
+		})
+
+		Context("when a PreStart Hook is provided", func() {
+			BeforeEach(func() {
+				jobConfig.Hooks = &bpm.Hooks{
+					PreStart: "/please/execute/me",
+				}
+			})
+
+			It("executes the pre start hook", func() {
+				err := runcLifecycle.StartJob(expectedJobName, expectedProcName, jobConfig)
+				Expect(err).NotTo(HaveOccurred())
+
+				expectedCommand := exec.Command("/bin/bash", "-c", jobConfig.Hooks.PreStart)
+				expectedCommand.Stdout = expectedStdout
+				expectedCommand.Stderr = expectedStderr
+
+				Expect(fakeCommandRunner.RunCallCount()).To(Equal(1))
+				Expect(fakeCommandRunner.RunArgsForCall(0)).To(Equal(expectedCommand))
+			})
+
+			Context("when the PreStart Hook fails", func() {
+				BeforeEach(func() {
+					fakeCommandRunner.RunReturns(errors.New("boom!"))
+				})
+
+				It("returns an error", func() {
+					err := runcLifecycle.StartJob(expectedJobName, expectedProcName, jobConfig)
+					Expect(err).To(HaveOccurred())
+				})
+			})
 		})
 
 		Context("when the process name is the same as the job name", func() {

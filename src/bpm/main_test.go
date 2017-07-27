@@ -221,6 +221,34 @@ var _ = Describe("bpm", func() {
 			Eventually(fileContents(bpmLogFileLocation)).Should(ContainSubstring("bpm.start.complete"))
 		})
 
+		Context("when a pre_start hook is specified", func() {
+			BeforeEach(func() {
+				f, err := os.OpenFile(filepath.Join(boshConfigPath, "pre-start"), os.O_CREATE|os.O_RDWR, 0700)
+				Expect(err).NotTo(HaveOccurred())
+
+				_, err = f.Write([]byte(`
+					#!/bin/bash
+
+					echo "Pre Start executed"
+				`))
+				Expect(err).NotTo(HaveOccurred())
+				Expect(f.Close()).To(Succeed())
+
+				cfg.Hooks = &bpm.Hooks{
+					PreStart: filepath.Join(boshConfigPath, "pre-start"),
+				}
+
+				writeConfig(jobName, jobName, cfg)
+			})
+
+			It("executs the pre-start prior to starting the process", func() {
+				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+				Eventually(session).Should(gexec.Exit(0))
+				Eventually(fileContents(stdoutFileLocation)).Should(Equal("Pre Start executed\nFoo is BAR\n"))
+			})
+		})
+
 		Context("when the process flag is specified", func() {
 			var procName string
 

@@ -155,6 +155,7 @@ func newRuncLifecycle() *lifecycle.RuncLifecycle {
 		runcClient,
 		runcAdapter,
 		userFinder,
+		lifecycle.NewCommandRunner(),
 		clock,
 		bpm.BoshRoot(),
 	)
