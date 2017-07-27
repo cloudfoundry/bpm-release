@@ -28,12 +28,13 @@ None of interest yet.
 
 ## Logging
 
-Your process should write logs to standard output and
-standard error file descriptors. This data will be written
-to `/var/vcap/sys/log/[JOB]/[PROCESS].out.log` and
-`/var/vcap/sys/log/[JOB]/[PROCESS].err.log` respectively. Any other files which
-are written to `/var/vcap/sys/log` inside the container will be written to
-`/var/vcap/sys/log/[JOB]/internal/[PROCESS]` in the host system.
+Your process should write logs to standard output and standard error file
+descriptors. This data will be written to
+`/var/vcap/sys/log/[JOB]/[PROCESS].out.log` and
+`/var/vcap/sys/log/[JOB]/[PROCESS].err.log` respectively.
+
+Any other files which are written to `/var/vcap/sys/log/[JOB]` inside the
+container will be written to `/var/vcap/sys/log/[JOB]` in the host system.
 
 ## Storing Data
 
