@@ -8,3 +8,6 @@ developing it to see what we may need to make decisions on.
 * What happens if I `bpm start` a job which is already running?
 
 * What happens to a process if it reaches its memory limit?
+
+* The content, format, or location of log files apart from their inclusion
+  inside `/var/vcap/sys/log/[JOB]`.
