@@ -94,7 +94,7 @@ var _ = Describe("RuncAdapter", func() {
 			Expect(stderrInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
 
 			// Data Directory
-			dataDir := filepath.Join(systemRoot, "data", jobName, procName)
+			dataDir := filepath.Join(systemRoot, "data", jobName)
 			dataDirInfo, err := os.Stat(dataDir)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(dataDirInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0700)))
@@ -217,9 +217,9 @@ var _ = Describe("RuncAdapter", func() {
 					Options:     []string{"nosuid", "nodev", "rbind", "ro"},
 				},
 				{
-					Destination: filepath.Join(systemRoot, "data", "example", "server"),
+					Destination: filepath.Join(systemRoot, "data", "example"),
 					Type:        "bind",
-					Source:      filepath.Join(systemRoot, "data", "example", "server"),
+					Source:      filepath.Join(systemRoot, "data", "example"),
 					Options:     []string{"rbind", "rw"},
 				},
 				{

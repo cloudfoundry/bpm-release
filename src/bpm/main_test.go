@@ -366,7 +366,7 @@ var _ = Describe("bpm", func() {
 							sleep 100 &
 							child=$!;
 							wait $child;
-							start_file_leak`, filepath.Join(boshConfigPath, "data", jobName, jobName)),
+							start_file_leak`, filepath.Join(boshConfigPath, "data", jobName)),
 					}
 
 					limit := uint64(10)

@@ -38,7 +38,7 @@ func (a *RuncAdapter) CreateJobPrerequisites(systemRoot, jobName, procName strin
 	jobLogDir := filepath.Join(systemRoot, "sys", "log", jobName)
 	stdoutFileLocation := filepath.Join(jobLogDir, fmt.Sprintf("%s.out.log", procName))
 	stderrFileLocation := filepath.Join(jobLogDir, fmt.Sprintf("%s.err.log", procName))
-	dataDir := filepath.Join(systemRoot, "data", jobName, procName)
+	dataDir := filepath.Join(systemRoot, "data", jobName)
 
 	err := os.MkdirAll(bpmPidDir, 0700)
 	if err != nil {
@@ -184,9 +184,9 @@ func (a *RuncAdapter) BuildSpec(
 func boshMounts(systemRoot, jobName, procName string) []specs.Mount {
 	return []specs.Mount{
 		{
-			Destination: filepath.Join(systemRoot, "data", jobName, procName),
+			Destination: filepath.Join(systemRoot, "data", jobName),
 			Type:        "bind",
-			Source:      filepath.Join(systemRoot, "data", jobName, procName),
+			Source:      filepath.Join(systemRoot, "data", jobName),
 			Options:     []string{"rbind", "rw"},
 		},
 		{
