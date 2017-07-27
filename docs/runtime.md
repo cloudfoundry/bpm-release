@@ -47,7 +47,7 @@ Applications may store temporary files in either `/tmp` or
 mapped onto the same host volume (`/var/vcap/data/[JOB]/tmp`) and changes made
 to one will instantly appear in the other.
 
-BPM will set the `TMPDIR` environment variable when execuring your job to one of
+bpm will set the `TMPDIR` environment variable when execuring your job to one of
 the paths listed above. This environment variable is respected by the majority
 of in-use standard libraries used by Cloud Foundry.
 
