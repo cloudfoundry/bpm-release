@@ -74,34 +74,36 @@ If you'd like an example of a release which has been converted to use BPM
 
 ## Development
 
-Development is not currently supported on anything other than Linux, though running the docker based tests is possible on OSX.
+Development is not currently supported on anything other than Linux, though
+running the docker based tests is possible on macOS.
 
 Dependencies required for local testing:
-* docker
-* golang
 
-The following steps should allow you to run the tests in a local docker container:
+* Docker
+* Go
+
+The following steps should allow you to run the tests in a local docker
+container:
 
 * Enable swap accounting
-  ```
-  $ sudo sed -i 's/GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="swapaccount=1"/' /etc/default/grub 
-  $ sudo update-grub
-  $ sudo reboot
-  ```
-* Clone the repo and submodules
-  ```
-  $ cd ~/workspace
-  $ git clone git@github.com:pivotal-cf/bpm-release
-  $ cd ~/workspace/bpm-release/
-  $ git submodule update --init --recursive
-  ```
-* Install `counterfiter` for generating fakes
-  ```
-  $ cd && go get github.com/maxbrunsfeld/counterfeiter
-  ```
+
+    # sed -i 's/GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="swapaccount=1"/' /etc/default/grub 
+    # update-grub
+    # reboot
+
+* Clone this repository and submodules
+
+    $ cd ~/workspace
+    $ git clone https://github.com/pivotal-cf/bpm-release.git --recursive
+    $ cd ~/workspace/bpm-release
+
+* Install `counterfeiter` for generating fakes.
+
+    $ cd && go get github.com/maxbrunsfeld/counterfeiter
+
 * Enable `direnv` and run tests
-  ```
-  $ cd ~/workspace/bpm-release/
+
+  $ cd ~/workspace/bpm-release
   $ direnv allow .envrc
   $ ./scripts/test-with-docker 
-  ```
+
