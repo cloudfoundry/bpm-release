@@ -10,8 +10,8 @@ any time.
 executable: /var/vcap/packages/program/bin/program-server
 
 args:
-  - --port
-  - 2424
+- --port
+- 2424
 
 env:
   - FOO=BAR
@@ -33,8 +33,8 @@ hooks:
 executable: /var/vcap/packages/program/bin/program-worker
 
 args:
-  - --queues
-  - 4
+- --queues
+- 4
 
 volumes:
 - name: sockets
