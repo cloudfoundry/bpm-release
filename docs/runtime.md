@@ -88,5 +88,28 @@ Paths which are not inside this directory will cause the job to fail to start.
 
 ### Persistent Data
 
-TODO: Work out if there is anything complex about persistent data across
-restarts (probably not).
+> **TODO**: Work out if there is anything complex about persistent data across
+> restarts (probably not).
+
+## `monit` Workarounds
+
+There are various `monit` quirks that bpm attempts to hide or smooth over.
+
+### Instant Restart
+
+If an operator runs `monit stop JOB && monit start JOB` then `monit` will wait
+until the monitored process has completely stopped and the `stop program` listed
+in the configuration has completely finished before attempting to start the job
+again. This is unsurprising behavior.
+
+Unfortunately `monit restart` [does not wait][monit-mail] until the existing job
+has stopped before starting the same job again. As soon as the existing job has
+removed its PID file `monit` forks and starts the new process. This behavior is
+unexpected, subtle, and full of race conditions. A considerable number of BOSH
+releases are unknowingly suffering from bugs caused by this.
+
+bpm enforces its own locking around process operations to avoid these race
+conditions. It is completely safe (from a correctness perspective, you may still
+break your service) to run `monit restart` on a job which uses bpm.
+
+[monit-mail]: https://lists.nongnu.org/archive/html/monit-general/2012-09/msg00103.html
