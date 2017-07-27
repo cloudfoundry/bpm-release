@@ -29,6 +29,7 @@ type Config struct {
 	Args       []string `yaml:"args"`
 	Env        []string `yaml:"env"`
 	Limits     *Limits  `yaml:"limits"`
+	Volumes    []string `yaml:"volumes"`
 	Hooks      *Hooks   `yaml:"hooks"`
 }
 

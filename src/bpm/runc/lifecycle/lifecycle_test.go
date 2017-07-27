@@ -124,14 +124,15 @@ var _ = Describe("RuncJobLifecycle", func() {
 			Expect(fakeUserFinder.LookupArgsForCall(0)).To(Equal(usertools.VcapUser))
 
 			Expect(fakeRuncAdapter.CreateJobPrerequisitesCallCount()).To(Equal(1))
-			systemRoot, jobName, procName, user := fakeRuncAdapter.CreateJobPrerequisitesArgsForCall(0)
+			systemRoot, jobName, procName, cfg, user := fakeRuncAdapter.CreateJobPrerequisitesArgsForCall(0)
 			Expect(systemRoot).To(Equal(expectedSystemRoot))
 			Expect(jobName).To(Equal(expectedJobName))
 			Expect(procName).To(Equal(expectedProcName))
+			Expect(cfg).To(Equal(jobConfig))
 			Expect(user).To(Equal(expectedUser))
 
 			Expect(fakeRuncAdapter.BuildSpecCallCount()).To(Equal(1))
-			systemRoot, jobName, procName, cfg, user := fakeRuncAdapter.BuildSpecArgsForCall(0)
+			systemRoot, jobName, procName, cfg, user = fakeRuncAdapter.BuildSpecArgsForCall(0)
 			Expect(systemRoot).To(Equal(expectedSystemRoot))
 			Expect(jobName).To(Equal(expectedJobName))
 			Expect(procName).To(Equal(expectedProcName))

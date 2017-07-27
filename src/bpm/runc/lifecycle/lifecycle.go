@@ -56,7 +56,7 @@ type CommandRunner interface {
 //go:generate counterfeiter . RuncAdapter
 
 type RuncAdapter interface {
-	CreateJobPrerequisites(systemRoot, jobName, procName string, user specs.User) (string, *os.File, *os.File, error)
+	CreateJobPrerequisites(systemRoot, jobName, procName string, cfg *bpm.Config, user specs.User) (string, *os.File, *os.File, error)
 	BuildSpec(systemRoot, jobName, procName string, cfg *bpm.Config, user specs.User) (specs.Spec, error)
 }
 
@@ -106,7 +106,7 @@ func (j *RuncLifecycle) StartJob(jobName, procName string, cfg *bpm.Config) erro
 		return err
 	}
 
-	pidDir, stdout, stderr, err := j.runcAdapter.CreateJobPrerequisites(j.systemRoot, jobName, procName, user)
+	pidDir, stdout, stderr, err := j.runcAdapter.CreateJobPrerequisites(j.systemRoot, jobName, procName, cfg, user)
 	if err != nil {
 		return fmt.Errorf("failed to create system files: %s", err.Error())
 	}

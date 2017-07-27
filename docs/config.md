@@ -22,8 +22,7 @@ limits:
   open_files: 100
 
 volumes:
-- name: certificates
-- name: sockets
+- /var/vcap/data/certificates
 
 hooks:
   pre_start: /var/vcap/job/program/bin/bpm-pre-start

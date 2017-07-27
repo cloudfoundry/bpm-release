@@ -33,7 +33,11 @@ func NewRuncAdapter() *RuncAdapter {
 	return &RuncAdapter{}
 }
 
-func (a *RuncAdapter) CreateJobPrerequisites(systemRoot, jobName, procName string, user specs.User) (string, *os.File, *os.File, error) {
+func (a *RuncAdapter) CreateJobPrerequisites(
+	systemRoot, jobName, procName string,
+	cfg *bpm.Config,
+	user specs.User,
+) (string, *os.File, *os.File, error) {
 	bpmPidDir := filepath.Join(systemRoot, "sys", "run", "bpm", jobName)
 	jobLogDir := filepath.Join(systemRoot, "sys", "log", jobName)
 	stdoutFileLocation := filepath.Join(jobLogDir, fmt.Sprintf("%s.out.log", procName))
@@ -64,16 +68,28 @@ func (a *RuncAdapter) CreateJobPrerequisites(systemRoot, jobName, procName strin
 		return "", nil, nil, err
 	}
 
-	err = os.MkdirAll(dataDir, 0700)
-	if err != nil {
-		return "", nil, nil, err
-	}
-	err = os.Chown(dataDir, int(user.UID), int(user.GID))
+	err = createDirFor(dataDir, int(user.UID), int(user.GID))
 	if err != nil {
 		return "", nil, nil, err
 	}
 
+	for _, vol := range cfg.Volumes {
+		err := createDirFor(vol, int(user.UID), int(user.GID))
+		if err != nil {
+			return "", nil, nil, err
+		}
+	}
+
 	return bpmPidDir, stdout, stderr, nil
+}
+
+func createDirFor(path string, uid, gid int) error {
+	err := os.MkdirAll(path, 0700)
+	if err != nil {
+		return err
+	}
+
+	return os.Chown(path, uid, gid)
 }
 
 func createFileFor(path string, uid, gid int) (*os.File, error) {
@@ -107,6 +123,7 @@ func (a *RuncAdapter) BuildSpec(
 	mounts := defaultMounts()
 	mounts = append(mounts, boshMounts(systemRoot, jobName, procName)...)
 	mounts = append(mounts, systemIdentityMounts()...)
+	mounts = append(mounts, userProvidedIdentityMounts(cfg.Volumes)...)
 
 	var resources *specs.LinuxResources
 	if cfg.Limits != nil {
@@ -290,4 +307,19 @@ func systemIdentityMounts() []specs.Mount {
 			Options:     []string{"nosuid", "nodev", "rbind", "ro"},
 		},
 	}
+}
+
+func userProvidedIdentityMounts(volumes []string) []specs.Mount {
+	var mnts []specs.Mount
+
+	for _, vol := range volumes {
+		mnts = append(mnts, specs.Mount{
+			Destination: vol,
+			Type:        "bind",
+			Source:      vol,
+			Options:     []string{"rbind", "rw"},
+		})
+	}
+
+	return mnts
 }

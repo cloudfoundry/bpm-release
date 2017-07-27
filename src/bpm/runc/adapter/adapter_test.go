@@ -40,6 +40,8 @@ var _ = Describe("RuncAdapter", func() {
 		procName,
 		systemRoot string
 		user specs.User
+
+		cfg *bpm.Config
 	)
 
 	BeforeEach(func() {
@@ -52,6 +54,13 @@ var _ = Describe("RuncAdapter", func() {
 		var err error
 		systemRoot, err = ioutil.TempDir("", "runc-adapter-system-files")
 		Expect(err).NotTo(HaveOccurred())
+
+		cfg = &bpm.Config{
+			Volumes: []string{
+				filepath.Join(systemRoot, "some", "directory"),
+				filepath.Join(systemRoot, "another", "location"),
+			},
+		}
 	})
 
 	AfterEach(func() {
@@ -60,7 +69,7 @@ var _ = Describe("RuncAdapter", func() {
 
 	Describe("CreateJobPrerequisites", func() {
 		It("creates the job prerequisites", func() {
-			pidDir, stdout, stderr, err := runcAdapter.CreateJobPrerequisites(systemRoot, jobName, procName, user)
+			pidDir, stdout, stderr, err := runcAdapter.CreateJobPrerequisites(systemRoot, jobName, procName, cfg, user)
 			Expect(err).NotTo(HaveOccurred())
 
 			logDir := filepath.Join(systemRoot, "sys", "log", jobName)
@@ -100,12 +109,19 @@ var _ = Describe("RuncAdapter", func() {
 			Expect(dataDirInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0700)))
 			Expect(dataDirInfo.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(200)))
 			Expect(dataDirInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
+
+			//Volumes
+			for _, vol := range cfg.Volumes {
+				volDirInfo, err := os.Stat(vol)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(volDirInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0700)))
+				Expect(volDirInfo.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(200)))
+				Expect(volDirInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
+			}
 		})
 	})
 
 	Describe("BuildSpec", func() {
-		var cfg *bpm.Config
-
 		BeforeEach(func() {
 			cfg = &bpm.Config{
 				Executable: "/var/vcap/packages/example/bin/example",
@@ -116,6 +132,10 @@ var _ = Describe("RuncAdapter", func() {
 				Env: []string{
 					"RAVE=true",
 					"ONE=two",
+				},
+				Volumes: []string{
+					"/path/to/volume/1",
+					"/path/to/volume/2",
 				},
 			}
 		})
@@ -244,6 +264,18 @@ var _ = Describe("RuncAdapter", func() {
 					Destination: filepath.Join(systemRoot, "sys", "log", jobName),
 					Type:        "bind",
 					Source:      filepath.Join(systemRoot, "sys", "log", jobName),
+					Options:     []string{"rbind", "rw"},
+				},
+				{
+					Destination: "/path/to/volume/1",
+					Type:        "bind",
+					Source:      "/path/to/volume/1",
+					Options:     []string{"rbind", "rw"},
+				},
+				{
+					Destination: "/path/to/volume/2",
+					Type:        "bind",
+					Source:      "/path/to/volume/2",
 					Options:     []string{"rbind", "rw"},
 				},
 			}))

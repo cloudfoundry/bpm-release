@@ -9,5 +9,8 @@ env:
 limits:
   memory: 100G
   open_files: 100
+volumes:
+  - /var/vcap/data/program/foobar
+  - /var/vcap/data/alternate-program
 hooks:
   pre_start: /var/vcap/jobs/program/bin/pre

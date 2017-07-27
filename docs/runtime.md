@@ -54,24 +54,6 @@ This storage area is shared between all processes in your job. It is your
 responsibility to make sure that the data saved by each of your job's processes
 does not collide.
 
-### Shared Data
-
-> **Note:** This feature has been added to enable support for older jobs which
-> use the file system to communicate with other jobs. It is preferable in nearly
-> all cases to use the network to communicate across job boundaries. Using the
-> network reduces scheduling constraints such that a job can be un-collocated
-> and allows more modern access control (key rotation, etc.) of the information
-> being transferred between your jobs.
-
-If your job configuration lists shared volumes then these will be mounted
-under `/var/vcap/data/shared/[VOLUME NAME]`. These volumes will be mounted
-read-write. All collocated jobs which list a particular volume name will be
-given a volume they can all share. If your release already has a data stored
-in the `/var/vcap/data/shared` directory then it is your responsibility to
-move this data to a different path before using shared volumes.
-
-Due to path collisions, job name of `shared` will be rejected.
-
 ### Persistent Data
 
 TODO: Work out if there is anything complex about persistent data across
