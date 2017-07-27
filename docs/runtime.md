@@ -26,7 +26,9 @@ process while running the drain script.
 
 ## Environment Variables
 
-None of interest yet.
+| *Name* | *Value*                    |
+|--------|----------------------------|
+| TMPDIR | `/var/vcap/data/[JOB]/tmp` |
 
 ## Logging
 
