@@ -16,7 +16,7 @@
 package adapter_test
 
 import (
-	"bpm/bpm"
+	"bpm/config"
 	"bpm/runc/adapter"
 	"fmt"
 	"io/ioutil"
@@ -41,7 +41,8 @@ var _ = Describe("RuncAdapter", func() {
 		systemRoot string
 		user specs.User
 
-		cfg *bpm.Config
+		bpmCfg  *config.BPMConfig
+		procCfg *config.ProcessConfig
 	)
 
 	BeforeEach(func() {
@@ -55,7 +56,8 @@ var _ = Describe("RuncAdapter", func() {
 		systemRoot, err = ioutil.TempDir("", "runc-adapter-system-files")
 		Expect(err).NotTo(HaveOccurred())
 
-		cfg = &bpm.Config{
+		bpmCfg = config.NewBPMConfig(systemRoot, jobName, procName)
+		procCfg = &config.ProcessConfig{
 			Volumes: []string{
 				filepath.Join(systemRoot, "some", "directory"),
 				filepath.Join(systemRoot, "another", "location"),
@@ -69,25 +71,25 @@ var _ = Describe("RuncAdapter", func() {
 
 	Describe("CreateJobPrerequisites", func() {
 		It("creates the job prerequisites", func() {
-			pidDir, stdout, stderr, err := runcAdapter.CreateJobPrerequisites(systemRoot, jobName, procName, cfg, user)
+			stdout, stderr, err := runcAdapter.CreateJobPrerequisites(bpmCfg, procCfg, user)
 			Expect(err).NotTo(HaveOccurred())
 
-			logDir := filepath.Join(systemRoot, "sys", "log", jobName)
-			expectedStdoutFileName := fmt.Sprintf("%s.out.log", procName)
-			expectedStderrFileName := fmt.Sprintf("%s.err.log", procName)
-
 			// PID Directory
-			Expect(pidDir).To(Equal(filepath.Join(systemRoot, "sys", "run", "bpm", jobName)))
+			pidDirInfo, err := os.Stat(bpmCfg.PidDir())
+			Expect(err).NotTo(HaveOccurred())
+			Expect(pidDirInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0700)))
+			Expect(pidDirInfo.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(0)))
+			Expect(pidDirInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(0)))
 
 			// Log Directory
-			logDirInfo, err := os.Stat(logDir)
+			logDirInfo, err := os.Stat(bpmCfg.LogDir())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(logDirInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0750)))
 			Expect(logDirInfo.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(200)))
 			Expect(logDirInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
 
 			// Stdout Log File
-			Expect(stdout.Name()).To(Equal(filepath.Join(logDir, expectedStdoutFileName)))
+			Expect(stdout.Name()).To(Equal(bpmCfg.Stdout()))
 			stdoutInfo, err := stdout.Stat()
 			Expect(err).NotTo(HaveOccurred())
 			Expect(stdoutInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0600)))
@@ -95,7 +97,7 @@ var _ = Describe("RuncAdapter", func() {
 			Expect(stdoutInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
 
 			// Stderr Log File
-			Expect(stderr.Name()).To(Equal(filepath.Join(logDir, expectedStderrFileName)))
+			Expect(stderr.Name()).To(Equal(bpmCfg.Stderr()))
 			stderrInfo, err := stderr.Stat()
 			Expect(err).NotTo(HaveOccurred())
 			Expect(stderrInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0600)))
@@ -103,23 +105,21 @@ var _ = Describe("RuncAdapter", func() {
 			Expect(stderrInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
 
 			// Data Directory
-			dataDir := filepath.Join(systemRoot, "data", jobName)
-			dataDirInfo, err := os.Stat(dataDir)
+			dataDirInfo, err := os.Stat(bpmCfg.DataDir())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(dataDirInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0700)))
 			Expect(dataDirInfo.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(200)))
 			Expect(dataDirInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
 
 			// TMP Directory
-			tmpDir := filepath.Join(systemRoot, "data", jobName, "tmp")
-			tmpDirInfo, err := os.Stat(tmpDir)
+			tmpDirInfo, err := os.Stat(bpmCfg.TempDir())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(tmpDirInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0700)))
 			Expect(tmpDirInfo.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(200)))
 			Expect(tmpDirInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
 
 			//Volumes
-			for _, vol := range cfg.Volumes {
+			for _, vol := range procCfg.Volumes {
 				volDirInfo, err := os.Stat(vol)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(volDirInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0700)))
@@ -131,7 +131,7 @@ var _ = Describe("RuncAdapter", func() {
 
 	Describe("BuildSpec", func() {
 		BeforeEach(func() {
-			cfg = &bpm.Config{
+			procCfg = &config.ProcessConfig{
 				Executable: "/var/vcap/packages/example/bin/example",
 				Args: []string{
 					"foo",
@@ -149,7 +149,7 @@ var _ = Describe("RuncAdapter", func() {
 		})
 
 		It("converts a bpm config into a runc spec", func() {
-			spec, err := runcAdapter.BuildSpec(systemRoot, jobName, procName, cfg, user)
+			spec, err := runcAdapter.BuildSpec(bpmCfg, procCfg, user)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(spec.Version).To(Equal(specs.Version))
@@ -159,20 +159,20 @@ var _ = Describe("RuncAdapter", func() {
 				Arch: runtime.GOARCH,
 			}))
 
-			expectedProcessArgs := append([]string{cfg.Executable}, cfg.Args...)
+			expectedProcessArgs := append([]string{procCfg.Executable}, procCfg.Args...)
 			Expect(spec.Process).To(Equal(&specs.Process{
 				Terminal:        false,
 				ConsoleSize:     nil,
 				User:            user,
 				Args:            expectedProcessArgs,
-				Env:             append(cfg.Env, fmt.Sprintf("TMPDIR=%s", filepath.Join(systemRoot, "data", jobName, "tmp"))),
+				Env:             append(procCfg.Env, fmt.Sprintf("TMPDIR=%s", bpmCfg.TempDir())),
 				Cwd:             "/",
 				Rlimits:         []specs.LinuxRlimit{},
 				NoNewPrivileges: true,
 			}))
 
 			Expect(spec.Root).To(Equal(specs.Root{
-				Path: "/var/vcap/data/bpm/bundles/example/server/rootfs",
+				Path: bpmCfg.RootFSPath(),
 			}))
 
 			Expect(spec.Hostname).To(Equal("example"))
@@ -324,11 +324,11 @@ var _ = Describe("RuncAdapter", func() {
 
 		Context("Limits", func() {
 			BeforeEach(func() {
-				cfg.Limits = &bpm.Limits{}
+				procCfg.Limits = &config.Limits{}
 			})
 
 			It("sets no limits by default", func() {
-				_, err := runcAdapter.BuildSpec(systemRoot, jobName, procName, cfg, user)
+				_, err := runcAdapter.BuildSpec(bpmCfg, procCfg, user)
 				Expect(err).NotTo(HaveOccurred())
 			})
 
@@ -337,11 +337,11 @@ var _ = Describe("RuncAdapter", func() {
 
 				BeforeEach(func() {
 					expectedMemoryLimit = "100G"
-					cfg.Limits.Memory = &expectedMemoryLimit
+					procCfg.Limits.Memory = &expectedMemoryLimit
 				})
 
 				It("sets the memory limit on the container", func() {
-					spec, err := runcAdapter.BuildSpec(systemRoot, jobName, procName, cfg, user)
+					spec, err := runcAdapter.BuildSpec(bpmCfg, procCfg, user)
 					Expect(err).NotTo(HaveOccurred())
 
 					expectedMemoryLimitInBytes, err := bytefmt.ToBytes(expectedMemoryLimit)
@@ -355,11 +355,11 @@ var _ = Describe("RuncAdapter", func() {
 				Context("when the memory limit is invalid", func() {
 					BeforeEach(func() {
 						memoryLimit := "invalid byte value"
-						cfg.Limits.Memory = &memoryLimit
+						procCfg.Limits.Memory = &memoryLimit
 					})
 
 					It("returns an error", func() {
-						_, err := runcAdapter.BuildSpec(systemRoot, jobName, procName, cfg, user)
+						_, err := runcAdapter.BuildSpec(bpmCfg, procCfg, user)
 						Expect(err).To(HaveOccurred())
 					})
 				})
@@ -370,11 +370,11 @@ var _ = Describe("RuncAdapter", func() {
 
 				BeforeEach(func() {
 					expectedOpenFilesLimit = 2444
-					cfg.Limits.OpenFiles = &expectedOpenFilesLimit
+					procCfg.Limits.OpenFiles = &expectedOpenFilesLimit
 				})
 
 				It("sets the rlimit on the process", func() {
-					spec, err := runcAdapter.BuildSpec(systemRoot, jobName, procName, cfg, user)
+					spec, err := runcAdapter.BuildSpec(bpmCfg, procCfg, user)
 					Expect(err).NotTo(HaveOccurred())
 
 					Expect(spec.Process.Rlimits).To(ConsistOf([]specs.LinuxRlimit{
@@ -392,11 +392,11 @@ var _ = Describe("RuncAdapter", func() {
 
 				BeforeEach(func() {
 					pidLimit = int64(30)
-					cfg.Limits.Processes = &pidLimit
+					procCfg.Limits.Processes = &pidLimit
 				})
 
 				It("sets a PidLimit on the container", func() {
-					spec, err := runcAdapter.BuildSpec(systemRoot, jobName, procName, cfg, user)
+					spec, err := runcAdapter.BuildSpec(bpmCfg, procCfg, user)
 					Expect(err).NotTo(HaveOccurred())
 
 					Expect(spec.Linux).NotTo(BeNil())
@@ -411,11 +411,11 @@ var _ = Describe("RuncAdapter", func() {
 
 		Context("when the limits configuration is not provided", func() {
 			BeforeEach(func() {
-				cfg.Limits = nil
+				procCfg.Limits = nil
 			})
 
 			It("does not set a memory limit", func() {
-				spec, err := runcAdapter.BuildSpec(systemRoot, jobName, procName, cfg, user)
+				spec, err := runcAdapter.BuildSpec(bpmCfg, procCfg, user)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(spec.Linux.Resources).To(BeNil())
 			})

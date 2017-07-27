@@ -13,18 +13,16 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 
-package bpm
+package config
 
 import (
 	"errors"
 	"io/ioutil"
-	"os"
-	"path/filepath"
 
 	yaml "gopkg.in/yaml.v2"
 )
 
-type Config struct {
+type ProcessConfig struct {
 	Executable string   `yaml:"executable"`
 	Args       []string `yaml:"args"`
 	Env        []string `yaml:"env"`
@@ -43,13 +41,13 @@ type Hooks struct {
 	PreStart string `yaml:"pre_start"`
 }
 
-func ParseConfig(configPath string) (*Config, error) {
+func ParseProcessConfig(configPath string) (*ProcessConfig, error) {
 	data, err := ioutil.ReadFile(configPath)
 	if err != nil {
 		return nil, err
 	}
 
-	cfg := Config{}
+	cfg := ProcessConfig{}
 
 	err = yaml.Unmarshal(data, &cfg)
 	if err != nil {
@@ -64,31 +62,10 @@ func ParseConfig(configPath string) (*Config, error) {
 	return &cfg, nil
 }
 
-func (c *Config) Validate() error {
+func (c *ProcessConfig) Validate() error {
 	if c.Executable == "" {
 		return errors.New("invalid config: executable")
 	}
 
 	return nil
-}
-
-func BoshRoot() string {
-	boshRoot := os.Getenv("BPM_BOSH_ROOT")
-	if boshRoot == "" {
-		boshRoot = "/var/vcap"
-	}
-
-	return boshRoot
-}
-
-func RuncPath() string {
-	return filepath.Join(BoshRoot(), "packages", "bpm", "bin", "runc")
-}
-
-func BundlesRoot() string {
-	return filepath.Join(BoshRoot(), "data", "bpm", "bundles")
-}
-
-func RuncRoot() string {
-	return filepath.Join(BoshRoot(), "data", "bpm", "runc")
 }

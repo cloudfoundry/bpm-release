@@ -16,7 +16,7 @@
 package lifecycle
 
 import (
-	"bpm/bpm"
+	"bpm/config"
 	"bpm/models"
 	"bpm/runc/client"
 	"bpm/usertools"
@@ -25,7 +25,6 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"time"
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
@@ -56,8 +55,8 @@ type CommandRunner interface {
 //go:generate counterfeiter . RuncAdapter
 
 type RuncAdapter interface {
-	CreateJobPrerequisites(systemRoot, jobName, procName string, cfg *bpm.Config, user specs.User) (string, *os.File, *os.File, error)
-	BuildSpec(systemRoot, jobName, procName string, cfg *bpm.Config, user specs.User) (specs.Spec, error)
+	CreateJobPrerequisites(bpmCfg *config.BPMConfig, procCfg *config.ProcessConfig, user specs.User) (*os.File, *os.File, error)
+	BuildSpec(bpmCfg *config.BPMConfig, procCfg *config.ProcessConfig, user specs.User) (specs.Spec, error)
 }
 
 //go:generate counterfeiter . RuncClient
@@ -78,7 +77,6 @@ type RuncLifecycle struct {
 	commandRunner CommandRunner
 	runcAdapter   RuncAdapter
 	runcClient    RuncClient
-	systemRoot    string
 	userFinder    UserFinder
 }
 
@@ -88,47 +86,41 @@ func NewRuncLifecycle(
 	userFinder UserFinder,
 	commandRunner CommandRunner,
 	clock clock.Clock,
-	systemRoot string,
 ) *RuncLifecycle {
 	return &RuncLifecycle{
 		clock:         clock,
 		runcClient:    runcClient,
 		runcAdapter:   runcAdapter,
-		systemRoot:    systemRoot,
 		userFinder:    userFinder,
 		commandRunner: commandRunner,
 	}
 }
 
-func (j *RuncLifecycle) StartJob(jobName, procName string, cfg *bpm.Config) error {
+func (j *RuncLifecycle) StartJob(bpmCfg *config.BPMConfig, procCfg *config.ProcessConfig) error {
 	user, err := j.userFinder.Lookup(usertools.VcapUser)
 	if err != nil {
 		return err
 	}
 
-	pidDir, stdout, stderr, err := j.runcAdapter.CreateJobPrerequisites(j.systemRoot, jobName, procName, cfg, user)
+	stdout, stderr, err := j.runcAdapter.CreateJobPrerequisites(bpmCfg, procCfg, user)
 	if err != nil {
 		return fmt.Errorf("failed to create system files: %s", err.Error())
 	}
 	defer stdout.Close()
 	defer stderr.Close()
 
-	spec, err := j.runcAdapter.BuildSpec(j.systemRoot, jobName, procName, cfg, user)
+	spec, err := j.runcAdapter.BuildSpec(bpmCfg, procCfg, user)
 	if err != nil {
 		return err
 	}
 
-	bundlePath := j.bundlePath(jobName, procName)
-	err = j.runcClient.CreateBundle(bundlePath, spec, user)
+	err = j.runcClient.CreateBundle(bpmCfg.BundlePath(), spec, user)
 	if err != nil {
 		return fmt.Errorf("bundle build failure: %s", err.Error())
 	}
 
-	pidFilePath := filepath.Join(pidDir, fmt.Sprintf("%s.pid", procName))
-	cid := containerID(jobName, procName)
-
-	if cfg.Hooks != nil {
-		preStartCmd := exec.Command("/bin/bash", "-c", cfg.Hooks.PreStart)
+	if procCfg.Hooks != nil {
+		preStartCmd := exec.Command("/bin/bash", "-c", procCfg.Hooks.PreStart)
 		preStartCmd.Stdout = stdout
 		preStartCmd.Stderr = stderr
 
@@ -139,9 +131,9 @@ func (j *RuncLifecycle) StartJob(jobName, procName string, cfg *bpm.Config) erro
 	}
 
 	return j.runcClient.RunContainer(
-		pidFilePath,
-		bundlePath,
-		cid,
+		bpmCfg.PidFile(),
+		bpmCfg.BundlePath(),
+		bpmCfg.ContainerID(),
 		stdout,
 		stderr,
 	)
@@ -151,9 +143,8 @@ func (j *RuncLifecycle) StartJob(jobName, procName string, cfg *bpm.Config) erro
 // - job, nil if the job is running (and no errors were encountered)
 // - nil,nil if the job is not running and there is no other error
 // - nil,error if there is any other error getting the job beyond it not running
-func (j *RuncLifecycle) GetJob(jobName, procName string) (*models.Job, error) {
-	cid := containerID(jobName, procName)
-	container, err := j.runcClient.ContainerState(cid)
+func (j *RuncLifecycle) GetJob(cfg *config.BPMConfig) (*models.Job, error) {
+	container, err := j.runcClient.ContainerState(cfg.ContainerID())
 	if err != nil {
 		return nil, err
 	}
@@ -169,9 +160,8 @@ func (j *RuncLifecycle) GetJob(jobName, procName string) (*models.Job, error) {
 	}, nil
 }
 
-func (j *RuncLifecycle) OpenShell(jobName, procName string, stdin io.Reader, stdout, stderr io.Writer) error {
-	cid := containerID(jobName, procName)
-	return j.runcClient.Exec(cid, "/bin/bash", stdin, stdout, stderr)
+func (j *RuncLifecycle) OpenShell(cfg *config.BPMConfig, stdin io.Reader, stdout, stderr io.Writer) error {
+	return j.runcClient.Exec(cfg.ContainerID(), "/bin/bash", stdin, stdout, stderr)
 }
 
 func (j *RuncLifecycle) ListJobs() ([]models.Job, error) {
@@ -193,15 +183,13 @@ func (j *RuncLifecycle) ListJobs() ([]models.Job, error) {
 	return jobs, nil
 }
 
-func (j *RuncLifecycle) StopJob(logger lager.Logger, jobName, procName string, exitTimeout time.Duration) error {
-	cid := containerID(jobName, procName)
-
-	err := j.runcClient.SignalContainer(cid, client.Term)
+func (j *RuncLifecycle) StopJob(logger lager.Logger, cfg *config.BPMConfig, exitTimeout time.Duration) error {
+	err := j.runcClient.SignalContainer(cfg.ContainerID(), client.Term)
 	if err != nil {
 		return err
 	}
 
-	state, err := j.runcClient.ContainerState(cid)
+	state, err := j.runcClient.ContainerState(cfg.ContainerID())
 	if err != nil {
 		logger.Error("failed-to-fetch-state", err)
 	} else {
@@ -217,7 +205,7 @@ func (j *RuncLifecycle) StopJob(logger lager.Logger, jobName, procName string, e
 	for {
 		select {
 		case <-stateTicker.C():
-			state, err = j.runcClient.ContainerState(cid)
+			state, err = j.runcClient.ContainerState(cfg.ContainerID())
 			if err != nil {
 				logger.Error("failed-to-fetch-state", err)
 			} else {
@@ -226,7 +214,7 @@ func (j *RuncLifecycle) StopJob(logger lager.Logger, jobName, procName string, e
 				}
 			}
 		case <-timeout.C():
-			err := j.runcClient.SignalContainer(cid, client.Quit)
+			err := j.runcClient.SignalContainer(cfg.ContainerID(), client.Quit)
 			if err != nil {
 				logger.Error("failed-to-sigquit", err)
 			}
@@ -237,27 +225,13 @@ func (j *RuncLifecycle) StopJob(logger lager.Logger, jobName, procName string, e
 	}
 }
 
-func (j *RuncLifecycle) RemoveJob(jobName, procName string) error {
-	cid := containerID(jobName, procName)
-
-	err := j.runcClient.DeleteContainer(cid)
+func (j *RuncLifecycle) RemoveJob(cfg *config.BPMConfig) error {
+	err := j.runcClient.DeleteContainer(cfg.ContainerID())
 	if err != nil {
 		return err
 	}
 
-	return j.runcClient.DestroyBundle(j.bundlePath(jobName, procName))
-}
-
-func (j *RuncLifecycle) bundlePath(jobName, procName string) string {
-	return filepath.Join(j.systemRoot, "data", "bpm", "bundles", jobName, procName)
-}
-
-func containerID(jobName, procName string) string {
-	if jobName == procName {
-		return jobName
-	}
-
-	return fmt.Sprintf("%s.%s", jobName, procName)
+	return j.runcClient.DestroyBundle(cfg.BundlePath())
 }
 
 type commandRunner struct{}

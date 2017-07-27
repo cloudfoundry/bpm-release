@@ -16,7 +16,7 @@
 package main_test
 
 import (
-	"bpm/bpm"
+	"bpm/config"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -53,10 +53,10 @@ var _ = Describe("bpm", func() {
 		runcRoot,
 		bpmLogFileLocation string
 
-		cfg *bpm.Config
+		cfg *config.ProcessConfig
 	)
 
-	var writeConfig = func(jobName, procName string, cfg *bpm.Config) string {
+	var writeConfig = func(jobName, procName string, cfg *config.ProcessConfig) string {
 		cfgDir := filepath.Join(boshConfigPath, "jobs", jobName, "config", "bpm")
 		err := os.MkdirAll(cfgDir, 0755)
 		Expect(err).NotTo(HaveOccurred())
@@ -85,8 +85,8 @@ var _ = Describe("bpm", func() {
 		return exec.Command("runc", args...)
 	}
 
-	var newDefaultConfig = func(jobName string) *bpm.Config {
-		return &bpm.Config{
+	var newDefaultConfig = func(jobName string) *config.ProcessConfig {
+		return &config.ProcessConfig{
 			Executable: "/bin/bash",
 			Args: []string{
 				"-c",
@@ -235,7 +235,7 @@ var _ = Describe("bpm", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(f.Close()).To(Succeed())
 
-				cfg.Hooks = &bpm.Hooks{
+				cfg.Hooks = &config.Hooks{
 					PreStart: filepath.Join(boshConfigPath, "pre-start"),
 				}
 
@@ -326,7 +326,7 @@ var _ = Describe("bpm", func() {
 					}
 
 					limit := "4M"
-					cfg.Limits = &bpm.Limits{
+					cfg.Limits = &config.Limits{
 						Memory: &limit,
 					}
 
@@ -399,7 +399,7 @@ var _ = Describe("bpm", func() {
 					}
 
 					limit := uint64(10)
-					cfg.Limits = &bpm.Limits{
+					cfg.Limits = &config.Limits{
 						OpenFiles: &limit,
 					}
 
@@ -435,7 +435,7 @@ var _ = Describe("bpm", func() {
 					}
 
 					limit := int64(1000)
-					cfg.Limits = &bpm.Limits{
+					cfg.Limits = &config.Limits{
 						Processes: &limit,
 					}
 

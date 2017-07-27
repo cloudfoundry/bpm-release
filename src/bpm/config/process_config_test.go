@@ -13,17 +13,17 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 
-package bpm_test
+package config_test
 
 import (
-	"bpm/bpm"
+	"bpm/config"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Config", func() {
-	Describe("ParseConfig", func() {
+	Describe("ParseProcessConfig", func() {
 		var configPath string
 
 		BeforeEach(func() {
@@ -31,7 +31,7 @@ var _ = Describe("Config", func() {
 		})
 
 		It("parses a yaml file into a bpm config", func() {
-			cfg, err := bpm.ParseConfig(configPath)
+			cfg, err := config.ParseProcessConfig(configPath)
 			Expect(err).NotTo(HaveOccurred())
 
 			expectedMemoryLimit := "100G"
@@ -51,7 +51,7 @@ var _ = Describe("Config", func() {
 			})
 
 			It("returns an error", func() {
-				_, err := bpm.ParseConfig(configPath)
+				_, err := config.ParseProcessConfig(configPath)
 				Expect(err).To(HaveOccurred())
 			})
 		})
@@ -62,7 +62,7 @@ var _ = Describe("Config", func() {
 			})
 
 			It("returns an error", func() {
-				_, err := bpm.ParseConfig(configPath)
+				_, err := config.ParseProcessConfig(configPath)
 				Expect(err).To(HaveOccurred())
 			})
 		})
@@ -73,17 +73,17 @@ var _ = Describe("Config", func() {
 			})
 
 			It("returns an error", func() {
-				_, err := bpm.ParseConfig(configPath)
+				_, err := config.ParseProcessConfig(configPath)
 				Expect(err).To(HaveOccurred())
 			})
 		})
 	})
 
 	Describe("Validate", func() {
-		var cfg *bpm.Config
+		var cfg *config.ProcessConfig
 
 		BeforeEach(func() {
-			cfg = &bpm.Config{
+			cfg = &config.ProcessConfig{
 				Executable: "executable",
 			}
 		})

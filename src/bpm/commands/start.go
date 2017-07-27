@@ -16,7 +16,7 @@
 package commands
 
 import (
-	"bpm/bpm"
+	"bpm/config"
 
 	"github.com/spf13/cobra"
 )
@@ -55,18 +55,19 @@ func start(cmd *cobra.Command, _ []string) error {
 	logger.Info("starting")
 	defer logger.Info("complete")
 
-	cfg, err := bpm.ParseConfig(configPath)
+	procCfg, err := config.ParseProcessConfig(bpmCfg.ConfigPath())
 	if err != nil {
 		logger.Error("failed-to-parse-config", err)
 		return err
 	}
 
 	runcLifecycle := newRuncLifecycle()
-	err = runcLifecycle.StartJob(jobName, processName, cfg)
+
+	err = runcLifecycle.StartJob(bpmCfg, procCfg)
 	if err != nil {
 		logger.Error("failed-to-start", err)
 
-		removeErr := runcLifecycle.RemoveJob(jobName, processName)
+		removeErr := runcLifecycle.RemoveJob(bpmCfg)
 		if removeErr != nil {
 			logger.Error("failed-to-cleanup", removeErr)
 		}

@@ -16,6 +16,8 @@
 package commands
 
 import (
+	"bpm/config"
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -39,8 +41,13 @@ func shellPre(cmd *cobra.Command, args []string) error {
 }
 
 func shell(cmd *cobra.Command, _ []string) error {
+	_, err := config.ParseProcessConfig(bpmCfg.ConfigPath())
+	if err != nil {
+		return fmt.Errorf("failed to get job: %s", err.Error())
+	}
+
 	cmd.SilenceUsage = true
 
 	runcLifecycle := newRuncLifecycle()
-	return runcLifecycle.OpenShell(jobName, processName, os.Stdin, cmd.OutOrStdout(), cmd.OutOrStderr())
+	return runcLifecycle.OpenShell(bpmCfg, os.Stdin, cmd.OutOrStdout(), cmd.OutOrStderr())
 }

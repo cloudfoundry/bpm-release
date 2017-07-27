@@ -13,7 +13,7 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 
-package bpm_test
+package config_test
 
 import (
 	. "github.com/onsi/ginkgo"
@@ -24,5 +24,5 @@ import (
 
 func TestConfig(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "BPM Suite")
+	RunSpecs(t, "Config Suite")
 }

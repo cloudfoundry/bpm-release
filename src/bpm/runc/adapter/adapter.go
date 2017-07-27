@@ -16,10 +16,9 @@
 package adapter
 
 import (
-	"bpm/bpm"
+	"bpm/config"
 	"fmt"
 	"os"
-	"path/filepath"
 	"runtime"
 
 	"code.cloudfoundry.org/bytefmt"
@@ -34,54 +33,52 @@ func NewRuncAdapter() *RuncAdapter {
 }
 
 func (a *RuncAdapter) CreateJobPrerequisites(
-	systemRoot, jobName, procName string,
-	cfg *bpm.Config,
+	bpmCfg *config.BPMConfig,
+	procCfg *config.ProcessConfig,
 	user specs.User,
-) (string, *os.File, *os.File, error) {
-	builder := newFilePathBuilder(systemRoot, jobName, procName)
-
-	err := os.MkdirAll(builder.pidDir(), 0700)
+) (*os.File, *os.File, error) {
+	err := os.MkdirAll(bpmCfg.PidDir(), 0700)
 	if err != nil {
-		return "", nil, nil, err
+		return nil, nil, err
 	}
 
-	err = os.MkdirAll(builder.logDir(), 0750)
+	err = os.MkdirAll(bpmCfg.LogDir(), 0750)
 	if err != nil {
-		return "", nil, nil, err
+		return nil, nil, err
 	}
-	err = os.Chown(builder.logDir(), int(user.UID), int(user.GID))
+	err = os.Chown(bpmCfg.LogDir(), int(user.UID), int(user.GID))
 	if err != nil {
-		return "", nil, nil, err
-	}
-
-	stdout, err := createFileFor(builder.stdout(), int(user.UID), int(user.GID))
-	if err != nil {
-		return "", nil, nil, err
+		return nil, nil, err
 	}
 
-	stderr, err := createFileFor(builder.stderr(), int(user.UID), int(user.GID))
+	stdout, err := createFileFor(bpmCfg.Stdout(), int(user.UID), int(user.GID))
 	if err != nil {
-		return "", nil, nil, err
+		return nil, nil, err
 	}
 
-	err = createDirFor(builder.dataDir(), int(user.UID), int(user.GID))
+	stderr, err := createFileFor(bpmCfg.Stderr(), int(user.UID), int(user.GID))
 	if err != nil {
-		return "", nil, nil, err
+		return nil, nil, err
 	}
 
-	err = createDirFor(builder.tempDir(), int(user.UID), int(user.GID))
+	err = createDirFor(bpmCfg.DataDir(), int(user.UID), int(user.GID))
 	if err != nil {
-		return "", nil, nil, err
+		return nil, nil, err
 	}
 
-	for _, vol := range cfg.Volumes {
+	err = createDirFor(bpmCfg.TempDir(), int(user.UID), int(user.GID))
+	if err != nil {
+		return nil, nil, err
+	}
+
+	for _, vol := range procCfg.Volumes {
 		err := createDirFor(vol, int(user.UID), int(user.GID))
 		if err != nil {
-			return "", nil, nil, err
+			return nil, nil, err
 		}
 	}
 
-	return builder.pidDir(), stdout, stderr, nil
+	return stdout, stderr, nil
 }
 
 func createDirFor(path string, uid, gid int) error {
@@ -108,32 +105,30 @@ func createFileFor(path string, uid, gid int) (*os.File, error) {
 }
 
 func (a *RuncAdapter) BuildSpec(
-	systemRoot, jobName, procName string,
-	cfg *bpm.Config,
+	bpmCfg *config.BPMConfig,
+	procCfg *config.ProcessConfig,
 	user specs.User,
 ) (specs.Spec, error) {
-	builder := newFilePathBuilder(systemRoot, jobName, procName)
-
 	process := &specs.Process{
 		User:            user,
-		Args:            append([]string{cfg.Executable}, cfg.Args...),
-		Env:             processEnvironment(cfg.Env, builder.tempDir()),
+		Args:            append([]string{procCfg.Executable}, procCfg.Args...),
+		Env:             processEnvironment(procCfg.Env, bpmCfg.TempDir()),
 		Cwd:             "/",
 		Rlimits:         []specs.LinuxRlimit{},
 		NoNewPrivileges: true,
 	}
 
 	mounts := defaultMounts()
-	mounts = append(mounts, boshMounts(builder)...)
+	mounts = append(mounts, boshMounts(bpmCfg)...)
 	mounts = append(mounts, systemIdentityMounts()...)
-	mounts = append(mounts, userProvidedIdentityMounts(cfg.Volumes)...)
+	mounts = append(mounts, userProvidedIdentityMounts(procCfg.Volumes)...)
 
 	var resources *specs.LinuxResources
-	if cfg.Limits != nil {
+	if procCfg.Limits != nil {
 		resources = &specs.LinuxResources{}
 
-		if cfg.Limits.Memory != nil {
-			memLimit, err := bytefmt.ToBytes(*cfg.Limits.Memory)
+		if procCfg.Limits.Memory != nil {
+			memLimit, err := bytefmt.ToBytes(*procCfg.Limits.Memory)
 			if err != nil {
 				return specs.Spec{}, err
 			}
@@ -144,17 +139,17 @@ func (a *RuncAdapter) BuildSpec(
 			}
 		}
 
-		if cfg.Limits.Processes != nil {
+		if procCfg.Limits.Processes != nil {
 			resources.Pids = &specs.LinuxPids{
-				Limit: *cfg.Limits.Processes,
+				Limit: *procCfg.Limits.Processes,
 			}
 		}
 
-		if cfg.Limits.OpenFiles != nil {
+		if procCfg.Limits.OpenFiles != nil {
 			process.Rlimits = append(process.Rlimits, specs.LinuxRlimit{
 				Type: "RLIMIT_NOFILE",
-				Hard: uint64(*cfg.Limits.OpenFiles),
-				Soft: uint64(*cfg.Limits.OpenFiles),
+				Hard: uint64(*procCfg.Limits.OpenFiles),
+				Soft: uint64(*procCfg.Limits.OpenFiles),
 			})
 		}
 	}
@@ -167,9 +162,9 @@ func (a *RuncAdapter) BuildSpec(
 		},
 		Process: process,
 		Root: specs.Root{
-			Path: filepath.Join(bpm.BundlesRoot(), jobName, procName, "rootfs"),
+			Path: bpmCfg.RootFSPath(),
 		},
-		Hostname: jobName,
+		Hostname: bpmCfg.JobName(),
 		Mounts:   mounts,
 		Linux: &specs.Linux{
 			MaskedPaths: []string{
@@ -201,42 +196,42 @@ func (a *RuncAdapter) BuildSpec(
 	}, nil
 }
 
-func boshMounts(builder filePathBuilder) []specs.Mount {
+func boshMounts(bpmCfg *config.BPMConfig) []specs.Mount {
 	return []specs.Mount{
 		{
-			Destination: builder.dataDir(),
+			Destination: bpmCfg.DataDir(),
 			Type:        "bind",
-			Source:      builder.dataDir(),
+			Source:      bpmCfg.DataDir(),
 			Options:     []string{"rbind", "rw"},
 		},
 		{
 			Destination: "/tmp",
 			Type:        "bind",
-			Source:      builder.tempDir(),
+			Source:      bpmCfg.TempDir(),
 			Options:     []string{"rbind", "rw"},
 		},
 		{
-			Destination: builder.dataPackageDir(),
+			Destination: bpmCfg.DataPackageDir(),
 			Type:        "bind",
-			Source:      builder.dataPackageDir(),
+			Source:      bpmCfg.DataPackageDir(),
 			Options:     []string{"rbind", "ro"},
 		},
 		{
-			Destination: builder.jobDir(),
+			Destination: bpmCfg.JobDir(),
 			Type:        "bind",
-			Source:      builder.jobDir(),
+			Source:      bpmCfg.JobDir(),
 			Options:     []string{"rbind", "ro"},
 		},
 		{
-			Destination: builder.packageDir(),
+			Destination: bpmCfg.PackageDir(),
 			Type:        "bind",
-			Source:      builder.packageDir(),
+			Source:      bpmCfg.PackageDir(),
 			Options:     []string{"rbind", "ro"},
 		},
 		{
-			Destination: builder.logDir(),
+			Destination: bpmCfg.LogDir(),
 			Type:        "bind",
-			Source:      builder.logDir(),
+			Source:      bpmCfg.LogDir(),
 			Options:     []string{"rbind", "rw"},
 		},
 	}
@@ -335,54 +330,4 @@ func userProvidedIdentityMounts(volumes []string) []specs.Mount {
 
 func processEnvironment(env []string, tmpDir string) []string {
 	return append(env, fmt.Sprintf("TMPDIR=%s", tmpDir))
-}
-
-type filePathBuilder struct {
-	systemRoot string
-	jobName    string
-	procName   string
-}
-
-func newFilePathBuilder(systemRoot, jobName, procName string) filePathBuilder {
-	return filePathBuilder{
-		systemRoot: systemRoot,
-		jobName:    jobName,
-		procName:   procName,
-	}
-}
-
-func (b filePathBuilder) dataDir() string {
-	return filepath.Join(b.systemRoot, "data", b.jobName)
-}
-
-func (b filePathBuilder) tempDir() string {
-	return filepath.Join(b.dataDir(), "tmp")
-}
-
-func (b filePathBuilder) logDir() string {
-	return filepath.Join(b.systemRoot, "sys", "log", b.jobName)
-}
-
-func (b filePathBuilder) stdout() string {
-	return filepath.Join(b.logDir(), fmt.Sprintf("%s.out.log", b.procName))
-}
-
-func (b filePathBuilder) stderr() string {
-	return filepath.Join(b.logDir(), fmt.Sprintf("%s.err.log", b.procName))
-}
-
-func (b filePathBuilder) pidDir() string {
-	return filepath.Join(b.systemRoot, "sys", "run", "bpm", b.jobName)
-}
-
-func (b filePathBuilder) packageDir() string {
-	return filepath.Join(b.systemRoot, "packages")
-}
-
-func (b filePathBuilder) dataPackageDir() string {
-	return filepath.Join(b.systemRoot, "data", "packages")
-}
-
-func (b filePathBuilder) jobDir() string {
-	return filepath.Join(b.systemRoot, "jobs", b.jobName)
 }

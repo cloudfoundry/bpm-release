@@ -16,15 +16,13 @@
 package commands
 
 import (
-	"bpm/bpm"
+	"bpm/config"
 	"bpm/runc/adapter"
 	"bpm/runc/client"
 	"bpm/runc/lifecycle"
 	"bpm/usertools"
 	"errors"
-	"fmt"
 	"os"
-	"path/filepath"
 
 	"golang.org/x/sys/unix"
 
@@ -35,8 +33,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var jobName, processName, configPath string
-var logger lager.Logger
+var (
+	processName string
+	bpmCfg      *config.BPMConfig
+	logger      lager.Logger
+)
 
 var userFinder = usertools.NewUserFinder()
 
@@ -58,29 +59,24 @@ func validateInput(args []string) error {
 		return errors.New("must specify a job")
 	}
 
-	jobName = args[0]
+	jobName := args[0]
 
 	if processName == "" {
 		processName = jobName
 	}
 
-	configPath = filepath.Join(
-		bpm.BoshRoot(),
-		"jobs", jobName, "config", "bpm",
-		fmt.Sprintf("%s.yml", processName),
-	)
+	bpmCfg = config.NewBPMConfig(config.BoshRoot(), jobName, processName)
 
 	return nil
 }
 
 func setupBpmLogs(sessionName string) error {
-	bpmLogFileLocation := filepath.Join(bpm.BoshRoot(), "sys", "log", jobName, "bpm.log")
-	err := os.MkdirAll(filepath.Join(bpm.BoshRoot(), "sys", "log", jobName), 0750)
+	err := os.MkdirAll(bpmCfg.LogDir(), 0750)
 	if err != nil {
 		return err
 	}
 
-	logFile, err := os.OpenFile(bpmLogFileLocation, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0600)
+	logFile, err := os.OpenFile(bpmCfg.BPMLog(), os.O_RDWR|os.O_CREATE|os.O_APPEND, 0600)
 	if err != nil {
 		return err
 	}
@@ -90,14 +86,14 @@ func setupBpmLogs(sessionName string) error {
 		return err
 	}
 
-	err = os.Chown(bpmLogFileLocation, int(usr.UID), int(usr.GID))
+	err = os.Chown(bpmCfg.BPMLog(), int(usr.UID), int(usr.GID))
 	if err != nil {
 		return err
 	}
 
 	logger, _ = lagerflags.NewFromConfig("bpm", lagerflags.DefaultLagerConfig())
 	logger.RegisterSink(lager.NewWriterSink(logFile, lager.INFO))
-	logger = logger.WithData(lager.Data{"job": jobName, "process": processName})
+	logger = logger.WithData(lager.Data{"job": bpmCfg.JobName(), "process": bpmCfg.ProcName()})
 	logger = logger.Session(sessionName)
 
 	return nil
@@ -108,15 +104,13 @@ func acquireLifecycleLock() error {
 	l.Info("starting")
 	defer l.Info("complete")
 
-	bpmPidDir := filepath.Join(bpm.BoshRoot(), "sys", "run", "bpm", jobName)
-	err := os.MkdirAll(bpmPidDir, 0700)
+	err := os.MkdirAll(bpmCfg.PidDir(), 0700)
 	if err != nil {
 		l.Error("failed-to-create-lock-dir", err)
 		return err
 	}
 
-	lockFile := filepath.Join(bpmPidDir, fmt.Sprintf("%s.lock", processName))
-	f, err := os.OpenFile(lockFile, os.O_CREATE|os.O_RDWR, 0600)
+	f, err := os.OpenFile(bpmCfg.LockFile(), os.O_CREATE|os.O_RDWR, 0600)
 	if err != nil {
 		l.Error("failed-to-create-lock-file", err)
 		return err
@@ -136,8 +130,7 @@ func releaseLifecycleLock() error {
 	l.Info("starting")
 	defer l.Info("complete")
 
-	lockFile := filepath.Join(bpm.BoshRoot(), "sys", "run", "bpm", jobName, fmt.Sprintf("%s.lock", processName))
-	err := os.RemoveAll(lockFile)
+	err := os.RemoveAll(bpmCfg.LockFile())
 	if err != nil {
 		l.Error("failed-to-remove-lock-file", err)
 		return err
@@ -147,7 +140,10 @@ func releaseLifecycleLock() error {
 }
 
 func newRuncLifecycle() *lifecycle.RuncLifecycle {
-	runcClient := client.NewRuncClient(bpm.RuncPath(), bpm.RuncRoot())
+	runcClient := client.NewRuncClient(
+		config.RuncPath(config.BoshRoot()),
+		config.RuncRoot(config.BoshRoot()),
+	)
 	runcAdapter := adapter.NewRuncAdapter()
 	clock := clock.NewClock()
 
@@ -157,6 +153,5 @@ func newRuncLifecycle() *lifecycle.RuncLifecycle {
 		userFinder,
 		lifecycle.NewCommandRunner(),
 		clock,
-		bpm.BoshRoot(),
 	)
 }

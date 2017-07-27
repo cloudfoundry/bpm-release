@@ -16,7 +16,7 @@
 package commands
 
 import (
-	"bpm/bpm"
+	"bpm/config"
 	"fmt"
 	"time"
 
@@ -59,13 +59,13 @@ func stop(cmd *cobra.Command, _ []string) error {
 	logger.Info("starting")
 	defer logger.Info("complete")
 
-	_, err := bpm.ParseConfig(configPath)
+	_, err := config.ParseProcessConfig(bpmCfg.ConfigPath())
 	if err != nil {
 		return fmt.Errorf("failed to get job: %s", err.Error())
 	}
 
 	runcLifecycle := newRuncLifecycle()
-	job, err := runcLifecycle.GetJob(jobName, processName)
+	job, err := runcLifecycle.GetJob(bpmCfg)
 	if err != nil {
 		logger.Error("failed-to-get-job", err)
 		return err
@@ -76,10 +76,10 @@ func stop(cmd *cobra.Command, _ []string) error {
 		return nil
 	}
 
-	err = runcLifecycle.StopJob(logger, jobName, processName, DefaultStopTimeout)
+	err = runcLifecycle.StopJob(logger, bpmCfg, DefaultStopTimeout)
 	if err != nil {
 		logger.Error("failed-to-stop", err)
 	}
 
-	return runcLifecycle.RemoveJob(jobName, processName)
+	return runcLifecycle.RemoveJob(bpmCfg)
 }
