@@ -61,6 +61,7 @@ func stop(cmd *cobra.Command, _ []string) error {
 
 	_, err := config.ParseProcessConfig(bpmCfg.ConfigPath())
 	if err != nil {
+		logger.Error("failed-to-parse-config", err)
 		return fmt.Errorf("failed to get job: %s", err.Error())
 	}
 
