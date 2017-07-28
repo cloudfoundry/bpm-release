@@ -77,3 +77,8 @@ sysctl -e -w net.ipv4.tcp_tw_reuse 1
 
 You could set these in your bpm `pre_start` but since these affect the entire
 host and not just the contained job we like to keep them separate.
+
+## Hooks
+
+Your startup hook must finish with time to spare before the `monit start`
+timeout (30s by default). We're looking into ways to make this less vague.
