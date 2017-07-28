@@ -175,8 +175,6 @@ var _ = Describe("RuncAdapter", func() {
 				Path: bpmCfg.RootFSPath(),
 			}))
 
-			Expect(spec.Hostname).To(Equal("example"))
-
 			Expect(spec.Mounts).To(ConsistOf([]specs.Mount{
 				{
 					Destination: "/proc",

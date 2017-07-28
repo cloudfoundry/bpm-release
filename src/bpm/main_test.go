@@ -954,10 +954,6 @@ var _ = Describe("bpm", func() {
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(ttyF.Close()).NotTo(HaveOccurred())
 
-			_, err = ptyF.Write([]byte("/bin/hostname\n"))
-			Expect(err).ShouldNot(HaveOccurred())
-			Eventually(session.Out).Should(gbytes.Say(jobName))
-
 			// Validate TERM variable is set
 			_, err = ptyF.Write([]byte("/bin/echo $TERM\n"))
 			Expect(err).ShouldNot(HaveOccurred())

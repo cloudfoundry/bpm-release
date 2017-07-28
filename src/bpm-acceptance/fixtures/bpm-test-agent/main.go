@@ -48,7 +48,6 @@ func main() {
 	log.Println("Test Agent Started - STDERR")
 
 	http.HandleFunc("/", handlers.Hello)
-	http.HandleFunc("/hostname", handlers.Hostname)
 	http.HandleFunc("/mounts", handlers.Mounts)
 	http.HandleFunc("/processes", handlers.Processes)
 	http.HandleFunc("/var-vcap", handlers.VarVcap)

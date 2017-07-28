@@ -50,16 +50,6 @@ var _ = Describe("BpmAcceptance", func() {
 		Expect(string(body)).To(Equal("vcap\n"))
 	})
 
-	It("has the correct hostname", func() {
-		resp, err := client.Get(fmt.Sprintf("%s/hostname", agentURI))
-		Expect(err).NotTo(HaveOccurred())
-		defer resp.Body.Close()
-
-		body, err := ioutil.ReadAll(resp.Body)
-		Expect(err).NotTo(HaveOccurred())
-		Expect(string(body)).To(Equal("bpm-test-agent\n"))
-	})
-
 	It("has the correct bosh mounts", func() {
 		resp, err := client.Get(fmt.Sprintf("%s/mounts", agentURI))
 		Expect(err).NotTo(HaveOccurred())

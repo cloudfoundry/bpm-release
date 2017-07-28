@@ -164,8 +164,7 @@ func (a *RuncAdapter) BuildSpec(
 		Root: specs.Root{
 			Path: bpmCfg.RootFSPath(),
 		},
-		Hostname: bpmCfg.JobName(),
-		Mounts:   mounts,
+		Mounts: mounts,
 		Linux: &specs.Linux{
 			MaskedPaths: []string{
 				"/etc/sv",
