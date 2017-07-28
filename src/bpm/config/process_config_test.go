@@ -85,7 +85,10 @@ var _ = Describe("Config", func() {
 		BeforeEach(func() {
 			cfg = &config.ProcessConfig{
 				Executable: "executable",
-				Volumes:    []string{"/var/vcap/data/program"},
+				Volumes: []string{
+					"/var/vcap/data/program",
+					"/var/vcap/store/program",
+				},
 			}
 		})
 
@@ -102,6 +105,9 @@ var _ = Describe("Config", func() {
 				Expect(cfg.Validate()).To(HaveOccurred())
 
 				cfg.Volumes = []string{"/var/vcap/data/valid", "/var/vcap/data"}
+				Expect(cfg.Validate()).To(HaveOccurred())
+
+				cfg.Volumes = []string{"/var/vcap/store"}
 				Expect(cfg.Validate()).To(HaveOccurred())
 
 				cfg.Volumes = []string{"//var/vcap/data/valid"}

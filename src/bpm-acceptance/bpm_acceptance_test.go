@@ -63,6 +63,7 @@ var _ = Describe("BpmAcceptance", func() {
 		expectedMountPaths := map[string]string{
 			"/var/vcap/data/packages":          "ro",
 			"/var/vcap/data/bpm-test-agent":    "rw",
+			"/var/vcap/store/bpm-test-agent":   "rw",
 			"/var/vcap/jobs/bpm-test-agent":    "ro",
 			"/var/vcap/packages":               "ro",
 			"/var/vcap/sys/log/bpm-test-agent": "rw",
@@ -79,7 +80,7 @@ var _ = Describe("BpmAcceptance", func() {
 			}
 		}
 
-		Expect(found).To(HaveLen(5), fmt.Sprintf("missing mounts, actual: %#v, expected: %#v", found, expectedMountPaths))
+		Expect(found).To(HaveLen(6), fmt.Sprintf("missing mounts, actual: %#v, expected: %#v", found, expectedMountPaths))
 	})
 
 	It("has the correct read only system mounts", func() {
@@ -112,7 +113,7 @@ var _ = Describe("BpmAcceptance", func() {
 		body, err := ioutil.ReadAll(resp.Body)
 		Expect(err).NotTo(HaveOccurred())
 		directories := strings.Split(strings.Trim(string(body), "\n"), "\n")
-		Expect(directories).To(ConsistOf("data", "jobs", "packages", "sys"))
+		Expect(directories).To(ConsistOf("store", "data", "jobs", "packages", "sys"))
 	})
 
 	It("only has access to its own data directory", func() {

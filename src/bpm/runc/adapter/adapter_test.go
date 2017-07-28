@@ -84,7 +84,7 @@ var _ = Describe("RuncAdapter", func() {
 			// Log Directory
 			logDirInfo, err := os.Stat(bpmCfg.LogDir())
 			Expect(err).NotTo(HaveOccurred())
-			Expect(logDirInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0750)))
+			Expect(logDirInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0700)))
 			Expect(logDirInfo.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(200)))
 			Expect(logDirInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
 
@@ -111,6 +111,10 @@ var _ = Describe("RuncAdapter", func() {
 			Expect(dataDirInfo.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(200)))
 			Expect(dataDirInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
 
+			// Store Directory
+			Expect(bpmCfg.StoreDir()).NotTo(BeADirectory())
+			Expect(bpmCfg.StoreDir()).NotTo(BeAnExistingFile())
+
 			// TMP Directory
 			tmpDirInfo, err := os.Stat(bpmCfg.TempDir())
 			Expect(err).NotTo(HaveOccurred())
@@ -126,6 +130,24 @@ var _ = Describe("RuncAdapter", func() {
 				Expect(volDirInfo.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(200)))
 				Expect(volDirInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
 			}
+		})
+
+		Context("when there is a persistent store", func() {
+			BeforeEach(func() {
+				Expect(os.MkdirAll(filepath.Join(systemRoot, "store"), 0700)).To(Succeed())
+			})
+
+			It("creates the job prerequisites", func() {
+				_, _, err := runcAdapter.CreateJobPrerequisites(bpmCfg, procCfg, user)
+				Expect(err).NotTo(HaveOccurred())
+
+				// Store Directory
+				storeDirInfo, err := os.Stat(bpmCfg.StoreDir())
+				Expect(err).NotTo(HaveOccurred())
+				Expect(storeDirInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0700)))
+				Expect(storeDirInfo.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(200)))
+				Expect(storeDirInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
+			})
 		})
 	})
 
@@ -318,6 +340,24 @@ var _ = Describe("RuncAdapter", func() {
 				specs.LinuxNamespace{Type: "pid"},
 				specs.LinuxNamespace{Type: "uts"},
 			))
+		})
+
+		Context("when there is a persistent store", func() {
+			BeforeEach(func() {
+				Expect(os.MkdirAll(filepath.Join(systemRoot, "store"), 0700)).To(Succeed())
+			})
+
+			It("creates the job prerequisites", func() {
+				spec, err := runcAdapter.BuildSpec(bpmCfg, procCfg, user)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(spec.Mounts).To(ContainElement(specs.Mount{
+					Destination: filepath.Join(systemRoot, "store", "example"),
+					Type:        "bind",
+					Source:      filepath.Join(systemRoot, "store", "example"),
+					Options:     []string{"rbind", "rw"},
+				}))
+			})
 		})
 
 		Context("Limits", func() {

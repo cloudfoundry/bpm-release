@@ -65,7 +65,10 @@ func ParseProcessConfig(configPath string) (*ProcessConfig, error) {
 	return &cfg, nil
 }
 
-const validVolumePrefix = "/var/vcap/data"
+const (
+	validDataVolumePrefix  = "/var/vcap/data"
+	validStoreVolumePrefix = "/var/vcap/store"
+)
 
 func (c *ProcessConfig) Validate() error {
 	if c.Executable == "" {
@@ -74,23 +77,36 @@ func (c *ProcessConfig) Validate() error {
 
 	for _, vol := range c.Volumes {
 		volCleaned := filepath.Clean(vol)
-		volParts := strings.Split(volCleaned, "/")
-		validParts := strings.Split(validVolumePrefix, "/")
-
 		if volCleaned != vol {
 			return fmt.Errorf("volume path must be canonical, expected %s but got %s", volCleaned, vol)
 		}
 
-		if len(volParts) <= len(validParts) {
-			return fmt.Errorf("invalid volume path: %s must be within %s", vol, validVolumePrefix)
-		}
-
-		for i, validPart := range validParts {
-			if volParts[i] != validPart {
-				return fmt.Errorf("invalid volume path: %s must be within %s", vol, validVolumePrefix)
-			}
+		if !pathIsIn(validDataVolumePrefix, volCleaned) && !pathIsIn(validStoreVolumePrefix, volCleaned) {
+			return fmt.Errorf(
+				"invalid volume path: %s must be within (%s,%s)",
+				vol,
+				validDataVolumePrefix,
+				validStoreVolumePrefix,
+			)
 		}
 	}
 
 	return nil
+}
+
+func pathIsIn(prefix string, path string) bool {
+	volParts := strings.Split(path, "/")
+	validParts := strings.Split(prefix, "/")
+
+	if len(volParts) <= len(validParts) {
+		return false
+	}
+
+	for i, validPart := range validParts {
+		if volParts[i] != validPart {
+			return false
+		}
+	}
+
+	return true
 }

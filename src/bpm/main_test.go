@@ -250,6 +250,35 @@ var _ = Describe("bpm", func() {
 			})
 		})
 
+		Context("when there is a persistent store", func() {
+			var storeFile string
+
+			BeforeEach(func() {
+				Expect(os.MkdirAll(filepath.Join(boshConfigPath, "store"), 0700)).To(Succeed())
+
+				storeFile = filepath.Join(boshConfigPath, "store", jobName, "data.txt")
+
+				cfg.Args = []string{
+					"-c",
+					fmt.Sprintf(
+						`echo "storing some data" > %s;
+						sleep 5`,
+						storeFile,
+					),
+				}
+
+				writeConfig(jobName, jobName, cfg)
+			})
+
+			It("exposes `/var/vcap/store/<job-name>` as a writeable mount point", func() {
+				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+				Eventually(session).Should(gexec.Exit(0))
+				Eventually(storeFile).Should(BeAnExistingFile())
+				Eventually(fileContents(storeFile)).Should(Equal("storing some data\n"))
+			})
+		})
+
 		Context("when the process flag is specified", func() {
 			var procName string
 

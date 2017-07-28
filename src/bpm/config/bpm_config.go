@@ -68,6 +68,10 @@ func (c *BPMConfig) DataDir() string {
 	return filepath.Join(c.boshRoot, "data", c.jobName)
 }
 
+func (c *BPMConfig) StoreDir() string {
+	return filepath.Join(c.boshRoot, "store", c.jobName)
+}
+
 func (c *BPMConfig) TempDir() string {
 	return filepath.Join(c.DataDir(), "tmp")
 }

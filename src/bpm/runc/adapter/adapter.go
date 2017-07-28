@@ -19,6 +19,7 @@ import (
 	"bpm/config"
 	"fmt"
 	"os"
+	"path/filepath"
 	"runtime"
 
 	"code.cloudfoundry.org/bytefmt"
@@ -42,43 +43,40 @@ func (a *RuncAdapter) CreateJobPrerequisites(
 		return nil, nil, err
 	}
 
-	err = os.MkdirAll(bpmCfg.LogDir(), 0750)
-	if err != nil {
-		return nil, nil, err
-	}
-	err = os.Chown(bpmCfg.LogDir(), int(user.UID), int(user.GID))
+	directories := append(
+		procCfg.Volumes,
+		bpmCfg.DataDir(),
+		bpmCfg.LogDir(),
+		bpmCfg.TempDir(),
+	)
+
+	mountStore, err := checkPersistentStore(bpmCfg.StoreDir())
 	if err != nil {
 		return nil, nil, err
 	}
 
-	stdout, err := createFileFor(bpmCfg.Stdout(), int(user.UID), int(user.GID))
-	if err != nil {
-		return nil, nil, err
+	if mountStore {
+		directories = append(directories, bpmCfg.StoreDir())
 	}
 
-	stderr, err := createFileFor(bpmCfg.Stderr(), int(user.UID), int(user.GID))
-	if err != nil {
-		return nil, nil, err
-	}
-
-	err = createDirFor(bpmCfg.DataDir(), int(user.UID), int(user.GID))
-	if err != nil {
-		return nil, nil, err
-	}
-
-	err = createDirFor(bpmCfg.TempDir(), int(user.UID), int(user.GID))
-	if err != nil {
-		return nil, nil, err
-	}
-
-	for _, vol := range procCfg.Volumes {
-		err := createDirFor(vol, int(user.UID), int(user.GID))
+	for _, dir := range directories {
+		err = createDirFor(dir, int(user.UID), int(user.GID))
 		if err != nil {
 			return nil, nil, err
 		}
 	}
 
-	return stdout, stderr, nil
+	files := make([]*os.File, 2)
+	paths := []string{bpmCfg.Stdout(), bpmCfg.Stderr()}
+	for i, path := range paths {
+		f, err := createFileFor(path, int(user.UID), int(user.GID))
+		if err != nil {
+			return nil, nil, err
+		}
+		files[i] = f
+	}
+
+	return files[0], files[1], nil
 }
 
 func createDirFor(path string, uid, gid int) error {
@@ -118,9 +116,14 @@ func (a *RuncAdapter) BuildSpec(
 		NoNewPrivileges: true,
 	}
 
-	mounts := defaultMounts()
-	mounts = append(mounts, boshMounts(bpmCfg)...)
+	mountStore, err := checkPersistentStore(bpmCfg.StoreDir())
+	if err != nil {
+		return specs.Spec{}, err
+	}
+
+	mounts := requiredMounts()
 	mounts = append(mounts, systemIdentityMounts()...)
+	mounts = append(mounts, boshMounts(bpmCfg, mountStore)...)
 	mounts = append(mounts, userProvidedIdentityMounts(procCfg.Volumes)...)
 
 	var resources *specs.LinuxResources
@@ -195,48 +198,7 @@ func (a *RuncAdapter) BuildSpec(
 	}, nil
 }
 
-func boshMounts(bpmCfg *config.BPMConfig) []specs.Mount {
-	return []specs.Mount{
-		{
-			Destination: bpmCfg.DataDir(),
-			Type:        "bind",
-			Source:      bpmCfg.DataDir(),
-			Options:     []string{"rbind", "rw"},
-		},
-		{
-			Destination: "/tmp",
-			Type:        "bind",
-			Source:      bpmCfg.TempDir(),
-			Options:     []string{"rbind", "rw"},
-		},
-		{
-			Destination: bpmCfg.DataPackageDir(),
-			Type:        "bind",
-			Source:      bpmCfg.DataPackageDir(),
-			Options:     []string{"rbind", "ro"},
-		},
-		{
-			Destination: bpmCfg.JobDir(),
-			Type:        "bind",
-			Source:      bpmCfg.JobDir(),
-			Options:     []string{"rbind", "ro"},
-		},
-		{
-			Destination: bpmCfg.PackageDir(),
-			Type:        "bind",
-			Source:      bpmCfg.PackageDir(),
-			Options:     []string{"rbind", "ro"},
-		},
-		{
-			Destination: bpmCfg.LogDir(),
-			Type:        "bind",
-			Source:      bpmCfg.LogDir(),
-			Options:     []string{"rbind", "rw"},
-		},
-	}
-}
-
-func defaultMounts() []specs.Mount {
+func requiredMounts() []specs.Mount {
 	return []specs.Mount{
 		{
 			Destination: "/proc",
@@ -279,54 +241,66 @@ func defaultMounts() []specs.Mount {
 
 func systemIdentityMounts() []specs.Mount {
 	return []specs.Mount{
+		identityBindMountWithOptions("/bin", "nosuid", "nodev", "rbind", "ro"),
+		identityBindMountWithOptions("/usr", "nosuid", "nodev", "rbind", "ro"),
+		identityBindMountWithOptions("/etc", "nosuid", "nodev", "rbind", "ro"),
+		identityBindMountWithOptions("/lib", "nosuid", "nodev", "rbind", "ro"),
+		identityBindMountWithOptions("/lib64", "nosuid", "nodev", "rbind", "ro"),
+	}
+}
+
+func boshMounts(bpmCfg *config.BPMConfig, mountStore bool) []specs.Mount {
+	mounts := []specs.Mount{
+		identityBindMountWithOptions(bpmCfg.DataDir(), "rbind", "rw"),
+		identityBindMountWithOptions(bpmCfg.LogDir(), "rbind", "rw"),
+		identityBindMountWithOptions(bpmCfg.DataPackageDir(), "rbind", "ro"),
+		identityBindMountWithOptions(bpmCfg.JobDir(), "rbind", "ro"),
+		identityBindMountWithOptions(bpmCfg.PackageDir(), "rbind", "ro"),
 		{
-			Destination: "/bin",
+			Destination: "/tmp",
 			Type:        "bind",
-			Source:      "/bin",
-			Options:     []string{"nosuid", "nodev", "rbind", "ro"},
-		},
-		{
-			Destination: "/etc",
-			Type:        "bind",
-			Source:      "/etc",
-			Options:     []string{"nosuid", "nodev", "rbind", "ro"},
-		},
-		{
-			Destination: "/usr",
-			Type:        "bind",
-			Source:      "/usr",
-			Options:     []string{"nosuid", "nodev", "rbind", "ro"},
-		},
-		{
-			Destination: "/lib",
-			Type:        "bind",
-			Source:      "/lib",
-			Options:     []string{"nosuid", "nodev", "rbind", "ro"},
-		},
-		{
-			Destination: "/lib64",
-			Type:        "bind",
-			Source:      "/lib64",
-			Options:     []string{"nosuid", "nodev", "rbind", "ro"},
+			Source:      bpmCfg.TempDir(),
+			Options:     []string{"rbind", "rw"},
 		},
 	}
+
+	if mountStore {
+		mounts = append(mounts, identityBindMountWithOptions(bpmCfg.StoreDir(), "rbind", "rw"))
+	}
+
+	return mounts
 }
 
 func userProvidedIdentityMounts(volumes []string) []specs.Mount {
 	var mnts []specs.Mount
 
 	for _, vol := range volumes {
-		mnts = append(mnts, specs.Mount{
-			Destination: vol,
-			Type:        "bind",
-			Source:      vol,
-			Options:     []string{"rbind", "rw"},
-		})
+		mnts = append(mnts, identityBindMountWithOptions(vol, "rbind", "rw"))
 	}
 
 	return mnts
 }
 
+func identityBindMountWithOptions(path string, options ...string) specs.Mount {
+	return specs.Mount{
+		Destination: path,
+		Type:        "bind",
+		Source:      path,
+		Options:     options,
+	}
+}
+
 func processEnvironment(env []string, tmpDir string) []string {
 	return append(env, fmt.Sprintf("TMPDIR=%s", tmpDir))
+}
+
+func checkPersistentStore(storeDir string) (bool, error) {
+	_, err := os.Stat(filepath.Dir(storeDir))
+	if err == nil {
+		return true, nil
+	} else if !os.IsNotExist(err) {
+		return false, err
+	}
+
+	return false, nil
 }

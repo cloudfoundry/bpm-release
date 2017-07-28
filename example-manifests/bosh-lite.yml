@@ -7,6 +7,7 @@ jobs:
 - instances: 1
   name: bpm
   resource_pool: bpm
+  persistent_disk: 1024
   networks:
   - name: bpm
   templates:
