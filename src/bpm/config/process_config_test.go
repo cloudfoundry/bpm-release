@@ -85,11 +85,28 @@ var _ = Describe("Config", func() {
 		BeforeEach(func() {
 			cfg = &config.ProcessConfig{
 				Executable: "executable",
+				Volumes:    []string{"/var/vcap/data/program"},
 			}
 		})
 
 		It("does not error on a valid config", func() {
 			Expect(cfg.Validate()).To(Succeed())
+		})
+
+		Context("when the config has volumes that are not nested in `/var/vcap`", func() {
+			It("returns a validation error", func() {
+				cfg.Volumes = []string{"/var/vcap/data/valid", "/bin"}
+				Expect(cfg.Validate()).To(HaveOccurred())
+
+				cfg.Volumes = []string{"/var/vcap/data/valid", "/var/vcap/invalid"}
+				Expect(cfg.Validate()).To(HaveOccurred())
+
+				cfg.Volumes = []string{"/var/vcap/data/valid", "/var/vcap/data"}
+				Expect(cfg.Validate()).To(HaveOccurred())
+
+				cfg.Volumes = []string{"//var/vcap/data/valid"}
+				Expect(cfg.Validate()).To(HaveOccurred())
+			})
 		})
 
 		Context("when the config does not have an Executable", func() {

@@ -17,7 +17,10 @@ package config
 
 import (
 	"errors"
+	"fmt"
 	"io/ioutil"
+	"path/filepath"
+	"strings"
 
 	yaml "gopkg.in/yaml.v2"
 )
@@ -62,9 +65,31 @@ func ParseProcessConfig(configPath string) (*ProcessConfig, error) {
 	return &cfg, nil
 }
 
+const validVolumePrefix = "/var/vcap/data"
+
 func (c *ProcessConfig) Validate() error {
 	if c.Executable == "" {
 		return errors.New("invalid config: executable")
+	}
+
+	for _, vol := range c.Volumes {
+		volCleaned := filepath.Clean(vol)
+		volParts := strings.Split(volCleaned, "/")
+		validParts := strings.Split(validVolumePrefix, "/")
+
+		if volCleaned != vol {
+			return fmt.Errorf("volume path must be canonical, expected %s but got %s", volCleaned, vol)
+		}
+
+		if len(volParts) <= len(validParts) {
+			return fmt.Errorf("invalid volume path: %s must be within %s", vol, validVolumePrefix)
+		}
+
+		for i, validPart := range validParts {
+			if volParts[i] != validPart {
+				return fmt.Errorf("invalid volume path: %s must be within %s", vol, validVolumePrefix)
+			}
+		}
 	}
 
 	return nil
