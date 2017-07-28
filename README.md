@@ -62,9 +62,10 @@ BOSH jobs. However, the project is still in an *alpha* state and the
 configuration or runtime environment may change in a backwards incompatible
 manner at any time.
 
-You can start to read about the [runtime environment](docs/runtime.md) which
-bpm provides to your job, the [configuration format](docs/config.md), and
-the [undefined behavior](docs/undefined.md) of the system.
+You can start to read about the [ethos and glossary](docs/bpm.md), [runtime
+environment](docs/runtime.md) which bpm provides to your job, the
+[configuration format](docs/config.md), and the [undefined
+behavior](docs/undefined.md) of the system.
 
 If you'd like an example of a release which has been converted to use BPM
 (behind a feature flag) then please refer to the `bpm-integration` [branch of
