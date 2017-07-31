@@ -86,25 +86,32 @@ Dependencies required for local testing:
 The following steps should allow you to run the tests in a local docker
 container:
 
-* Enable swap accounting
+* Enable swap accounting by running the following commands as root:
 
+    ```sh
     # sed -i 's/GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="swapaccount=1"/' /etc/default/grub 
     # update-grub
     # reboot
+    ```
+    
+* Clone this repository and submodules:
 
-* Clone this repository and submodules
-
+    ```sh
     $ cd ~/workspace
     $ git clone https://github.com/pivotal-cf/bpm-release.git --recursive
     $ cd ~/workspace/bpm-release
+    ```
 
-* Install `counterfeiter` for generating fakes.
+* Install `counterfeiter` for generating fakes:
 
+    ```sh
     $ cd && go get github.com/maxbrunsfeld/counterfeiter
+    ```
 
-* Enable `direnv` and run tests
+* Enable `direnv` and run tests:
 
-  $ cd ~/workspace/bpm-release
-  $ direnv allow .envrc
-  $ ./scripts/test-with-docker 
-
+    ```sh
+    $ cd ~/workspace/bpm-release
+    $ direnv allow .envrc
+    $ ./scripts/test-with-docker 
+    ```
