@@ -14,27 +14,26 @@ The current job lifecycle is very dependent on `monit` semantics. Job and
 process start order is not guaranteed and there are hidden timeouts you can hit
 which will put your system in an unexpected state.
 
-bpm makes its expectations of your job very clear. It defines how long
-things should take, how bpm will communicate with your process, and how
-your job should behave under certain scenarios. Most jobs will already be
-compliant.
+bpm makes its expectations of your job very clear. It defines how long things
+should take, how bpm will communicate with your process, and how your job
+should behave under certain scenarios. Most jobs will already be compliant.
 
 ### Isolation
 
-Jobs using bpm are isolated from one another. All operating system
-resources (with the exception of networking) are namespaced such that a job
-cannot see or interact with other processes outside their containing job.
+Jobs using bpm are isolated from one another. All operating system resources
+(with the exception of networking) are namespaced such that a job cannot see or
+interact with other processes outside their containing job.
 
 This provides a far smaller and easier to maintain interface between your jobs
-and the system but crucially provides a security barrier such that if one of the
-jobs on your machine is compromised then the incident is limited to just that
-job rather than all jobs on the same machine.
+and the system but crucially provides a security barrier such that if one of
+the jobs on your machine is compromised then the incident is limited to just
+that job rather than all jobs on the same machine.
 
 ### Resource Limits
 
-bpm is also able to offer resource limiting due to the technologies chosen
-for the above features. This stops any one job from starving other collocated
-jobs of the operating system resources they need in order to work.
+bpm is also able to offer resource limiting due to the technologies chosen for
+the above features. This stops any one job from starving other collocated jobs
+of the operating system resources they need in order to work.
 
 ## Documentation
 
@@ -44,8 +43,8 @@ eventually become the official source of bpm documentation.
 
 ## Plans
 
-We're currently planning on switching [Diego][diego-release] to use bpm as
-a first step. This change will initially be behind a feature flag. If this is
+We're currently planning on switching [Diego][diego-release] to use bpm as a
+first step. This change will initially be behind a feature flag. If this is
 successful then we'd like to continue migrating both open and closed source
 releases over.
 
@@ -89,11 +88,11 @@ container:
 * Enable swap accounting by running the following commands as root:
 
     ```sh
-    # sed -i 's/GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="swapaccount=1"/' /etc/default/grub 
+    # sed -i 's/GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="swapaccount=1"/' /etc/default/grub
     # update-grub
     # reboot
     ```
-    
+
 * Clone this repository and submodules:
 
     ```sh
@@ -113,5 +112,5 @@ container:
     ```sh
     $ cd ~/workspace/bpm-release
     $ direnv allow .envrc
-    $ ./scripts/test-with-docker 
+    $ ./scripts/test-with-docker
     ```
