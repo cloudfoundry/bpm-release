@@ -42,11 +42,11 @@ func init() {
 }
 
 var traceCommand = &cobra.Command{
-	Long:              longText,
-	RunE:              trace,
-	Short:             "traces a BOSH Process",
-	Use:               "trace <job-name>",
-	PersistentPreRunE: tracePre,
+	Long:    longText,
+	RunE:    trace,
+	Short:   "traces a BOSH Process",
+	Use:     "trace <job-name>",
+	PreRunE: tracePre,
 }
 
 func tracePre(cmd *cobra.Command, args []string) error {

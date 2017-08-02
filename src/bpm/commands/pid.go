@@ -29,11 +29,11 @@ func init() {
 }
 
 var pidCommand = &cobra.Command{
-	Long:              "Displays the PID for a given job",
-	RunE:              pidForJob,
-	Short:             "PID for job",
-	Use:               "pid <job-name>",
-	PersistentPreRunE: pidPre,
+	Long:    "Displays the PID for a given job",
+	RunE:    pidForJob,
+	Short:   "PID for job",
+	Use:     "pid <job-name>",
+	PreRunE: pidPre,
 }
 
 func pidPre(cmd *cobra.Command, args []string) error {

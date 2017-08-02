@@ -52,17 +52,22 @@ var RootCmd = &cobra.Command{
 	PersistentPreRunE: rootPre,
 }
 
-func rootPre(*cobra.Command, []string) error {
+func rootPre(cmd *cobra.Command, _ []string) error {
 	usr, err := user.Current()
 	if err != nil {
 		return err
 	}
 
 	if usr.Uid != "0" && usr.Gid != "0" {
-		return errors.New("bpm must be run as root! Please run 'sudo -i' to become the root user.")
+		silenceUsage(cmd)
+		return errors.New("bpm must be run as root. Please run 'sudo -i' to become the root user.")
 	}
 
 	return nil
+}
+
+func silenceUsage(cmd *cobra.Command) {
+	cmd.SilenceUsage = true
 }
 
 func root(cmd *cobra.Command, args []string) error {

@@ -29,11 +29,11 @@ func init() {
 }
 
 var shellCommand = &cobra.Command{
-	Long:              "start a shell inside the process container",
-	RunE:              shell,
-	Short:             "start a shell inside the process container",
-	Use:               "shell <job-name>",
-	PersistentPreRunE: shellPre,
+	Long:    "start a shell inside the process container",
+	RunE:    shell,
+	Short:   "start a shell inside the process container",
+	Use:     "shell <job-name>",
+	PreRunE: shellPre,
 }
 
 func shellPre(cmd *cobra.Command, args []string) error {
@@ -46,7 +46,7 @@ func shell(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("failed to get job: %s", err.Error())
 	}
 
-	cmd.SilenceUsage = true
+	silenceUsage(cmd)
 
 	runcLifecycle := newRuncLifecycle()
 	return runcLifecycle.OpenShell(bpmCfg, os.Stdin, cmd.OutOrStdout(), cmd.OutOrStderr())

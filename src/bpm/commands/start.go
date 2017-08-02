@@ -27,12 +27,12 @@ func init() {
 }
 
 var startCommand = &cobra.Command{
-	Long:               "Starts a BOSH Process",
-	RunE:               start,
-	Short:              "Starts a BOSH Process",
-	Use:                "start <job-name>",
-	PersistentPreRunE:  startPre,
-	PersistentPostRunE: startPost,
+	Long:     "Starts a BOSH Process",
+	RunE:     start,
+	Short:    "Starts a BOSH Process",
+	Use:      "start <job-name>",
+	PreRunE:  startPre,
+	PostRunE: startPost,
 }
 
 func startPre(cmd *cobra.Command, args []string) error {
