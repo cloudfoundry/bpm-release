@@ -23,6 +23,7 @@ import (
 	"bpm/usertools"
 	"errors"
 	"os"
+	"os/user"
 
 	"golang.org/x/sys/unix"
 
@@ -42,12 +43,26 @@ var (
 var userFinder = usertools.NewUserFinder()
 
 var RootCmd = &cobra.Command{
-	Long:          "A bosh process manager for starting and stopping release jobs",
-	RunE:          root,
-	Short:         "A bosh process manager for starting and stopping release jobs",
-	SilenceErrors: true,
-	Use:           "bpm",
-	ValidArgs:     []string{"start", "stop", "list"},
+	Long:              "A bosh process manager for starting and stopping release jobs",
+	RunE:              root,
+	Short:             "A bosh process manager for starting and stopping release jobs",
+	SilenceErrors:     true,
+	Use:               "bpm",
+	ValidArgs:         []string{"start", "stop", "list"},
+	PersistentPreRunE: rootPre,
+}
+
+func rootPre(*cobra.Command, []string) error {
+	usr, err := user.Current()
+	if err != nil {
+		return err
+	}
+
+	if usr.Uid != "0" && usr.Gid != "0" {
+		return errors.New("bpm must be run as root! Please run 'sudo -i' to become the root user.")
+	}
+
+	return nil
 }
 
 func root(cmd *cobra.Command, args []string) error {

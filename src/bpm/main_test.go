@@ -1088,6 +1088,51 @@ var _ = Describe("bpm", func() {
 		})
 	})
 
+	Context("when not run as root", func() {
+		var tmpDir string
+
+		BeforeEach(func() {
+			var err error
+			tmpDir, err = ioutil.TempDir("", "vcap-bpm")
+			Expect(err).NotTo(HaveOccurred())
+
+			f, err := os.Create(filepath.Join(tmpDir, "bpm"))
+			Expect(err).NotTo(HaveOccurred())
+			defer f.Close()
+
+			bpmFile, err := os.Open(bpmPath)
+			Expect(err).NotTo(HaveOccurred())
+			defer bpmFile.Close()
+
+			_, err = io.Copy(f, bpmFile)
+			Expect(err).NotTo(HaveOccurred())
+
+			err = os.Chmod(filepath.Join(tmpDir, "bpm"), 0777)
+			Expect(err).NotTo(HaveOccurred())
+
+			// 2000 and 3000 are test fixtures in the docker container
+			err = chownR(tmpDir, 2000, 3000)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		AfterEach(func() {
+			err := os.RemoveAll(tmpDir)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("returns an error", func() {
+			command := exec.Command(filepath.Join(tmpDir, "bpm"))
+			command.SysProcAttr = &syscall.SysProcAttr{}
+			command.SysProcAttr.Credential = &syscall.Credential{Uid: 2000, Gid: 3000}
+
+			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+			Eventually(session).Should(gexec.Exit(1))
+
+			Expect(session.Err).Should(gbytes.Say("bpm must be run as root! Please run 'sudo -i' to become the root user."))
+		})
+	})
+
 	Context("when no arguments are provided", func() {
 		It("exits with a non-zero exit code and prints the usage", func() {
 			command := exec.Command(bpmPath)
@@ -1099,6 +1144,15 @@ var _ = Describe("bpm", func() {
 		})
 	})
 })
+
+func chownR(path string, uid, gid int) error {
+	return filepath.Walk(path, func(name string, _ os.FileInfo, err error) error {
+		if err == nil {
+			err = os.Chown(name, uid, gid)
+		}
+		return err
+	})
+}
 
 func fileContents(path string) func() string {
 	return func() string {
