@@ -110,7 +110,7 @@ func (a *RuncAdapter) BuildSpec(
 	process := &specs.Process{
 		User:            user,
 		Args:            append([]string{procCfg.Executable}, procCfg.Args...),
-		Env:             processEnvironment(procCfg.Env, bpmCfg.TempDir()),
+		Env:             processEnvironment(procCfg.Env, bpmCfg),
 		Cwd:             "/",
 		Rlimits:         []specs.LinuxRlimit{},
 		NoNewPrivileges: true,
@@ -290,8 +290,12 @@ func identityBindMountWithOptions(path string, options ...string) specs.Mount {
 	}
 }
 
-func processEnvironment(env []string, tmpDir string) []string {
-	return append(env, fmt.Sprintf("TMPDIR=%s", tmpDir))
+func processEnvironment(env []string, cfg *config.BPMConfig) []string {
+	return append(
+		env,
+		fmt.Sprintf("TMPDIR=%s", cfg.TempDir()),
+		fmt.Sprintf("BPM_ID=%s", cfg.ContainerID()),
+	)
 }
 
 func checkPersistentStore(storeDir string) (bool, error) {

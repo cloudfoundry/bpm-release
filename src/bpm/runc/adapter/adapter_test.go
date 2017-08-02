@@ -183,11 +183,15 @@ var _ = Describe("RuncAdapter", func() {
 
 			expectedProcessArgs := append([]string{procCfg.Executable}, procCfg.Args...)
 			Expect(spec.Process).To(Equal(&specs.Process{
-				Terminal:        false,
-				ConsoleSize:     nil,
-				User:            user,
-				Args:            expectedProcessArgs,
-				Env:             append(procCfg.Env, fmt.Sprintf("TMPDIR=%s", bpmCfg.TempDir())),
+				Terminal:    false,
+				ConsoleSize: nil,
+				User:        user,
+				Args:        expectedProcessArgs,
+				Env: append(
+					procCfg.Env,
+					fmt.Sprintf("TMPDIR=%s", bpmCfg.TempDir()),
+					fmt.Sprintf("BPM_ID=%s", bpmCfg.ContainerID()),
+				),
 				Cwd:             "/",
 				Rlimits:         []specs.LinuxRlimit{},
 				NoNewPrivileges: true,
