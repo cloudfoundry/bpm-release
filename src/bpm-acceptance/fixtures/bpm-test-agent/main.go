@@ -50,6 +50,8 @@ func main() {
 	http.HandleFunc("/", handlers.Hello)
 	http.HandleFunc("/mounts", handlers.Mounts)
 	http.HandleFunc("/processes", handlers.Processes)
+	http.HandleFunc("/syscall-allowed", handlers.SyscallAllowed)
+	http.HandleFunc("/syscall-disallowed", handlers.SyscallDisallowed)
 	http.HandleFunc("/var-vcap", handlers.VarVcap)
 	http.HandleFunc("/var-vcap-data", handlers.VarVcapData)
 	http.HandleFunc("/var-vcap-jobs", handlers.VarVcapJobs)

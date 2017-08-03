@@ -7,3 +7,5 @@ dependencies:
 files:
   - bpm-acceptance/fixtures/bpm-test-agent/*.go # gosub
   - bpm-acceptance/fixtures/bpm-test-agent/handlers/*.go # gosub
+  - golang.org/x/sys/unix/*.go # gosub
+  - golang.org/x/sys/unix/*.s # gosub

@@ -184,6 +184,7 @@ func (a *RuncAdapter) BuildSpec(
 				{Type: "pid"},
 				{Type: "uts"},
 			},
+			Seccomp: seccomp,
 			ReadonlyPaths: []string{
 				"/proc/asound",
 				"/proc/bus",

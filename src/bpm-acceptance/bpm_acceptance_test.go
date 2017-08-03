@@ -80,7 +80,8 @@ var _ = Describe("BpmAcceptance", func() {
 			}
 		}
 
-		Expect(found).To(HaveLen(6), fmt.Sprintf("missing mounts, actual: %#v, expected: %#v", found, expectedMountPaths))
+		expectedLength := len(expectedMountPaths)
+		Expect(found).To(HaveLen(expectedLength), fmt.Sprintf("missing mounts, actual: %#v, expected: %#v", found, expectedMountPaths))
 	})
 
 	It("has the correct read only system mounts", func() {
@@ -150,6 +151,32 @@ var _ = Describe("BpmAcceptance", func() {
 		// We expect the test agent to be the only process with the root PID
 		Expect(processes).To(HaveLen(1))
 		Expect(processes).To(ConsistOf(MatchRegexp("1 /var/vcap/packages/bpm-test-agent/bin/bpm-test-agent.*")))
+	})
+
+	Context("seccomp filters", func() {
+		It("accepts an allowed syscall", func() {
+			resp, err := client.Get(fmt.Sprintf("%s/syscall-allowed", agentURI))
+			Expect(err).NotTo(HaveOccurred())
+			defer resp.Body.Close()
+
+			Expect(resp.StatusCode).To(Equal(http.StatusOK))
+
+			body, err := ioutil.ReadAll(resp.Body)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(string(body)).To(ContainSubstring("Expected success occurred"))
+		})
+
+		It("does not accept a disallowed syscall", func() {
+			resp, err := client.Get(fmt.Sprintf("%s/syscall-disallowed", agentURI))
+			Expect(err).NotTo(HaveOccurred())
+			defer resp.Body.Close()
+
+			Expect(resp.StatusCode).To(Equal(http.StatusOK))
+
+			body, err := ioutil.ReadAll(resp.Body)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(string(body)).To(ContainSubstring("Expected error occurred"))
+		})
 	})
 })
 
