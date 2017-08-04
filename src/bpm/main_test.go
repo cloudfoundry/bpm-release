@@ -1041,6 +1041,19 @@ var _ = Describe("bpm", func() {
 				Expect(session.Err).Should(gbytes.Say("must specify a job"))
 			})
 		})
+
+		Context("when an invalid job/process name is specified", func() {
+			It("returns an error", func() {
+				command = exec.Command(bpmPath, "shell", "some-bad-job-name")
+				command.Env = append(command.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
+
+				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+				Expect(err).ShouldNot(HaveOccurred())
+
+				Eventually(session).Should(gexec.Exit(1))
+				Expect(session.Err).Should(gbytes.Say("does not exist"))
+			})
+		})
 	})
 
 	Context("start stop parallelization", func() {
