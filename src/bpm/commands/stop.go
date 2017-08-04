@@ -24,7 +24,7 @@ import (
 const DefaultStopTimeout = 20 * time.Second
 
 func init() {
-	stopCommand.Flags().StringVarP(&processName, "process", "p", "", "The optional process name.")
+	stopCommand.Flags().StringVarP(&procName, "process", "p", "", "The optional process name.")
 	RootCmd.AddCommand(stopCommand)
 }
 

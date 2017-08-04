@@ -28,7 +28,7 @@ var (
 )
 
 func init() {
-	startCommand.Flags().StringVarP(&processName, "process", "p", "", "The optional process name.")
+	startCommand.Flags().StringVarP(&procName, "process", "p", "", "The optional process name.")
 	startCommand.Flags().StringVarP(&configPath, "config", "c", "", "The optional process config path.")
 	RootCmd.AddCommand(startCommand)
 }

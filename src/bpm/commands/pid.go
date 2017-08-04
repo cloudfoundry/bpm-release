@@ -23,7 +23,7 @@ import (
 )
 
 func init() {
-	pidCommand.Flags().StringVarP(&processName, "process", "p", "", "The optional process name.")
+	pidCommand.Flags().StringVarP(&procName, "process", "p", "", "The optional process name.")
 	RootCmd.AddCommand(pidCommand)
 }
 

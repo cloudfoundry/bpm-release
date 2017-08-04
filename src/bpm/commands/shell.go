@@ -22,7 +22,7 @@ import (
 )
 
 func init() {
-	shellCommand.Flags().StringVarP(&processName, "process", "p", "", "The optional process name.")
+	shellCommand.Flags().StringVarP(&procName, "process", "p", "", "The optional process name.")
 	RootCmd.AddCommand(shellCommand)
 }
 

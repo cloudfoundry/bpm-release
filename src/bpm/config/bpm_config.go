@@ -49,6 +49,10 @@ type BPMConfig struct {
 }
 
 func NewBPMConfig(boshRoot, jobName, procName string) *BPMConfig {
+	if procName == "" {
+		procName = jobName
+	}
+
 	return &BPMConfig{
 		boshRoot: boshRoot,
 		jobName:  jobName,

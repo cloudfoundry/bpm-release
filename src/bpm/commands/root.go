@@ -35,7 +35,7 @@ import (
 )
 
 var (
-	processName string
+	procName string
 
 	bpmCfg *config.BPMConfig
 	logger lager.Logger
@@ -82,11 +82,7 @@ func validateInput(args []string) error {
 
 	jobName := args[0]
 
-	if processName == "" {
-		processName = jobName
-	}
-
-	bpmCfg = config.NewBPMConfig(config.BoshRoot(), jobName, processName)
+	bpmCfg = config.NewBPMConfig(config.BoshRoot(), jobName, procName)
 
 	return nil
 }
