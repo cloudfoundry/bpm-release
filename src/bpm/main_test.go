@@ -829,7 +829,7 @@ var _ = Describe("bpm", func() {
 				Expect(err).ShouldNot(HaveOccurred())
 
 				Eventually(session).Should(gexec.Exit(1))
-				Expect(session.Err).Should(gbytes.Say("Error: failed to get job:"))
+				Expect(session.Err).Should(gbytes.Say("Error: job is not running"))
 			})
 		})
 
@@ -921,7 +921,7 @@ var _ = Describe("bpm", func() {
 				Expect(err).ShouldNot(HaveOccurred())
 
 				Eventually(session).Should(gexec.Exit(1))
-				Expect(session.Err).Should(gbytes.Say("Error: failed to get job:"))
+				Expect(session.Err).Should(gbytes.Say("Error: job is not running"))
 			})
 		})
 
