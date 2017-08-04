@@ -36,8 +36,9 @@ import (
 
 var (
 	processName string
-	bpmCfg      *config.BPMConfig
-	logger      lager.Logger
+
+	bpmCfg *config.BPMConfig
+	logger lager.Logger
 )
 
 var userFinder = usertools.NewUserFinder()

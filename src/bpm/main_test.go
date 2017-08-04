@@ -222,6 +222,40 @@ var _ = Describe("bpm", func() {
 			Eventually(fileContents(bpmLogFileLocation)).Should(ContainSubstring("bpm.start.complete"))
 		})
 
+		Context("when the process config path is specified", func() {
+			var (
+				newCfgPath string
+			)
+
+			BeforeEach(func() {
+				newCfgPath = filepath.Join(filepath.Dir(cfgPath), "new-cfg.yml")
+
+				err := os.Rename(cfgPath, newCfgPath)
+				Expect(err).NotTo(HaveOccurred())
+
+				// To be extra safe
+				Expect(cfgPath).NotTo(BeAnExistingFile())
+			})
+
+			It("uses the provided config path instead of the default", func() {
+				command = exec.Command(bpmPath, "start", jobName, "-c", newCfgPath)
+				command.Env = append(command.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
+
+				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+				Eventually(session).Should(gexec.Exit(0))
+
+				state := runcState(containerID)
+				Expect(state.Status).To(Equal("running"))
+				pidText, err := ioutil.ReadFile(filepath.Join(boshConfigPath, "sys", "run", "bpm", jobName, fmt.Sprintf("%s.pid", jobName)))
+				Expect(err).NotTo(HaveOccurred())
+
+				pid, err := strconv.Atoi(string(pidText))
+				Expect(err).NotTo(HaveOccurred())
+				Expect(pid).To(Equal(state.Pid))
+			})
+		})
+
 		Context("when a pre_start hook is specified", func() {
 			BeforeEach(func() {
 				f, err := os.OpenFile(filepath.Join(boshConfigPath, "pre-start"), os.O_CREATE|os.O_RDWR, 0700)

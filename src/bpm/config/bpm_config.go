@@ -112,8 +112,8 @@ func (c *BPMConfig) JobDir() string {
 	return filepath.Join(c.boshRoot, "jobs", c.jobName)
 }
 
-func (c *BPMConfig) ConfigPath() string {
-	return filepath.Join(c.JobDir(), "config", "bpm", fmt.Sprintf("%s.yml", c.procName))
+func (c *BPMConfig) ProcConfigDir() string {
+	return filepath.Join(c.JobDir(), "config", "bpm")
 }
 
 func (c *BPMConfig) BPMLog() string {

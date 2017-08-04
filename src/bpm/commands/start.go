@@ -17,12 +17,19 @@ package commands
 
 import (
 	"bpm/config"
+	"fmt"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 )
 
+var (
+	configPath string
+)
+
 func init() {
 	startCommand.Flags().StringVarP(&processName, "process", "p", "", "The optional process name.")
+	startCommand.Flags().StringVarP(&configPath, "config", "c", "", "The optional process config path.")
 	RootCmd.AddCommand(startCommand)
 }
 
@@ -55,7 +62,12 @@ func start(cmd *cobra.Command, _ []string) error {
 	logger.Info("starting")
 	defer logger.Info("complete")
 
-	procCfg, err := config.ParseProcessConfig(bpmCfg.ConfigPath())
+	if configPath == "" {
+		procConfigFile := fmt.Sprintf("%s.yml", bpmCfg.ProcName())
+		configPath = filepath.Join(bpmCfg.ProcConfigDir(), procConfigFile)
+	}
+
+	procCfg, err := config.ParseProcessConfig(configPath)
 	if err != nil {
 		logger.Error("failed-to-parse-config", err)
 		return err
