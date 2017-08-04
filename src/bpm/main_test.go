@@ -687,12 +687,12 @@ var _ = Describe("bpm", func() {
 				jobName = "some-bad-job-name"
 			})
 
-			It("returns an error", func() {
+			It("returns successfully", func() {
 				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 				Expect(err).ShouldNot(HaveOccurred())
 
-				Eventually(session).Should(gexec.Exit(1))
-				Expect(session.Err).Should(gbytes.Say("Error: failed to get job:"))
+				Eventually(session).Should(gexec.Exit(0))
+				Expect(session.Out).Should(gbytes.Say("job-already-stopped"))
 			})
 		})
 	})

@@ -16,8 +16,6 @@
 package commands
 
 import (
-	"bpm/config"
-	"fmt"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -58,12 +56,6 @@ func stopPost(cmd *cobra.Command, args []string) error {
 func stop(cmd *cobra.Command, _ []string) error {
 	logger.Info("starting")
 	defer logger.Info("complete")
-
-	_, err := config.ParseProcessConfig(bpmCfg.ConfigPath())
-	if err != nil {
-		logger.Error("failed-to-parse-config", err)
-		return fmt.Errorf("failed to get job: %s", err.Error())
-	}
 
 	runcLifecycle := newRuncLifecycle()
 	job, err := runcLifecycle.GetJob(bpmCfg)
