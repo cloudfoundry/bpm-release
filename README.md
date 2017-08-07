@@ -38,7 +38,7 @@ of the operating system resources they need in order to work.
 ## Documentation
 
 Documentation can be found in the [docs](docs) directory. As we're developing
-bpm this documentation my lead the implementation changes briefly but will
+bpm this documentation may lead the implementation changes briefly, but it will
 eventually become the official source of bpm documentation.
 
 ## Plans
