@@ -49,7 +49,6 @@ var RootCmd = &cobra.Command{
 	Short:             "A bosh process manager for starting and stopping release jobs",
 	SilenceErrors:     true,
 	Use:               "bpm",
-	ValidArgs:         []string{"start", "stop", "list"},
 	PersistentPreRunE: rootPre,
 }
 
