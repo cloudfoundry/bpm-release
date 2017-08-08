@@ -257,12 +257,9 @@ func boshMounts(bpmCfg *config.BPMConfig, mountStore bool) []specs.Mount {
 		identityBindMountWithOptions(bpmCfg.DataPackageDir(), "rbind", "ro"),
 		identityBindMountWithOptions(bpmCfg.JobDir(), "rbind", "ro"),
 		identityBindMountWithOptions(bpmCfg.PackageDir(), "rbind", "ro"),
-		{
-			Destination: "/tmp",
-			Type:        "bind",
-			Source:      bpmCfg.TempDir(),
-			Options:     []string{"rbind", "rw"},
-		},
+		identityBindMountWithOptions(bpmCfg.TempDir(), "nodev", "nosuid", "noexec", "rbind", "rw"),
+		bindMountWithOptions("/var/tmp", bpmCfg.TempDir(), "nodev", "nosuid", "noexec", "rbind", "rw"),
+		bindMountWithOptions("/tmp", bpmCfg.TempDir(), "nodev", "nosuid", "noexec", "rbind", "rw"),
 	}
 
 	if mountStore {
@@ -283,10 +280,14 @@ func userProvidedIdentityMounts(volumes []string) []specs.Mount {
 }
 
 func identityBindMountWithOptions(path string, options ...string) specs.Mount {
+	return bindMountWithOptions(path, path, options...)
+}
+
+func bindMountWithOptions(dest, src string, options ...string) specs.Mount {
 	return specs.Mount{
-		Destination: path,
+		Destination: dest,
 		Type:        "bind",
-		Source:      path,
+		Source:      src,
 		Options:     options,
 	}
 }
