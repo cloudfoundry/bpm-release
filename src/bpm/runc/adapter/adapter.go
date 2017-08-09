@@ -252,18 +252,17 @@ func systemIdentityMounts() []specs.Mount {
 
 func boshMounts(bpmCfg *config.BPMConfig, mountStore bool) []specs.Mount {
 	mounts := []specs.Mount{
-		identityBindMountWithOptions(bpmCfg.DataDir(), "rbind", "rw"),
-		identityBindMountWithOptions(bpmCfg.LogDir(), "rbind", "rw"),
-		identityBindMountWithOptions(bpmCfg.DataPackageDir(), "rbind", "ro"),
-		identityBindMountWithOptions(bpmCfg.JobDir(), "rbind", "ro"),
-		identityBindMountWithOptions(bpmCfg.PackageDir(), "rbind", "ro"),
-		identityBindMountWithOptions(bpmCfg.TempDir(), "nodev", "nosuid", "noexec", "rbind", "rw"),
+		identityBindMountWithOptions(bpmCfg.DataDir(), "nodev", "nosuid", "noexec", "rbind", "rw"),
+		identityBindMountWithOptions(bpmCfg.LogDir(), "nodev", "nosuid", "noexec", "rbind", "rw"),
+		identityBindMountWithOptions(bpmCfg.DataPackageDir(), "nodev", "nosuid", "rbind", "ro"),
+		identityBindMountWithOptions(bpmCfg.JobDir(), "nodev", "nosuid", "rbind", "ro"),
+		identityBindMountWithOptions(bpmCfg.PackageDir(), "nodev", "nosuid", "rbind", "ro"),
 		bindMountWithOptions("/var/tmp", bpmCfg.TempDir(), "nodev", "nosuid", "noexec", "rbind", "rw"),
 		bindMountWithOptions("/tmp", bpmCfg.TempDir(), "nodev", "nosuid", "noexec", "rbind", "rw"),
 	}
 
 	if mountStore {
-		mounts = append(mounts, identityBindMountWithOptions(bpmCfg.StoreDir(), "rbind", "rw"))
+		mounts = append(mounts, identityBindMountWithOptions(bpmCfg.StoreDir(), "nodev", "nosuid", "noexec", "rbind", "rw"))
 	}
 
 	return mounts
@@ -273,7 +272,7 @@ func userProvidedIdentityMounts(volumes []string) []specs.Mount {
 	var mnts []specs.Mount
 
 	for _, vol := range volumes {
-		mnts = append(mnts, identityBindMountWithOptions(vol, "rbind", "rw"))
+		mnts = append(mnts, identityBindMountWithOptions(vol, "nodev", "nosuid", "noexec", "rbind", "rw"))
 	}
 
 	return mnts
