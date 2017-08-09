@@ -17,18 +17,11 @@ if [ -z "${BLOB_VERSION_FILE}" ] ; then
   exit 1
 fi
 
-blob=${PWD}/blob-dir/*.tar.gz
+blob_dir=${PWD}/blob-dir
+blob=${blob_dir}/*.tar.gz
 blobsha=$(sha1sum ${blob} | cut -d' ' -f1)
 
-# Ensuring client-side cache matches director blobs
-bosh sync-blobs
-
-if "bosh -n blobs | grep ${blobsha}"; then
-  echo "Blob already present."
-  exit 0
-fi
-
-blob_version=$(cat "${BLOB_VERSION_FILE}")
+blob_version=$(cat ${blob_dir}/${BLOB_VERSION_FILE})
 
 git clone bosh-release bumped-bosh-release
 
@@ -37,6 +30,13 @@ echo "${BOSH_PRIVATE_CONFIG}" > bumped-bosh-release/config/private.yml
 set -x
 
 pushd bumped-bosh-release
+  # Ensuring client-side cache matches director blobs
+  bosh sync-blobs
+
+  if "bosh -n blobs | grep ${blobsha}"; then
+    echo "Blob already present."
+    exit 0
+  fi
   # work-around Go BOSH CLI trying to rename blobs downloaded into ~/.root/tmp
   # into release dir, which is invalid cross-device link
   export HOME=${PWD}
