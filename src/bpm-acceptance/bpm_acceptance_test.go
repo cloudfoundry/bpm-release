@@ -61,13 +61,12 @@ var _ = Describe("BpmAcceptance", func() {
 		mounts := parseMounts(string(body))
 
 		expectedMountPaths := map[string]string{
-			"/var/vcap/data/packages":           "ro",
-			"/var/vcap/data/bpm-test-agent":     "rw",
-			"/var/vcap/data/bpm-test-agent/tmp": "rw",
-			"/var/vcap/store/bpm-test-agent":    "rw",
-			"/var/vcap/jobs/bpm-test-agent":     "ro",
-			"/var/vcap/packages":                "ro",
-			"/var/vcap/sys/log/bpm-test-agent":  "rw",
+			"/var/vcap/data/packages":          "ro",
+			"/var/vcap/data/bpm-test-agent":    "rw",
+			"/var/vcap/store/bpm-test-agent":   "rw",
+			"/var/vcap/jobs/bpm-test-agent":    "ro",
+			"/var/vcap/packages":               "ro",
+			"/var/vcap/sys/log/bpm-test-agent": "rw",
 		}
 
 		var found []string
@@ -107,7 +106,7 @@ var _ = Describe("BpmAcceptance", func() {
 		Expect(found).To(ConsistOf(expectedMountPaths))
 	})
 
-	It("only has access to data, jobs, sys, and packages in /var/vcap", func() {
+	It("only has access to store, data, jobs, sys, and packages in /var/vcap", func() {
 		resp, err := client.Get(fmt.Sprintf("%s/var-vcap", agentURI))
 		Expect(err).NotTo(HaveOccurred())
 		defer resp.Body.Close()

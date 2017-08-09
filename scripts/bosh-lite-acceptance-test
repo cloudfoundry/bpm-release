@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+set -eux
+
+export BOSH_DEPLOYMENT=bpm
+export BOSH_NON_INTERACTIVE=true
+export BOSH_ENVIRONMENT=lite
+
+bosh create-release \
+  --dir "$PWD" --force
+
+bosh upload-release \
+  --dir "$PWD"
+
+bosh deploy \
+  "$PWD/example-manifests/bosh-lite.yml"
+
+export GOPATH="$PWD"
+export PATH=$GOPATH/bin:$PATH
+
+
+# This is the IP of the first VM in the bosh in the concourse container.
+# It will not change unless we deploy more instances/jobs etc or the upstream
+# docker image changes its cloudconfig.
+AGENT_HOST="$(bosh vms | grep running | grep bpm | awk '{print $4}')"
+agent_port=1337
+
+pushd "${GOPATH}/src/bpm-acceptance" > /dev/null
+  ginkgo -r -p -race -randomizeAllSpecs -- --agent-uri="http://${AGENT_HOST}:${agent_port}/"
+popd > /dev/null
