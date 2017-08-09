@@ -18,7 +18,7 @@ if [ -z "${BLOB_VERSION_FILE}" ] ; then
 fi
 
 blob=${PWD}/blob-dir/${BLOB_NAME}
-blobsha=$(sha1sum "${blob}")
+blobsha=$(sha1sum "${blob} | awk '{print $1}'")
 
 # Ensuring client-side cache matches director blobs
 bosh sync-blobs
