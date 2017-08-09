@@ -17,8 +17,8 @@ if [ -z "${BLOB_VERSION_FILE}" ] ; then
   exit 1
 fi
 
-blob=${PWD}/blob-dir/${BLOB_NAME}
-blobsha=$(sha1sum "${blob} | awk '{print $1}'")
+blob=${PWD}/blob-dir/*.tar.gz
+blobsha=$(sha1sum ${blob} | cut -d' ' -f1)
 
 # Ensuring client-side cache matches director blobs
 bosh sync-blobs
