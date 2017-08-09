@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+set -eu
+
+MESSAGE_PATH="$PWD/bump-submodules-message/message"
+IN_REPO_PATH="$PWD/repo"
+OUT_REPO_PATH="$PWD/bumped-repo"
+
+git clone "$IN_REPO_PATH" "$OUT_REPO_PATH"
+
+cd "$OUT_REPO_PATH"
+
+# Disable updates as runtime-spec is updated at a different cadence to runc
+git config submodule.src/github.com/opencontainers/runtime-spec.active false
+
+git submodule update --init --remote
+
+go get github.com/vito/gosub
+export GOPATH="$PWD"
+./scripts/sync-package-specs
+./scripts/sync-submodules
+
+git clean -ffd
+git add -A
+
+STATUS=$(git status --porcelain)
+
+if [ "$STATUS" == "" ]; then
+  exit 0
+fi
+
+git config --global user.name "Submodule Bumper"
+git config --global user.email "cf-bpm+submodule-bumper@pivotal.io"
+
+git commit -m "Update submodules"
+
+cat > "$MESSAGE_PATH" << EOF
+Submodules were updated:
+
+$STATUS
+EOF
