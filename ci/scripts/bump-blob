@@ -44,7 +44,7 @@ pushd bumped-bosh-release
   git config --global user.name "CF BPM"
   git config --global user.email "cf-bpm+blob-bumper@pivotal.io"
 
-  bosh -n add-blob "${blob}" "${BLOB_DESTINATION}/${BLOB_NAME}"
+  bosh -n add-blob ${blob} ${BLOB_DESTINATION}/${BLOB_NAME}
   bosh -n upload-blobs
 
   git add config/blobs.yml
