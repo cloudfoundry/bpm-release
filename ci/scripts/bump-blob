@@ -17,8 +17,12 @@ if [ -z "${BLOB_VERSION_FILE}" ] ; then
   exit 1
 fi
 
+if [ -z "${BLOB_DOWNLOAD_FILENAME}" ] ; then
+  BLOB_DOWNLOAD_FILENAME=*.tar.gz
+fi
+
 blob_dir=${PWD}/blob-dir
-blob=${blob_dir}/*.tar.gz
+blob=${blob_dir}/${BLOB_DOWNLOAD_FILENAME}
 blobsha=$(sha1sum ${blob} | cut -d' ' -f1)
 
 blob_version=$(cat ${blob_dir}/${BLOB_VERSION_FILE})

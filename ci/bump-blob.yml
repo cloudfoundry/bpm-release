@@ -18,6 +18,7 @@ params:
   BLOB_NAME: ~
   BLOB_VERSION_FILE: ~
   BOSH_PRIVATE_CONFIG: ~
+  BOSH_DOWNLOAD_FILENAME: ~
 
 run:
   path: bosh-release/ci/scripts/bump-blob
