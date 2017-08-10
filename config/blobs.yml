@@ -2,6 +2,10 @@ golang/go1.8.3.linux-amd64.tar.gz:
   size: 90029041
   object_id: 11bdf1a5-13d8-4ba5-70e6-1a2a60c71436
   sha: 838c415896ef5ecd395dfabde5e7e6f8ac943c8e
+golang/golang-linux-amd64.tar.gz:
+  size: 90029041
+  object_id: e1982ffb-d5c1-4535-6860-8a18942a8aed
+  sha: 838c415896ef5ecd395dfabde5e7e6f8ac943c8e
 runc/runc-linux-amd64-v1.0.0-rc3:
   size: 6369872
   object_id: b80598c5-f052-466a-5ef9-29029dc1b82a
