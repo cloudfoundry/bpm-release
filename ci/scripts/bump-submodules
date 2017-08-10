@@ -40,6 +40,6 @@ Submodules were updated:
 $STATUS
 EOF
 
-# Disable updates as runtime-spec is updated at a different cadence to runc
+# Re-enable updates to runtime-spec for downstream tasks
 git config  --unset submodule.src/github.com/opencontainers/runtime-spec.update
 git submodule update --init
