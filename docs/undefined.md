@@ -11,3 +11,5 @@ developing it to see what we may need to make decisions on.
 
 * The content, format, or location of log files apart from their inclusion
   inside `/var/vcap/sys/log/[JOB]`.
+  * Bind-mounted filesystems operations may not be atomic from within/without
+    the container
