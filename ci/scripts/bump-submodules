@@ -11,7 +11,7 @@ git clone "$IN_REPO_PATH" "$OUT_REPO_PATH"
 cd "$OUT_REPO_PATH"
 
 # Disable updates as runtime-spec is updated at a different cadence to runc
-git config submodule.src/github.com/opencontainers/runtime-spec.active false
+git config submodule.src/github.com/opencontainers/runtime-spec.update none
 
 git submodule update --init --remote
 
