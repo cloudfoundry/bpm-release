@@ -2,4 +2,4 @@
 name: runc
 
 files:
-  - runc/runc-linux-amd64-v1.0.0-rc3
+  - runc/runc-linux-amd64
