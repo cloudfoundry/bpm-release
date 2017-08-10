@@ -40,6 +40,7 @@ Submodules were updated:
 $STATUS
 EOF
 
+echo "Re-enabling disabled submodules for update and updating them"
 # Re-enable updates to runtime-spec for downstream tasks
 git config  --unset submodule.src/github.com/opencontainers/runtime-spec.update
 git submodule update --init
