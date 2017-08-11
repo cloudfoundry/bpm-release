@@ -357,7 +357,7 @@ var _ = Describe("RuncAdapter", func() {
 				Expect(os.MkdirAll(filepath.Join(systemRoot, "store"), 0700)).To(Succeed())
 			})
 
-			It("creates the job prerequisites", func() {
+			It("bind mounts the store directory into the container", func() {
 				spec, err := runcAdapter.BuildSpec(bpmCfg, procCfg, user)
 				Expect(err).NotTo(HaveOccurred())
 
@@ -366,6 +366,28 @@ var _ = Describe("RuncAdapter", func() {
 					Type:        "bind",
 					Source:      filepath.Join(systemRoot, "store", "example"),
 					Options:     []string{"nodev", "nosuid", "noexec", "rbind", "rw"},
+				}))
+			})
+		})
+
+		Context("when the /run/resolvconf directory exists", func() {
+			BeforeEach(func() {
+				Expect(os.MkdirAll(adapter.ResolvConfDir, 0700)).To(Succeed())
+			})
+
+			AfterEach(func() {
+				Expect(os.RemoveAll(adapter.ResolvConfDir)).To(Succeed())
+			})
+
+			It("bind mounts the /run/resolvconf directory into the container", func() {
+				spec, err := runcAdapter.BuildSpec(bpmCfg, procCfg, user)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(spec.Mounts).To(ContainElement(specs.Mount{
+					Destination: adapter.ResolvConfDir,
+					Type:        "bind",
+					Source:      adapter.ResolvConfDir,
+					Options:     []string{"nodev", "nosuid", "noexec", "rbind", "ro"},
 				}))
 			})
 		})

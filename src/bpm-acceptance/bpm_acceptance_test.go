@@ -178,6 +178,17 @@ var _ = Describe("BpmAcceptance", func() {
 			Expect(string(body)).To(ContainSubstring("Expected error occurred"))
 		})
 	})
+
+	It("it can communicate with the public internet", func() {
+		req, err := http.NewRequest("GET", fmt.Sprintf("%s/curl", agentURI), strings.NewReader("http://www.google.com"))
+		Expect(err).NotTo(HaveOccurred())
+
+		resp, err := client.Do(req)
+		Expect(err).NotTo(HaveOccurred())
+		defer resp.Body.Close()
+
+		Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	})
 })
 
 func containsString(list []string, item string) bool {

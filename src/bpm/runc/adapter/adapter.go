@@ -27,6 +27,8 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
+const ResolvConfDir string = "/run/resolvconf"
+
 type RuncAdapter struct{}
 
 func NewRuncAdapter() *RuncAdapter {
@@ -50,7 +52,7 @@ func (a *RuncAdapter) CreateJobPrerequisites(
 		bpmCfg.TempDir(),
 	)
 
-	mountStore, err := checkPersistentStore(bpmCfg.StoreDir())
+	mountStore, err := checkDirExists(filepath.Dir(bpmCfg.StoreDir()))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -116,13 +118,18 @@ func (a *RuncAdapter) BuildSpec(
 		NoNewPrivileges: true,
 	}
 
-	mountStore, err := checkPersistentStore(bpmCfg.StoreDir())
+	mountStore, err := checkDirExists(filepath.Dir(bpmCfg.StoreDir()))
+	if err != nil {
+		return specs.Spec{}, err
+	}
+
+	mountResolvConf, err := checkDirExists(ResolvConfDir)
 	if err != nil {
 		return specs.Spec{}, err
 	}
 
 	mounts := requiredMounts()
-	mounts = append(mounts, systemIdentityMounts()...)
+	mounts = append(mounts, systemIdentityMounts(mountResolvConf)...)
 	mounts = append(mounts, boshMounts(bpmCfg, mountStore)...)
 	mounts = append(mounts, userProvidedIdentityMounts(procCfg.Volumes)...)
 
@@ -240,14 +247,20 @@ func requiredMounts() []specs.Mount {
 	}
 }
 
-func systemIdentityMounts() []specs.Mount {
-	return []specs.Mount{
+func systemIdentityMounts(mountResolvConf bool) []specs.Mount {
+	mounts := []specs.Mount{
 		identityBindMountWithOptions("/bin", "nosuid", "nodev", "rbind", "ro"),
 		identityBindMountWithOptions("/usr", "nosuid", "nodev", "rbind", "ro"),
 		identityBindMountWithOptions("/etc", "nosuid", "nodev", "rbind", "ro"),
 		identityBindMountWithOptions("/lib", "nosuid", "nodev", "rbind", "ro"),
 		identityBindMountWithOptions("/lib64", "nosuid", "nodev", "rbind", "ro"),
 	}
+
+	if mountResolvConf {
+		mounts = append(mounts, identityBindMountWithOptions("/run/resolvconf", "nodev", "nosuid", "noexec", "rbind", "ro"))
+	}
+
+	return mounts
 }
 
 func boshMounts(bpmCfg *config.BPMConfig, mountStore bool) []specs.Mount {
@@ -299,8 +312,8 @@ func processEnvironment(env []string, cfg *config.BPMConfig) []string {
 	)
 }
 
-func checkPersistentStore(storeDir string) (bool, error) {
-	_, err := os.Stat(filepath.Dir(storeDir))
+func checkDirExists(dir string) (bool, error) {
+	_, err := os.Stat(dir)
 	if err == nil {
 		return true, nil
 	} else if !os.IsNotExist(err) {
