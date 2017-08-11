@@ -12,10 +12,8 @@ RUN \
 
 RUN apt-get update && apt-get -y install pkg-config strace
 
-# install runc
-RUN wget -O /bin/runc \
-  https://github.com/opencontainers/runc/releases/download/v1.0.0-rc3/runc-linux-amd64 && \
-  chmod +x /bin/runc
+# copy runc binary to /bin
+ADD runc-linux/runc-linux-amd64 /bin/
 
 # # add vcap user for test
 RUN \
