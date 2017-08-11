@@ -1,5 +1,8 @@
 #!/bin/bash
 
+mkdir -p /var/vcap/sys/log/bpm
+chown -R vcap:vcap /var/vcap/sys/log/bpm
+
 # mount cgroup subsystems if not present
 mount_subsystem() {
   subsystem=$1
