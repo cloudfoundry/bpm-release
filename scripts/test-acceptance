@@ -32,5 +32,5 @@ AGENT_HOST="${AGENT_HOST:-"10.245.0.2"}"
 agent_port=1337
 
 pushd "${GOPATH}/src/bpm-acceptance" > /dev/null
-  ginkgo -r -p -race -randomizeAllSpecs -- --agent-uri="http://${AGENT_HOST}:${agent_port}/"
+  ginkgo -r -p -race -randomizeAllSpecs -- --agent-uri="http://${AGENT_HOST}:${agent_port}"
 popd > /dev/null
