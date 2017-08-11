@@ -3,10 +3,32 @@
 **Note:** This is not the final configuration format and is subject to change at
 any time.
 
+## Example `monit` Configuration
+
+bpm still sits on top of `monit` as part of the current BOSH job API.
+However, the contents of the `monit` file now become simpler and less variable.
+The amount of features used is minimized. BOSH would like to remove support
+for `monit` eventually and so reducing the exposed feature area will make this
+easier.
+
+```
+check process <job>
+  with pidfile /var/vcap/sys/run/bpm/<job>/<job>.pid
+  start program "/var/vcap/packages/bpm/bin/bpm start <job>"
+  stop program "/var/vcap/packages/bpm/bin/bpm stop <job>"
+  group vcap
+
+check process <job>-<worker>
+  with pidfile /var/vcap/sys/run/bpm/<job>/<worker>.pid
+  start program "/var/vcap/packages/bpm/bin/bpm start <job> -p <worker>"
+  stop program "/var/vcap/packages/bpm/bin/bpm stop <job> -p <worker>"
+  group vcap
+```
+
 ## Job Configuration
 
 ``` yaml
-# /var/vcap/jobs/job/config/bpm/job.yml
+# /var/vcap/jobs/<job>/config/bpm/<job>.yml
 executable: /var/vcap/packages/program/bin/program-server
 
 args:
@@ -25,11 +47,11 @@ volumes:
 - /var/vcap/data/certificates
 
 hooks:
-  pre_start: /var/vcap/job/program/bin/bpm-pre-start
+  pre_start: /var/vcap/jobs/<job>/bin/bpm-pre-start
 ```
 
 ``` yaml
-# /var/vcap/jobs/job/config/bpm/worker.yml
+# /var/vcap/jobs/<job>/config/bpm/<worker>.yml
 executable: /var/vcap/packages/program/bin/program-worker
 
 args:
@@ -40,29 +62,7 @@ volumes:
 - name: /var/vcap/data/sockets
 
 hooks:
-  pre_start: /var/vcap/jobs/job/bin/initialize
-```
-
-## Example `monit` Configuration
-
-bpm still sits on top of `monit` as part of the current BOSH job API.
-However, the contents of the `monit` file now become simpler and less variable.
-The amount of features used is minimized. BOSH would like to remove support
-for `monit` eventually and so reducing the exposed feature area will make this
-easier.
-
-```
-check process job
-  with pidfile /var/vcap/sys/run/bpm/job/job.pid
-  start program "/var/vcap/packages/bpm/bin/bpm start job"
-  stop program "/var/vcap/packages/bpm/bin/bpm stop job"
-  group vcap
-
-check process job-worker
-  with pidfile /var/vcap/sys/run/bpm/job/worker.pid
-  start program "/var/vcap/packages/bpm/bin/bpm start job -p worker"
-  stop program "/var/vcap/packages/bpm/bin/bpm stop job -p worker"
-  group vcap
+  pre_start: /var/vcap/jobs/<job>/bin/initialize
 ```
 
 ## Setting Sysctl Kernel Parameters
