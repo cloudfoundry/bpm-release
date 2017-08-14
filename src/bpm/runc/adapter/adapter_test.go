@@ -22,7 +22,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"runtime"
 	"syscall"
 
 	"code.cloudfoundry.org/bytefmt"
@@ -176,11 +175,6 @@ var _ = Describe("RuncAdapter", func() {
 
 			Expect(spec.Version).To(Equal(specs.Version))
 
-			Expect(spec.Platform).To(Equal(specs.Platform{
-				OS:   runtime.GOOS,
-				Arch: runtime.GOARCH,
-			}))
-
 			expectedProcessArgs := append([]string{procCfg.Executable}, procCfg.Args...)
 			Expect(spec.Process).To(Equal(&specs.Process{
 				Terminal:    false,
@@ -193,11 +187,11 @@ var _ = Describe("RuncAdapter", func() {
 					fmt.Sprintf("BPM_ID=%s", bpmCfg.ContainerID()),
 				),
 				Cwd:             "/",
-				Rlimits:         []specs.LinuxRlimit{},
+				Rlimits:         []specs.POSIXRlimit{},
 				NoNewPrivileges: true,
 			}))
 
-			Expect(spec.Root).To(Equal(specs.Root{
+			Expect(spec.Root).To(Equal(&specs.Root{
 				Path: bpmCfg.RootFSPath(),
 			}))
 
@@ -416,9 +410,10 @@ var _ = Describe("RuncAdapter", func() {
 
 					expectedMemoryLimitInBytes, err := bytefmt.ToBytes(expectedMemoryLimit)
 					Expect(err).NotTo(HaveOccurred())
+					signedExpectedMemoryLimitInBytes := int64(expectedMemoryLimitInBytes)
 					Expect(spec.Linux.Resources.Memory).To(Equal(&specs.LinuxMemory{
-						Limit: &expectedMemoryLimitInBytes,
-						Swap:  &expectedMemoryLimitInBytes,
+						Limit: &signedExpectedMemoryLimitInBytes,
+						Swap:  &signedExpectedMemoryLimitInBytes,
 					}))
 				})
 
@@ -447,7 +442,7 @@ var _ = Describe("RuncAdapter", func() {
 					spec, err := runcAdapter.BuildSpec(bpmCfg, procCfg, user)
 					Expect(err).NotTo(HaveOccurred())
 
-					Expect(spec.Process.Rlimits).To(ConsistOf([]specs.LinuxRlimit{
+					Expect(spec.Process.Rlimits).To(ConsistOf([]specs.POSIXRlimit{
 						{
 							Type: "RLIMIT_NOFILE",
 							Hard: uint64(expectedOpenFilesLimit),

@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"runtime"
 
 	"code.cloudfoundry.org/bytefmt"
 
@@ -114,7 +113,7 @@ func (a *RuncAdapter) BuildSpec(
 		Args:            append([]string{procCfg.Executable}, procCfg.Args...),
 		Env:             processEnvironment(procCfg.Env, bpmCfg),
 		Cwd:             "/",
-		Rlimits:         []specs.LinuxRlimit{},
+		Rlimits:         []specs.POSIXRlimit{},
 		NoNewPrivileges: true,
 	}
 
@@ -143,9 +142,10 @@ func (a *RuncAdapter) BuildSpec(
 				return specs.Spec{}, err
 			}
 
+			signedMemLimit := int64(memLimit)
 			resources.Memory = &specs.LinuxMemory{
-				Limit: &memLimit,
-				Swap:  &memLimit,
+				Limit: &signedMemLimit,
+				Swap:  &signedMemLimit,
 			}
 		}
 
@@ -156,7 +156,7 @@ func (a *RuncAdapter) BuildSpec(
 		}
 
 		if procCfg.Limits.OpenFiles != nil {
-			process.Rlimits = append(process.Rlimits, specs.LinuxRlimit{
+			process.Rlimits = append(process.Rlimits, specs.POSIXRlimit{
 				Type: "RLIMIT_NOFILE",
 				Hard: uint64(*procCfg.Limits.OpenFiles),
 				Soft: uint64(*procCfg.Limits.OpenFiles),
@@ -166,12 +166,8 @@ func (a *RuncAdapter) BuildSpec(
 
 	return specs.Spec{
 		Version: specs.Version,
-		Platform: specs.Platform{
-			OS:   runtime.GOOS,
-			Arch: runtime.GOARCH,
-		},
 		Process: process,
-		Root: specs.Root{
+		Root: &specs.Root{
 			Path: bpmCfg.RootFSPath(),
 		},
 		Mounts: mounts,
