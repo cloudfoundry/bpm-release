@@ -8,6 +8,8 @@ absolute_path() {
 
 scripts_path=$(absolute_path "$(dirname "$0")" )
 
+sudo docker pull pcfsecurity/bpm-ci:latest
+
 # On development workstations docker must run as root.
 # These settings are not related to the privileges that bpm creates runc containers with.
 sudo docker run \
