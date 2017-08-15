@@ -10,7 +10,7 @@ RUN \
   make && \
   make install
 
-RUN apt-get update && apt-get -y install pkg-config strace
+RUN apt-get update && apt-get -y install pkg-config strace dnsutils
 
 # copy runc binary to /bin
 ADD runc-linux/runc-linux-amd64 /bin/runc
