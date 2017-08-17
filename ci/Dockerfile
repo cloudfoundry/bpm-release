@@ -26,7 +26,8 @@ RUN \
   mkdir -p /var/vcap/packages/bpm/bin && \
   mkdir -p /var/vcap/data/packages && \
   mkdir -p /var/vcap/data/bpm && \
-  mkdir -p /var/vcap/jobs/
+  mkdir -p /var/vcap/jobs/ && \
+  mkdir -p /var/vcap/store/
 
 RUN \
   ln -s /bin/runc /var/vcap/packages/bpm/bin/runc
