@@ -81,9 +81,9 @@ var _ = Describe("RuncClient", func() {
 			f, err := os.Stat(bundlefs)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(f.IsDir()).To(BeTrue())
-			Expect(f.Mode() & os.ModePerm).To(Equal(os.FileMode(0700)))
-			Expect(f.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(200)))
-			Expect(f.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
+			Expect(f.Mode() & os.ModePerm).To(Equal(os.FileMode(0755)))
+			Expect(f.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(0)))
+			Expect(f.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(0)))
 
 			infos, err := ioutil.ReadDir(bundlefs)
 			Expect(err).ToNot(HaveOccurred())

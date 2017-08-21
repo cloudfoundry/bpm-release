@@ -74,14 +74,9 @@ func (*RuncClient) CreateBundle(bundlePath string, jobSpec specs.Spec, user spec
 	}
 
 	rootfsPath := filepath.Join(bundlePath, "rootfs")
-	err = os.MkdirAll(rootfsPath, 0700)
+	err = os.MkdirAll(rootfsPath, 0755)
 	if err != nil {
 		return err
-	}
-
-	err = os.Chown(rootfsPath, int(user.UID), int(user.GID))
-	if err != nil {
-		panic(err)
 	}
 
 	f, err := os.OpenFile(filepath.Join(bundlePath, "config.json"), os.O_RDWR|os.O_CREATE, 0600)
