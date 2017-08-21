@@ -65,6 +65,18 @@ hooks:
   pre_start: /var/vcap/jobs/<job>/bin/initialize
 ```
 
+**Note:** The value of the `args:` are passed literally to the `executable:`.
+Consider the following snippet:
+
+```yaml
+executable: /path/to/command
+
+args:
+- --some-flag="flag-value"
+```
+
+The value of `--some-flag` will be the string `"flag-value"` including quotes.
+
 ## Setting Sysctl Kernel Parameters
 
 We recommend setting these parameters in your BOSH `pre-start` with the
