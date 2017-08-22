@@ -1,17 +1,4 @@
 ---
-# Add Releases
-- type: replace
-  path: /releases/name=diego
-  value:
-    name: diego
-    version: latest
-
-- type: replace
-  path: /releases/-
-  value:
-    name: bpm
-    version: latest
-
 # Enable for Diego Cell
 - type: replace
   path: /instance_groups/name=diego-cell/jobs/-
