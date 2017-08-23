@@ -258,14 +258,12 @@ var _ = Describe("bpm", func() {
 
 		Context("when a pre_start hook is specified", func() {
 			BeforeEach(func() {
-				f, err := os.OpenFile(filepath.Join(boshConfigPath, "pre-start"), os.O_CREATE|os.O_RDWR, 0700)
+				f, err := os.OpenFile(filepath.Join(boshConfigPath, "pre-start"), os.O_CREATE|os.O_RDWR, 0755)
 				Expect(err).NotTo(HaveOccurred())
 
-				_, err = f.Write([]byte(`
-					#!/bin/bash
-
-					echo "Pre Start executed"
-				`))
+				_, err = f.Write([]byte(fmt.Sprintf(`#!/bin/bash
+					echo "Pre Start executed" > %s
+				`, stdoutFileLocation)))
 				Expect(err).NotTo(HaveOccurred())
 				Expect(f.Close()).To(Succeed())
 

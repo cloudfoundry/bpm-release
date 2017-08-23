@@ -117,6 +117,16 @@ func (a *RuncAdapter) BuildSpec(
 		NoNewPrivileges: true,
 	}
 
+	hooks := &specs.Hooks{}
+	if procCfg.Hooks != nil {
+		hooks.Prestart = []specs.Hook{
+			{
+				Path: procCfg.Hooks.PreStart,
+				Env:  processEnvironment(procCfg.Env, bpmCfg),
+			},
+		}
+	}
+
 	mountStore, err := checkDirExists(filepath.Dir(bpmCfg.StoreDir()))
 	if err != nil {
 		return specs.Spec{}, err
@@ -167,6 +177,7 @@ func (a *RuncAdapter) BuildSpec(
 	return specs.Spec{
 		Version: specs.Version,
 		Process: process,
+		Hooks:   hooks,
 		Root: &specs.Root{
 			Path: bpmCfg.RootFSPath(),
 		},
