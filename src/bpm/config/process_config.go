@@ -26,12 +26,13 @@ import (
 )
 
 type ProcessConfig struct {
-	Executable string   `yaml:"executable"`
-	Args       []string `yaml:"args"`
-	Env        []string `yaml:"env"`
-	Limits     *Limits  `yaml:"limits"`
-	Volumes    []string `yaml:"volumes"`
-	Hooks      *Hooks   `yaml:"hooks"`
+	Executable     string   `yaml:"executable"`
+	Args           []string `yaml:"args"`
+	Env            []string `yaml:"env"`
+	Limits         *Limits  `yaml:"limits"`
+	Volumes        []string `yaml:"volumes"`
+	Hooks          *Hooks   `yaml:"hooks"`
+	AdditionalJobs []string `yaml:"additional_jobs"`
 }
 
 type Limits struct {
