@@ -129,17 +129,6 @@ func (j *RuncLifecycle) StartProcess(logger lager.Logger, bpmCfg *config.BPMConf
 		return fmt.Errorf("bundle build failure: %s", err.Error())
 	}
 
-	if procCfg.Hooks != nil {
-		preStartCmd := exec.Command("/bin/bash", "-c", procCfg.Hooks.PreStart)
-		preStartCmd.Stdout = stdout
-		preStartCmd.Stderr = stderr
-
-		err := j.commandRunner.Run(preStartCmd)
-		if err != nil {
-			return fmt.Errorf("prestart hook failed: %s", err.Error())
-		}
-	}
-
 	logger.Info("running-container")
 	return j.runcClient.RunContainer(
 		bpmCfg.PidFile(),

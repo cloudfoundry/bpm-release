@@ -154,6 +154,18 @@ var _ = Describe("RuncAdapter", func() {
 	})
 
 	Describe("BuildSpec", func() {
+		var expectedEnv []string
+
+		convertEnv := func(env map[string]string) []string {
+			var environ []string
+
+			for k, v := range env {
+				environ = append(environ, fmt.Sprintf("%s=%s", k, v))
+			}
+
+			return environ
+		}
+
 		BeforeEach(func() {
 			procCfg = &config.ProcessConfig{
 				Executable: "/var/vcap/packages/example/bin/example",
@@ -177,17 +189,12 @@ var _ = Describe("RuncAdapter", func() {
 				},
 				Capabilities: []string{"TAIN", "SAICIN"},
 			}
+
+			expectedEnv = convertEnv(procCfg.Env)
+			expectedEnv = append(expectedEnv, fmt.Sprintf("TMPDIR=%s", bpmCfg.TempDir()))
+			expectedEnv = append(expectedEnv, fmt.Sprintf("LANG=%s", adapter.DefaultLang))
+			expectedEnv = append(expectedEnv, fmt.Sprintf("BPM_ID=%s", bpmCfg.ContainerID(false)))
 		})
-
-		convertEnv := func(env map[string]string) []string {
-			var environ []string
-
-			for k, v := range env {
-				environ = append(environ, fmt.Sprintf("%s=%s", k, v))
-			}
-
-			return environ
-		}
 
 		It("converts a bpm config into a runc spec", func() {
 			spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
@@ -196,11 +203,6 @@ var _ = Describe("RuncAdapter", func() {
 			Expect(spec.Version).To(Equal(specs.Version))
 
 			expectedProcessArgs := append([]string{procCfg.Executable}, procCfg.Args...)
-			expectedEnv := convertEnv(procCfg.Env)
-			expectedEnv = append(expectedEnv, fmt.Sprintf("TMPDIR=%s", bpmCfg.TempDir()))
-			expectedEnv = append(expectedEnv, fmt.Sprintf("LANG=%s", adapter.DefaultLang))
-			expectedEnv = append(expectedEnv, fmt.Sprintf("BPM_ID=%s", bpmCfg.ContainerID(false)))
-
 			Expect(spec.Process.Terminal).To(Equal(false))
 			Expect(spec.Process.ConsoleSize).To(BeNil())
 			Expect(spec.Process.User).To(Equal(user))
@@ -370,6 +372,24 @@ var _ = Describe("RuncAdapter", func() {
 				specs.LinuxNamespace{Type: "pid"},
 				specs.LinuxNamespace{Type: "uts"},
 			))
+		})
+
+		Context("when the process config has a pre-start hook", func() {
+			BeforeEach(func() {
+				procCfg.Hooks = &config.Hooks{
+					PreStart: "/foobar",
+				}
+			})
+
+			It("adds a prestart hook to the runc spec", func() {
+				spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(spec.Hooks).NotTo(BeNil())
+				Expect(spec.Hooks.Prestart).To(HaveLen(1))
+				Expect(spec.Hooks.Prestart[0].Path).To(Equal("/foobar"))
+				Expect(spec.Hooks.Prestart[0].Env).To(ConsistOf(expectedEnv))
+			})
 		})
 
 		Context("when there is a persistent store", func() {
