@@ -13,7 +13,7 @@ RUN \
 RUN apt-get update && apt-get -y install pkg-config strace dnsutils vim-nox
 
 # copy runc binary to /bin
-ADD runc-linux/runc-linux-amd64 /bin/runc
+ADD runc-linux/runc.amd64 /bin/runc
 RUN chmod +x /bin/runc
 
 # # add vcap user for test
