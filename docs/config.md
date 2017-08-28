@@ -14,14 +14,14 @@ easier.
 ```
 check process <job>
   with pidfile /var/vcap/sys/run/bpm/<job>/<job>.pid
-  start program "/var/vcap/packages/bpm/bin/bpm start <job>"
-  stop program "/var/vcap/packages/bpm/bin/bpm stop <job>"
+  start program "/var/vcap/jobs/bpm/bin/bpm start <job>"
+  stop program "/var/vcap/jobs/bpm/bin/bpm stop <job>"
   group vcap
 
 check process <job>-<worker>
   with pidfile /var/vcap/sys/run/bpm/<job>/<worker>.pid
-  start program "/var/vcap/packages/bpm/bin/bpm start <job> -p <worker>"
-  stop program "/var/vcap/packages/bpm/bin/bpm stop <job> -p <worker>"
+  start program "/var/vcap/jobs/bpm/bin/bpm start <job> -p <worker>"
+  stop program "/var/vcap/jobs/bpm/bin/bpm stop <job> -p <worker>"
   group vcap
 ```
 

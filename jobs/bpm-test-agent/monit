@@ -1,11 +1,11 @@
 check process bpm-test-agent
   with pidfile /var/vcap/sys/run/bpm/bpm-test-agent/bpm-test-agent.pid
-  start program "/var/vcap/packages/bpm/bin/bpm start bpm-test-agent"
-  stop program "/var/vcap/packages/bpm/bin/bpm stop bpm-test-agent"
+  start program "/var/vcap/jobs/bpm/bin/bpm start bpm-test-agent"
+  stop program "/var/vcap/jobs/bpm/bin/bpm stop bpm-test-agent"
   group vcap
 
 check process alt-bpm-test-agent
   with pidfile /var/vcap/sys/run/bpm/bpm-test-agent/alt-server.pid
-  start program "/var/vcap/packages/bpm/bin/bpm start bpm-test-agent -p alt-server"
-  stop program "/var/vcap/packages/bpm/bin/bpm stop bpm-test-agent -p alt-server"
+  start program "/var/vcap/jobs/bpm/bin/bpm start bpm-test-agent -p alt-server"
+  stop program "/var/vcap/jobs/bpm/bin/bpm stop bpm-test-agent -p alt-server"
   group vcap

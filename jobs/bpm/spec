@@ -2,6 +2,7 @@
 name: bpm
 
 templates:
+  bpm: bin/bpm
   setup.erb: bin/setup
   pre-start.erb: bin/pre-start
 
