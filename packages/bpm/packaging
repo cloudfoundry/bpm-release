@@ -12,4 +12,4 @@ go install bpm/
 rm -rf ${BOSH_INSTALL_TARGET}/src ${BOSH_INSTALL_TARGET}/pkg
 
 # runc
-cp /var/vcap/packages/runc/bin/runc ${BOSH_INSTALL_TARGET}/bin
+cp /var/vcap/packages/bpm-runc/bin/runc ${BOSH_INSTALL_TARGET}/bin
