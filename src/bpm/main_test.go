@@ -24,6 +24,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"syscall"
@@ -612,26 +613,108 @@ var _ = Describe("bpm", func() {
 			})
 		})
 
-		Context("when starting the job fails", func() {
+		Context("when a stopped container exists with the same name", func() {
 			BeforeEach(func() {
+				cfg.Executable = "/bin/bash"
+				cfg.Args = []string{
+					"-c",
+					"sleep 10000",
+				}
+
+				limit := int64(1000)
+				cfg.Limits = &config.Limits{
+					Processes: &limit,
+				}
+
+				cfgPath = writeConfig(jobName, jobName, cfg)
+
 				start := exec.Command(bpmPath, "start", jobName)
 				start.Env = append(start.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
 
 				session, err := gexec.Start(start, GinkgoWriter, GinkgoWriter)
 				Expect(err).ShouldNot(HaveOccurred())
 				Eventually(session).Should(gexec.Exit(0))
+
+				// kill the existing container
+				command = exec.Command(bpmPath, "list")
+				command.Env = append(command.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
+				session, err = gexec.Start(command, GinkgoWriter, GinkgoWriter)
+				Expect(err).ShouldNot(HaveOccurred())
+				Eventually(session).Should(gexec.Exit(0))
+				Expect(session.Out).Should(gbytes.Say("running"))
+
+				re := regexp.MustCompile("\\s(\\d+)\\s")
+				pids := re.FindSubmatch(session.Out.Contents())
+				Expect(pids).ShouldNot(BeNil())
+				Expect(len(pids)).Should(Equal(2))
+
+				pid, err := strconv.Atoi(string(pids[1]))
+				Expect(err).NotTo(HaveOccurred())
+				err = syscall.Kill(pid, syscall.Signal(9))
+				Expect(err).NotTo(HaveOccurred())
+
+				// This is insane, killing takes time
+				time.Sleep(1000 * time.Millisecond)
+
+				// check that bpm thinks the container is stopped
+				command = exec.Command(bpmPath, "list")
+				command.Env = append(command.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
+				session, err = gexec.Start(command, GinkgoWriter, GinkgoWriter)
+				Expect(err).ShouldNot(HaveOccurred())
+				Eventually(session).Should(gexec.Exit(0))
+				Expect(session.Out).Should(gbytes.Say("stopped"))
 			})
 
-			It("cleans up the associated container and artifacts", func() {
+			It("`bpm start` cleans up the associated container and artifacts and starts it", func() {
 				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 				Expect(err).ShouldNot(HaveOccurred())
-				Eventually(session).Should(gexec.Exit(1))
+				Eventually(session).Should(gexec.Exit(0))
 
-				_, err = os.Open(filepath.Join(boshConfigPath, "data", "bpm", "bundles", jobName, jobName))
-				Expect(err).To(HaveOccurred())
-				Expect(os.IsNotExist(err)).To(BeTrue())
+				command = exec.Command(bpmPath, "list")
+				command.Env = append(command.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
+				session, err = gexec.Start(command, GinkgoWriter, GinkgoWriter)
+				Expect(err).ShouldNot(HaveOccurred())
+				Eventually(session).Should(gexec.Exit(0))
 
-				Expect(runcCommand("state", containerID).Run()).To(HaveOccurred())
+				Expect(session.Out).Should(gbytes.Say("running"))
+			})
+
+			Context("when the cleanup fails", func() {
+				AfterEach(func() {
+					newPath := filepath.Join(boshConfigPath, "jobs", jobName, "config", "bpm", "foo.yml")
+					oldPath := filepath.Join(boshConfigPath, "jobs", jobName, "config", "bpm", fmt.Sprintf("%s.yml", jobName))
+					os.Rename(newPath, oldPath)
+
+					// just to be doubly sure it's definitely moved!
+					_, err := os.Open(newPath)
+					Expect(err).To(HaveOccurred())
+					Expect(os.IsNotExist(err)).To(BeTrue())
+				})
+
+				It("gives instructions on where to manually cleanup", func() {
+					oldPath := filepath.Join(boshConfigPath, "jobs", jobName, "config", "bpm", fmt.Sprintf("%s.yml", jobName))
+					newPath := filepath.Join(boshConfigPath, "jobs", jobName, "config", "bpm", "foo.yml")
+					os.Rename(oldPath, newPath)
+
+					// just to be doubly sure it's definitely moved!
+					_, err := os.Open(oldPath)
+					Expect(err).To(HaveOccurred())
+					Expect(os.IsNotExist(err)).To(BeTrue())
+
+					session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+					Expect(err).ShouldNot(HaveOccurred())
+					Eventually(session).Should(gexec.Exit(1))
+					Expect(session.Err).Should(gbytes.Say("no such file or directory"))
+
+					command = exec.Command(bpmPath, "list")
+					command.Env = append(command.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
+
+					session, err = gexec.Start(command, GinkgoWriter, GinkgoWriter)
+					Expect(err).ShouldNot(HaveOccurred())
+					Eventually(session).Should(gexec.Exit(0))
+
+					Expect(session.Out).Should(gbytes.Say("stopped"))
+				})
 			})
 		})
 	})

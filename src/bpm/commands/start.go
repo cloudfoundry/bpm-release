@@ -77,14 +77,19 @@ func start(cmd *cobra.Command, _ []string) error {
 
 	err = runcLifecycle.StartJob(bpmCfg, procCfg)
 	if err != nil {
-		logger.Error("failed-to-start", err)
-
 		removeErr := runcLifecycle.RemoveJob(bpmCfg)
 		if removeErr != nil {
 			logger.Error("failed-to-cleanup", removeErr)
+			return removeErr
 		}
 
-		return err
+		// Case of pre-existing stopped container
+		// with same name that needed to be cleaned up
+		err = runcLifecycle.StartJob(bpmCfg, procCfg)
+
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
