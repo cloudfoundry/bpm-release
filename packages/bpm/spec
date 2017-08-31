@@ -3,7 +3,7 @@ name: bpm
 
 dependencies:
   - golang
-  - bpm-runc
+  - runc
 
 files:
   - bpm/*.go # gosub

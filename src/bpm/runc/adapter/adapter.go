@@ -44,11 +44,6 @@ func (a *RuncAdapter) CreateJobPrerequisites(
 		return nil, nil, err
 	}
 
-	mountStore, err := checkDirExists(filepath.Dir(bpmCfg.StoreDir()))
-	if err != nil {
-		return nil, nil, err
-	}
-
 	directories := append(
 		procCfg.Volumes,
 		bpmCfg.DataDir(),
@@ -56,22 +51,13 @@ func (a *RuncAdapter) CreateJobPrerequisites(
 		bpmCfg.TempDir(),
 	)
 
-	if mountStore {
-		directories = append(directories, bpmCfg.StoreDir())
+	mountStore, err := checkDirExists(filepath.Dir(bpmCfg.StoreDir()))
+	if err != nil {
+		return nil, nil, err
 	}
 
-	for _, job := range procCfg.AdditionalJobs {
-		additionalBPMCfg := config.NewBPMConfig(config.BoshRoot(), job, job)
-		directories = append(
-			directories,
-			additionalBPMCfg.DataDir(),
-			additionalBPMCfg.LogDir(),
-			additionalBPMCfg.TempDir(),
-		)
-
-		if mountStore {
-			directories = append(directories, additionalBPMCfg.StoreDir())
-		}
+	if mountStore {
+		directories = append(directories, bpmCfg.StoreDir())
 	}
 
 	for _, dir := range directories {
@@ -145,7 +131,6 @@ func (a *RuncAdapter) BuildSpec(
 	mounts = append(mounts, systemIdentityMounts(mountResolvConf)...)
 	mounts = append(mounts, boshMounts(bpmCfg, mountStore)...)
 	mounts = append(mounts, userProvidedIdentityMounts(procCfg.Volumes)...)
-	mounts = append(mounts, additionalConfigMounts(procCfg, mountStore)...)
 
 	var resources *specs.LinuxResources
 	if procCfg.Limits != nil {
@@ -297,17 +282,6 @@ func userProvidedIdentityMounts(volumes []string) []specs.Mount {
 
 	for _, vol := range volumes {
 		mnts = append(mnts, identityBindMountWithOptions(vol, "nodev", "nosuid", "noexec", "rbind", "rw"))
-	}
-
-	return mnts
-}
-
-func additionalConfigMounts(procCfg *config.ProcessConfig, mountStore bool) []specs.Mount {
-	var mnts []specs.Mount
-
-	for _, job := range procCfg.AdditionalJobs {
-		additionalBPMCfg := config.NewBPMConfig(config.BoshRoot(), job, job)
-		mnts = append(mnts, boshMounts(additionalBPMCfg, mountStore)...)
 	}
 
 	return mnts

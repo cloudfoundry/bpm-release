@@ -1,5 +1,5 @@
 ---
-name: bpm-runc
+name: runc
 
 files:
   - runc/runc-linux-amd64
