@@ -75,7 +75,7 @@ func start(cmd *cobra.Command, _ []string) error {
 	}
 
 	runcLifecycle := newRuncLifecycle()
-	state := getContainerState(runcLifecycle, bpmCfg.JobName())
+	state := getContainerState(runcLifecycle, bpmCfg.ContainerID())
 
 	switch state {
 	case lifecycle.ContainerStateRunning:
