@@ -36,6 +36,9 @@ import (
 const (
 	ContainerSigQuitGracePeriod = 5 * time.Second
 	ContainerStatePollInterval  = 1 * time.Second
+	ContainerStateRunning       = "running"
+	ContainerStatePaused        = "paused"
+	ContainerStateStopped       = "stopped"
 )
 
 var TimeoutError = errors.New("failed to stop job within timeout")

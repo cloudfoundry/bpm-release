@@ -613,6 +613,64 @@ var _ = Describe("bpm", func() {
 			})
 		})
 
+		Context("when a running container exist with the same name", func() {
+			startContainer := func() *exec.Cmd {
+				cfg.Executable = "/bin/bash"
+				cfg.Args = []string{
+					"-c",
+					"sleep 10000",
+				}
+
+				limit := int64(1000)
+				cfg.Limits = &config.Limits{
+					Processes: &limit,
+				}
+
+				cfgPath = writeConfig(jobName, jobName, cfg)
+
+				start := exec.Command(bpmPath, "start", jobName)
+				start.Env = append(start.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
+				return start
+			}
+
+			// Currently assumes only one thing is running #NAIVE
+			getContainerPid := func() int {
+				command = exec.Command(bpmPath, "list")
+				command.Env = append(command.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
+				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+				Expect(err).ShouldNot(HaveOccurred())
+				Eventually(session).Should(gexec.Exit(0))
+				Expect(session.Out).Should(gbytes.Say("running"))
+
+				re := regexp.MustCompile("\\s(\\d+)\\s")
+				pids := re.FindSubmatch(session.Out.Contents())
+				Expect(pids).ShouldNot(BeNil())
+				Expect(len(pids)).Should(Equal(2))
+
+				pid, err := strconv.Atoi(string(pids[1]))
+				Expect(err).NotTo(HaveOccurred())
+				return pid
+			}
+
+			BeforeEach(func() {
+				start := startContainer()
+				session, err := gexec.Start(start, GinkgoWriter, GinkgoWriter)
+				Expect(err).ShouldNot(HaveOccurred())
+				Eventually(session).Should(gexec.Exit(0))
+			})
+
+			It("should not restart the container and logs", func() {
+				origPid := getContainerPid()
+				start := startContainer()
+				session, err := gexec.Start(start, GinkgoWriter, GinkgoWriter)
+				Expect(err).ShouldNot(HaveOccurred())
+				Eventually(session).Should(gexec.Exit(0))
+				Expect(session.Out).Should(gbytes.Say(fmt.Sprintf("container %s is already running", jobName)))
+				newPid := getContainerPid()
+				Expect(newPid).To(Equal(origPid))
+			})
+		})
+
 		Context("when a stopped container exists with the same name", func() {
 			BeforeEach(func() {
 				cfg.Executable = "/bin/bash"

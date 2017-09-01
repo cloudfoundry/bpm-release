@@ -17,6 +17,7 @@ package commands
 
 import (
 	"bpm/config"
+	"bpm/runc/lifecycle"
 	"fmt"
 	"path/filepath"
 
@@ -74,23 +75,34 @@ func start(cmd *cobra.Command, _ []string) error {
 	}
 
 	runcLifecycle := newRuncLifecycle()
+	state := getContainerState(runcLifecycle, bpmCfg.JobName())
 
-	err = runcLifecycle.StartJob(bpmCfg, procCfg)
-	if err != nil {
+	switch state {
+	case lifecycle.ContainerStateRunning:
+		logger.Info(fmt.Sprintf("container %s is already running", bpmCfg.JobName()))
+		return nil
+	case lifecycle.ContainerStateStopped:
 		removeErr := runcLifecycle.RemoveJob(bpmCfg)
 		if removeErr != nil {
 			logger.Error("failed-to-cleanup", removeErr)
 			return removeErr
 		}
+		return runcLifecycle.StartJob(bpmCfg, procCfg)
+	default:
+		return runcLifecycle.StartJob(bpmCfg, procCfg)
+	}
+}
 
-		// Case of pre-existing stopped container
-		// with same name that needed to be cleaned up
-		err = runcLifecycle.StartJob(bpmCfg, procCfg)
-
-		if err != nil {
-			return err
-		}
+func getContainerState(runcLifecycle *lifecycle.RuncLifecycle, jobName string) string {
+	jobs, err := runcLifecycle.ListJobs()
+	if err != nil {
+		logger.Error("failed-list-jobs", err)
 	}
 
-	return nil
+	for _, job := range jobs {
+		if job.Name == jobName {
+			return job.Status
+		}
+	}
+	return ""
 }
