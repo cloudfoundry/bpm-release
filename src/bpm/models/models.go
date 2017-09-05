@@ -15,7 +15,7 @@
 
 package models
 
-type Job struct {
+type Process struct {
 	Name   string
 	Pid    int
 	Status string

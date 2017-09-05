@@ -81,6 +81,10 @@ func validateInput(args []string) error {
 
 	jobName := args[0]
 
+	if procName == "" {
+		procName = jobName
+	}
+
 	bpmCfg = config.NewBPMConfig(config.BoshRoot(), jobName, procName)
 
 	return nil

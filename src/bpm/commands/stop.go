@@ -58,7 +58,7 @@ func stop(cmd *cobra.Command, _ []string) error {
 	defer logger.Info("complete")
 
 	runcLifecycle := newRuncLifecycle()
-	job, err := runcLifecycle.GetJob(bpmCfg)
+	job, err := runcLifecycle.GetProcess(bpmCfg)
 	if err != nil {
 		logger.Error("failed-to-get-job", err)
 		return err
@@ -69,10 +69,10 @@ func stop(cmd *cobra.Command, _ []string) error {
 		return nil
 	}
 
-	err = runcLifecycle.StopJob(logger, bpmCfg, DefaultStopTimeout)
+	err = runcLifecycle.StopProcess(logger, bpmCfg, DefaultStopTimeout)
 	if err != nil {
 		logger.Error("failed-to-stop", err)
 	}
 
-	return runcLifecycle.RemoveJob(bpmCfg)
+	return runcLifecycle.RemoveProcess(bpmCfg)
 }

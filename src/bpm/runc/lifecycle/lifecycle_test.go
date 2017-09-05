@@ -114,9 +114,9 @@ var _ = Describe("RuncJobLifecycle", func() {
 		Expect(os.RemoveAll(expectedStderr.Name())).To(Succeed())
 	})
 
-	Describe("StartJob", func() {
+	Describe("StartProcess", func() {
 		It("builds the runc spec, bundle, and runs the container", func() {
-			err := runcLifecycle.StartJob(bpmCfg, procCfg)
+			err := runcLifecycle.StartProcess(bpmCfg, procCfg)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(fakeUserFinder.LookupCallCount()).To(Equal(1))
@@ -157,7 +157,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 			})
 
 			It("executes the pre start hook", func() {
-				err := runcLifecycle.StartJob(bpmCfg, procCfg)
+				err := runcLifecycle.StartProcess(bpmCfg, procCfg)
 				Expect(err).NotTo(HaveOccurred())
 
 				expectedCommand := exec.Command("/bin/bash", "-c", procCfg.Hooks.PreStart)
@@ -174,7 +174,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 				})
 
 				It("returns an error", func() {
-					err := runcLifecycle.StartJob(bpmCfg, procCfg)
+					err := runcLifecycle.StartProcess(bpmCfg, procCfg)
 					Expect(err).To(HaveOccurred())
 				})
 			})
@@ -186,7 +186,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 			})
 
 			It("simplifies the container ID", func() {
-				err := runcLifecycle.StartJob(bpmCfg, procCfg)
+				err := runcLifecycle.StartProcess(bpmCfg, procCfg)
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(fakeRuncClient.RunContainerCallCount()).To(Equal(1))
@@ -201,7 +201,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 			})
 
 			It("returns an error", func() {
-				err := runcLifecycle.StartJob(bpmCfg, procCfg)
+				err := runcLifecycle.StartProcess(bpmCfg, procCfg)
 				Expect(err).To(HaveOccurred())
 			})
 		})
@@ -212,7 +212,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 			})
 
 			It("returns an error", func() {
-				err := runcLifecycle.StartJob(bpmCfg, procCfg)
+				err := runcLifecycle.StartProcess(bpmCfg, procCfg)
 				Expect(err).To(HaveOccurred())
 			})
 		})
@@ -223,7 +223,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 			})
 
 			It("returns an error", func() {
-				err := runcLifecycle.StartJob(bpmCfg, procCfg)
+				err := runcLifecycle.StartProcess(bpmCfg, procCfg)
 				Expect(err).To(HaveOccurred())
 			})
 		})
@@ -234,7 +234,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 			})
 
 			It("returns an error", func() {
-				err := runcLifecycle.StartJob(bpmCfg, procCfg)
+				err := runcLifecycle.StartProcess(bpmCfg, procCfg)
 				Expect(err).To(HaveOccurred())
 			})
 		})
@@ -245,13 +245,13 @@ var _ = Describe("RuncJobLifecycle", func() {
 			})
 
 			It("returns an error", func() {
-				err := runcLifecycle.StartJob(bpmCfg, procCfg)
+				err := runcLifecycle.StartProcess(bpmCfg, procCfg)
 				Expect(err).To(HaveOccurred())
 			})
 		})
 	})
 
-	Describe("StopJob", func() {
+	Describe("StopProcess", func() {
 		var exitTimeout time.Duration
 
 		BeforeEach(func() {
@@ -266,7 +266,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 			errChan := make(chan error)
 			go func() {
 				defer GinkgoRecover()
-				errChan <- runcLifecycle.StopJob(logger, bpmCfg, exitTimeout)
+				errChan <- runcLifecycle.StopProcess(logger, bpmCfg, exitTimeout)
 			}()
 
 			Eventually(fakeRuncClient.SignalContainerCallCount).Should(Equal(1))
@@ -295,7 +295,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 				errChan := make(chan error)
 				go func() {
 					defer GinkgoRecover()
-					errChan <- runcLifecycle.StopJob(logger, bpmCfg, exitTimeout)
+					errChan <- runcLifecycle.StopProcess(logger, bpmCfg, exitTimeout)
 				}()
 
 				Eventually(fakeRuncClient.SignalContainerCallCount).Should(Equal(1))
@@ -325,7 +325,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 					errChan := make(chan error)
 					go func() {
 						defer GinkgoRecover()
-						errChan <- runcLifecycle.StopJob(logger, bpmCfg, exitTimeout)
+						errChan <- runcLifecycle.StopProcess(logger, bpmCfg, exitTimeout)
 					}()
 
 					Eventually(fakeRuncClient.SignalContainerCallCount).Should(Equal(1))
@@ -366,7 +366,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 				errChan := make(chan error)
 				go func() {
 					defer GinkgoRecover()
-					errChan <- runcLifecycle.StopJob(logger, bpmCfg, exitTimeout)
+					errChan <- runcLifecycle.StopProcess(logger, bpmCfg, exitTimeout)
 				}()
 
 				Eventually(fakeRuncClient.ContainerStateCallCount).Should(Equal(1))
@@ -406,15 +406,15 @@ var _ = Describe("RuncJobLifecycle", func() {
 			})
 
 			It("returns an error", func() {
-				err := runcLifecycle.StopJob(logger, bpmCfg, exitTimeout)
+				err := runcLifecycle.StopProcess(logger, bpmCfg, exitTimeout)
 				Expect(err).To(Equal(expectedErr))
 			})
 		})
 	})
 
-	Describe("RemoveJob", func() {
+	Describe("RemoveProcess", func() {
 		It("deletes the container", func() {
-			err := runcLifecycle.RemoveJob(bpmCfg)
+			err := runcLifecycle.RemoveProcess(bpmCfg)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(fakeRuncClient.DeleteContainerCallCount()).To(Equal(1))
@@ -423,7 +423,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 		})
 
 		It("destroys the bundle", func() {
-			err := runcLifecycle.RemoveJob(bpmCfg)
+			err := runcLifecycle.RemoveProcess(bpmCfg)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(fakeRuncClient.DestroyBundleCallCount()).To(Equal(1))
@@ -437,7 +437,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 			})
 
 			It("simplifies the container id", func() {
-				err := runcLifecycle.RemoveJob(bpmCfg)
+				err := runcLifecycle.RemoveProcess(bpmCfg)
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(fakeRuncClient.DeleteContainerCallCount()).To(Equal(1))
@@ -455,7 +455,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 			})
 
 			It("returns an error", func() {
-				err := runcLifecycle.RemoveJob(bpmCfg)
+				err := runcLifecycle.RemoveProcess(bpmCfg)
 				Expect(err).To(Equal(expectedErr))
 			})
 		})
@@ -464,15 +464,15 @@ var _ = Describe("RuncJobLifecycle", func() {
 			It("returns an error", func() {
 				expectedErr := errors.New("an error2")
 				fakeRuncClient.DestroyBundleReturns(expectedErr)
-				err := runcLifecycle.RemoveJob(bpmCfg)
+				err := runcLifecycle.RemoveProcess(bpmCfg)
 				Expect(err).To(Equal(expectedErr))
 			})
 		})
 	})
 
-	Describe("ListJobs", func() {
+	Describe("ListProcesses", func() {
 		It("calls the runc client", func() {
-			_, err := runcLifecycle.ListJobs()
+			_, err := runcLifecycle.ListProcesses()
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(fakeRuncClient.ListContainersCallCount()).To(Equal(1))
@@ -493,10 +493,10 @@ var _ = Describe("RuncJobLifecycle", func() {
 			}
 			fakeRuncClient.ListContainersReturns(containerStates, nil)
 
-			bpmJobs, err := runcLifecycle.ListJobs()
+			bpmJobs, err := runcLifecycle.ListProcesses()
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(bpmJobs).To(ConsistOf([]models.Job{
+			Expect(bpmJobs).To(ConsistOf([]models.Process{
 				{Name: "job-process-2", Pid: 23456, Status: "created"},
 				{Name: "job-process-1", Pid: 34567, Status: "running"},
 			}))
@@ -507,24 +507,24 @@ var _ = Describe("RuncJobLifecycle", func() {
 				expectedErr := errors.New("list jobs error")
 				fakeRuncClient.ListContainersReturns([]client.ContainerState{}, expectedErr)
 
-				_, err := runcLifecycle.ListJobs()
+				_, err := runcLifecycle.ListProcesses()
 				Expect(err).To(Equal(expectedErr))
 			})
 		})
 	})
 
-	Describe("GetJob", func() {
+	Describe("GetProcess", func() {
 		BeforeEach(func() {
 			fakeRuncClient.ContainerStateReturns(&specs.State{ID: expectedContainerID, Pid: 1234, Status: "running"}, nil)
 		})
 
 		It("fetches the container state and translates it into a job", func() {
-			job, err := runcLifecycle.GetJob(bpmCfg)
+			job, err := runcLifecycle.GetProcess(bpmCfg)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(fakeRuncClient.ContainerStateCallCount()).To(Equal(1))
 			Expect(fakeRuncClient.ContainerStateArgsForCall(0)).To(Equal(expectedContainerID))
 			Expect(job).NotTo(BeNil())
-			Expect(*job).To(Equal(models.Job{
+			Expect(*job).To(Equal(models.Process{
 				Name:   expectedContainerID,
 				Pid:    1234,
 				Status: "running",
@@ -537,7 +537,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 			})
 
 			It("simplifies the container id", func() {
-				_, err := runcLifecycle.GetJob(bpmCfg)
+				_, err := runcLifecycle.GetProcess(bpmCfg)
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(fakeRuncClient.ContainerStateCallCount()).To(Equal(1))
@@ -551,7 +551,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 			})
 
 			It("returns nil,nil", func() {
-				job, err := runcLifecycle.GetJob(bpmCfg)
+				job, err := runcLifecycle.GetProcess(bpmCfg)
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(job).To(BeNil())
@@ -564,7 +564,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 			})
 
 			It("returns an error", func() {
-				_, err := runcLifecycle.GetJob(bpmCfg)
+				_, err := runcLifecycle.GetProcess(bpmCfg)
 				Expect(err).To(HaveOccurred())
 			})
 		})

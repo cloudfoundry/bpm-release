@@ -25,6 +25,10 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+type JobConfig struct {
+	Processes map[string]*ProcessConfig `yaml:"processes"`
+}
+
 type ProcessConfig struct {
 	Executable string   `yaml:"executable"`
 	Args       []string `yaml:"args"`
@@ -44,13 +48,13 @@ type Hooks struct {
 	PreStart string `yaml:"pre_start"`
 }
 
-func ParseProcessConfig(configPath string) (*ProcessConfig, error) {
+func ParseJobConfig(configPath string) (*JobConfig, error) {
 	data, err := ioutil.ReadFile(configPath)
 	if err != nil {
 		return nil, err
 	}
 
-	cfg := ProcessConfig{}
+	cfg := JobConfig{}
 
 	err = yaml.Unmarshal(data, &cfg)
 	if err != nil {
@@ -69,6 +73,16 @@ const (
 	validDataVolumePrefix  = "/var/vcap/data"
 	validStoreVolumePrefix = "/var/vcap/store"
 )
+
+func (c *JobConfig) Validate() error {
+	for _, v := range c.Processes {
+		if err := v.Validate(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
 
 func (c *ProcessConfig) Validate() error {
 	if c.Executable == "" {

@@ -54,7 +54,7 @@ func tracePre(cmd *cobra.Command, args []string) error {
 
 func trace(cmd *cobra.Command, _ []string) error {
 	runcLifecycle := newRuncLifecycle()
-	job, err := runcLifecycle.GetJob(bpmCfg)
+	job, err := runcLifecycle.GetProcess(bpmCfg)
 	if err != nil {
 		return fmt.Errorf("failed to get job: %s", err.Error())
 	}

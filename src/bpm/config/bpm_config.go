@@ -49,10 +49,6 @@ type BPMConfig struct {
 }
 
 func NewBPMConfig(boshRoot, jobName, procName string) *BPMConfig {
-	if procName == "" {
-		procName = jobName
-	}
-
 	return &BPMConfig{
 		boshRoot: boshRoot,
 		jobName:  jobName,
@@ -116,8 +112,12 @@ func (c *BPMConfig) JobDir() string {
 	return filepath.Join(c.boshRoot, "jobs", c.jobName)
 }
 
-func (c *BPMConfig) ProcConfigDir() string {
-	return filepath.Join(c.JobDir(), "config", "bpm")
+func (c *BPMConfig) ConfigDir() string {
+	return filepath.Join(c.JobDir(), "config")
+}
+
+func (c *BPMConfig) JobConfig() string {
+	return filepath.Join(c.ConfigDir(), "bpm.yml")
 }
 
 func (c *BPMConfig) BPMLog() string {

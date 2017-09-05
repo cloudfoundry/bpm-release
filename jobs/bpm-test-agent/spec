@@ -2,8 +2,7 @@
 name: bpm-test-agent
 
 templates:
-  bpm-test-agent.yml.erb: config/bpm/bpm-test-agent.yml
-  alt-server.yml.erb: config/bpm/alt-server.yml
+  bpm.yml.erb: config/bpm.yml
 
 packages:
 - bpm-test-agent

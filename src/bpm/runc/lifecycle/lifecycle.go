@@ -99,7 +99,7 @@ func NewRuncLifecycle(
 	}
 }
 
-func (j *RuncLifecycle) StartJob(bpmCfg *config.BPMConfig, procCfg *config.ProcessConfig) error {
+func (j *RuncLifecycle) StartProcess(bpmCfg *config.BPMConfig, procCfg *config.ProcessConfig) error {
 	user, err := j.userFinder.Lookup(usertools.VcapUser)
 	if err != nil {
 		return err
@@ -142,11 +142,11 @@ func (j *RuncLifecycle) StartJob(bpmCfg *config.BPMConfig, procCfg *config.Proce
 	)
 }
 
-// GetJob returns the following:
-// - job, nil if the job is running (and no errors were encountered)
-// - nil,nil if the job is not running and there is no other error
-// - nil,error if there is any other error getting the job beyond it not running
-func (j *RuncLifecycle) GetJob(cfg *config.BPMConfig) (*models.Job, error) {
+// GetProcess returns the following:
+// - process, nil if the process is running (and no errors were encountered)
+// - nil,nil if the process is not running and there is no other error
+// - nil,error if there is any other error getting the process beyond it not running
+func (j *RuncLifecycle) GetProcess(cfg *config.BPMConfig) (*models.Process, error) {
 	container, err := j.runcClient.ContainerState(cfg.ContainerID())
 	if err != nil {
 		return nil, err
@@ -156,7 +156,7 @@ func (j *RuncLifecycle) GetJob(cfg *config.BPMConfig) (*models.Job, error) {
 		return nil, nil
 	}
 
-	return &models.Job{
+	return &models.Process{
 		Name:   container.ID,
 		Pid:    container.Pid,
 		Status: container.Status,
@@ -167,15 +167,15 @@ func (j *RuncLifecycle) OpenShell(cfg *config.BPMConfig, stdin io.Reader, stdout
 	return j.runcClient.Exec(cfg.ContainerID(), "/bin/bash", stdin, stdout, stderr)
 }
 
-func (j *RuncLifecycle) ListJobs() ([]models.Job, error) {
+func (j *RuncLifecycle) ListProcesses() ([]models.Process, error) {
 	containers, err := j.runcClient.ListContainers()
 	if err != nil {
 		return nil, err
 	}
 
-	var jobs []models.Job
+	var jobs []models.Process
 	for _, c := range containers {
-		job := models.Job{
+		job := models.Process{
 			Name:   c.ID,
 			Pid:    c.InitProcessPid,
 			Status: c.Status,
@@ -186,7 +186,7 @@ func (j *RuncLifecycle) ListJobs() ([]models.Job, error) {
 	return jobs, nil
 }
 
-func (j *RuncLifecycle) StopJob(logger lager.Logger, cfg *config.BPMConfig, exitTimeout time.Duration) error {
+func (j *RuncLifecycle) StopProcess(logger lager.Logger, cfg *config.BPMConfig, exitTimeout time.Duration) error {
 	err := j.runcClient.SignalContainer(cfg.ContainerID(), client.Term)
 	if err != nil {
 		return err
@@ -228,7 +228,7 @@ func (j *RuncLifecycle) StopJob(logger lager.Logger, cfg *config.BPMConfig, exit
 	}
 }
 
-func (j *RuncLifecycle) RemoveJob(cfg *config.BPMConfig) error {
+func (j *RuncLifecycle) RemoveProcess(cfg *config.BPMConfig) error {
 	err := j.runcClient.DeleteContainer(cfg.ContainerID())
 	if err != nil {
 		return err

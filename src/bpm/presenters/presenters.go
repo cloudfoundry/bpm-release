@@ -24,7 +24,7 @@ import (
 	"text/tabwriter"
 )
 
-func PrintJobs(jobs []models.Job, stdout io.Writer) error {
+func PrintJobs(jobs []models.Process, stdout io.Writer) error {
 	tw := tabwriter.NewWriter(stdout, 0, 0, 1, ' ', 0)
 
 	printRow(tw, "Name", "Pid", "Status")

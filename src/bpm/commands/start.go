@@ -19,18 +19,12 @@ import (
 	"bpm/config"
 	"bpm/runc/lifecycle"
 	"fmt"
-	"path/filepath"
 
 	"github.com/spf13/cobra"
 )
 
-var (
-	configPath string
-)
-
 func init() {
 	startCommand.Flags().StringVarP(&procName, "process", "p", "", "The optional process name.")
-	startCommand.Flags().StringVarP(&configPath, "config", "c", "", "The optional process config path.")
 	RootCmd.AddCommand(startCommand)
 }
 
@@ -63,19 +57,22 @@ func start(cmd *cobra.Command, _ []string) error {
 	logger.Info("starting")
 	defer logger.Info("complete")
 
-	if configPath == "" {
-		procConfigFile := fmt.Sprintf("%s.yml", bpmCfg.ProcName())
-		configPath = filepath.Join(bpmCfg.ProcConfigDir(), procConfigFile)
-	}
-
-	procCfg, err := config.ParseProcessConfig(configPath)
+	jobCfg, err := config.ParseJobConfig(bpmCfg.JobConfig())
 	if err != nil {
 		logger.Error("failed-to-parse-config", err)
 		return err
 	}
 
+	procCfg, ok := jobCfg.Processes[procName]
+	if !ok {
+		//TODO: Test Me
+		err := fmt.Errorf("invalid-process: %s", procName)
+		logger.Error("process-not-defined", err)
+		return err
+	}
+
 	runcLifecycle := newRuncLifecycle()
-	job, err := runcLifecycle.GetJob(bpmCfg)
+	job, err := runcLifecycle.GetProcess(bpmCfg)
 	if err != nil {
 		logger.Error("failed-getting-job", err)
 	}
@@ -90,13 +87,13 @@ func start(cmd *cobra.Command, _ []string) error {
 		logger.Info(fmt.Sprintf("container %s is already running", bpmCfg.JobName()))
 		return nil
 	case lifecycle.ContainerStateStopped:
-		removeErr := runcLifecycle.RemoveJob(bpmCfg)
+		removeErr := runcLifecycle.RemoveProcess(bpmCfg)
 		if removeErr != nil {
 			logger.Error("failed-to-cleanup", removeErr)
 			return removeErr
 		}
-		return runcLifecycle.StartJob(bpmCfg, procCfg)
+		return runcLifecycle.StartProcess(bpmCfg, procCfg)
 	default:
-		return runcLifecycle.StartJob(bpmCfg, procCfg)
+		return runcLifecycle.StartProcess(bpmCfg, procCfg)
 	}
 }

@@ -28,41 +28,32 @@ check process <job>-<worker>
 ## Job Configuration
 
 ``` yaml
-# /var/vcap/jobs/<job>/config/bpm/<job>.yml
-executable: /var/vcap/packages/program/bin/program-server
-
-args:
-- --port
-- 2424
-
-env:
-  - FOO=BAR
-
-limits:
-  memory: 3G
-  processes: 10
-  open_files: 100
-
-volumes:
-- /var/vcap/data/certificates
-
-hooks:
-  pre_start: /var/vcap/jobs/<job>/bin/bpm-pre-start
-```
-
-``` yaml
-# /var/vcap/jobs/<job>/config/bpm/<worker>.yml
-executable: /var/vcap/packages/program/bin/program-worker
-
-args:
-- --queues
-- 4
-
-volumes:
-- name: /var/vcap/data/sockets
-
-hooks:
-  pre_start: /var/vcap/jobs/<job>/bin/initialize
+# /var/vcap/jobs/<job>/config/bpm.yml
+processes:
+  <job>:
+    executable: /var/vcap/packages/program/bin/program-server
+    args:
+    - --port
+    - 2424
+    env:
+      - FOO=BAR
+    limits:
+      memory: 3G
+      processes: 10
+      open_files: 100
+    volumes:
+    - /var/vcap/data/certificates
+    hooks:
+      pre_start: /var/vcap/jobs/<job>/bin/bpm-pre-start
+  <worker>:
+    executable: /var/vcap/packages/program/bin/program-worker
+    args:
+    - --queues
+    - 4
+    volumes:
+    - name: /var/vcap/data/sockets
+    hooks:
+      pre_start: /var/vcap/jobs/<job>/bin/initialize
 ```
 
 **Note:** The value of the `args:` are passed literally to the `executable:`.

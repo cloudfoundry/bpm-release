@@ -23,7 +23,7 @@ import (
 )
 
 var _ = Describe("Config", func() {
-	Describe("ParseProcessConfig", func() {
+	Describe("ParseJobConfig", func() {
 		var configPath string
 
 		BeforeEach(func() {
@@ -31,18 +31,27 @@ var _ = Describe("Config", func() {
 		})
 
 		It("parses a yaml file into a bpm config", func() {
-			cfg, err := config.ParseProcessConfig(configPath)
+			cfg, err := config.ParseJobConfig(configPath)
 			Expect(err).NotTo(HaveOccurred())
 
 			expectedMemoryLimit := "100G"
 			expectedOpenFilesLimit := uint64(100)
-			Expect(cfg.Executable).To(Equal("/var/vcap/packages/program/bin/program-server"))
-			Expect(cfg.Args).To(ConsistOf("--port=2424", "--host=\"localhost\""))
-			Expect(cfg.Env).To(ConsistOf("FOO=BAR", "BAZ=BUZZ"))
-			Expect(cfg.Limits.Memory).To(Equal(&expectedMemoryLimit))
-			Expect(cfg.Limits.OpenFiles).To(Equal(&expectedOpenFilesLimit))
-			Expect(cfg.Volumes).To(ConsistOf("/var/vcap/data/program/foobar", "/var/vcap/data/alternate-program"))
-			Expect(cfg.Hooks.PreStart).To(Equal("/var/vcap/jobs/program/bin/pre"))
+
+			Expect(cfg.Processes).To(HaveLen(2))
+
+			processCfg, ok := cfg.Processes["example"]
+			Expect(ok).To(BeTrue())
+			Expect(processCfg.Executable).To(Equal("/var/vcap/packages/program/bin/program-server"))
+			Expect(processCfg.Args).To(ConsistOf("--port=2424", "--host=\"localhost\""))
+			Expect(processCfg.Env).To(ConsistOf("FOO=BAR", "BAZ=BUZZ"))
+			Expect(processCfg.Limits.Memory).To(Equal(&expectedMemoryLimit))
+			Expect(processCfg.Limits.OpenFiles).To(Equal(&expectedOpenFilesLimit))
+			Expect(processCfg.Volumes).To(ConsistOf("/var/vcap/data/program/foobar", "/var/vcap/data/alternate-program"))
+			Expect(processCfg.Hooks.PreStart).To(Equal("/var/vcap/jobs/program/bin/pre"))
+
+			alternateConfig, ok := cfg.Processes["alternate-example"]
+			Expect(ok).To(BeTrue())
+			Expect(alternateConfig.Executable).To(Equal("/I/AM/AN/EXECUTABLE"))
 		})
 
 		Context("when reading the file fails", func() {
@@ -51,7 +60,7 @@ var _ = Describe("Config", func() {
 			})
 
 			It("returns an error", func() {
-				_, err := config.ParseProcessConfig(configPath)
+				_, err := config.ParseJobConfig(configPath)
 				Expect(err).To(HaveOccurred())
 			})
 		})
@@ -62,7 +71,7 @@ var _ = Describe("Config", func() {
 			})
 
 			It("returns an error", func() {
-				_, err := config.ParseProcessConfig(configPath)
+				_, err := config.ParseJobConfig(configPath)
 				Expect(err).To(HaveOccurred())
 			})
 		})
@@ -73,21 +82,25 @@ var _ = Describe("Config", func() {
 			})
 
 			It("returns an error", func() {
-				_, err := config.ParseProcessConfig(configPath)
+				_, err := config.ParseJobConfig(configPath)
 				Expect(err).To(HaveOccurred())
 			})
 		})
 	})
 
 	Describe("Validate", func() {
-		var cfg *config.ProcessConfig
+		var cfg *config.JobConfig
 
 		BeforeEach(func() {
-			cfg = &config.ProcessConfig{
-				Executable: "executable",
-				Volumes: []string{
-					"/var/vcap/data/program",
-					"/var/vcap/store/program",
+			cfg = &config.JobConfig{
+				Processes: map[string]*config.ProcessConfig{
+					"example": &config.ProcessConfig{
+						Executable: "executable",
+						Volumes: []string{
+							"/var/vcap/data/program",
+							"/var/vcap/store/program",
+						},
+					},
 				},
 			}
 		})
@@ -98,26 +111,26 @@ var _ = Describe("Config", func() {
 
 		Context("when the config has volumes that are not nested in `/var/vcap`", func() {
 			It("returns a validation error", func() {
-				cfg.Volumes = []string{"/var/vcap/data/valid", "/bin"}
+				cfg.Processes["example"].Volumes = []string{"/var/vcap/data/valid", "/bin"}
 				Expect(cfg.Validate()).To(HaveOccurred())
 
-				cfg.Volumes = []string{"/var/vcap/data/valid", "/var/vcap/invalid"}
+				cfg.Processes["example"].Volumes = []string{"/var/vcap/data/valid", "/var/vcap/invalid"}
 				Expect(cfg.Validate()).To(HaveOccurred())
 
-				cfg.Volumes = []string{"/var/vcap/data/valid", "/var/vcap/data"}
+				cfg.Processes["example"].Volumes = []string{"/var/vcap/data/valid", "/var/vcap/data"}
 				Expect(cfg.Validate()).To(HaveOccurred())
 
-				cfg.Volumes = []string{"/var/vcap/store"}
+				cfg.Processes["example"].Volumes = []string{"/var/vcap/store"}
 				Expect(cfg.Validate()).To(HaveOccurred())
 
-				cfg.Volumes = []string{"//var/vcap/data/valid"}
+				cfg.Processes["example"].Volumes = []string{"//var/vcap/data/valid"}
 				Expect(cfg.Validate()).To(HaveOccurred())
 			})
 		})
 
 		Context("when the config does not have an Executable", func() {
 			BeforeEach(func() {
-				cfg.Executable = ""
+				cfg.Processes["example"].Executable = ""
 			})
 
 			It("returns an error", func() {

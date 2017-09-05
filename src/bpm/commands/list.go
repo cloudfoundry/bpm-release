@@ -35,7 +35,7 @@ var listCommandCommand = &cobra.Command{
 
 func listContainers(cmd *cobra.Command, _ []string) error {
 	runcLifecycle := newRuncLifecycle()
-	jobs, err := runcLifecycle.ListJobs()
+	jobs, err := runcLifecycle.ListProcesses()
 	if err != nil {
 		fmt.Fprintf(cmd.OutOrStderr(), "failed to list jobs: %s\n", err.Error())
 		return err
