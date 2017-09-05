@@ -315,11 +315,14 @@ var _ = Describe("bpm", func() {
 		})
 
 		Context("when the process flag is specified", func() {
-			var procName string
+			var (
+				procName          string
+				nestedContainerID string
+			)
 
 			BeforeEach(func() {
 				procName = "server"
-				containerID = fmt.Sprintf("%s.%s", jobName, procName)
+				nestedContainerID = fmt.Sprintf("%s.%s", jobName, procName)
 
 				stdoutFileLocation = filepath.Join(boshConfigPath, "sys", "log", jobName, fmt.Sprintf("%s.out.log", procName))
 				stderrFileLocation = filepath.Join(boshConfigPath, "sys", "log", jobName, fmt.Sprintf("%s.err.log", procName))
@@ -331,6 +334,21 @@ var _ = Describe("bpm", func() {
 				}
 
 				writeConfig(jobName, procName, cfg)
+
+				startCmd := exec.Command(bpmPath, "start", jobName)
+				startCmd.Env = append(startCmd.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
+
+				session, err := gexec.Start(startCmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+				Eventually(session).Should(gexec.Exit(0))
+			})
+
+			AfterEach(func() {
+				// using force, as we cannot delete a running container.
+				err := runcCommand("delete", "--force", nestedContainerID).Run() // TODO: Assert on error when runc is updated to 1.0.0-rc4+
+				if err != nil {
+					fmt.Fprintf(GinkgoWriter, "WARNING: Failed to cleanup container: %s\n", err.Error())
+				}
 			})
 
 			It("runs the process specified in the corresponding configuration file", func() {
@@ -341,7 +359,7 @@ var _ = Describe("bpm", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Eventually(session).Should(gexec.Exit(0))
 
-				state := runcState(containerID)
+				state := runcState(nestedContainerID)
 				Expect(state.Status).To(Equal("running"))
 				pidText, err := ioutil.ReadFile(filepath.Join(boshConfigPath, "sys", "run", "bpm", jobName, fmt.Sprintf("%s.pid", procName)))
 				Expect(err).NotTo(HaveOccurred())

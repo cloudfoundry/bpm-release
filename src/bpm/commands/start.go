@@ -75,7 +75,15 @@ func start(cmd *cobra.Command, _ []string) error {
 	}
 
 	runcLifecycle := newRuncLifecycle()
-	state := getContainerState(runcLifecycle, bpmCfg.ContainerID())
+	job, err := runcLifecycle.GetJob(bpmCfg)
+	if err != nil {
+		logger.Error("failed-getting-job", err)
+	}
+
+	var state string
+	if job != nil {
+		state = job.Status
+	}
 
 	switch state {
 	case lifecycle.ContainerStateRunning:
@@ -91,18 +99,4 @@ func start(cmd *cobra.Command, _ []string) error {
 	default:
 		return runcLifecycle.StartJob(bpmCfg, procCfg)
 	}
-}
-
-func getContainerState(runcLifecycle *lifecycle.RuncLifecycle, jobName string) string {
-	jobs, err := runcLifecycle.ListJobs()
-	if err != nil {
-		logger.Error("failed-list-jobs", err)
-	}
-
-	for _, job := range jobs {
-		if job.Name == jobName {
-			return job.Status
-		}
-	}
-	return ""
 }
