@@ -346,6 +346,30 @@ var _ = Describe("RuncAdapter", func() {
 			))
 		})
 
+		Context("when the process config has a pre-start hook", func() {
+			BeforeEach(func() {
+				procCfg.Hooks = &config.Hooks{
+					PreStart: "/foobar",
+				}
+			})
+
+			It("adds a prestart hook to the runc spec", func() {
+				spec, err := runcAdapter.BuildSpec(bpmCfg, procCfg, user)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(spec.Hooks).To(Equal(&specs.Hooks{
+					Prestart: []specs.Hook{{
+						Path: "/foobar",
+						Env: append(
+							procCfg.Env,
+							fmt.Sprintf("TMPDIR=%s", bpmCfg.TempDir()),
+							fmt.Sprintf("BPM_ID=%s", bpmCfg.ContainerID()),
+						),
+					}},
+				}))
+			})
+		})
+
 		Context("when there is a persistent store", func() {
 			BeforeEach(func() {
 				Expect(os.MkdirAll(filepath.Join(systemRoot, "store"), 0700)).To(Succeed())
