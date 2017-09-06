@@ -106,6 +106,18 @@ var _ = Describe("BpmAcceptance", func() {
 		Expect(found).To(ConsistOf(expectedMountPaths))
 	})
 
+	It("doesn't allow processes to read data from masked paths", func(){
+		resp, err := client.Get(fmt.Sprintf("%s/masked-paths", agentURI))
+		Expect(err).NotTo(HaveOccurred())
+		defer resp.Body.Close()
+
+		body, err := ioutil.ReadAll(resp.Body)
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(string(body)).To(ContainSubstring("0+0 records in"))
+		Expect(string(body)).To(ContainSubstring("0+0 records out"))
+	})
+
 	It("only has access to store, data, jobs, sys, and packages in /var/vcap", func() {
 		resp, err := client.Get(fmt.Sprintf("%s/var-vcap", agentURI))
 		Expect(err).NotTo(HaveOccurred())

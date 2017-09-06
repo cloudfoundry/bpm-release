@@ -48,7 +48,9 @@ func main() {
 	log.Println("Test Agent Started - STDERR")
 
 	http.HandleFunc("/", handlers.Hello)
+	http.HandleFunc("/curl", handlers.Curl)
 	http.HandleFunc("/mounts", handlers.Mounts)
+	http.HandleFunc("/masked-paths", handlers.MaskedPaths)
 	http.HandleFunc("/processes", handlers.Processes)
 	http.HandleFunc("/syscall-allowed", handlers.SyscallAllowed)
 	http.HandleFunc("/syscall-disallowed", handlers.SyscallDisallowed)
@@ -56,7 +58,6 @@ func main() {
 	http.HandleFunc("/var-vcap-data", handlers.VarVcapData)
 	http.HandleFunc("/var-vcap-jobs", handlers.VarVcapJobs)
 	http.HandleFunc("/whoami", handlers.Whoami)
-	http.HandleFunc("/curl", handlers.Curl)
 
 	signals := make(chan os.Signal)
 	signal.Notify(signals)
