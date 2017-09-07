@@ -488,7 +488,9 @@ var _ = Describe("bpm", func() {
 					cfg.Processes[jobName].Executable = "/bin/bash"
 					cfg.Processes[jobName].Args = []string{
 						"-c",
-						` trap "kill $child" SIGTERM;
+						` trap "if [ \"$child\" ]; then \
+										 kill $child \
+										fi" SIGTERM;
                     sleep 100 &
                     child=$!;
                     wait $child;
