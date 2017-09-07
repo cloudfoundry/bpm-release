@@ -1226,6 +1226,150 @@ var _ = Describe("bpm", func() {
 		})
 	})
 
+	Context("logs", func() {
+		BeforeEach(func() {
+			startCmd := exec.Command(bpmPath, "start", jobName)
+			startCmd.Env = append(startCmd.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
+
+			session, err := gexec.Start(startCmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).ShouldNot(HaveOccurred())
+			Eventually(session).Should(gexec.Exit(0))
+			Eventually(stdoutFileLocation).Should(BeAnExistingFile())
+		})
+
+		It("streams the logs until it receives a SIGINT signal", func() {
+			logsCmd := exec.Command(bpmPath, "logs", jobName)
+			logsCmd.Env = append(os.Environ(), fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
+
+			session, err := gexec.Start(logsCmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).ShouldNot(HaveOccurred())
+
+			Eventually(session.Out).Should(gbytes.Say("Foo is BAR\n"))
+			Consistently(session).ShouldNot(gexec.Exit())
+			session.Interrupt()
+			Eventually(session).Should(gexec.Exit())
+		})
+
+		Context("when the --err flag is	set", func() {
+			It("streams stderr logs", func() {
+				logsCmd := exec.Command(bpmPath, "logs", jobName, "--err")
+				logsCmd.Env = append(os.Environ(), fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
+
+				session, err := gexec.Start(logsCmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).ShouldNot(HaveOccurred())
+
+				Eventually(session.Out).Should(gbytes.Say("BAR is Foo\n"))
+				Consistently(session.Out).ShouldNot(gbytes.Say("Foo is BAR\n"))
+				Consistently(session).ShouldNot(gexec.Exit())
+				session.Interrupt()
+				Eventually(session).Should(gexec.Exit())
+			})
+		})
+
+		Context("when the --all flag is	set", func() {
+			It("streams both stderr and stdout logs", func() {
+				logsCmd := exec.Command(bpmPath, "logs", jobName, "--all")
+				logsCmd.Env = append(os.Environ(), fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
+
+				session, err := gexec.Start(logsCmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).ShouldNot(HaveOccurred())
+
+				Eventually(session.Out).Should(gbytes.Say("Foo is BAR\n"))
+				Eventually(session.Out).Should(gbytes.Say("BAR is Foo\n"))
+				Consistently(session).ShouldNot(gexec.Exit())
+				session.Interrupt()
+				Eventually(session).Should(gexec.Exit())
+			})
+		})
+
+		Context("when both the --all and --err flags are	set", func() {
+			It("streams both stderr and stdout logs", func() {
+				logsCmd := exec.Command(bpmPath, "logs", jobName, "--all", "--err")
+				logsCmd.Env = append(os.Environ(), fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
+
+				session, err := gexec.Start(logsCmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).ShouldNot(HaveOccurred())
+
+				Eventually(session.Out).Should(gbytes.Say("Foo is BAR\n"))
+				Eventually(session.Out).Should(gbytes.Say("BAR is Foo\n"))
+				Consistently(session).ShouldNot(gexec.Exit())
+				session.Interrupt()
+				Eventually(session).Should(gexec.Exit())
+			})
+		})
+
+		Context("when the process flag is specified", func() {
+			var (
+				procName          string
+				nestedContainerID string
+			)
+
+			BeforeEach(func() {
+				procName = "server"
+				nestedContainerID = fmt.Sprintf("%s.%s", jobName, procName)
+
+				stdoutFileLocation = filepath.Join(boshConfigPath, "sys", "log", jobName, fmt.Sprintf("%s.out.log", procName))
+				stderrFileLocation = filepath.Join(boshConfigPath, "sys", "log", jobName, fmt.Sprintf("%s.err.log", procName))
+
+				cfg := &config.JobConfig{
+					Processes: map[string]*config.ProcessConfig{
+						jobName:  newDefaultProcConfig(jobName, jobName),
+						procName: newDefaultProcConfig(jobName, procName),
+					},
+				}
+
+				cfg.Processes[procName].Args = []string{
+					"-c",
+					`echo "alternate config out" && echo "alternate config err" 1>&2 && sleep 5`,
+				}
+
+				writeConfig(jobName, cfg)
+
+				startCmd := exec.Command(bpmPath, "start", jobName, "-p", procName)
+				startCmd.Env = append(startCmd.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
+
+				session, err := gexec.Start(startCmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+				Eventually(session).Should(gexec.Exit(0))
+			})
+
+			AfterEach(func() {
+				// using force, as we cannot delete a running container.
+				err := runcCommand("delete", "--force", nestedContainerID).Run() // TODO: Assert on error when runc is updated to 1.0.0-rc4+
+				if err != nil {
+					fmt.Fprintf(GinkgoWriter, "WARNING: Failed to cleanup container: %s\n", err.Error())
+				}
+			})
+
+			It("tails the logs associated with the process", func() {
+				logsCmd := exec.Command(bpmPath, "logs", jobName, "-p", procName, "--all")
+				logsCmd.Env = append(os.Environ(), fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
+
+				session, err := gexec.Start(logsCmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).ShouldNot(HaveOccurred())
+
+				Eventually(session.Out).Should(gbytes.Say("alternate config out\n"))
+				Eventually(session.Out).Should(gbytes.Say("alternate config err\n"))
+				Consistently(session).ShouldNot(gexec.Exit())
+				session.Interrupt()
+				Eventually(session).Should(gexec.Exit())
+			})
+		})
+
+		Context("when the job does not exist", func() {
+			It("returns an error", func() {
+				logsCmd := exec.Command(bpmPath, "logs", "bogus")
+				logsCmd.Env = append(os.Environ(), fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
+
+				session, err := gexec.Start(logsCmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).ShouldNot(HaveOccurred())
+
+				Eventually(session).Should(gexec.Exit(1))
+				Expect(session.Err).Should(gbytes.Say("Error: logs not found"))
+			})
+		})
+	})
+
 	Context("start stop parallelization", func() {
 		BeforeEach(func() {
 			cfg.Processes[jobName].Executable = "/bin/bash"
