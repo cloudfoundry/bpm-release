@@ -87,7 +87,6 @@ func logsForJob(cmd *cobra.Command, _ []string) error {
 			return err
 		}
 	}
-
 }
 
 func shouldTailStdout() bool {
