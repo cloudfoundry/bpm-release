@@ -245,15 +245,15 @@ func requiredMounts() []specs.Mount {
 
 func systemIdentityMounts(mountResolvConf bool) []specs.Mount {
 	mounts := []specs.Mount{
-		identityBindMountWithOptions("/bin", "nosuid", "nodev", "rbind", "ro"),
-		identityBindMountWithOptions("/usr", "nosuid", "nodev", "rbind", "ro"),
-		identityBindMountWithOptions("/etc", "nosuid", "nodev", "rbind", "ro"),
-		identityBindMountWithOptions("/lib", "nosuid", "nodev", "rbind", "ro"),
-		identityBindMountWithOptions("/lib64", "nosuid", "nodev", "rbind", "ro"),
+		identityBindMountWithOptions("/bin", "nosuid", "nodev", "bind", "ro"),
+		identityBindMountWithOptions("/usr", "nosuid", "nodev", "bind", "ro"),
+		identityBindMountWithOptions("/etc", "nosuid", "nodev", "bind", "ro"),
+		identityBindMountWithOptions("/lib", "nosuid", "nodev", "bind", "ro"),
+		identityBindMountWithOptions("/lib64", "nosuid", "nodev", "bind", "ro"),
 	}
 
 	if mountResolvConf {
-		mounts = append(mounts, identityBindMountWithOptions("/run/resolvconf", "nodev", "nosuid", "noexec", "rbind", "ro"))
+		mounts = append(mounts, identityBindMountWithOptions("/run/resolvconf", "nodev", "nosuid", "noexec", "bind", "ro"))
 	}
 
 	return mounts
@@ -263,9 +263,9 @@ func boshMounts(bpmCfg *config.BPMConfig, mountStore bool) []specs.Mount {
 	mounts := []specs.Mount{
 		identityBindMountWithOptions(bpmCfg.DataDir(), "nodev", "nosuid", "noexec", "rbind", "rw"),
 		identityBindMountWithOptions(bpmCfg.LogDir(), "nodev", "nosuid", "noexec", "rbind", "rw"),
-		identityBindMountWithOptions(bpmCfg.DataPackageDir(), "nodev", "nosuid", "rbind", "ro"),
-		identityBindMountWithOptions(bpmCfg.JobDir(), "nodev", "nosuid", "rbind", "ro"),
-		identityBindMountWithOptions(bpmCfg.PackageDir(), "nodev", "nosuid", "rbind", "ro"),
+		identityBindMountWithOptions(bpmCfg.DataPackageDir(), "nodev", "nosuid", "bind", "ro"),
+		identityBindMountWithOptions(bpmCfg.JobDir(), "nodev", "nosuid", "bind", "ro"),
+		identityBindMountWithOptions(bpmCfg.PackageDir(), "nodev", "nosuid", "bind", "ro"),
 		bindMountWithOptions("/var/tmp", bpmCfg.TempDir(), "nodev", "nosuid", "noexec", "rbind", "rw"),
 		bindMountWithOptions("/tmp", bpmCfg.TempDir(), "nodev", "nosuid", "noexec", "rbind", "rw"),
 	}

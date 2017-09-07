@@ -236,31 +236,31 @@ var _ = Describe("RuncAdapter", func() {
 					Destination: "/bin",
 					Type:        "bind",
 					Source:      "/bin",
-					Options:     []string{"nosuid", "nodev", "rbind", "ro"},
+					Options:     []string{"nosuid", "nodev", "bind", "ro"},
 				},
 				{
 					Destination: "/etc",
 					Type:        "bind",
 					Source:      "/etc",
-					Options:     []string{"nosuid", "nodev", "rbind", "ro"},
+					Options:     []string{"nosuid", "nodev", "bind", "ro"},
 				},
 				{
 					Destination: "/usr",
 					Type:        "bind",
 					Source:      "/usr",
-					Options:     []string{"nosuid", "nodev", "rbind", "ro"},
+					Options:     []string{"nosuid", "nodev", "bind", "ro"},
 				},
 				{
 					Destination: "/lib",
 					Type:        "bind",
 					Source:      "/lib",
-					Options:     []string{"nosuid", "nodev", "rbind", "ro"},
+					Options:     []string{"nosuid", "nodev", "bind", "ro"},
 				},
 				{
 					Destination: "/lib64",
 					Type:        "bind",
 					Source:      "/lib64",
-					Options:     []string{"nosuid", "nodev", "rbind", "ro"},
+					Options:     []string{"nosuid", "nodev", "bind", "ro"},
 				},
 				{
 					Destination: filepath.Join(systemRoot, "data", "example"),
@@ -272,19 +272,19 @@ var _ = Describe("RuncAdapter", func() {
 					Destination: filepath.Join(systemRoot, "data", "packages"),
 					Type:        "bind",
 					Source:      filepath.Join(systemRoot, "data", "packages"),
-					Options:     []string{"nodev", "nosuid", "rbind", "ro"},
+					Options:     []string{"nodev", "nosuid", "bind", "ro"},
 				},
 				{
 					Destination: filepath.Join(systemRoot, "jobs", "example"),
 					Type:        "bind",
 					Source:      filepath.Join(systemRoot, "jobs", "example"),
-					Options:     []string{"nodev", "nosuid", "rbind", "ro"},
+					Options:     []string{"nodev", "nosuid", "bind", "ro"},
 				},
 				{
 					Destination: filepath.Join(systemRoot, "packages"),
 					Type:        "bind",
 					Source:      filepath.Join(systemRoot, "packages"),
-					Options:     []string{"nodev", "nosuid", "rbind", "ro"},
+					Options:     []string{"nodev", "nosuid", "bind", "ro"},
 				},
 				{
 					Destination: filepath.Join(systemRoot, "sys", "log", jobName),
@@ -381,7 +381,7 @@ var _ = Describe("RuncAdapter", func() {
 					Destination: adapter.ResolvConfDir,
 					Type:        "bind",
 					Source:      adapter.ResolvConfDir,
-					Options:     []string{"nodev", "nosuid", "noexec", "rbind", "ro"},
+					Options:     []string{"nodev", "nosuid", "noexec", "bind", "ro"},
 				}))
 			})
 		})
