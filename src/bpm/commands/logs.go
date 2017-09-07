@@ -17,6 +17,7 @@ package commands
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -71,6 +72,8 @@ func logsForJob(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
+	cmd.SilenceUsage = true
+
 	errCh := make(chan error)
 	go func() {
 		errCh <- tailCmd.Wait()
@@ -84,7 +87,12 @@ func logsForJob(cmd *cobra.Command, _ []string) error {
 		case sig := <-signals:
 			tailCmd.Process.Signal(sig)
 		case err := <-errCh:
-			return err
+			if err.Error() != "signal: interrupt" {
+				return err
+			}
+
+			fmt.Fprintln(cmd.OutOrStdout(), "")
+			return nil
 		}
 	}
 }
