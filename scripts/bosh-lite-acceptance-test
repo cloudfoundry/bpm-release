@@ -9,6 +9,12 @@ export BOSH_ENVIRONMENT=vbox
 bosh create-release \
   --dir "$PWD" --force
 
+# Currently bosh will upload event if it has it, so check first
+STEMCELL=`bosh stemcells | grep warden | awk '{print $1}'`
+if [ -z "$STEMCELL" ]; then
+  bosh upload-stemcell https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-trusty-go_agent?v=3445.7 --sha1 4c0670b318ca4c394e72037e05f49cc14d369636
+fi
+
 bosh upload-release \
   --dir "$PWD"
 
