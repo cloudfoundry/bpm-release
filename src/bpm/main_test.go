@@ -164,7 +164,7 @@ var _ = Describe("bpm", func() {
 	})
 
 	runcState := func(cid string) specs.State {
-		cmd := runcCommand("state", cid)
+		cmd := runcCommand("state", config.Encode(cid))
 		cmd.Stderr = GinkgoWriter
 
 		data, err := cmd.Output()
@@ -425,19 +425,18 @@ var _ = Describe("bpm", func() {
 					session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 					Expect(err).NotTo(HaveOccurred())
 					Eventually(session).Should(gexec.Exit(0))
-
 					Eventually(func() string {
 						return runcState(containerID).Status
 					}).Should(Equal("running"))
 
-					eventsCmd := runcCommand("events", containerID)
+					eventsCmd := runcCommand("events", config.Encode(containerID))
 					stdout, err := eventsCmd.StdoutPipe()
 					Expect(err).NotTo(HaveOccurred())
 
 					oomEventsChan := streamOOMEvents(stdout)
 					Expect(eventsCmd.Start()).To(Succeed())
 
-					Expect(runcCommand("kill", containerID).Run()).To(Succeed())
+					Expect(runcCommand("kill", config.Encode(containerID)).Run()).To(Succeed())
 
 					Eventually(oomEventsChan).Should(Receive())
 
@@ -477,7 +476,7 @@ var _ = Describe("bpm", func() {
 						return runcState(containerID).Status
 					}).Should(Equal("running"))
 
-					Expect(runcCommand("kill", containerID).Run()).To(Succeed())
+					Expect(runcCommand("kill", config.Encode(containerID)).Run()).To(Succeed())
 
 					Eventually(fileContents(stderrFileLocation)).Should(ContainSubstring("Too many open files"))
 				})
@@ -515,7 +514,7 @@ var _ = Describe("bpm", func() {
 						return runcState(containerID).Status
 					}).Should(Equal("running"))
 
-					Expect(runcCommand("kill", containerID).Run()).To(Succeed())
+					Expect(runcCommand("kill", config.Encode(containerID)).Run()).To(Succeed())
 
 					Eventually(fileContents(stderrFileLocation)).Should(ContainSubstring("fork: retry: Resource temporarily unavailable"))
 				})
@@ -902,12 +901,13 @@ var _ = Describe("bpm", func() {
 				Expect(err).ShouldNot(HaveOccurred())
 
 				state := runcState(containerID)
-				otherState := runcState(fmt.Sprintf("%s.%s", otherJobName, otherProcName))
+				otherContainerID := fmt.Sprintf("%s.%s", otherJobName, otherProcName)
+				otherState := runcState(otherContainerID)
 
 				Eventually(session).Should(gexec.Exit(0))
 				Expect(session.Out).Should(gbytes.Say("Name\\s+Pid\\s+Status"))
-				Expect(session.Out).Should(gbytes.Say(fmt.Sprintf("%s\\s+%d\\s+%s", state.ID, state.Pid, state.Status)))
-				Expect(session.Out).Should(gbytes.Say(fmt.Sprintf("%s\\s+%d\\s+%s", otherState.ID, otherState.Pid, otherState.Status)))
+				Expect(session.Out).Should(gbytes.Say(fmt.Sprintf("%s\\s+%d\\s+%s", containerID, state.Pid, state.Status)))
+				Expect(session.Out).Should(gbytes.Say(fmt.Sprintf("%s\\s+%d\\s+%s", otherContainerID, otherState.Pid, otherState.Status)))
 			})
 		})
 
@@ -953,7 +953,7 @@ var _ = Describe("bpm", func() {
 
 		Context("when the container is stopped", func() {
 			BeforeEach(func() {
-				Expect(runcCommand("kill", containerID, "KILL").Run()).To(Succeed())
+				Expect(runcCommand("kill", config.Encode(containerID), "KILL").Run()).To(Succeed())
 				Eventually(func() string {
 					return runcState(containerID).Status
 				}).Should(Equal("stopped"))
@@ -1045,7 +1045,7 @@ var _ = Describe("bpm", func() {
 
 		Context("when the container is stopped", func() {
 			BeforeEach(func() {
-				Expect(runcCommand("kill", containerID, "KILL").Run()).To(Succeed())
+				Expect(runcCommand("kill", config.Encode(containerID), "KILL").Run()).To(Succeed())
 				Eventually(func() string {
 					return runcState(containerID).Status
 				}).Should(Equal("stopped"))
@@ -1410,7 +1410,7 @@ var _ = Describe("bpm", func() {
 			Expect(err).ShouldNot(HaveOccurred())
 			Consistently(startSesh).ShouldNot(gexec.Exit())
 
-			Expect(runcCommand("kill", containerID, "USR1").Run()).To(Succeed())
+			Expect(runcCommand("kill", config.Encode(containerID), "USR1").Run()).To(Succeed())
 
 			Eventually(stopSesh).Should(gexec.Exit(0))
 			Eventually(startSesh).Should(gexec.Exit(0))

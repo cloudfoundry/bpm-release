@@ -184,7 +184,7 @@ var _ = Describe("RuncAdapter", func() {
 				Env: append(
 					procCfg.Env,
 					fmt.Sprintf("TMPDIR=%s", bpmCfg.TempDir()),
-					fmt.Sprintf("BPM_ID=%s", bpmCfg.ContainerID()),
+					fmt.Sprintf("BPM_ID=%s", bpmCfg.ContainerID(false)),
 				),
 				Cwd:             "/",
 				Rlimits:         []specs.POSIXRlimit{},

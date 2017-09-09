@@ -136,7 +136,7 @@ func (j *RuncLifecycle) StartProcess(bpmCfg *config.BPMConfig, procCfg *config.P
 	return j.runcClient.RunContainer(
 		bpmCfg.PidFile(),
 		bpmCfg.BundlePath(),
-		bpmCfg.ContainerID(),
+		bpmCfg.ContainerID(true),
 		stdout,
 		stderr,
 	)
@@ -147,7 +147,7 @@ func (j *RuncLifecycle) StartProcess(bpmCfg *config.BPMConfig, procCfg *config.P
 // - nil,nil if the process is not running and there is no other error
 // - nil,error if there is any other error getting the process beyond it not running
 func (j *RuncLifecycle) GetProcess(cfg *config.BPMConfig) (*models.Process, error) {
-	container, err := j.runcClient.ContainerState(cfg.ContainerID())
+	container, err := j.runcClient.ContainerState(cfg.ContainerID(true))
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +164,7 @@ func (j *RuncLifecycle) GetProcess(cfg *config.BPMConfig) (*models.Process, erro
 }
 
 func (j *RuncLifecycle) OpenShell(cfg *config.BPMConfig, stdin io.Reader, stdout, stderr io.Writer) error {
-	return j.runcClient.Exec(cfg.ContainerID(), "/bin/bash", stdin, stdout, stderr)
+	return j.runcClient.Exec(cfg.ContainerID(true), "/bin/bash", stdin, stdout, stderr)
 }
 
 func (j *RuncLifecycle) ListProcesses() ([]models.Process, error) {
@@ -187,12 +187,12 @@ func (j *RuncLifecycle) ListProcesses() ([]models.Process, error) {
 }
 
 func (j *RuncLifecycle) StopProcess(logger lager.Logger, cfg *config.BPMConfig, exitTimeout time.Duration) error {
-	err := j.runcClient.SignalContainer(cfg.ContainerID(), client.Term)
+	err := j.runcClient.SignalContainer(cfg.ContainerID(true), client.Term)
 	if err != nil {
 		return err
 	}
 
-	state, err := j.runcClient.ContainerState(cfg.ContainerID())
+	state, err := j.runcClient.ContainerState(cfg.ContainerID(true))
 	if err != nil {
 		logger.Error("failed-to-fetch-state", err)
 	} else {
@@ -208,7 +208,7 @@ func (j *RuncLifecycle) StopProcess(logger lager.Logger, cfg *config.BPMConfig, 
 	for {
 		select {
 		case <-stateTicker.C():
-			state, err = j.runcClient.ContainerState(cfg.ContainerID())
+			state, err = j.runcClient.ContainerState(cfg.ContainerID(true))
 			if err != nil {
 				logger.Error("failed-to-fetch-state", err)
 			} else {
@@ -217,7 +217,7 @@ func (j *RuncLifecycle) StopProcess(logger lager.Logger, cfg *config.BPMConfig, 
 				}
 			}
 		case <-timeout.C():
-			err := j.runcClient.SignalContainer(cfg.ContainerID(), client.Quit)
+			err := j.runcClient.SignalContainer(cfg.ContainerID(true), client.Quit)
 			if err != nil {
 				logger.Error("failed-to-sigquit", err)
 			}
@@ -229,7 +229,7 @@ func (j *RuncLifecycle) StopProcess(logger lager.Logger, cfg *config.BPMConfig, 
 }
 
 func (j *RuncLifecycle) RemoveProcess(cfg *config.BPMConfig) error {
-	err := j.runcClient.DeleteContainer(cfg.ContainerID())
+	err := j.runcClient.DeleteContainer(cfg.ContainerID(true))
 	if err != nil {
 		return err
 	}

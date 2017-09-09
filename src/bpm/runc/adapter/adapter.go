@@ -304,7 +304,7 @@ func processEnvironment(env []string, cfg *config.BPMConfig) []string {
 	return append(
 		env,
 		fmt.Sprintf("TMPDIR=%s", cfg.TempDir()),
-		fmt.Sprintf("BPM_ID=%s", cfg.ContainerID()),
+		fmt.Sprintf("BPM_ID=%s", cfg.ContainerID(false)),
 	)
 }
 

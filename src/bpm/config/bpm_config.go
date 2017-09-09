@@ -16,6 +16,7 @@
 package config
 
 import (
+	"encoding/base32"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -132,10 +133,37 @@ func (c *BPMConfig) RootFSPath() string {
 	return filepath.Join(c.BundlePath(), "rootfs")
 }
 
-func (c *BPMConfig) ContainerID() string {
+func (c *BPMConfig) ContainerID(encoded bool) string {
+	var containerID string
+
 	if c.jobName == c.procName {
-		return c.jobName
+		containerID = c.jobName
+	} else {
+		containerID = fmt.Sprintf("%s.%s", c.jobName, c.procName)
 	}
 
-	return fmt.Sprintf("%s.%s", c.jobName, c.procName)
+	if encoded {
+		containerID = Encode(containerID)
+	}
+
+	return containerID
+}
+
+// runc spec only allows `^[\w+-\.]+$`
+// https://github.com/opencontainers/runc/blob/master/libcontainer/factory_linux.go
+func Encode(containerID string) string {
+	enc := base32.StdEncoding
+	enc = enc.WithPadding('-')
+	return enc.EncodeToString([]byte(containerID))
+}
+
+func Decode(containerID string) (string, error) {
+	enc := base32.StdEncoding
+	enc = enc.WithPadding('-')
+	data, err := enc.DecodeString(containerID)
+	if err != nil {
+		return "", err
+	}
+
+	return string(data), nil
 }

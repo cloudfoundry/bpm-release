@@ -16,6 +16,7 @@
 package presenters
 
 import (
+	"bpm/config"
 	"bpm/models"
 	"fmt"
 	"io"
@@ -29,7 +30,11 @@ func PrintJobs(jobs []models.Process, stdout io.Writer) error {
 
 	printRow(tw, "Name", "Pid", "Status")
 	for _, job := range jobs {
-		printRow(tw, job.Name, strconv.Itoa(job.Pid), job.Status)
+		name, err := config.Decode(job.Name)
+		if err != nil {
+			return err
+		}
+		printRow(tw, name, strconv.Itoa(job.Pid), job.Status)
 	}
 
 	return tw.Flush()
