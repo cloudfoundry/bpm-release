@@ -1,0 +1,17 @@
+---
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: golang
+
+inputs:
+- name: bpm-release
+- name: version
+
+outputs:
+- name: bpm-rc
+
+run:
+  path: bpm-release/ci/scripts/create-rc
