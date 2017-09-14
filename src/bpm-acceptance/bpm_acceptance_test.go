@@ -106,7 +106,7 @@ var _ = Describe("BpmAcceptance", func() {
 		Expect(found).To(ConsistOf(expectedMountPaths))
 	})
 
-	It("doesn't allow processes to read data from masked paths", func(){
+	It("doesn't allow processes to read data from masked paths", func() {
 		resp, err := client.Get(fmt.Sprintf("%s/masked-paths", agentURI))
 		Expect(err).NotTo(HaveOccurred())
 		defer resp.Body.Close()
@@ -161,7 +161,7 @@ var _ = Describe("BpmAcceptance", func() {
 		processes := strings.Split(strings.Trim(string(body), "\n"), "\n")
 
 		// We expect the test agent to be the only process with the root PID
-		Expect(processes).To(HaveLen(1))
+		Expect(len(processes)).To(BeNumerically(">=", 1))
 		Expect(processes).To(ConsistOf(MatchRegexp("1 /var/vcap/packages/bpm-test-agent/bin/bpm-test-agent.*")))
 	})
 
