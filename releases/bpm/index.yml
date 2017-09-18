@@ -1,4 +1,6 @@
 builds:
+  3f8dc220-06b9-4947-621b-65ef50b26628:
+    version: 0.1.0-rc.8
   9b1adbc8-68e5-466c-67f5-78c14f9fb9d3:
     version: 0.1.0-rc.7
 format-version: "2"
