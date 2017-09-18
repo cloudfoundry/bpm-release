@@ -5,4 +5,6 @@ builds:
     version: 0.1.0-rc.9
   9b1adbc8-68e5-466c-67f5-78c14f9fb9d3:
     version: 0.1.0-rc.7
+  f340c9ca-3ffd-41f9-77e8-aeac753c4532:
+    version: 0.1.0-rc.10
 format-version: "2"
