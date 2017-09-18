@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+set -e -u
+
+# set tag name
+date +%Y-%m-%d-%H-%M-%S > release-params/tag-name
+
+# set tag commit
+pushd bpm-release
+  git rev-parse HEAD > ../release-params/commit-sha
+popd
