@@ -2,8 +2,12 @@ FROM golang:latest
 MAINTAINER PCF Security Enablement <pcf-security-enablement@pivotal.io>
 
 # install libseccomp
+# The GPG key added is Paul Moore's PGP key.
 RUN \
+  gpg --keyserver pgp.mit.edu --recv-keys 0x55E45A5AE8CA7C8A && \
   wget https://github.com/seccomp/libseccomp/releases/download/v2.3.2/libseccomp-2.3.2.tar.gz && \
+  wget https://github.com/seccomp/libseccomp/releases/download/v2.3.2/libseccomp-2.3.2.tar.gz.asc && \
+  gpg --verify libseccomp-2.3.2.tar.gz.asc libseccomp-2.3.2.tar.gz && \
   tar zxf libseccomp-2.3.2.tar.gz && \
   cd libseccomp-2.3.2/  && \
   ./configure && \
