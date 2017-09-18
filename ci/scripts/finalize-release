@@ -19,9 +19,10 @@ fi
 FINAL_RELEASE_TARBALL="${FINAL_RELEASE_TARBALL_DIR}/${RELEASE_NAME}-${VERSION}.tgz"
 
 git clone $BOSH_RELEASE_DIR $FINAL_RELEASE_REPO
-
-echo $BLOBSTORE_PRIVATE_YML >> $FINAL_RELEASE_REPO/config/private.yml
-
+{
+  IFS=''
+  echo $BLOBSTORE_PRIVATE_YML >> $FINAL_RELEASE_REPO/config/private.yml
+}
 git config --global user.email "ci@localhost"
 git config --global user.name "CI Bot"
 
