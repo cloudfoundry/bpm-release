@@ -1037,10 +1037,13 @@ var _ = Describe("bpm", func() {
 			Eventually(session).Should(gexec.Exit(0))
 		})
 
-		It("streams the output of a reasonable strace command", func() {
+		It("streams the output of an strace command until a SIGINT is received", func() {
 			session, err := gexec.Start(traceCmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
 			Eventually(session.Err).Should(gbytes.Say("wait4"))
+
+			session.Interrupt()
+			Eventually(session).Should(gexec.Exit())
 		})
 
 		Context("when the container is stopped", func() {

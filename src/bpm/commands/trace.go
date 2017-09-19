@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"os/signal"
 
 	"github.com/spf13/cobra"
 )
@@ -72,5 +73,32 @@ func trace(cmd *cobra.Command, _ []string) error {
 	straceCmd.Stdout = cmd.OutOrStdout()
 	straceCmd.Stderr = cmd.OutOrStderr()
 
-	return straceCmd.Run()
+	err = straceCmd.Start()
+	if err != nil {
+		return err
+	}
+
+	cmd.SilenceUsage = true
+
+	errCh := make(chan error)
+	go func() {
+		errCh <- straceCmd.Wait()
+	}()
+
+	signals := make(chan os.Signal)
+	signal.Notify(signals)
+
+	for {
+		select {
+		case sig := <-signals:
+			straceCmd.Process.Signal(sig)
+		case err := <-errCh:
+			if err.Error() != "signal: interrupt" {
+				return err
+			}
+
+			fmt.Fprintln(cmd.OutOrStdout(), "")
+			return nil
+		}
+	}
 }
