@@ -27,7 +27,7 @@ check process <job>-<worker>
 
 ## Job Configuration
 
-``` yaml
+```yaml
 # /var/vcap/jobs/<job>/config/bpm.yml
 processes:
   <job>:
