@@ -25,12 +25,23 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var errLogs, allLogs bool
+var (
+	errLogs,
+	allLogs,
+	follow,
+	quiet bool
+
+	numLines         int
+	allowedTailFlags map[string]string
+)
 
 func init() {
-	logsCommand.Flags().StringVarP(&procName, "process", "p", "", "The optional process name.")
+	logsCommand.Flags().BoolVarP(&allLogs, "all", "a", false, "Tail both error and stdout logs.")
 	logsCommand.Flags().BoolVarP(&errLogs, "err", "e", false, "Tail error logs.")
-	logsCommand.Flags().BoolVarP(&allLogs, "all", "a", false, "Tail all logs.")
+	logsCommand.Flags().BoolVarP(&follow, "follow", "f", false, "Tail and follow specified logs.")
+	logsCommand.Flags().IntVarP(&numLines, "lines", "n", 25, "Number of lines to tail.")
+	logsCommand.Flags().StringVarP(&procName, "process", "p", "", "The optional process name.")
+	logsCommand.Flags().BoolVarP(&quiet, "quiet", "q", false, "Suppress filename headers.")
 
 	RootCmd.AddCommand(logsCommand)
 }
@@ -49,6 +60,7 @@ func logsPre(cmd *cobra.Command, args []string) error {
 
 func logsForJob(cmd *cobra.Command, _ []string) error {
 	var filesToTail []string
+	var tailArgs []string
 
 	if shouldTailStdout() {
 		filesToTail = append(filesToTail, bpmCfg.Stdout())
@@ -62,7 +74,18 @@ func logsForJob(cmd *cobra.Command, _ []string) error {
 		return errors.New("logs not found")
 	}
 
-	tailArgs := append([]string{"-f"}, filesToTail...)
+	if follow {
+		tailArgs = append(tailArgs, "-f")
+	}
+
+	if quiet {
+		tailArgs = append(tailArgs, "-q")
+	}
+
+	linesToPrint := fmt.Sprintf("-n %d", numLines)
+	tailArgs = append(tailArgs, linesToPrint)
+
+	tailArgs = append(tailArgs, filesToTail...)
 	tailCmd := exec.Command("tail", tailArgs...)
 	tailCmd.Stdout = cmd.OutOrStdout()
 	tailCmd.Stderr = cmd.OutOrStderr()
@@ -84,10 +107,10 @@ func logsForJob(cmd *cobra.Command, _ []string) error {
 
 	for {
 		select {
-		case sig := <-signals:
+		case sig := <-signals: // Forward signal recieved by parent to child
 			tailCmd.Process.Signal(sig)
-		case err := <-errCh:
-			if err.Error() != "signal: interrupt" {
+		case err := <-errCh: // Signal parent when child dies
+			if err != nil && err.Error() != "signal: interrupt" {
 				return err
 			}
 
