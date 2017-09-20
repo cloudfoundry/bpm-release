@@ -184,6 +184,7 @@ var _ = Describe("RuncAdapter", func() {
 				Env: append(
 					procCfg.Env,
 					fmt.Sprintf("TMPDIR=%s", bpmCfg.TempDir()),
+					fmt.Sprintf("LANG=%s", adapter.DefaultLang),
 					fmt.Sprintf("BPM_ID=%s", bpmCfg.ContainerID(false)),
 				),
 				Cwd:             "/",

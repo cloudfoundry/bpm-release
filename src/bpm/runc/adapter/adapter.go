@@ -26,7 +26,10 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
-const ResolvConfDir string = "/run/resolvconf"
+const (
+	ResolvConfDir string = "/run/resolvconf"
+	DefaultLang   string = "en_US.UTF-8"
+)
 
 type RuncAdapter struct{}
 
@@ -304,6 +307,7 @@ func processEnvironment(env []string, cfg *config.BPMConfig) []string {
 	return append(
 		env,
 		fmt.Sprintf("TMPDIR=%s", cfg.TempDir()),
+		fmt.Sprintf("LANG=%s", DefaultLang),
 		fmt.Sprintf("BPM_ID=%s", cfg.ContainerID(false)),
 	)
 }

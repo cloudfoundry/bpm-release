@@ -102,9 +102,9 @@ var _ = Describe("bpm", func() {
 		//commands referenced by the PID in the $child variable
 		processCmd := fmt.Sprintf(`trap "echo Signalled && kill -9 $child" SIGTERM;
 					 echo Foo is $FOO &&
-					  (>&2 echo "$FOO is Foo") &&
-					  (echo "Dear Diary, Today I measured my beats per minute." > %s/sys/log/%s/foo.log) &&
-					  sleep 5 &
+					 (>&2 echo "$FOO is Foo") &&
+					 (echo "Dear Diary, Today I measured my beats per minute." > %s/sys/log/%s/foo.log) &&
+				   sleep 5 &
 					 child=$!;
 					 wait $child`, boshConfigPath, jobName)
 
@@ -187,6 +187,23 @@ var _ = Describe("bpm", func() {
 		JustBeforeEach(func() {
 			command = exec.Command(bpmPath, "start", jobName)
 			command.Env = append(command.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshConfigPath))
+		})
+
+		It("starts bpm with the LANG environment variable set correctly", func() {
+			//overwrite config to print env
+			procCmd := `trap "echo Signalled && kill -9 $child" SIGTERM;
+					 echo $LANG;
+				   sleep 5 &
+					 child=$!;
+					 wait $child`
+			cfg.Processes[jobName] = newProcConfig(procCmd)
+			cfgPath = writeConfig(jobName, cfg)
+
+			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+			Eventually(session).Should(gexec.Exit(0))
+
+			Eventually(fileContents(stdoutFileLocation)).Should(Equal("en_US.UTF-8\n"))
 		})
 
 		It("runs the process in a container with a pidfile", func() {
@@ -1253,13 +1270,7 @@ var _ = Describe("bpm", func() {
 										sleep 5 &
 										child=$!;
 										wait $child`, boshConfigPath, jobName)
-			jobConfig := &config.JobConfig{
-				Processes: map[string]*config.ProcessConfig{
-					jobName: newProcConfig(procCmd),
-				},
-			}
-
-			cfg = jobConfig
+			cfg.Processes[jobName] = newProcConfig(procCmd)
 			cfgPath = writeConfig(jobName, cfg)
 		})
 
