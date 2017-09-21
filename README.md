@@ -44,8 +44,9 @@ eventually become the official source of bpm documentation.
 ## Plans
 
 We working to make bpm a feature-flagged addition to the releases which are
-part of [CF Deployment](cf-deployment). To date bpm has been incorporated into 
-[Deigo release](diego-release) v1.26.0, and [CAPI release](capi-release) v1.42.0
+part of [CF Deployment](cf-deployment). To date bpm has been incorporated into
+[Deigo release](diego-release) as of v1.26.0, and [CAPI release](capi-release)
+as of v1.42.0
 
 This entire project can also be viewed as a step towards the isolation of BOSH
 jobs such that they can be run on many different work schedulers without code
