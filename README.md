@@ -43,20 +43,21 @@ eventually become the official source of bpm documentation.
 
 ## Plans
 
-We're currently planning on switching [Diego][diego-release] to use bpm as a
-first step. This change will initially be behind a feature flag. If this is
-successful then we'd like to continue migrating both open and closed source
-releases over.
+We working to make bpm a feature-flagged addition to the releases which are
+part of [CF Deployment](cf-deployment). To date bpm has been incorporated into 
+[Deigo release](diego-release) v1.26.0, and [CAPI release](capi-release) v1.42.0
 
 This entire project can also be viewed as a step towards the isolation of BOSH
 jobs such that they can be run on many different work schedulers without code
 changes.
 
-[diego-release]: https://github.com/cloudfoundry/diego-release
+[cf-deployment]: https://github.com/cloudfoundry/cf-deployment
+[diego-release]: https://github.com/cloudfoundry/diego-release/tree/v1.26.0
+[capi-release]: https://github.com/cloudfoundry/capi-release/tree/1.42.0
 
 ## Usage
 
-BPM is now ready for experimentation and should be usable for the majority of
+bpm is now ready for experimentation and should be usable for the majority of
 BOSH jobs. However, the project is still in an *alpha* state and the
 configuration or runtime environment may change in a backwards incompatible
 manner at any time.
@@ -65,12 +66,6 @@ You can start to read about the [ethos and glossary](docs/bpm.md), [runtime
 environment](docs/runtime.md) which bpm provides to your job, the
 [configuration format](docs/config.md), and the [undefined
 behavior](docs/undefined.md) of the system.
-
-If you'd like an example of a release which has been converted to use BPM
-(behind a feature flag) then please refer to the `bpm-integration` [branch of
-`diego-release`][branch].
-
-[branch]: https://github.com/cloudfoundry/diego-release/compare/bpm-integration
 
 ## Development
 
