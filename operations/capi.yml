@@ -12,12 +12,6 @@
 
 # Enable for Scheduler
 - type: replace
-  path: /instance_groups/name=scheduler/jobs/-
-  value:
-    name: bpm
-    release: bpm
-
-- type: replace
   path: /instance_groups/name=scheduler/jobs/name=nsync/properties/bpm?/enabled?
   value: true
 
@@ -31,25 +25,12 @@
 
 # Enable for API
 - type: replace
-  path: /instance_groups/name=api/jobs/-
-  value:
-    name: bpm
-    release: bpm
-
-- type: replace
   path: /instance_groups/name=api/jobs/name=cc_uploader/properties/bpm?/enabled?
   value: true
 
 - type: replace
   path: /instance_groups/name=api/jobs/name=stager/properties/bpm?/enabled?
   value: true
-
-# Enable for Cloud Controller
-- type: replace
-  path: /instance_groups/name=api/jobs/-
-  value:
-    name: bpm
-    release: bpm
 
 - type: replace
   path: /instance_groups/name=api/jobs/name=cloud_controller_ng/properties/bpm?/enabled?
