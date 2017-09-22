@@ -18,10 +18,6 @@
     release: bpm
 
 - type: replace
-  path: /instance_groups/name=scheduler/jobs/name=cc_uploader/properties/bpm?/enabled?
-  value: true
-
-- type: replace
   path: /instance_groups/name=scheduler/jobs/name=nsync/properties/bpm?/enabled?
   value: true
 
