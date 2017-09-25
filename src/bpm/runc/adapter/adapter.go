@@ -22,6 +22,7 @@ import (
 	"path/filepath"
 
 	"code.cloudfoundry.org/bytefmt"
+	"code.cloudfoundry.org/lager"
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
@@ -107,10 +108,12 @@ func createFileFor(path string, uid, gid int) (*os.File, error) {
 }
 
 func (a *RuncAdapter) BuildSpec(
+	logger lager.Logger,
 	bpmCfg *config.BPMConfig,
 	procCfg *config.ProcessConfig,
 	user specs.User,
 ) (specs.Spec, error) {
+	logger = logger.Session("build-spec")
 	process := &specs.Process{
 		User:            user,
 		Args:            append([]string{procCfg.Executable}, procCfg.Args...),
@@ -133,7 +136,7 @@ func (a *RuncAdapter) BuildSpec(
 	mounts := requiredMounts()
 	mounts = append(mounts, systemIdentityMounts(mountResolvConf)...)
 	mounts = append(mounts, boshMounts(bpmCfg, mountStore)...)
-	mounts = append(mounts, userProvidedIdentityMounts(procCfg.Volumes)...)
+	mounts = append(mounts, userProvidedIdentityMounts(logger, bpmCfg, procCfg.Volumes)...)
 
 	var resources *specs.LinuxResources
 	if procCfg.Limits != nil {
@@ -280,11 +283,20 @@ func boshMounts(bpmCfg *config.BPMConfig, mountStore bool) []specs.Mount {
 	return mounts
 }
 
-func userProvidedIdentityMounts(volumes []string) []specs.Mount {
+func userProvidedIdentityMounts(logger lager.Logger, bpmCfg *config.BPMConfig, volumes []string) []specs.Mount {
 	var mnts []specs.Mount
+	mntsSeen := map[string]bool{
+		bpmCfg.DataDir():  true,
+		bpmCfg.StoreDir(): true,
+	}
 
 	for _, vol := range volumes {
+		if _, ok := mntsSeen[vol]; ok {
+			logger.Info("duplicate-volume", lager.Data{"volume": vol})
+			continue
+		}
 		mnts = append(mnts, identityBindMountWithOptions(vol, "nodev", "nosuid", "noexec", "rbind", "rw"))
+		mntsSeen[vol] = true
 	}
 
 	return mnts

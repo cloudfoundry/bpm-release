@@ -25,6 +25,7 @@ import (
 	"syscall"
 
 	"code.cloudfoundry.org/bytefmt"
+	"code.cloudfoundry.org/lager/lagertest"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -42,9 +43,11 @@ var _ = Describe("RuncAdapter", func() {
 
 		bpmCfg  *config.BPMConfig
 		procCfg *config.ProcessConfig
+		logger  *lagertest.TestLogger
 	)
 
 	BeforeEach(func() {
+		logger = lagertest.NewTestLogger("adapter")
 		runcAdapter = adapter.NewRuncAdapter()
 
 		jobName = "example"
@@ -164,13 +167,19 @@ var _ = Describe("RuncAdapter", func() {
 				},
 				Volumes: []string{
 					"/path/to/volume/1",
+					// Testing duplicate volumes
 					"/path/to/volume/2",
+					"/path/to/volume/2",
+					// Testing duplicate store mount
+					bpmCfg.DataDir(),
+					// Testing duplicate data mount
+					bpmCfg.StoreDir(),
 				},
 			}
 		})
 
 		It("converts a bpm config into a runc spec", func() {
-			spec, err := runcAdapter.BuildSpec(bpmCfg, procCfg, user)
+			spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(spec.Version).To(Equal(specs.Version))
@@ -353,7 +362,7 @@ var _ = Describe("RuncAdapter", func() {
 			})
 
 			It("bind mounts the store directory into the container", func() {
-				spec, err := runcAdapter.BuildSpec(bpmCfg, procCfg, user)
+				spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(spec.Mounts).To(ContainElement(specs.Mount{
@@ -375,7 +384,7 @@ var _ = Describe("RuncAdapter", func() {
 			})
 
 			It("bind mounts the /run/resolvconf directory into the container", func() {
-				spec, err := runcAdapter.BuildSpec(bpmCfg, procCfg, user)
+				spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(spec.Mounts).To(ContainElement(specs.Mount{
@@ -393,7 +402,7 @@ var _ = Describe("RuncAdapter", func() {
 			})
 
 			It("sets no limits by default", func() {
-				_, err := runcAdapter.BuildSpec(bpmCfg, procCfg, user)
+				_, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
 				Expect(err).NotTo(HaveOccurred())
 			})
 
@@ -406,7 +415,7 @@ var _ = Describe("RuncAdapter", func() {
 				})
 
 				It("sets the memory limit on the container", func() {
-					spec, err := runcAdapter.BuildSpec(bpmCfg, procCfg, user)
+					spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
 					Expect(err).NotTo(HaveOccurred())
 
 					expectedMemoryLimitInBytes, err := bytefmt.ToBytes(expectedMemoryLimit)
@@ -425,7 +434,7 @@ var _ = Describe("RuncAdapter", func() {
 					})
 
 					It("returns an error", func() {
-						_, err := runcAdapter.BuildSpec(bpmCfg, procCfg, user)
+						_, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
 						Expect(err).To(HaveOccurred())
 					})
 				})
@@ -440,7 +449,7 @@ var _ = Describe("RuncAdapter", func() {
 				})
 
 				It("sets the rlimit on the process", func() {
-					spec, err := runcAdapter.BuildSpec(bpmCfg, procCfg, user)
+					spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
 					Expect(err).NotTo(HaveOccurred())
 
 					Expect(spec.Process.Rlimits).To(ConsistOf([]specs.POSIXRlimit{
@@ -462,7 +471,7 @@ var _ = Describe("RuncAdapter", func() {
 				})
 
 				It("sets a PidLimit on the container", func() {
-					spec, err := runcAdapter.BuildSpec(bpmCfg, procCfg, user)
+					spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
 					Expect(err).NotTo(HaveOccurred())
 
 					Expect(spec.Linux).NotTo(BeNil())
@@ -481,7 +490,7 @@ var _ = Describe("RuncAdapter", func() {
 			})
 
 			It("does not set a memory limit", func() {
-				spec, err := runcAdapter.BuildSpec(bpmCfg, procCfg, user)
+				spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(spec.Linux.Resources).To(BeNil())
 			})

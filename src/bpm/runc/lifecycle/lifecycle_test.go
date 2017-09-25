@@ -116,7 +116,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 	Describe("StartProcess", func() {
 		It("builds the runc spec, bundle, and runs the container", func() {
-			err := runcLifecycle.StartProcess(bpmCfg, procCfg)
+			err := runcLifecycle.StartProcess(logger, bpmCfg, procCfg)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(fakeUserFinder.LookupCallCount()).To(Equal(1))
@@ -129,7 +129,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 			Expect(user).To(Equal(expectedUser))
 
 			Expect(fakeRuncAdapter.BuildSpecCallCount()).To(Equal(1))
-			actualBPMCfg, actualProcCfg, user = fakeRuncAdapter.BuildSpecArgsForCall(0)
+			_, actualBPMCfg, actualProcCfg, user = fakeRuncAdapter.BuildSpecArgsForCall(0)
 			Expect(actualBPMCfg).To(Equal(bpmCfg))
 			Expect(actualProcCfg).To(Equal(procCfg))
 			Expect(user).To(Equal(expectedUser))
@@ -157,7 +157,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 			})
 
 			It("executes the pre start hook", func() {
-				err := runcLifecycle.StartProcess(bpmCfg, procCfg)
+				err := runcLifecycle.StartProcess(logger, bpmCfg, procCfg)
 				Expect(err).NotTo(HaveOccurred())
 
 				expectedCommand := exec.Command("/bin/bash", "-c", procCfg.Hooks.PreStart)
@@ -174,7 +174,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 				})
 
 				It("returns an error", func() {
-					err := runcLifecycle.StartProcess(bpmCfg, procCfg)
+					err := runcLifecycle.StartProcess(logger, bpmCfg, procCfg)
 					Expect(err).To(HaveOccurred())
 				})
 			})
@@ -186,7 +186,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 			})
 
 			It("simplifies the container ID", func() {
-				err := runcLifecycle.StartProcess(bpmCfg, procCfg)
+				err := runcLifecycle.StartProcess(logger, bpmCfg, procCfg)
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(fakeRuncClient.RunContainerCallCount()).To(Equal(1))
@@ -201,7 +201,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 			})
 
 			It("returns an error", func() {
-				err := runcLifecycle.StartProcess(bpmCfg, procCfg)
+				err := runcLifecycle.StartProcess(logger, bpmCfg, procCfg)
 				Expect(err).To(HaveOccurred())
 			})
 		})
@@ -212,7 +212,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 			})
 
 			It("returns an error", func() {
-				err := runcLifecycle.StartProcess(bpmCfg, procCfg)
+				err := runcLifecycle.StartProcess(logger, bpmCfg, procCfg)
 				Expect(err).To(HaveOccurred())
 			})
 		})
@@ -223,7 +223,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 			})
 
 			It("returns an error", func() {
-				err := runcLifecycle.StartProcess(bpmCfg, procCfg)
+				err := runcLifecycle.StartProcess(logger, bpmCfg, procCfg)
 				Expect(err).To(HaveOccurred())
 			})
 		})
@@ -234,7 +234,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 			})
 
 			It("returns an error", func() {
-				err := runcLifecycle.StartProcess(bpmCfg, procCfg)
+				err := runcLifecycle.StartProcess(logger, bpmCfg, procCfg)
 				Expect(err).To(HaveOccurred())
 			})
 		})
@@ -245,7 +245,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 			})
 
 			It("returns an error", func() {
-				err := runcLifecycle.StartProcess(bpmCfg, procCfg)
+				err := runcLifecycle.StartProcess(logger, bpmCfg, procCfg)
 				Expect(err).To(HaveOccurred())
 			})
 		})

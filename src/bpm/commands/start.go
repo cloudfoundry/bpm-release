@@ -92,8 +92,8 @@ func start(cmd *cobra.Command, _ []string) error {
 			logger.Error("failed-to-cleanup", removeErr)
 			return removeErr
 		}
-		return runcLifecycle.StartProcess(bpmCfg, procCfg)
+		fallthrough
 	default:
-		return runcLifecycle.StartProcess(bpmCfg, procCfg)
+		return runcLifecycle.StartProcess(logger, bpmCfg, procCfg)
 	}
 }

@@ -59,7 +59,7 @@ type CommandRunner interface {
 
 type RuncAdapter interface {
 	CreateJobPrerequisites(bpmCfg *config.BPMConfig, procCfg *config.ProcessConfig, user specs.User) (*os.File, *os.File, error)
-	BuildSpec(bpmCfg *config.BPMConfig, procCfg *config.ProcessConfig, user specs.User) (specs.Spec, error)
+	BuildSpec(logger lager.Logger, bpmCfg *config.BPMConfig, procCfg *config.ProcessConfig, user specs.User) (specs.Spec, error)
 }
 
 //go:generate counterfeiter . RuncClient
@@ -99,7 +99,7 @@ func NewRuncLifecycle(
 	}
 }
 
-func (j *RuncLifecycle) StartProcess(bpmCfg *config.BPMConfig, procCfg *config.ProcessConfig) error {
+func (j *RuncLifecycle) StartProcess(logger lager.Logger, bpmCfg *config.BPMConfig, procCfg *config.ProcessConfig) error {
 	user, err := j.userFinder.Lookup(usertools.VcapUser)
 	if err != nil {
 		return err
@@ -112,7 +112,7 @@ func (j *RuncLifecycle) StartProcess(bpmCfg *config.BPMConfig, procCfg *config.P
 	defer stdout.Close()
 	defer stderr.Close()
 
-	spec, err := j.runcAdapter.BuildSpec(bpmCfg, procCfg, user)
+	spec, err := j.runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
 	if err != nil {
 		return err
 	}
