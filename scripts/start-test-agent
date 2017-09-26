@@ -28,7 +28,7 @@ processes:
       - --port
       - 1337
     env:
-      - BPM=SWEET
+      BPM: SWEET
     limits:
       memory: 1G
       open_files: 1024

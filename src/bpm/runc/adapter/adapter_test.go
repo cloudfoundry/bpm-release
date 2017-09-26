@@ -161,9 +161,9 @@ var _ = Describe("RuncAdapter", func() {
 					"foo",
 					"bar",
 				},
-				Env: []string{
-					"RAVE=true",
-					"ONE=two",
+				Env: map[string]string{
+					"RAVE": "true",
+					"ONE":  "two",
 				},
 				Volumes: []string{
 					"/path/to/volume/1",
@@ -178,6 +178,16 @@ var _ = Describe("RuncAdapter", func() {
 			}
 		})
 
+		convertEnv := func(env map[string]string) []string {
+			var environ []string
+
+			for k, v := range env {
+				environ = append(environ, fmt.Sprintf("%s=%s", k, v))
+			}
+
+			return environ
+		}
+
 		It("converts a bpm config into a runc spec", func() {
 			spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
 			Expect(err).NotTo(HaveOccurred())
@@ -191,7 +201,7 @@ var _ = Describe("RuncAdapter", func() {
 				User:        user,
 				Args:        expectedProcessArgs,
 				Env: append(
-					procCfg.Env,
+					convertEnv(procCfg.Env),
 					fmt.Sprintf("TMPDIR=%s", bpmCfg.TempDir()),
 					fmt.Sprintf("LANG=%s", adapter.DefaultLang),
 					fmt.Sprintf("BPM_ID=%s", bpmCfg.ContainerID(false)),

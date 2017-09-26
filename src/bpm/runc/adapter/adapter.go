@@ -315,9 +315,15 @@ func bindMountWithOptions(dest, src string, options ...string) specs.Mount {
 	}
 }
 
-func processEnvironment(env []string, cfg *config.BPMConfig) []string {
+func processEnvironment(env map[string]string, cfg *config.BPMConfig) []string {
+	var environ []string
+
+	for k, v := range env {
+		environ = append(environ, fmt.Sprintf("%s=%s", k, v))
+	}
+
 	return append(
-		env,
+		environ,
 		fmt.Sprintf("TMPDIR=%s", cfg.TempDir()),
 		fmt.Sprintf("LANG=%s", DefaultLang),
 		fmt.Sprintf("BPM_ID=%s", cfg.ContainerID(false)),

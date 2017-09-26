@@ -36,7 +36,7 @@ processes:
     - --port
     - 2424
     env:
-      - FOO=BAR
+      FOO: BAR
     limits:
       memory: 3G
       processes: 10

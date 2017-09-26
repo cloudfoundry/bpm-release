@@ -16,7 +16,8 @@ check process <job>
   group vcap
 ```
 
-*Note*: You should use `bpm` from the canonical location of `/var/vcap/jobs/bpm/bin/bpm`.
+*Note*: You should use `bpm` from the canonical location of
+`/var/vcap/jobs/bpm/bin/bpm`.
 
 ## Create `bpm.yml` Configuration File
 
@@ -34,7 +35,7 @@ processes:
     - --port
     - 2424
     env:
-      - FOO=BAR
+      FOO: BAR
 ```
 
 Also you will need to add the following to the list of templates in the job's
@@ -77,8 +78,12 @@ as follows:
 
 ```yaml
 env:
-- KEY=VALUE
+  KEY: VALUE
 ```
+
+*Note*: that it is not currently possible for one value to interpolate values
+from another. If this is required, perform the interpolation earlier in the erb
+rendering, or later in a shell script that is called by BPM.
 
 #### Runtime Configuration
 
@@ -123,7 +128,7 @@ config= {}
 config["executable"] = /path/to/executable
 config["args"] = [] 
 config["args"] << p("example.property")
-config["env"] = ["KEY=#{p("another.example.property")}"]
+config["env"] = { "KEY" => "#{p("another.example.property")}" }
 
 YAML.dump(config)
 %>

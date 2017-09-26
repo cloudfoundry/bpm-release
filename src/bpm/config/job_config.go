@@ -30,12 +30,12 @@ type JobConfig struct {
 }
 
 type ProcessConfig struct {
-	Executable string   `yaml:"executable"`
-	Args       []string `yaml:"args"`
-	Env        []string `yaml:"env"`
-	Limits     *Limits  `yaml:"limits"`
-	Volumes    []string `yaml:"volumes"`
-	Hooks      *Hooks   `yaml:"hooks"`
+	Executable string            `yaml:"executable"`
+	Args       []string          `yaml:"args"`
+	Env        map[string]string `yaml:"env"`
+	Limits     *Limits           `yaml:"limits"`
+	Volumes    []string          `yaml:"volumes"`
+	Hooks      *Hooks            `yaml:"hooks"`
 }
 
 type Limits struct {

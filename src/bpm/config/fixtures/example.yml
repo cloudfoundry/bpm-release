@@ -6,8 +6,8 @@ processes:
       - --port=2424
       - --host="localhost"
     env:
-      - FOO=BAR
-      - BAZ=BUZZ
+      FOO: BAR
+      BAZ: BUZZ
     limits:
       memory: 100G
       open_files: 100

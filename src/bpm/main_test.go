@@ -93,7 +93,9 @@ var _ = Describe("bpm", func() {
 				"-c",
 				processCmd,
 			},
-			Env: []string{"FOO=BAR"},
+			Env: map[string]string{
+				"FOO": "BAR",
+			},
 		}
 	}
 
