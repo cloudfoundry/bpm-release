@@ -49,6 +49,7 @@ var _ = Describe("Config", func() {
 			Expect(processCfg.Limits.OpenFiles).To(Equal(&expectedOpenFilesLimit))
 			Expect(processCfg.Volumes).To(ConsistOf("/var/vcap/data/program/foobar", "/var/vcap/data/alternate-program"))
 			Expect(processCfg.Hooks.PreStart).To(Equal("/var/vcap/jobs/program/bin/pre"))
+			Expect(processCfg.Capabilities).To(ConsistOf("NET_BIND_SERVICE"))
 
 			alternateConfig, ok := cfg.Processes["alternate-example"]
 			Expect(ok).To(BeTrue())
@@ -125,6 +126,16 @@ var _ = Describe("Config", func() {
 				Expect(cfg.Validate()).To(HaveOccurred())
 
 				cfg.Processes["example"].Volumes = []string{"//var/vcap/data/valid"}
+				Expect(cfg.Validate()).To(HaveOccurred())
+			})
+		})
+
+		Context("when the capabilities are not permitted", func() {
+			BeforeEach(func() {
+				cfg.Processes["example"].Capabilities = []string{"YO_DOG_CAP"}
+			})
+
+			It("returns an error", func() {
 				Expect(cfg.Validate()).To(HaveOccurred())
 			})
 		})

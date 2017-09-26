@@ -30,12 +30,13 @@ type JobConfig struct {
 }
 
 type ProcessConfig struct {
-	Executable string            `yaml:"executable"`
-	Args       []string          `yaml:"args"`
-	Env        map[string]string `yaml:"env"`
-	Limits     *Limits           `yaml:"limits"`
-	Volumes    []string          `yaml:"volumes"`
-	Hooks      *Hooks            `yaml:"hooks"`
+	Executable   string            `yaml:"executable"`
+	Args         []string          `yaml:"args"`
+	Env          map[string]string `yaml:"env"`
+	Limits       *Limits           `yaml:"limits"`
+	Volumes      []string          `yaml:"volumes"`
+	Hooks        *Hooks            `yaml:"hooks"`
+	Capabilities []string          `yaml:"capabilities"`
 }
 
 type Limits struct {
@@ -74,6 +75,10 @@ const (
 	validStoreVolumePrefix = "/var/vcap/store"
 )
 
+var validCaps = map[string]bool{
+	"NET_BIND_SERVICE": true,
+}
+
 func (c *JobConfig) Validate() error {
 	for _, v := range c.Processes {
 		if err := v.Validate(); err != nil {
@@ -101,6 +106,15 @@ func (c *ProcessConfig) Validate() error {
 				vol,
 				validDataVolumePrefix,
 				validStoreVolumePrefix,
+			)
+		}
+	}
+
+	for _, cap := range c.Capabilities {
+		if _, ok := validCaps[cap]; !ok {
+			return fmt.Errorf(
+				"invalid capability: %s",
+				cap,
 			)
 		}
 	}

@@ -175,6 +175,7 @@ var _ = Describe("RuncAdapter", func() {
 					// Testing duplicate data mount
 					bpmCfg.StoreDir(),
 				},
+				Capabilities: []string{"TAIN", "SAICIN"},
 			}
 		})
 
@@ -195,20 +196,25 @@ var _ = Describe("RuncAdapter", func() {
 			Expect(spec.Version).To(Equal(specs.Version))
 
 			expectedProcessArgs := append([]string{procCfg.Executable}, procCfg.Args...)
-			Expect(spec.Process).To(Equal(&specs.Process{
-				Terminal:    false,
-				ConsoleSize: nil,
-				User:        user,
-				Args:        expectedProcessArgs,
-				Env: append(
-					convertEnv(procCfg.Env),
-					fmt.Sprintf("TMPDIR=%s", bpmCfg.TempDir()),
-					fmt.Sprintf("LANG=%s", adapter.DefaultLang),
-					fmt.Sprintf("BPM_ID=%s", bpmCfg.ContainerID(false)),
-				),
-				Cwd:             "/",
-				Rlimits:         []specs.POSIXRlimit{},
-				NoNewPrivileges: true,
+			expectedEnv := convertEnv(procCfg.Env)
+			expectedEnv = append(expectedEnv, fmt.Sprintf("TMPDIR=%s", bpmCfg.TempDir()))
+			expectedEnv = append(expectedEnv, fmt.Sprintf("LANG=%s", adapter.DefaultLang))
+			expectedEnv = append(expectedEnv, fmt.Sprintf("BPM_ID=%s", bpmCfg.ContainerID(false)))
+
+			Expect(spec.Process.Terminal).To(Equal(false))
+			Expect(spec.Process.ConsoleSize).To(BeNil())
+			Expect(spec.Process.User).To(Equal(user))
+			Expect(spec.Process.Args).To(Equal(expectedProcessArgs))
+			Expect(spec.Process.Env).To(ConsistOf(expectedEnv))
+			Expect(spec.Process.Cwd).To(Equal("/"))
+			Expect(spec.Process.Rlimits).To(Equal([]specs.POSIXRlimit{}))
+			Expect(spec.Process.NoNewPrivileges).To(Equal(true))
+			Expect(spec.Process.Capabilities).To(Equal(&specs.LinuxCapabilities{
+				Bounding:    []string{"CAP_TAIN", "CAP_SAICIN"},
+				Effective:   []string{},
+				Inheritable: []string{"CAP_TAIN", "CAP_SAICIN"},
+				Permitted:   []string{"CAP_TAIN", "CAP_SAICIN"},
+				Ambient:     []string{"CAP_TAIN", "CAP_SAICIN"},
 			}))
 
 			Expect(spec.Root).To(Equal(&specs.Root{

@@ -45,6 +45,8 @@ processes:
     - /var/vcap/data/certificates
     hooks:
       pre_start: /var/vcap/jobs/<job>/bin/bpm-pre-start
+    capabilities:
+    - NET_BIND_SERVICE
   <worker>:
     executable: /var/vcap/packages/program/bin/program-worker
     args:

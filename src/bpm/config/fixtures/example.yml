@@ -16,5 +16,7 @@ processes:
       - /var/vcap/data/alternate-program
     hooks:
       pre_start: /var/vcap/jobs/program/bin/pre
+    capabilities:
+      - NET_BIND_SERVICE
   alternate-example:
     executable: /I/AM/AN/EXECUTABLE

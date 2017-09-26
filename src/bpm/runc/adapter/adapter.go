@@ -121,6 +121,7 @@ func (a *RuncAdapter) BuildSpec(
 		Cwd:             "/",
 		Rlimits:         []specs.POSIXRlimit{},
 		NoNewPrivileges: true,
+		Capabilities:    processCapabilities(procCfg.Capabilities),
 	}
 
 	mountStore, err := checkDirExists(filepath.Dir(bpmCfg.StoreDir()))
@@ -328,6 +329,24 @@ func processEnvironment(env map[string]string, cfg *config.BPMConfig) []string {
 		fmt.Sprintf("LANG=%s", DefaultLang),
 		fmt.Sprintf("BPM_ID=%s", cfg.ContainerID(false)),
 	)
+}
+
+// Returns the specs.LinuxCapabilities for a given slice of Capabilities.
+// We do not set the Effective set, as it is computed dynamically by the
+// kernel from the other sets.
+func processCapabilities(caps []string) *specs.LinuxCapabilities {
+	capsWithPrefix := make([]string, len(caps))
+	for i := 0; i < len(caps); i++ {
+		capsWithPrefix[i] = fmt.Sprintf("CAP_%s", caps[i])
+	}
+
+	return &specs.LinuxCapabilities{
+		Ambient:     capsWithPrefix,
+		Bounding:    capsWithPrefix,
+		Effective:   []string{},
+		Inheritable: capsWithPrefix,
+		Permitted:   capsWithPrefix,
+	}
 }
 
 func checkDirExists(dir string) (bool, error) {

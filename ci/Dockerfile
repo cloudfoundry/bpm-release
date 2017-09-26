@@ -14,7 +14,7 @@ RUN \
   make && \
   make install
 
-RUN apt-get update && apt-get -y install pkg-config strace dnsutils vim-nox
+RUN apt-get update && apt-get -y install pkg-config strace dnsutils vim-nox netcat-openbsd
 
 # copy runc binary to /bin
 ADD runc-linux/runc.amd64 /bin/runc

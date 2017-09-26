@@ -17,10 +17,12 @@ package main_test
 
 import (
 	"bpm/config"
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -389,11 +391,37 @@ var _ = Describe("bpm", func() {
 				cfgPath = writeConfig(jobName, cfg)
 			})
 
-			It("has no effective capabilities", func() {
+			It("has no effective capabilities by default", func() {
 				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 				Eventually(session).Should(gexec.Exit(0))
 				Eventually(fileContents(stdoutFileLocation)).Should(MatchRegexp("^\\s?CapEff:\\s?0000000000000000\\s?$"))
+			})
+
+			Context("when the NET_BIND_SERVICE capability is provided", func() {
+				BeforeEach(func() {
+					cfg.Processes[jobName].Executable = "/bin/bash"
+					cfg.Processes[jobName].Args = []string{
+						"-c",
+						`echo jim | nc -l 127.0.0.1 80`,
+					}
+					cfg.Processes[jobName].Capabilities = []string{"NET_BIND_SERVICE"}
+
+					cfgPath = writeConfig(jobName, cfg)
+				})
+
+				It("allows processes to bind to privileged ports", func() {
+					session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+					Expect(err).NotTo(HaveOccurred())
+					Eventually(session).Should(gexec.Exit(0))
+
+					conn, err := net.Dial("tcp", "127.0.0.1:80")
+					Expect(err).NotTo(HaveOccurred())
+
+					data, err := bufio.NewReader(conn).ReadString('\n')
+					Expect(err).NotTo(HaveOccurred())
+					Expect(data).To(Equal("jim\n"))
+				})
 			})
 		})
 
