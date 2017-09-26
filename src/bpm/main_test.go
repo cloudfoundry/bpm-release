@@ -717,7 +717,7 @@ var _ = Describe("bpm", func() {
 				session, err := gexec.Start(start, GinkgoWriter, GinkgoWriter)
 				Expect(err).ShouldNot(HaveOccurred())
 				Eventually(session).Should(gexec.Exit(0))
-				Expect(session.Out).Should(gbytes.Say(fmt.Sprintf("container %s is already running", jobName)))
+				Expect(session.Out).Should(gbytes.Say("process-already-running"))
 				newPid := getContainerPid()
 				Expect(newPid).To(Equal(origPid))
 			})

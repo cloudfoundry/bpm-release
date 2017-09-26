@@ -67,7 +67,11 @@ func NewRuncClient(runcPath, runcRoot string) *RuncClient {
 	}
 }
 
-func (*RuncClient) CreateBundle(bundlePath string, jobSpec specs.Spec, user specs.User) error {
+func (*RuncClient) CreateBundle(
+	bundlePath string,
+	jobSpec specs.Spec,
+	user specs.User,
+) error {
 	err := os.MkdirAll(bundlePath, 0700)
 	if err != nil {
 		return err
@@ -108,7 +112,7 @@ func (c *RuncClient) RunContainer(pidFilePath, bundlePath, containerID string, s
 	return runcCmd.Run()
 }
 
-// This function assumes you are launching an interactive shell.
+// Exec assumes you are launching an interactive shell.
 // We should improve the interface to mirror `runc exec` more generally.
 func (c *RuncClient) Exec(containerID, command string, stdin io.Reader, stdout, stderr io.Writer) error {
 	runcCmd := exec.Command(

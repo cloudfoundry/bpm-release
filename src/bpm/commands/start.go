@@ -66,7 +66,7 @@ func start(cmd *cobra.Command, _ []string) error {
 	procCfg, ok := jobCfg.Processes[procName]
 	if !ok {
 		//TODO: Test Me
-		err := fmt.Errorf("invalid-process: %s", procName)
+		err = fmt.Errorf("invalid-process: %s", procName)
 		logger.Error("process-not-defined", err)
 		return err
 	}
@@ -84,9 +84,10 @@ func start(cmd *cobra.Command, _ []string) error {
 
 	switch state {
 	case lifecycle.ContainerStateRunning:
-		logger.Info(fmt.Sprintf("container %s is already running", bpmCfg.JobName()))
+		logger.Info("process-already-running")
 		return nil
 	case lifecycle.ContainerStateStopped:
+		logger.Info("removing-stopped-process")
 		removeErr := runcLifecycle.RemoveProcess(bpmCfg)
 		if removeErr != nil {
 			logger.Error("failed-to-cleanup", removeErr)

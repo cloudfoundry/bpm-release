@@ -113,7 +113,6 @@ func (a *RuncAdapter) BuildSpec(
 	procCfg *config.ProcessConfig,
 	user specs.User,
 ) (specs.Spec, error) {
-	logger = logger.Session("build-spec")
 	process := &specs.Process{
 		User:            user,
 		Args:            append([]string{procCfg.Executable}, procCfg.Args...),

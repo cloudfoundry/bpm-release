@@ -100,11 +100,16 @@ func NewRuncLifecycle(
 }
 
 func (j *RuncLifecycle) StartProcess(logger lager.Logger, bpmCfg *config.BPMConfig, procCfg *config.ProcessConfig) error {
+	logger = logger.Session("start-process")
+	logger.Info("starting")
+	defer logger.Info("complete")
+
 	user, err := j.userFinder.Lookup(usertools.VcapUser)
 	if err != nil {
 		return err
 	}
 
+	logger.Info("creating-job-prerequisites")
 	stdout, stderr, err := j.runcAdapter.CreateJobPrerequisites(bpmCfg, procCfg, user)
 	if err != nil {
 		return fmt.Errorf("failed to create system files: %s", err.Error())
@@ -112,11 +117,13 @@ func (j *RuncLifecycle) StartProcess(logger lager.Logger, bpmCfg *config.BPMConf
 	defer stdout.Close()
 	defer stderr.Close()
 
+	logger.Info("building-spec")
 	spec, err := j.runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
 	if err != nil {
 		return err
 	}
 
+	logger.Info("creating-bundle")
 	err = j.runcClient.CreateBundle(bpmCfg.BundlePath(), spec, user)
 	if err != nil {
 		return fmt.Errorf("bundle build failure: %s", err.Error())
@@ -133,6 +140,7 @@ func (j *RuncLifecycle) StartProcess(logger lager.Logger, bpmCfg *config.BPMConf
 		}
 	}
 
+	logger.Info("running-container")
 	return j.runcClient.RunContainer(
 		bpmCfg.PidFile(),
 		bpmCfg.BundlePath(),
