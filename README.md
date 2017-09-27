@@ -45,7 +45,7 @@ eventually become the official source of bpm documentation.
 
 We working to make bpm a feature-flagged addition to the releases which are
 part of [CF Deployment](cf-deployment). To date bpm has been incorporated into
-[Deigo release](diego-release) as of v1.26.0, and [CAPI release](capi-release)
+[Diego release](diego-release) as of v1.26.0, and [CAPI release](capi-release)
 as of v1.42.0
 
 This entire project can also be viewed as a step towards the isolation of BOSH
