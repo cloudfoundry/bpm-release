@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"time"
 
@@ -146,6 +147,37 @@ var _ = Describe("RuncJobLifecycle", func() {
 			Expect(cid).To(Equal(expectedContainerID))
 			Expect(stdout).To(Equal(expectedStdout))
 			Expect(stderr).To(Equal(expectedStderr))
+		})
+
+		Context("when a PreStart Hook is provided", func() {
+			BeforeEach(func() {
+				procCfg.Hooks = &config.Hooks{
+					PreStart: "/please/execute/me",
+				}
+			})
+
+			It("executes the pre start hook", func() {
+				err := runcLifecycle.StartProcess(logger, bpmCfg, procCfg)
+				Expect(err).NotTo(HaveOccurred())
+
+				expectedCommand := exec.Command("/bin/bash", "-c", procCfg.Hooks.PreStart)
+				expectedCommand.Stdout = expectedStdout
+				expectedCommand.Stderr = expectedStderr
+
+				Expect(fakeCommandRunner.RunCallCount()).To(Equal(1))
+				Expect(fakeCommandRunner.RunArgsForCall(0)).To(Equal(expectedCommand))
+			})
+
+			Context("when the PreStart Hook fails", func() {
+				BeforeEach(func() {
+					fakeCommandRunner.RunReturns(errors.New("boom!"))
+				})
+
+				It("returns an error", func() {
+					err := runcLifecycle.StartProcess(logger, bpmCfg, procCfg)
+					Expect(err).To(HaveOccurred())
+				})
+			})
 		})
 
 		Context("when the process name is the same as the job name", func() {
