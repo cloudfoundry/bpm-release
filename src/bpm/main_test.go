@@ -88,8 +88,9 @@ var _ = Describe("bpm", func() {
 		return exec.Command("runc", args...)
 	}
 
-	var newProcConfig = func(processCmd string) *config.ProcessConfig {
+	var newProcConfig = func(processName, processCmd string) *config.ProcessConfig {
 		return &config.ProcessConfig{
+			Name:       processName,
 			Executable: "/bin/bash",
 			Args: []string{
 				"-c",
@@ -112,13 +113,13 @@ var _ = Describe("bpm", func() {
 					 child=$!;
 					 wait $child`, boshConfigPath, jobName)
 
-		return newProcConfig(processCmd)
+		return newProcConfig(processName, processCmd)
 	}
 
 	var newDefaultConfig = func(jobName, processName string) *config.JobConfig {
 		return &config.JobConfig{
-			Processes: map[string]*config.ProcessConfig{
-				processName: newDefaultProcConfig(jobName, processName),
+			Processes: []*config.ProcessConfig{
+				newDefaultProcConfig(jobName, processName),
 			},
 		}
 	}
@@ -200,7 +201,7 @@ var _ = Describe("bpm", func() {
 				   sleep 5 &
 					 child=$!;
 					 wait $child`
-			cfg.Processes[jobName] = newProcConfig(procCmd)
+			cfg.Processes[0] = newProcConfig(jobName, procCmd)
 			cfgPath = writeConfig(jobName, cfg)
 
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
@@ -271,7 +272,7 @@ var _ = Describe("bpm", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(f.Close()).To(Succeed())
 
-				cfg.Processes[jobName].Hooks = &config.Hooks{
+				cfg.Processes[0].Hooks = &config.Hooks{
 					PreStart: filepath.Join(boshConfigPath, "pre-start"),
 				}
 
@@ -294,7 +295,7 @@ var _ = Describe("bpm", func() {
 
 				storeFile = filepath.Join(boshConfigPath, "store", jobName, "data.txt")
 
-				cfg.Processes[jobName].Args = []string{
+				cfg.Processes[0].Args = []string{
 					"-c",
 					fmt.Sprintf(
 						`echo "storing some data" > %s;
@@ -329,13 +330,13 @@ var _ = Describe("bpm", func() {
 				stderrFileLocation = filepath.Join(boshConfigPath, "sys", "log", jobName, fmt.Sprintf("%s.err.log", procName))
 
 				cfg := &config.JobConfig{
-					Processes: map[string]*config.ProcessConfig{
-						jobName:  newDefaultProcConfig(jobName, jobName),
-						procName: newDefaultProcConfig(jobName, procName),
+					Processes: []*config.ProcessConfig{
+						newDefaultProcConfig(jobName, jobName),
+						newDefaultProcConfig(jobName, procName),
 					},
 				}
 
-				cfg.Processes[procName].Args = []string{
+				cfg.Processes[1].Args = []string{
 					"-c",
 					`echo "alternate config out" && echo "alternate config err" 1>&2 && sleep 5`,
 				}
@@ -382,8 +383,8 @@ var _ = Describe("bpm", func() {
 
 		Context("capabilities", func() {
 			BeforeEach(func() {
-				cfg.Processes[jobName].Executable = "/bin/bash"
-				cfg.Processes[jobName].Args = []string{
+				cfg.Processes[0].Executable = "/bin/bash"
+				cfg.Processes[0].Args = []string{
 					"-c",
 					`cat /proc/1/status | grep CapEff`,
 				}
@@ -400,12 +401,12 @@ var _ = Describe("bpm", func() {
 
 			Context("when the NET_BIND_SERVICE capability is provided", func() {
 				BeforeEach(func() {
-					cfg.Processes[jobName].Executable = "/bin/bash"
-					cfg.Processes[jobName].Args = []string{
+					cfg.Processes[0].Executable = "/bin/bash"
+					cfg.Processes[0].Args = []string{
 						"-c",
 						`echo jim | nc -l 127.0.0.1 80`,
 					}
-					cfg.Processes[jobName].Capabilities = []string{"NET_BIND_SERVICE"}
+					cfg.Processes[0].Capabilities = []string{"NET_BIND_SERVICE"}
 
 					cfgPath = writeConfig(jobName, cfg)
 				})
@@ -415,8 +416,12 @@ var _ = Describe("bpm", func() {
 					Expect(err).NotTo(HaveOccurred())
 					Eventually(session).Should(gexec.Exit(0))
 
-					conn, err := net.Dial("tcp", "127.0.0.1:80")
-					Expect(err).NotTo(HaveOccurred())
+					var conn net.Conn
+					Eventually(func() error {
+						var err error
+						conn, err = net.Dial("tcp", "127.0.0.1:80")
+						return err
+					}).ShouldNot(HaveOccurred())
 
 					data, err := bufio.NewReader(conn).ReadString('\n')
 					Expect(err).NotTo(HaveOccurred())
@@ -428,8 +433,8 @@ var _ = Describe("bpm", func() {
 		Context("resource limits", func() {
 			Context("memory", func() {
 				BeforeEach(func() {
-					cfg.Processes[jobName].Executable = "/bin/bash"
-					cfg.Processes[jobName].Args = []string{
+					cfg.Processes[0].Executable = "/bin/bash"
+					cfg.Processes[0].Args = []string{
 						"-c",
 						// See https://codegolf.stackexchange.com/questions/24485/create-a-memory-leak-without-any-fork-bombs
 						`start_memory_leak() { :(){ : $@$@;};: : ;};
@@ -441,7 +446,7 @@ var _ = Describe("bpm", func() {
 					}
 
 					limit := "4M"
-					cfg.Processes[jobName].Limits = &config.Limits{
+					cfg.Processes[0].Limits = &config.Limits{
 						Memory: &limit,
 					}
 
@@ -500,8 +505,8 @@ var _ = Describe("bpm", func() {
 
 			Context("open files", func() {
 				BeforeEach(func() {
-					cfg.Processes[jobName].Executable = "/bin/bash"
-					cfg.Processes[jobName].Args = []string{
+					cfg.Processes[0].Executable = "/bin/bash"
+					cfg.Processes[0].Args = []string{
 						"-c",
 						fmt.Sprintf(`file_dir=%s;
 						  start_file_leak() { for i in $(seq 1 20); do touch $file_dir/file-$i; done; tail -f $file_dir/* ;};
@@ -513,7 +518,7 @@ var _ = Describe("bpm", func() {
 					}
 
 					limit := uint64(10)
-					cfg.Processes[jobName].Limits = &config.Limits{
+					cfg.Processes[0].Limits = &config.Limits{
 						OpenFiles: &limit,
 					}
 
@@ -537,8 +542,8 @@ var _ = Describe("bpm", func() {
 
 			Context("processes", func() {
 				BeforeEach(func() {
-					cfg.Processes[jobName].Executable = "/bin/bash"
-					cfg.Processes[jobName].Args = []string{
+					cfg.Processes[0].Executable = "/bin/bash"
+					cfg.Processes[0].Args = []string{
 						"-c",
 						` trap "if [ \"$child\" ]; then \
 										 kill $child \
@@ -551,7 +556,7 @@ var _ = Describe("bpm", func() {
 					}
 
 					limit := int64(1000)
-					cfg.Processes[jobName].Limits = &config.Limits{
+					cfg.Processes[0].Limits = &config.Limits{
 						Processes: &limit,
 					}
 
@@ -589,7 +594,7 @@ var _ = Describe("bpm", func() {
 					messageQueueId, err = strconv.Atoi(strings.Trim(parts[1], " \n"))
 					Expect(err).NotTo(HaveOccurred())
 
-					cfg.Processes[jobName].Args = []string{
+					cfg.Processes[0].Args = []string{
 						"-c",
 						fmt.Sprintf(`
 						ipcs -q -i %d;
@@ -667,14 +672,14 @@ var _ = Describe("bpm", func() {
 
 		Context("when a running container exist with the same name", func() {
 			startContainer := func() *exec.Cmd {
-				cfg.Processes[jobName].Executable = "/bin/bash"
-				cfg.Processes[jobName].Args = []string{
+				cfg.Processes[0].Executable = "/bin/bash"
+				cfg.Processes[0].Args = []string{
 					"-c",
 					"sleep 10000",
 				}
 
 				limit := int64(1000)
-				cfg.Processes[jobName].Limits = &config.Limits{
+				cfg.Processes[0].Limits = &config.Limits{
 					Processes: &limit,
 				}
 
@@ -725,14 +730,14 @@ var _ = Describe("bpm", func() {
 
 		Context("when a stopped container exists with the same name", func() {
 			BeforeEach(func() {
-				cfg.Processes[jobName].Executable = "/bin/bash"
-				cfg.Processes[jobName].Args = []string{
+				cfg.Processes[0].Executable = "/bin/bash"
+				cfg.Processes[0].Args = []string{
 					"-c",
 					"sleep 10000",
 				}
 
 				limit := int64(1000)
-				cfg.Processes[jobName].Limits = &config.Limits{
+				cfg.Processes[0].Limits = &config.Limits{
 					Processes: &limit,
 				}
 
@@ -1300,7 +1305,7 @@ var _ = Describe("bpm", func() {
 										sleep 5 &
 										child=$!;
 										wait $child`, boshConfigPath, jobName)
-			cfg.Processes[jobName] = newProcConfig(procCmd)
+			cfg.Processes[0] = newProcConfig(jobName, procCmd)
 			cfgPath = writeConfig(jobName, cfg)
 		})
 
@@ -1445,13 +1450,13 @@ var _ = Describe("bpm", func() {
 				stderrFileLocation = filepath.Join(boshConfigPath, "sys", "log", jobName, fmt.Sprintf("%s.err.log", procName))
 
 				cfg := &config.JobConfig{
-					Processes: map[string]*config.ProcessConfig{
-						jobName:  newDefaultProcConfig(jobName, jobName),
-						procName: newDefaultProcConfig(jobName, procName),
+					Processes: []*config.ProcessConfig{
+						newDefaultProcConfig(jobName, jobName),
+						newDefaultProcConfig(jobName, procName),
 					},
 				}
 
-				cfg.Processes[procName].Args = []string{
+				cfg.Processes[1].Args = []string{
 					"-c",
 					`echo "alternate config out" && echo "alternate config err" 1>&2 && sleep 5`,
 				}
@@ -1640,13 +1645,13 @@ var _ = Describe("bpm", func() {
 					stderrFileLocation = filepath.Join(boshConfigPath, "sys", "log", jobName, fmt.Sprintf("%s.err.log", procName))
 
 					cfg := &config.JobConfig{
-						Processes: map[string]*config.ProcessConfig{
-							jobName:  newDefaultProcConfig(jobName, jobName),
-							procName: newDefaultProcConfig(jobName, procName),
+						Processes: []*config.ProcessConfig{
+							newDefaultProcConfig(jobName, jobName),
+							newDefaultProcConfig(jobName, procName),
 						},
 					}
 
-					cfg.Processes[procName].Args = []string{
+					cfg.Processes[1].Args = []string{
 						"-c",
 						`echo "alternate config out" && echo "alternate config err" 1>&2 && sleep 5`,
 					}
@@ -1685,8 +1690,8 @@ var _ = Describe("bpm", func() {
 
 	Context("start stop parallelization", func() {
 		BeforeEach(func() {
-			cfg.Processes[jobName].Executable = "/bin/bash"
-			cfg.Processes[jobName].Args = []string{
+			cfg.Processes[0].Executable = "/bin/bash"
+			cfg.Processes[0].Args = []string{
 				"-c",
 				`trap "kill $child" SIGUSR1;
 				 sleep 100 &

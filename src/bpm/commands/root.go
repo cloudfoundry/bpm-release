@@ -175,3 +175,13 @@ func newRuncLifecycle() *lifecycle.RuncLifecycle {
 		clock,
 	)
 }
+
+func processByNameFromJobConfig(jobCfg *config.JobConfig, procName string) (*config.ProcessConfig, error) {
+	for _, processConfig := range jobCfg.Processes {
+		if processConfig.Name == procName {
+			return processConfig, nil
+		}
+	}
+
+	return nil, errors.New("process-not-found")
+}

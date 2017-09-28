@@ -1,22 +1,22 @@
 ---
 processes:
-  example:
-    executable: /var/vcap/packages/program/bin/program-server
-    args:
-      - --port=2424
-      - --host="localhost"
-    env:
-      FOO: BAR
-      BAZ: BUZZ
-    limits:
-      memory: 100G
-      open_files: 100
-    volumes:
-      - /var/vcap/data/program/foobar
-      - /var/vcap/data/alternate-program
-    hooks:
-      pre_start: /var/vcap/jobs/program/bin/pre
-    capabilities:
-      - NET_BIND_SERVICE
-  alternate-example:
-    executable: /I/AM/AN/EXECUTABLE
+- name: example
+  executable: /var/vcap/packages/program/bin/program-server
+  args:
+  - --port=2424
+  - --host="localhost"
+  env:
+    FOO: BAR
+    BAZ: BUZZ
+  limits:
+    memory: 100G
+    open_files: 100
+  volumes:
+  - /var/vcap/data/program/foobar
+  - /var/vcap/data/alternate-program
+  hooks:
+    pre_start: /var/vcap/jobs/program/bin/pre
+  capabilities:
+  - NET_BIND_SERVICE
+- name: alternate-example
+  executable: /I/AM/AN/EXECUTABLE

@@ -26,10 +26,11 @@ import (
 )
 
 type JobConfig struct {
-	Processes map[string]*ProcessConfig `yaml:"processes"`
+	Processes []*ProcessConfig `yaml:"processes"`
 }
 
 type ProcessConfig struct {
+	Name         string            `yaml:"name"`
 	Executable   string            `yaml:"executable"`
 	Args         []string          `yaml:"args"`
 	Env          map[string]string `yaml:"env"`
@@ -90,6 +91,10 @@ func (c *JobConfig) Validate() error {
 }
 
 func (c *ProcessConfig) Validate() error {
+	if c.Name == "" {
+		return errors.New("invalid config: name")
+	}
+
 	if c.Executable == "" {
 		return errors.New("invalid config: executable")
 	}

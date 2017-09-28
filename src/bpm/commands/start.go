@@ -63,9 +63,8 @@ func start(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	procCfg, ok := jobCfg.Processes[procName]
-	if !ok {
-		//TODO: Test Me
+	procCfg, err := processByNameFromJobConfig(jobCfg, procName)
+	if err != nil {
 		err = fmt.Errorf("invalid-process: %s", procName)
 		logger.Error("process-not-defined", err)
 		return err

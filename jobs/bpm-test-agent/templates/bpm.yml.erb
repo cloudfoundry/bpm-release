@@ -1,19 +1,19 @@
 processes:
-  bpm-test-agent:
-    executable: /var/vcap/packages/bpm-test-agent/bin/bpm-test-agent
-    args:
-      - --port
-      - 1337
-    env:
-      BPM: SWEET
-    limits:
-      memory: 1G
-      open_files: 1024
-  alt-server:
-    executable: /var/vcap/packages/bpm-test-agent/bin/bpm-test-agent
-    args:
-      - --port
-      - 1338
-      - --ignore-signals
-    env:
-      BPM: CONTAINED
+- name: bpm-test-agent
+  executable: /var/vcap/packages/bpm-test-agent/bin/bpm-test-agent
+  args:
+    - --port
+    - 1337
+  env:
+    BPM: SWEET
+  limits:
+    memory: 1G
+    open_files: 1024
+- name: alt-server
+  executable: /var/vcap/packages/bpm-test-agent/bin/bpm-test-agent
+  args:
+    - --port
+    - 1338
+    - --ignore-signals
+  env:
+    BPM: CONTAINED
