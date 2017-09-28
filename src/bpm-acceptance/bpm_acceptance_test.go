@@ -162,7 +162,7 @@ var _ = Describe("BpmAcceptance", func() {
 
 		// We expect the test agent to be the only process with the root PID
 		Expect(len(processes)).To(BeNumerically(">=", 1))
-		Expect(processes).To(ConsistOf(MatchRegexp("1 /var/vcap/packages/bpm-test-agent/bin/bpm-test-agent.*")))
+		Expect(processes).To(ContainElement(MatchRegexp("1 /var/vcap/packages/bpm-test-agent/bin/bpm-test-agent.*")))
 	})
 
 	Context("seccomp filters", func() {
