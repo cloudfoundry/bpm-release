@@ -12,8 +12,10 @@ processes:
     memory: 100G
     open_files: 100
   volumes:
-  - /var/vcap/data/program/foobar
-  - /var/vcap/data/alternate-program
+  - path: /var/vcap/data/program/foobar
+    writable: true
+  - path: /var/vcap/data/alternate-program
+    writable: false
   hooks:
     pre_start: /var/vcap/jobs/program/bin/pre
   capabilities:

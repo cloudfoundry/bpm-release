@@ -48,8 +48,13 @@ func (a *RuncAdapter) CreateJobPrerequisites(
 		return nil, nil, err
 	}
 
-	directories := append(
-		procCfg.Volumes,
+	var directories []string
+	for _, vol := range procCfg.Volumes {
+		directories = append(directories, vol.Path)
+	}
+
+	directories = append(
+		directories,
 		bpmCfg.DataDir(),
 		bpmCfg.LogDir(),
 		bpmCfg.TempDir(),
@@ -283,7 +288,7 @@ func boshMounts(bpmCfg *config.BPMConfig, mountStore bool) []specs.Mount {
 	return mounts
 }
 
-func userProvidedIdentityMounts(logger lager.Logger, bpmCfg *config.BPMConfig, volumes []string) []specs.Mount {
+func userProvidedIdentityMounts(logger lager.Logger, bpmCfg *config.BPMConfig, volumes []config.Volume) []specs.Mount {
 	var mnts []specs.Mount
 	mntsSeen := map[string]bool{
 		bpmCfg.DataDir():  true,
@@ -291,12 +296,16 @@ func userProvidedIdentityMounts(logger lager.Logger, bpmCfg *config.BPMConfig, v
 	}
 
 	for _, vol := range volumes {
-		if _, ok := mntsSeen[vol]; ok {
-			logger.Info("duplicate-volume", lager.Data{"volume": vol})
+		if _, ok := mntsSeen[vol.Path]; ok {
+			logger.Info("duplicate-volume", lager.Data{"volume": vol.Path})
 			continue
 		}
-		mnts = append(mnts, identityBindMountWithOptions(vol, "nodev", "nosuid", "noexec", "rbind", "rw"))
-		mntsSeen[vol] = true
+		if vol.Writable {
+			mnts = append(mnts, identityBindMountWithOptions(vol.Path, "nodev", "nosuid", "noexec", "rbind", "rw"))
+		} else {
+			mnts = append(mnts, identityBindMountWithOptions(vol.Path, "nodev", "nosuid", "noexec", "rbind", "ro"))
+		}
+		mntsSeen[vol.Path] = true
 	}
 
 	return mnts

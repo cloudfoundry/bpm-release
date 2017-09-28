@@ -46,7 +46,10 @@ var _ = Describe("Config", func() {
 			Expect(cfg.Processes[0].Env).To(HaveKeyWithValue("BAZ", "BUZZ"))
 			Expect(cfg.Processes[0].Limits.Memory).To(Equal(&expectedMemoryLimit))
 			Expect(cfg.Processes[0].Limits.OpenFiles).To(Equal(&expectedOpenFilesLimit))
-			Expect(cfg.Processes[0].Volumes).To(ConsistOf("/var/vcap/data/program/foobar", "/var/vcap/data/alternate-program"))
+			Expect(cfg.Processes[0].Volumes).To(ConsistOf(
+				config.Volume{Path: "/var/vcap/data/program/foobar", Writable: true},
+				config.Volume{Path: "/var/vcap/data/alternate-program"},
+			))
 			Expect(cfg.Processes[0].Hooks.PreStart).To(Equal("/var/vcap/jobs/program/bin/pre"))
 			Expect(cfg.Processes[0].Capabilities).To(ConsistOf("NET_BIND_SERVICE"))
 
@@ -97,9 +100,9 @@ var _ = Describe("Config", func() {
 					{
 						Name:       "example",
 						Executable: "executable",
-						Volumes: []string{
-							"/var/vcap/data/program",
-							"/var/vcap/store/program",
+						Volumes: []config.Volume{
+							{Path: "/var/vcap/data/program", Writable: true},
+							{Path: "/var/vcap/store/program", Writable: false},
 						},
 					},
 				},
@@ -112,19 +115,32 @@ var _ = Describe("Config", func() {
 
 		Context("when the config has volumes that are not nested in `/var/vcap`", func() {
 			It("returns a validation error", func() {
-				cfg.Processes[0].Volumes = []string{"/var/vcap/data/valid", "/bin"}
+				cfg.Processes[0].Volumes = []config.Volume{
+					{Path: "/var/vcap/data/valid"},
+					{Path: "/bin"},
+				}
 				Expect(cfg.Validate()).To(HaveOccurred())
 
-				cfg.Processes[0].Volumes = []string{"/var/vcap/data/valid", "/var/vcap/invalid"}
+				cfg.Processes[0].Volumes = []config.Volume{
+					{Path: "/var/vcap/data/valid"},
+					{Path: "/var/vcap/invalid"},
+				}
 				Expect(cfg.Validate()).To(HaveOccurred())
 
-				cfg.Processes[0].Volumes = []string{"/var/vcap/data/valid", "/var/vcap/data"}
+				cfg.Processes[0].Volumes = []config.Volume{
+					{Path: "/var/vcap/data/valid"},
+					{Path: "/var/vcap/data"},
+				}
 				Expect(cfg.Validate()).To(HaveOccurred())
 
-				cfg.Processes[0].Volumes = []string{"/var/vcap/store"}
+				cfg.Processes[0].Volumes = []config.Volume{
+					{Path: "/var/vcap/store"},
+				}
 				Expect(cfg.Validate()).To(HaveOccurred())
 
-				cfg.Processes[0].Volumes = []string{"//var/vcap/data/valid"}
+				cfg.Processes[0].Volumes = []config.Volume{
+					{Path: "//var/vcap/data/valid"},
+				}
 				Expect(cfg.Validate()).To(HaveOccurred())
 			})
 		})

@@ -60,9 +60,9 @@ var _ = Describe("RuncAdapter", func() {
 
 		bpmCfg = config.NewBPMConfig(systemRoot, jobName, procName)
 		procCfg = &config.ProcessConfig{
-			Volumes: []string{
-				filepath.Join(systemRoot, "some", "directory"),
-				filepath.Join(systemRoot, "another", "location"),
+			Volumes: []config.Volume{
+				{Path: filepath.Join(systemRoot, "some", "directory")},
+				{Path: filepath.Join(systemRoot, "another", "location")},
 			},
 		}
 	})
@@ -126,7 +126,7 @@ var _ = Describe("RuncAdapter", func() {
 
 			//Volumes
 			for _, vol := range procCfg.Volumes {
-				volDirInfo, err := os.Stat(vol)
+				volDirInfo, err := os.Stat(vol.Path)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(volDirInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0700)))
 				Expect(volDirInfo.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(200)))
@@ -165,15 +165,15 @@ var _ = Describe("RuncAdapter", func() {
 					"RAVE": "true",
 					"ONE":  "two",
 				},
-				Volumes: []string{
-					"/path/to/volume/1",
+				Volumes: []config.Volume{
+					{Path: "/path/to/volume/1", Writable: true},
 					// Testing duplicate volumes
-					"/path/to/volume/2",
-					"/path/to/volume/2",
-					// Testing duplicate store mount
-					bpmCfg.DataDir(),
+					{Path: "/path/to/volume/2"},
+					{Path: "/path/to/volume/2"},
+					// Testing duplicate store mount and ignore writable flag
+					{Path: bpmCfg.DataDir()},
 					// Testing duplicate data mount
-					bpmCfg.StoreDir(),
+					{Path: bpmCfg.StoreDir(), Writable: true},
 				},
 				Capabilities: []string{"TAIN", "SAICIN"},
 			}
@@ -328,7 +328,7 @@ var _ = Describe("RuncAdapter", func() {
 					Destination: "/path/to/volume/2",
 					Type:        "bind",
 					Source:      "/path/to/volume/2",
-					Options:     []string{"nodev", "nosuid", "noexec", "rbind", "rw"},
+					Options:     []string{"nodev", "nosuid", "noexec", "rbind", "ro"},
 				},
 				{
 					Destination: "/var/tmp",

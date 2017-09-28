@@ -35,7 +35,7 @@ type ProcessConfig struct {
 	Args         []string          `yaml:"args"`
 	Env          map[string]string `yaml:"env"`
 	Limits       *Limits           `yaml:"limits"`
-	Volumes      []string          `yaml:"volumes"`
+	Volumes      []Volume          `yaml:"volumes"`
 	Hooks        *Hooks            `yaml:"hooks"`
 	Capabilities []string          `yaml:"capabilities"`
 }
@@ -48,6 +48,11 @@ type Limits struct {
 
 type Hooks struct {
 	PreStart string `yaml:"pre_start"`
+}
+
+type Volume struct {
+	Path     string `yaml:"path"`
+	Writable bool   `yaml:"writable"`
 }
 
 func ParseJobConfig(configPath string) (*JobConfig, error) {
@@ -100,9 +105,9 @@ func (c *ProcessConfig) Validate() error {
 	}
 
 	for _, vol := range c.Volumes {
-		volCleaned := filepath.Clean(vol)
-		if volCleaned != vol {
-			return fmt.Errorf("volume path must be canonical, expected %s but got %s", volCleaned, vol)
+		volCleaned := filepath.Clean(vol.Path)
+		if volCleaned != vol.Path {
+			return fmt.Errorf("volume path must be canonical, expected %s but got %s", volCleaned, vol.Path)
 		}
 
 		if !pathIsIn(validDataVolumePrefix, volCleaned) && !pathIsIn(validStoreVolumePrefix, volCleaned) {
