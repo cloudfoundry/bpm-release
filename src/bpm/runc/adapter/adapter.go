@@ -337,11 +337,15 @@ func processEnvironment(env map[string]string, cfg *config.BPMConfig) []string {
 		environ = append(environ, fmt.Sprintf("%s=%s", k, v))
 	}
 
-	return append(
-		environ,
-		fmt.Sprintf("TMPDIR=%s", cfg.TempDir()),
-		fmt.Sprintf("LANG=%s", DefaultLang),
-	)
+	if _, ok := env["TMPDIR"]; !ok {
+		environ = append(environ, fmt.Sprintf("TMPDIR=%s", cfg.TempDir()))
+	}
+
+	if _, ok := env["LANG"]; !ok {
+		environ = append(environ, fmt.Sprintf("LANG=%s", DefaultLang))
+	}
+
+	return environ
 }
 
 // Returns the specs.LinuxCapabilities for a given slice of Capabilities.

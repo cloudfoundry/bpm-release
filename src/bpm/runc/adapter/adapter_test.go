@@ -377,6 +377,23 @@ var _ = Describe("RuncAdapter", func() {
 				specs.LinuxNamespace{Type: "uts"},
 			))
 		})
+
+		Context("when a user provides TMPDIR and LANG environment variables", func() {
+			BeforeEach(func() {
+				procCfg.Env["TMPDIR"] = "/I/AM/A/TMPDIR"
+				procCfg.Env["LANG"] = "esperanto"
+			})
+
+			It("uses the user-provided values", func() {
+				spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(spec.Process.Env).NotTo(ContainElement(fmt.Sprintf("TMPDIR=%s", bpmCfg.TempDir())))
+				Expect(spec.Process.Env).NotTo(ContainElement(fmt.Sprintf("LANG=%s", adapter.DefaultLang)))
+				Expect(spec.Process.Env).To(ContainElement("TMPDIR=/I/AM/A/TMPDIR"))
+				Expect(spec.Process.Env).To(ContainElement("LANG=esperanto"))
+			})
+		})
+
 		Context("when a workdir is provided", func() {
 			BeforeEach(func() {
 				procCfg.WorkDir = "/I/AM/A/WORKDIR"
