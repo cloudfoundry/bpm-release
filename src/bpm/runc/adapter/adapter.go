@@ -119,11 +119,16 @@ func (a *RuncAdapter) BuildSpec(
 	procCfg *config.ProcessConfig,
 	user specs.User,
 ) (specs.Spec, error) {
+	cwd := "/"
+	if procCfg.WorkDir != "" {
+		cwd = procCfg.WorkDir
+	}
+
 	process := &specs.Process{
 		User:            user,
 		Args:            append([]string{procCfg.Executable}, procCfg.Args...),
 		Env:             processEnvironment(procCfg.Env, bpmCfg),
-		Cwd:             "/",
+		Cwd:             cwd,
 		Rlimits:         []specs.POSIXRlimit{},
 		NoNewPrivileges: true,
 		Capabilities:    processCapabilities(procCfg.Capabilities),

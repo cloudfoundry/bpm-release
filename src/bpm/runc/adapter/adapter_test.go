@@ -377,6 +377,17 @@ var _ = Describe("RuncAdapter", func() {
 				specs.LinuxNamespace{Type: "uts"},
 			))
 		})
+		Context("when a workdir is provided", func() {
+			BeforeEach(func() {
+				procCfg.WorkDir = "/I/AM/A/WORKDIR"
+			})
+
+			It("sets the current working directory of the process", func() {
+				spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(spec.Process.Cwd).To(Equal("/I/AM/A/WORKDIR"))
+			})
+		})
 
 		Context("when there is a persistent store", func() {
 			BeforeEach(func() {

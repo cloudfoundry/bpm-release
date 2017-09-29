@@ -38,6 +38,7 @@ type ProcessConfig struct {
 	Volumes      []Volume          `yaml:"volumes"`
 	Hooks        *Hooks            `yaml:"hooks"`
 	Capabilities []string          `yaml:"capabilities"`
+	WorkDir      string            `yaml:"workdir"`
 }
 
 type Limits struct {
