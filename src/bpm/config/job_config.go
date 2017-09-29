@@ -39,6 +39,7 @@ type ProcessConfig struct {
 	Hooks             *Hooks            `yaml:"hooks"`
 	Capabilities      []string          `yaml:"capabilities"`
 	WorkDir           string            `yaml:"workdir"`
+	PersistentDisk    bool              `yaml:"persistent_disk"`
 }
 
 type Limits struct {

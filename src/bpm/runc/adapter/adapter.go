@@ -17,6 +17,7 @@ package adapter
 
 import (
 	"bpm/config"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -61,12 +62,16 @@ func (a *RuncAdapter) CreateJobPrerequisites(
 		bpmCfg.TempDir(),
 	)
 
-	mountStore, err := checkDirExists(filepath.Dir(bpmCfg.StoreDir()))
-	if err != nil {
-		return nil, nil, err
-	}
+	if procCfg.PersistentDisk {
+		storeExists, err := checkDirExists(filepath.Dir(bpmCfg.StoreDir()))
+		if err != nil {
+			return nil, nil, err
+		}
 
-	if mountStore {
+		if !storeExists {
+			return nil, nil, errors.New("requested persistent disk does not exist")
+		}
+
 		directories = append(directories, bpmCfg.StoreDir())
 	}
 
@@ -134,11 +139,6 @@ func (a *RuncAdapter) BuildSpec(
 		Capabilities:    processCapabilities(procCfg.Capabilities),
 	}
 
-	mountStore, err := checkDirExists(filepath.Dir(bpmCfg.StoreDir()))
-	if err != nil {
-		return specs.Spec{}, err
-	}
-
 	mountResolvConf, err := checkDirExists(ResolvConfDir)
 	if err != nil {
 		return specs.Spec{}, err
@@ -146,7 +146,7 @@ func (a *RuncAdapter) BuildSpec(
 
 	mounts := requiredMounts()
 	mounts = append(mounts, systemIdentityMounts(mountResolvConf)...)
-	mounts = append(mounts, boshMounts(bpmCfg, mountStore)...)
+	mounts = append(mounts, boshMounts(bpmCfg, procCfg.PersistentDisk)...)
 	mounts = append(mounts, userProvidedIdentityMounts(logger, bpmCfg, procCfg.AdditionalVolumes)...)
 
 	var resources *specs.LinuxResources

@@ -9,6 +9,7 @@ processes:
   limits:
     memory: 1G
     open_files: 1024
+  persistent_disk: true
 - name: alt-server
   executable: /var/vcap/packages/bpm-test-agent/bin/bpm-test-agent
   args:

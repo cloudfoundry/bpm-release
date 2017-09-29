@@ -65,6 +65,8 @@ var _ = Describe("RuncAdapter", func() {
 				{Path: filepath.Join(systemRoot, "another", "location")},
 			},
 		}
+
+		Expect(os.MkdirAll(filepath.Join(systemRoot, "store"), 0700)).To(Succeed())
 	})
 
 	AfterEach(func() {
@@ -141,9 +143,9 @@ var _ = Describe("RuncAdapter", func() {
 			}
 		})
 
-		Context("when there is a persistent store", func() {
+		Context("when the user requests a persistent disk", func() {
 			BeforeEach(func() {
-				Expect(os.MkdirAll(filepath.Join(systemRoot, "store"), 0700)).To(Succeed())
+				procCfg.PersistentDisk = true
 			})
 
 			It("creates the job prerequisites", func() {
@@ -156,6 +158,17 @@ var _ = Describe("RuncAdapter", func() {
 				Expect(storeDirInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0700)))
 				Expect(storeDirInfo.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(200)))
 				Expect(storeDirInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
+			})
+
+			Context("and the persistent disk directory does not exist", func() {
+				BeforeEach(func() {
+					Expect(os.RemoveAll(filepath.Join(systemRoot, "store"))).To(Succeed())
+				})
+
+				It("creates the job prerequisites", func() {
+					_, _, err := runcAdapter.CreateJobPrerequisites(bpmCfg, procCfg, user)
+					Expect(err).To(HaveOccurred())
+				})
 			})
 		})
 	})
@@ -406,9 +419,9 @@ var _ = Describe("RuncAdapter", func() {
 			})
 		})
 
-		Context("when there is a persistent store", func() {
+		Context("when the user requests a persistent disk", func() {
 			BeforeEach(func() {
-				Expect(os.MkdirAll(filepath.Join(systemRoot, "store"), 0700)).To(Succeed())
+				procCfg.PersistentDisk = true
 			})
 
 			It("bind mounts the store directory into the container", func() {

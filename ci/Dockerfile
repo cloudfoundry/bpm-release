@@ -20,12 +20,12 @@ RUN apt-get update && apt-get -y install pkg-config strace dnsutils vim-nox netc
 ADD runc-linux/runc.amd64 /bin/runc
 RUN chmod +x /bin/runc
 
-# # add vcap user for test
+# add vcap user for test
 RUN \
   groupadd vcap -g 3000 && \
   useradd vcap -u 2000 -g 3000
 
-# # add required bosh directories for test
+# add required bosh directories for test
 RUN \
   mkdir -p /var/vcap/packages/bpm/bin && \
   mkdir -p /var/vcap/data/packages && \

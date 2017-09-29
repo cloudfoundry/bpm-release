@@ -287,7 +287,7 @@ var _ = Describe("bpm", func() {
 			})
 		})
 
-		Context("when there is a persistent store", func() {
+		Context("when the persistent store is requested", func() {
 			var storeFile string
 
 			BeforeEach(func() {
@@ -303,6 +303,7 @@ var _ = Describe("bpm", func() {
 						storeFile,
 					),
 				}
+				cfg.Processes[0].PersistentDisk = true
 
 				writeConfig(jobName, cfg)
 			})

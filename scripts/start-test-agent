@@ -32,6 +32,7 @@ processes:
   limits:
     memory: 1G
     open_files: 1024
+  persistent_disk: true
 EOF
 
 bpm start bpm-test-agent
