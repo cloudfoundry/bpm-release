@@ -90,6 +90,13 @@ var _ = Describe("RuncAdapter", func() {
 			Expect(logDirInfo.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(200)))
 			Expect(logDirInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
 
+			// Internal Log Directory
+			internalLogDirInfo, err := os.Stat(bpmCfg.InternalLogDir())
+			Expect(err).NotTo(HaveOccurred())
+			Expect(internalLogDirInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0700)))
+			Expect(internalLogDirInfo.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(200)))
+			Expect(internalLogDirInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
+
 			// Stdout Log File
 			Expect(stdout.Name()).To(Equal(bpmCfg.Stdout()))
 			stdoutInfo, err := stdout.Stat()
@@ -315,7 +322,7 @@ var _ = Describe("RuncAdapter", func() {
 				{
 					Destination: filepath.Join(systemRoot, "sys", "log", jobName),
 					Type:        "bind",
-					Source:      filepath.Join(systemRoot, "sys", "log", jobName),
+					Source:      filepath.Join(systemRoot, "sys", "log", jobName, procName),
 					Options:     []string{"nodev", "nosuid", "noexec", "rbind", "rw"},
 				},
 				{

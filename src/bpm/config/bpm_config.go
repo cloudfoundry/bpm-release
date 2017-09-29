@@ -81,6 +81,10 @@ func (c *BPMConfig) LogDir() string {
 	return filepath.Join(c.boshRoot, "sys", "log", c.jobName)
 }
 
+func (c *BPMConfig) InternalLogDir() string {
+	return filepath.Join(c.boshRoot, "sys", "log", c.jobName, c.procName)
+}
+
 func (c *BPMConfig) Stdout() string {
 	return filepath.Join(c.LogDir(), fmt.Sprintf("%s.out.log", c.procName))
 }

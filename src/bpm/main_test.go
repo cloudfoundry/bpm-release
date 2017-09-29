@@ -243,7 +243,7 @@ var _ = Describe("bpm", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Eventually(session).Should(gexec.Exit(0))
 
-			exampleLogLocation := filepath.Join(boshConfigPath, "sys", "log", jobName, "foo.log")
+			exampleLogLocation := filepath.Join(boshConfigPath, "sys", "log", jobName, jobName, "foo.log")
 			Eventually(exampleLogLocation).Should(BeAnExistingFile())
 			Eventually(fileContents(exampleLogLocation)).Should(Equal("Dear Diary, Today I measured my beats per minute.\n"))
 		})
