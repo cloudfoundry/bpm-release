@@ -11,7 +11,7 @@ processes:
   limits:
     memory: 100G
     open_files: 100
-  volumes:
+  additional_volumes:
   - path: /var/vcap/data/program/foobar
     writable: true
   - path: /var/vcap/data/alternate-program

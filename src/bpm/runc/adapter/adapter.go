@@ -49,7 +49,7 @@ func (a *RuncAdapter) CreateJobPrerequisites(
 	}
 
 	var directories []string
-	for _, vol := range procCfg.Volumes {
+	for _, vol := range procCfg.AdditionalVolumes {
 		directories = append(directories, vol.Path)
 	}
 
@@ -147,7 +147,7 @@ func (a *RuncAdapter) BuildSpec(
 	mounts := requiredMounts()
 	mounts = append(mounts, systemIdentityMounts(mountResolvConf)...)
 	mounts = append(mounts, boshMounts(bpmCfg, mountStore)...)
-	mounts = append(mounts, userProvidedIdentityMounts(logger, bpmCfg, procCfg.Volumes)...)
+	mounts = append(mounts, userProvidedIdentityMounts(logger, bpmCfg, procCfg.AdditionalVolumes)...)
 
 	var resources *specs.LinuxResources
 	if procCfg.Limits != nil {

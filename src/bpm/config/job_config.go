@@ -30,15 +30,15 @@ type JobConfig struct {
 }
 
 type ProcessConfig struct {
-	Name         string            `yaml:"name"`
-	Executable   string            `yaml:"executable"`
-	Args         []string          `yaml:"args"`
-	Env          map[string]string `yaml:"env"`
-	Limits       *Limits           `yaml:"limits"`
-	Volumes      []Volume          `yaml:"volumes"`
-	Hooks        *Hooks            `yaml:"hooks"`
-	Capabilities []string          `yaml:"capabilities"`
-	WorkDir      string            `yaml:"workdir"`
+	Name              string            `yaml:"name"`
+	Executable        string            `yaml:"executable"`
+	Args              []string          `yaml:"args"`
+	Env               map[string]string `yaml:"env"`
+	Limits            *Limits           `yaml:"limits"`
+	AdditionalVolumes []Volume          `yaml:"additional_volumes"`
+	Hooks             *Hooks            `yaml:"hooks"`
+	Capabilities      []string          `yaml:"capabilities"`
+	WorkDir           string            `yaml:"workdir"`
 }
 
 type Limits struct {
@@ -105,7 +105,7 @@ func (c *ProcessConfig) Validate() error {
 		return errors.New("invalid config: executable")
 	}
 
-	for _, vol := range c.Volumes {
+	for _, vol := range c.AdditionalVolumes {
 		volCleaned := filepath.Clean(vol.Path)
 		if volCleaned != vol.Path {
 			return fmt.Errorf("volume path must be canonical, expected %s but got %s", volCleaned, vol.Path)

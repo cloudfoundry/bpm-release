@@ -60,7 +60,7 @@ var _ = Describe("RuncAdapter", func() {
 
 		bpmCfg = config.NewBPMConfig(systemRoot, jobName, procName)
 		procCfg = &config.ProcessConfig{
-			Volumes: []config.Volume{
+			AdditionalVolumes: []config.Volume{
 				{Path: filepath.Join(systemRoot, "some", "directory")},
 				{Path: filepath.Join(systemRoot, "another", "location")},
 			},
@@ -131,8 +131,8 @@ var _ = Describe("RuncAdapter", func() {
 			Expect(tmpDirInfo.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(200)))
 			Expect(tmpDirInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
 
-			//Volumes
-			for _, vol := range procCfg.Volumes {
+			//AdditionalVolumes
+			for _, vol := range procCfg.AdditionalVolumes {
 				volDirInfo, err := os.Stat(vol.Path)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(volDirInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0700)))
@@ -172,7 +172,7 @@ var _ = Describe("RuncAdapter", func() {
 					"RAVE": "true",
 					"ONE":  "two",
 				},
-				Volumes: []config.Volume{
+				AdditionalVolumes: []config.Volume{
 					{Path: "/path/to/volume/1", Writable: true},
 					// Testing duplicate volumes
 					{Path: "/path/to/volume/2"},
