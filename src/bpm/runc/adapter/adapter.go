@@ -336,7 +336,6 @@ func processEnvironment(env map[string]string, cfg *config.BPMConfig) []string {
 		environ,
 		fmt.Sprintf("TMPDIR=%s", cfg.TempDir()),
 		fmt.Sprintf("LANG=%s", DefaultLang),
-		fmt.Sprintf("BPM_ID=%s", cfg.ContainerID(false)),
 	)
 }
 

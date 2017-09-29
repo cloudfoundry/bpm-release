@@ -29,7 +29,6 @@ https://bosh.io/docs/drain.html
 | *Name* | *Value*                                            |
 |--------|----------------------------------------------------|
 | TMPDIR | `/var/vcap/data/[job-name]/tmp`                    |
-| BPM_ID | *a unique process id within the context of the VM* |
 
 ## Logging
 

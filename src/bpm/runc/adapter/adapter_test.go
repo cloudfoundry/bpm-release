@@ -206,7 +206,6 @@ var _ = Describe("RuncAdapter", func() {
 			expectedEnv := convertEnv(procCfg.Env)
 			expectedEnv = append(expectedEnv, fmt.Sprintf("TMPDIR=%s", bpmCfg.TempDir()))
 			expectedEnv = append(expectedEnv, fmt.Sprintf("LANG=%s", adapter.DefaultLang))
-			expectedEnv = append(expectedEnv, fmt.Sprintf("BPM_ID=%s", bpmCfg.ContainerID(false)))
 
 			Expect(spec.Process.Terminal).To(Equal(false))
 			Expect(spec.Process.ConsoleSize).To(BeNil())
