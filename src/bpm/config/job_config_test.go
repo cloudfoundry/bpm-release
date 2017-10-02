@@ -54,6 +54,7 @@ var _ = Describe("Config", func() {
 			Expect(cfg.Processes[0].Capabilities).To(ConsistOf("NET_BIND_SERVICE"))
 			Expect(cfg.Processes[0].WorkDir).To(Equal("/I/AM/A/WORKDIR"))
 			Expect(cfg.Processes[0].PersistentDisk).To(BeTrue())
+			Expect(cfg.Processes[0].EphemeralDisk).To(BeTrue())
 
 			Expect(cfg.Processes[1].Name).To(Equal("alternate-example"))
 			Expect(cfg.Processes[1].Executable).To(Equal("/I/AM/AN/EXECUTABLE"))

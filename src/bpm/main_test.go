@@ -522,6 +522,7 @@ var _ = Describe("bpm", func() {
 					cfg.Processes[0].Limits = &config.Limits{
 						OpenFiles: &limit,
 					}
+					cfg.Processes[0].EphemeralDisk = true
 
 					cfgPath = writeConfig(jobName, cfg)
 				})

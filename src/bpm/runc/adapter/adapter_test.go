@@ -108,12 +108,12 @@ var _ = Describe("RuncAdapter", func() {
 			Expect(stderrInfo.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(200)))
 			Expect(stderrInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
 
-			// Data Directory
+			// Data Directory should not be writable
 			dataDirInfo, err := os.Stat(bpmCfg.DataDir())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(dataDirInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0700)))
-			Expect(dataDirInfo.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(200)))
-			Expect(dataDirInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
+			Expect(dataDirInfo.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(0)))
+			Expect(dataDirInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(0)))
 
 			// Store Directory
 			Expect(bpmCfg.StoreDir()).NotTo(BeADirectory())
@@ -162,6 +162,24 @@ var _ = Describe("RuncAdapter", func() {
 					_, _, err := runcAdapter.CreateJobPrerequisites(bpmCfg, procCfg, user)
 					Expect(err).To(HaveOccurred())
 				})
+			})
+		})
+
+		Context("when the user requests an ephemeral disk", func() {
+			BeforeEach(func() {
+				procCfg.EphemeralDisk = true
+			})
+
+			It("creates the data directory with the correct permissions", func() {
+				_, _, err := runcAdapter.CreateJobPrerequisites(bpmCfg, procCfg, user)
+				Expect(err).NotTo(HaveOccurred())
+
+				// Data Directory
+				dataDirInfo, err := os.Stat(bpmCfg.DataDir())
+				Expect(err).NotTo(HaveOccurred())
+				Expect(dataDirInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0700)))
+				Expect(dataDirInfo.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(200)))
+				Expect(dataDirInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
 			})
 		})
 	})
@@ -301,12 +319,6 @@ var _ = Describe("RuncAdapter", func() {
 					Options:     []string{"nosuid", "nodev", "bind", "ro"},
 				},
 				{
-					Destination: filepath.Join(systemRoot, "data", "example"),
-					Type:        "bind",
-					Source:      filepath.Join(systemRoot, "data", "example"),
-					Options:     []string{"nodev", "nosuid", "noexec", "rbind", "rw"},
-				},
-				{
 					Destination: filepath.Join(systemRoot, "data", "packages"),
 					Type:        "bind",
 					Source:      filepath.Join(systemRoot, "data", "packages"),
@@ -425,6 +437,24 @@ var _ = Describe("RuncAdapter", func() {
 					Destination: filepath.Join(systemRoot, "store", "example"),
 					Type:        "bind",
 					Source:      filepath.Join(systemRoot, "store", "example"),
+					Options:     []string{"nodev", "nosuid", "noexec", "rbind", "rw"},
+				}))
+			})
+		})
+
+		Context("when the user requests an ephemeral disk", func() {
+			BeforeEach(func() {
+				procCfg.EphemeralDisk = true
+			})
+
+			It("bind mounts the data directory into the container", func() {
+				spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(spec.Mounts).To(ContainElement(specs.Mount{
+					Destination: filepath.Join(systemRoot, "data", "example"),
+					Type:        "bind",
+					Source:      filepath.Join(systemRoot, "data", "example"),
 					Options:     []string{"nodev", "nosuid", "noexec", "rbind", "rw"},
 				}))
 			})

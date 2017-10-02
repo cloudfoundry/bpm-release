@@ -56,10 +56,13 @@ func (a *RuncAdapter) CreateJobPrerequisites(
 
 	directories = append(
 		directories,
-		bpmCfg.DataDir(),
 		bpmCfg.LogDir(),
 		bpmCfg.TempDir(),
 	)
+
+	if procCfg.EphemeralDisk {
+		directories = append(directories, bpmCfg.DataDir())
+	}
 
 	if procCfg.PersistentDisk {
 		storeExists, err := checkDirExists(filepath.Dir(bpmCfg.StoreDir()))
@@ -145,7 +148,7 @@ func (a *RuncAdapter) BuildSpec(
 
 	mounts := requiredMounts()
 	mounts = append(mounts, systemIdentityMounts(mountResolvConf)...)
-	mounts = append(mounts, boshMounts(bpmCfg, procCfg.PersistentDisk)...)
+	mounts = append(mounts, boshMounts(bpmCfg, procCfg.EphemeralDisk, procCfg.PersistentDisk)...)
 	mounts = append(mounts, userProvidedIdentityMounts(logger, bpmCfg, procCfg.AdditionalVolumes)...)
 
 	var resources *specs.LinuxResources
@@ -275,15 +278,18 @@ func systemIdentityMounts(mountResolvConf bool) []specs.Mount {
 	return mounts
 }
 
-func boshMounts(bpmCfg *config.BPMConfig, mountStore bool) []specs.Mount {
+func boshMounts(bpmCfg *config.BPMConfig, mountData, mountStore bool) []specs.Mount {
 	mounts := []specs.Mount{
-		identityBindMountWithOptions(bpmCfg.DataDir(), "nodev", "nosuid", "noexec", "rbind", "rw"),
 		identityBindMountWithOptions(bpmCfg.LogDir(), "nodev", "nosuid", "noexec", "rbind", "rw"),
 		identityBindMountWithOptions(bpmCfg.DataPackageDir(), "nodev", "nosuid", "bind", "ro"),
 		identityBindMountWithOptions(bpmCfg.JobDir(), "nodev", "nosuid", "bind", "ro"),
 		identityBindMountWithOptions(bpmCfg.PackageDir(), "nodev", "nosuid", "bind", "ro"),
 		bindMountWithOptions("/var/tmp", bpmCfg.TempDir(), "nodev", "nosuid", "noexec", "rbind", "rw"),
 		bindMountWithOptions("/tmp", bpmCfg.TempDir(), "nodev", "nosuid", "noexec", "rbind", "rw"),
+	}
+
+	if mountData {
+		mounts = append(mounts, identityBindMountWithOptions(bpmCfg.DataDir(), "nodev", "nosuid", "noexec", "rbind", "rw"))
 	}
 
 	if mountStore {

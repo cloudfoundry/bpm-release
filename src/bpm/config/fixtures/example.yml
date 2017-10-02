@@ -22,5 +22,6 @@ processes:
   - NET_BIND_SERVICE
   workdir: /I/AM/A/WORKDIR
   persistent_disk: true
+  ephemeral_disk: true
 - name: alternate-example
   executable: /I/AM/AN/EXECUTABLE

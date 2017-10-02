@@ -34,12 +34,13 @@ type ProcessConfig struct {
 	Executable        string            `yaml:"executable"`
 	Args              []string          `yaml:"args"`
 	Env               map[string]string `yaml:"env"`
-	Limits            *Limits           `yaml:"limits"`
 	AdditionalVolumes []Volume          `yaml:"additional_volumes"`
-	Hooks             *Hooks            `yaml:"hooks"`
 	Capabilities      []string          `yaml:"capabilities"`
-	WorkDir           string            `yaml:"workdir"`
+	EphemeralDisk     bool              `yaml:"ephemeral_disk"`
+	Hooks             *Hooks            `yaml:"hooks"`
+	Limits            *Limits           `yaml:"limits"`
 	PersistentDisk    bool              `yaml:"persistent_disk"`
+	WorkDir           string            `yaml:"workdir"`
 }
 
 type Limits struct {
