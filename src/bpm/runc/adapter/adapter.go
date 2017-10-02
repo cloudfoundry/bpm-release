@@ -58,7 +58,6 @@ func (a *RuncAdapter) CreateJobPrerequisites(
 		directories,
 		bpmCfg.DataDir(),
 		bpmCfg.LogDir(),
-		bpmCfg.InternalLogDir(),
 		bpmCfg.TempDir(),
 	)
 
@@ -278,13 +277,13 @@ func systemIdentityMounts(mountResolvConf bool) []specs.Mount {
 
 func boshMounts(bpmCfg *config.BPMConfig, mountStore bool) []specs.Mount {
 	mounts := []specs.Mount{
-		bindMountWithOptions("/tmp", bpmCfg.TempDir(), "nodev", "nosuid", "noexec", "rbind", "rw"),
-		bindMountWithOptions("/var/tmp", bpmCfg.TempDir(), "nodev", "nosuid", "noexec", "rbind", "rw"),
-		bindMountWithOptions(bpmCfg.LogDir(), bpmCfg.InternalLogDir(), "nodev", "nosuid", "noexec", "rbind", "rw"),
 		identityBindMountWithOptions(bpmCfg.DataDir(), "nodev", "nosuid", "noexec", "rbind", "rw"),
+		identityBindMountWithOptions(bpmCfg.LogDir(), "nodev", "nosuid", "noexec", "rbind", "rw"),
 		identityBindMountWithOptions(bpmCfg.DataPackageDir(), "nodev", "nosuid", "bind", "ro"),
 		identityBindMountWithOptions(bpmCfg.JobDir(), "nodev", "nosuid", "bind", "ro"),
 		identityBindMountWithOptions(bpmCfg.PackageDir(), "nodev", "nosuid", "bind", "ro"),
+		bindMountWithOptions("/var/tmp", bpmCfg.TempDir(), "nodev", "nosuid", "noexec", "rbind", "rw"),
+		bindMountWithOptions("/tmp", bpmCfg.TempDir(), "nodev", "nosuid", "noexec", "rbind", "rw"),
 	}
 
 	if mountStore {
