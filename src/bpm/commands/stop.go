@@ -42,6 +42,8 @@ func stopPre(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	cmd.SilenceUsage = true
+
 	if err := setupBpmLogs("stop"); err != nil {
 		return err
 	}

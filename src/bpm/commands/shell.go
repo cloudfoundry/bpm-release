@@ -39,7 +39,7 @@ func shellPre(cmd *cobra.Command, args []string) error {
 }
 
 func shell(cmd *cobra.Command, _ []string) error {
-	silenceUsage(cmd)
+	cmd.SilenceUsage = true
 
 	runcLifecycle := newRuncLifecycle()
 	return runcLifecycle.OpenShell(bpmCfg, os.Stdin, cmd.OutOrStdout(), cmd.OutOrStderr())

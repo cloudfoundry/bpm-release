@@ -54,6 +54,8 @@ func tracePre(cmd *cobra.Command, args []string) error {
 }
 
 func trace(cmd *cobra.Command, _ []string) error {
+	cmd.SilenceUsage = true
+
 	runcLifecycle := newRuncLifecycle()
 	job, err := runcLifecycle.GetProcess(bpmCfg)
 	if err != nil {

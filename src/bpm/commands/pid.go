@@ -40,6 +40,8 @@ func pidPre(cmd *cobra.Command, args []string) error {
 }
 
 func pidForJob(cmd *cobra.Command, _ []string) error {
+	cmd.SilenceUsage = true
+
 	runcLifecycle := newRuncLifecycle()
 	job, err := runcLifecycle.GetProcess(bpmCfg)
 	if err != nil {

@@ -34,6 +34,8 @@ var listCommandCommand = &cobra.Command{
 }
 
 func listContainers(cmd *cobra.Command, _ []string) error {
+	cmd.SilenceUsage = true
+
 	runcLifecycle := newRuncLifecycle()
 	jobs, err := runcLifecycle.ListProcesses()
 	if err != nil {

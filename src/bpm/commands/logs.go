@@ -59,6 +59,8 @@ func logsPre(cmd *cobra.Command, args []string) error {
 }
 
 func logsForJob(cmd *cobra.Command, _ []string) error {
+	cmd.SilenceUsage = true
+
 	var filesToTail []string
 	var tailArgs []string
 
@@ -94,8 +96,6 @@ func logsForJob(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return err
 	}
-
-	cmd.SilenceUsage = true
 
 	errCh := make(chan error)
 	go func() {
