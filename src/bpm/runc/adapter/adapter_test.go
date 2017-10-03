@@ -355,6 +355,12 @@ var _ = Describe("RuncAdapter", func() {
 					Options:     []string{"nodev", "nosuid", "noexec", "rbind", "ro"},
 				},
 				{
+					Destination: filepath.Join(systemRoot, "data", "example", "tmp"),
+					Type:        "bind",
+					Source:      filepath.Join(systemRoot, "data", "example", "tmp"),
+					Options:     []string{"nodev", "nosuid", "noexec", "rbind", "rw"},
+				},
+				{
 					Destination: "/var/tmp",
 					Type:        "bind",
 					Source:      filepath.Join(systemRoot, "data", "example", "tmp"),
