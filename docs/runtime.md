@@ -21,8 +21,8 @@ your server. The drain script should put your server in such a state that it
 can shutdown within 20 seconds. It is acceptable and supported to terminate
 your process while running the drain script.
 
-[post-start]: https://bosh.io/docs/post-start.html [drain]:
-https://bosh.io/docs/drain.html
+[post-start]:https://bosh.io/docs/post-start.html 
+[drain]:https://bosh.io/docs/drain.html
 
 ## Environment Variables
 
