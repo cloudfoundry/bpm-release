@@ -130,7 +130,8 @@ func (j *RuncLifecycle) StartProcess(logger lager.Logger, bpmCfg *config.BPMConf
 	}
 
 	if procCfg.Hooks != nil {
-		preStartCmd := exec.Command("/bin/bash", "-c", procCfg.Hooks.PreStart)
+		preStartCmd := exec.Command(procCfg.Hooks.PreStart)
+		preStartCmd.Env = spec.Process.Env
 		preStartCmd.Stdout = stdout
 		preStartCmd.Stderr = stderr
 

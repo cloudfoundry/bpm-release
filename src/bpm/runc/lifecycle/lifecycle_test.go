@@ -93,6 +93,9 @@ var _ = Describe("RuncJobLifecycle", func() {
 			Executable: "/bin/sleep",
 		}
 		jobSpec = specs.Spec{
+			Process: &specs.Process{
+				Env: []string{"foo=bar"},
+			},
 			Version: "example-version",
 		}
 		fakeRuncAdapter.BuildSpecReturns(jobSpec, nil)
@@ -160,9 +163,10 @@ var _ = Describe("RuncJobLifecycle", func() {
 				err := runcLifecycle.StartProcess(logger, bpmCfg, procCfg)
 				Expect(err).NotTo(HaveOccurred())
 
-				expectedCommand := exec.Command("/bin/bash", "-c", procCfg.Hooks.PreStart)
+				expectedCommand := exec.Command(procCfg.Hooks.PreStart)
 				expectedCommand.Stdout = expectedStdout
 				expectedCommand.Stderr = expectedStderr
+				expectedCommand.Env = []string{"foo=bar"}
 
 				Expect(fakeCommandRunner.RunCallCount()).To(Equal(1))
 				Expect(fakeCommandRunner.RunArgsForCall(0)).To(Equal(expectedCommand))
