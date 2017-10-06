@@ -141,16 +141,6 @@ func (a *RuncAdapter) BuildSpec(
 		Capabilities:    processCapabilities(procCfg.Capabilities),
 	}
 
-	hooks := &specs.Hooks{}
-	if procCfg.Hooks != nil {
-		hooks.Prestart = []specs.Hook{
-			{
-				Path: procCfg.Hooks.PreStart,
-				Env:  processEnvironment(procCfg.Env, bpmCfg),
-			},
-		}
-	}
-
 	mountResolvConf, err := checkDirExists(ResolvConfDir)
 	if err != nil {
 		return specs.Spec{}, err
@@ -196,7 +186,6 @@ func (a *RuncAdapter) BuildSpec(
 	return specs.Spec{
 		Version: specs.Version,
 		Process: process,
-		Hooks:   hooks,
 		Root: &specs.Root{
 			Path: bpmCfg.RootFSPath(),
 		},
