@@ -29,7 +29,7 @@ your job definition with the following structure:
 ```yaml
 # jobs/<job>/templates/bpm.yml.erb
 processes:
-  <job>:
+  - name: <job>
     executable: /path/to/executable
     args:
     - --port
@@ -126,7 +126,7 @@ example:
 
 config= {}
 config["executable"] = /path/to/executable
-config["args"] = [] 
+config["args"] = []
 config["args"] << p("example.property")
 config["env"] = { "KEY" => "#{p("another.example.property")}" }
 
