@@ -30,7 +30,7 @@ check process <job>-<worker>
 ```yaml
 # /var/vcap/jobs/<job>/config/bpm.yml
 processes:
-  <job>:
+  - name: <job>
     executable: /var/vcap/packages/program/bin/program-server
     args:
     - --port
@@ -47,7 +47,7 @@ processes:
       pre_start: /var/vcap/jobs/<job>/bin/bpm-pre-start
     capabilities:
     - NET_BIND_SERVICE
-  <worker>:
+  - name: <worker>
     executable: /var/vcap/packages/program/bin/program-worker
     args:
     - --queues
