@@ -12,26 +12,26 @@ for `monit` eventually and so reducing the exposed feature area will make this
 easier.
 
 ```
-check process <job>
-  with pidfile /var/vcap/sys/run/bpm/<job>/<job>.pid
-  start program "/var/vcap/jobs/bpm/bin/bpm start <job>"
-  stop program "/var/vcap/jobs/bpm/bin/bpm stop <job>"
+check process the_job
+  with pidfile /var/vcap/sys/run/bpm/the_job/the_job.pid
+  start program "/var/vcap/jobs/bpm/bin/bpm start the_job"
+  stop program "/var/vcap/jobs/bpm/bin/bpm stop the_job"
   group vcap
 
-check process <job>-<worker>
-  with pidfile /var/vcap/sys/run/bpm/<job>/<worker>.pid
-  start program "/var/vcap/jobs/bpm/bin/bpm start <job> -p <worker>"
-  stop program "/var/vcap/jobs/bpm/bin/bpm stop <job> -p <worker>"
+check process the_job-worker
+  with pidfile /var/vcap/sys/run/bpm/the_job/worker.pid
+  start program "/var/vcap/jobs/bpm/bin/bpm start the_job -p worker"
+  stop program "/var/vcap/jobs/bpm/bin/bpm stop the_job -p worker"
   group vcap
 ```
 
 ## Job Configuration
 
 ```yaml
-# /var/vcap/jobs/<job>/config/bpm.yml
+# /var/vcap/jobs/the_job/config/bpm.yml
 processes:
-  - name: <job>
-    executable: /var/vcap/packages/program/bin/program-server
+  - name: the_job # same as BOSH-job name means `-p <process>` is not needed
+    executable: /var/vcap/data/packages/server/serve.sh
     args:
     - --port
     - 2424
@@ -41,21 +41,25 @@ processes:
       memory: 3G
       processes: 10
       open_files: 100
-    volumes:
+    ephemeral_disk: true # mount /var/vcap/data/the_job ; default `false`
+                         # NOTE: /var/vcap/data/the_job/tmp is always mounted `rw`
+    additional_volumes:
     - /var/vcap/data/certificates
     hooks:
-      pre_start: /var/vcap/jobs/<job>/bin/bpm-pre-start
+      pre_start: /var/vcap/jobs/the_job/bin/server-setup
     capabilities:
     - NET_BIND_SERVICE
-  - name: <worker>
-    executable: /var/vcap/packages/program/bin/program-worker
+  - name: worker
+    executable: /var/vcap/data/packages/worker/work.sh
     args:
     - --queues
     - 4
-    volumes:
+    persistent_disk: true # mount /var/vcap/store/the_job ; default `false`
+    additional_volumes:
     - name: /var/vcap/data/sockets
+      writable: true # default `false`
     hooks:
-      pre_start: /var/vcap/jobs/<job>/bin/initialize
+      pre_start: /var/vcap/jobs/the_job/bin/worker-setup
 ```
 
 **Note:** The value of the `args:` are passed literally to the `executable:`.
