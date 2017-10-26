@@ -95,12 +95,7 @@ func trace(cmd *cobra.Command, _ []string) error {
 		case sig := <-signals:
 			straceCmd.Process.Signal(sig)
 		case err := <-errCh:
-			if err.Error() != "signal: interrupt" {
-				return err
-			}
-
-			fmt.Fprintln(cmd.OutOrStdout(), "")
-			return nil
+			return err
 		}
 	}
 }

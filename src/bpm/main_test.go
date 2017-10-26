@@ -1103,7 +1103,7 @@ var _ = Describe("bpm", func() {
 			Eventually(session.Err).Should(gbytes.Say("wait4"))
 
 			session.Interrupt()
-			Eventually(session).Should(gexec.Exit())
+			Eventually(session).Should(gexec.Exit(0))
 		})
 
 		Context("when the container is stopped", func() {
