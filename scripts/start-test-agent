@@ -12,18 +12,18 @@ export PATH=$GOPATH/bin:$PATH
 ${scripts_path}/mountgroups.sh
 
 go install bpm
-go install bpm-acceptance/fixtures/bpm-test-agent
+go install bpm-acceptance/fixtures/test-server
 
-mkdir -p /var/vcap/packages/bpm-test-agent/bin
+mkdir -p /var/vcap/packages/test-server/bin
 
-cp `which bpm-test-agent` /var/vcap/packages/bpm-test-agent/bin
+cp `which test-server` /var/vcap/packages/test-server/bin
 
-mkdir -p /var/vcap/jobs/bpm-test-agent/config/bpm/
+mkdir -p /var/vcap/jobs/test-server/config/bpm/
 
-cat << EOF > /var/vcap/jobs/bpm-test-agent/config/bpm.yml
+cat << EOF > /var/vcap/jobs/test-server/config/bpm.yml
 processes:
-- name: bpm-test-agent
-  executable: /var/vcap/packages/bpm-test-agent/bin/bpm-test-agent
+- name: test-server
+  executable: /var/vcap/packages/test-server/bin/test-server
   args:
     - --port
     - 1337
@@ -35,4 +35,4 @@ processes:
   persistent_disk: true
 EOF
 
-bpm start bpm-test-agent
+bpm start test-server

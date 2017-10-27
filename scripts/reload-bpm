@@ -1,8 +1,8 @@
 #!/bin/bash
 set -eux
 
-bpm stop bpm-test-agent
+bpm stop test-server
 
 /bpm/scripts/start-test-agent
 
-bpm shell bpm-test-agent
+bpm shell test-server

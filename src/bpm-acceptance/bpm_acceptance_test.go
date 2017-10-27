@@ -61,13 +61,13 @@ var _ = Describe("BpmAcceptance", func() {
 		mounts := parseMounts(string(body))
 
 		expectedMountPaths := map[string]string{
-			"/var/vcap/data/packages":           "ro",
-			"/var/vcap/data/bpm-test-agent":     "rw",
-			"/var/vcap/data/bpm-test-agent/tmp": "rw",
-			"/var/vcap/store/bpm-test-agent":    "rw",
-			"/var/vcap/jobs/bpm-test-agent":     "ro",
-			"/var/vcap/packages":                "ro",
-			"/var/vcap/sys/log/bpm-test-agent":  "rw",
+			"/var/vcap/data/packages":        "ro",
+			"/var/vcap/data/test-server":     "rw",
+			"/var/vcap/data/test-server/tmp": "rw",
+			"/var/vcap/store/test-server":    "rw",
+			"/var/vcap/jobs/test-server":     "ro",
+			"/var/vcap/packages":             "ro",
+			"/var/vcap/sys/log/test-server":  "rw",
 		}
 
 		var found []string
@@ -138,7 +138,7 @@ var _ = Describe("BpmAcceptance", func() {
 		body, err := ioutil.ReadAll(resp.Body)
 		Expect(err).NotTo(HaveOccurred())
 		directories := strings.Split(strings.Trim(string(body), "\n"), "\n")
-		Expect(directories).To(ConsistOf("bpm-test-agent", "packages"))
+		Expect(directories).To(ConsistOf("test-server", "packages"))
 	})
 
 	It("only has access to its own job directory", func() {
@@ -149,7 +149,7 @@ var _ = Describe("BpmAcceptance", func() {
 		body, err := ioutil.ReadAll(resp.Body)
 		Expect(err).NotTo(HaveOccurred())
 		directories := strings.Split(strings.Trim(string(body), "\n"), "\n")
-		Expect(directories).To(ConsistOf("bpm-test-agent"))
+		Expect(directories).To(ConsistOf("test-server"))
 	})
 
 	It("is contained in a pid namespace", func() {
@@ -163,7 +163,7 @@ var _ = Describe("BpmAcceptance", func() {
 
 		// We expect the test agent to be the only process with the root PID
 		Expect(len(processes)).To(BeNumerically(">=", 1))
-		Expect(processes).To(ContainElement(MatchRegexp("1 /var/vcap/packages/bpm-test-agent/bin/bpm-test-agent.*")))
+		Expect(processes).To(ContainElement(MatchRegexp("1 /var/vcap/packages/test-server/bin/test-server.*")))
 	})
 
 	Context("seccomp filters", func() {

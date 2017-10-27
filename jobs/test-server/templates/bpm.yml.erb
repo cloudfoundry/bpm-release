@@ -1,6 +1,6 @@
 processes:
-- name: bpm-test-agent
-  executable: /var/vcap/packages/bpm-test-agent/bin/bpm-test-agent
+- name: test-server
+  executable: /var/vcap/packages/test-server/bin/test-server
   args:
     - --port
     - 1337
@@ -11,8 +11,8 @@ processes:
     open_files: 1024
   ephemeral_disk: true
   persistent_disk: true
-- name: alt-server
-  executable: /var/vcap/packages/bpm-test-agent/bin/bpm-test-agent
+- name: alt-test-server
+  executable: /var/vcap/packages/test-server/bin/test-server
   args:
     - --port
     - 1338

@@ -7,7 +7,7 @@ instance_groups:
   jobs:
   - name: bpm
     release: bpm
-  - name: bpm-test-agent
+  - name: test-server
     release: bpm
   vm_type: default
   stemcell: default
