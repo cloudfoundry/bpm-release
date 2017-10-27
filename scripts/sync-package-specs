@@ -39,7 +39,7 @@ function sync_package() {
 }
 
 sync_package bpm -app bpm &
-sync_package bpm-test-agent -app bpm-acceptance/fixtures/bpm-test-agent &
+sync_package test-server -app bpm-acceptance/fixtures/test-server &
 
 wait
 

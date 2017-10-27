@@ -1,10 +1,10 @@
 ---
-name: bpm-test-agent
+name: test-server
 
 templates:
   bpm.yml.erb: config/bpm.yml
 
 packages:
-- bpm-test-agent
+- test-server
 
 properties: {}

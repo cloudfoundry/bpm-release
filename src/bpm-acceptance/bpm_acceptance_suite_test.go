@@ -38,7 +38,7 @@ var (
 )
 
 func init() {
-	flag.StringVar(&agentURI, "agent-uri", "", "http address of the bpm-test-agent")
+	flag.StringVar(&agentURI, "agent-uri", "", "http address of the test-server")
 	flag.Parse()
 
 	if agentURI == "" {
