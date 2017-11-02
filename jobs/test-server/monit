@@ -1,0 +1,11 @@
+check process test-server
+  with pidfile /var/vcap/sys/run/bpm/test-server/test-server.pid
+  start program "/var/vcap/jobs/bpm/bin/bpm start test-server"
+  stop program "/var/vcap/jobs/bpm/bin/bpm stop test-server"
+  group vcap
+
+check process alt-test-server
+  with pidfile /var/vcap/sys/run/bpm/test-server/alt-test-server.pid
+  start program "/var/vcap/jobs/bpm/bin/bpm start test-server -p alt-test-server"
+  stop program "/var/vcap/jobs/bpm/bin/bpm stop test-server -p alt-test-server"
+  group vcap

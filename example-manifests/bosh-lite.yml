@@ -13,7 +13,7 @@ jobs:
   templates:
   - name: bpm
     release: bpm
-  - name: bpm-test-agent
+  - name: test-server
     release: bpm
 name: bpm
 networks:
