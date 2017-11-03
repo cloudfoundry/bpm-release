@@ -230,6 +230,7 @@ var _ = Describe("RuncAdapter", func() {
 			expectedEnv := convertEnv(procCfg.Env)
 			expectedEnv = append(expectedEnv, fmt.Sprintf("TMPDIR=%s", bpmCfg.TempDir()))
 			expectedEnv = append(expectedEnv, fmt.Sprintf("LANG=%s", adapter.DefaultLang))
+			expectedEnv = append(expectedEnv, fmt.Sprintf("PATH=%s", adapter.DefaultPath(bpmCfg)))
 
 			Expect(spec.Process.Terminal).To(Equal(false))
 			Expect(spec.Process.ConsoleSize).To(BeNil())
@@ -402,10 +403,11 @@ var _ = Describe("RuncAdapter", func() {
 			))
 		})
 
-		Context("when a user provides TMPDIR and LANG environment variables", func() {
+		Context("when a user provides TMPDIR, LANG and PATH environment variables", func() {
 			BeforeEach(func() {
 				procCfg.Env["TMPDIR"] = "/I/AM/A/TMPDIR"
 				procCfg.Env["LANG"] = "esperanto"
+				procCfg.Env["PATH"] = "some-path"
 			})
 
 			It("uses the user-provided values", func() {
@@ -413,8 +415,10 @@ var _ = Describe("RuncAdapter", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(spec.Process.Env).NotTo(ContainElement(fmt.Sprintf("TMPDIR=%s", bpmCfg.TempDir())))
 				Expect(spec.Process.Env).NotTo(ContainElement(fmt.Sprintf("LANG=%s", adapter.DefaultLang)))
+				Expect(spec.Process.Env).NotTo(ContainElement(fmt.Sprintf("PATH=%s", adapter.DefaultPath(bpmCfg))))
 				Expect(spec.Process.Env).To(ContainElement("TMPDIR=/I/AM/A/TMPDIR"))
 				Expect(spec.Process.Env).To(ContainElement("LANG=esperanto"))
+				Expect(spec.Process.Env).To(ContainElement("PATH=some-path"))
 			})
 		})
 

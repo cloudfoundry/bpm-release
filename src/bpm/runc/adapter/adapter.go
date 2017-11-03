@@ -351,6 +351,10 @@ func processEnvironment(env map[string]string, cfg *config.BPMConfig) []string {
 		environ = append(environ, fmt.Sprintf("LANG=%s", DefaultLang))
 	}
 
+	if _, ok := env["PATH"]; !ok {
+		environ = append(environ, fmt.Sprintf("PATH=%s", DefaultPath(cfg)))
+	}
+
 	return environ
 }
 
@@ -381,4 +385,11 @@ func checkDirExists(dir string) (bool, error) {
 	}
 
 	return false, nil
+}
+
+func DefaultPath(cfg *config.BPMConfig) string {
+	defaultPath := "%s:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin:."
+	defaultPath = fmt.Sprintf(defaultPath, filepath.Join(cfg.JobDir(), "bin"))
+
+	return defaultPath
 }

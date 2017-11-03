@@ -58,6 +58,7 @@ func main() {
 	http.HandleFunc("/var-vcap-data", handlers.VarVcapData)
 	http.HandleFunc("/var-vcap-jobs", handlers.VarVcapJobs)
 	http.HandleFunc("/whoami", handlers.Whoami)
+	http.HandleFunc("/env", handlers.Env)
 
 	signals := make(chan os.Signal)
 	signal.Notify(signals)
