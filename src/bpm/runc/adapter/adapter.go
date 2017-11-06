@@ -355,6 +355,10 @@ func processEnvironment(env map[string]string, cfg *config.BPMConfig) []string {
 		environ = append(environ, fmt.Sprintf("PATH=%s", DefaultPath(cfg)))
 	}
 
+	if _, ok := env["HOME"]; !ok {
+		environ = append(environ, fmt.Sprintf("HOME=%s", cfg.DataDir()))
+	}
+
 	return environ
 }
 

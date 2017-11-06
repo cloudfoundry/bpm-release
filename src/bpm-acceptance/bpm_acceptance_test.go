@@ -179,6 +179,19 @@ var _ = Describe("BpmAcceptance", func() {
 		Expect(string(body)).To(ContainSubstring("/var/vcap/jobs/bpm-test-agent/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin:."))
 	})
 
+	It("has the default home env variable", func() {
+		req, err := http.NewRequest("GET", fmt.Sprintf("%s/env", agentURI), strings.NewReader("HOME"))
+		Expect(err).NotTo(HaveOccurred())
+
+		resp, err := client.Do(req)
+		Expect(err).NotTo(HaveOccurred())
+		defer resp.Body.Close()
+
+		body, err := ioutil.ReadAll(resp.Body)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(string(body)).To(ContainSubstring("/var/vcap/data/"))
+	})
+
 	Context("seccomp filters", func() {
 		It("accepts an allowed syscall", func() {
 			resp, err := client.Get(fmt.Sprintf("%s/syscall-allowed", agentURI))
