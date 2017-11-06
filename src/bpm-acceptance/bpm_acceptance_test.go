@@ -176,7 +176,7 @@ var _ = Describe("BpmAcceptance", func() {
 
 		body, err := ioutil.ReadAll(resp.Body)
 		Expect(err).NotTo(HaveOccurred())
-		Expect(string(body)).To(ContainSubstring("/var/vcap/jobs/bpm-test-agent/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin:."))
+		Expect(string(body)).To(ContainSubstring("/var/vcap/jobs/test-server/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin:."))
 	})
 
 	It("has the default home env variable", func() {
