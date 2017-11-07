@@ -37,7 +37,7 @@ type ProcessConfig struct {
 	AdditionalVolumes []Volume          `yaml:"additional_volumes"`
 	Capabilities      []string          `yaml:"capabilities"`
 	EphemeralDisk     bool              `yaml:"ephemeral_disk"`
-	Hooks             *Hooks            `yaml:"hooks"`
+	Hooks             *Hooks            `yaml:"hooks,omitempty"`
 	Limits            *Limits           `yaml:"limits"`
 	PersistentDisk    bool              `yaml:"persistent_disk"`
 	WorkDir           string            `yaml:"workdir"`

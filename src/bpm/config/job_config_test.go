@@ -92,6 +92,19 @@ var _ = Describe("Config", func() {
 				Expect(err).To(HaveOccurred())
 			})
 		})
+
+		Context("when the configuration contains empty hooks", func() {
+			BeforeEach(func() {
+				configPath = "fixtures/example-empty-hook.yml"
+			})
+
+			It("returns an error", func() {
+				cfg, err := config.ParseJobConfig(configPath)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(cfg.Processes[0].Hooks.PreStart).To(BeEmpty())
+			})
+		})
 	})
 
 	Describe("Validate", func() {

@@ -184,6 +184,19 @@ var _ = Describe("RuncJobLifecycle", func() {
 			})
 		})
 
+		Context("when PreStart Hook is empty", func() {
+			BeforeEach(func() {
+				procCfg.Hooks = &config.Hooks{
+					PreStart: "",
+				}
+			})
+
+			It("ignores the pre start hook", func() {
+				err := runcLifecycle.StartProcess(logger, bpmCfg, procCfg)
+				Expect(err).NotTo(HaveOccurred())
+			})
+		})
+
 		Context("when the process name is the same as the job name", func() {
 			BeforeEach(func() {
 				bpmCfg = config.NewBPMConfig(expectedSystemRoot, expectedJobName, expectedJobName)
