@@ -98,7 +98,7 @@ var _ = Describe("Config", func() {
 				configPath = "fixtures/example-empty-hook.yml"
 			})
 
-			It("returns an error", func() {
+			It("creates a `Hooks` element with empty contents", func() {
 				cfg, err := config.ParseJobConfig(configPath)
 				Expect(err).NotTo(HaveOccurred())
 
