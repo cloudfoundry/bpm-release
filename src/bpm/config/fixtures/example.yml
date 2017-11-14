@@ -1,6 +1,6 @@
 ---
 processes:
-- name: example
+- name: first-process
   executable: /var/vcap/packages/program/bin/program-server
   args:
   - --port=2424
@@ -23,5 +23,8 @@ processes:
   workdir: /I/AM/A/WORKDIR
   persistent_disk: true
   ephemeral_disk: true
-- name: alternate-example
-  executable: /I/AM/AN/EXECUTABLE
+- name: second-process
+  executable: /I/AM/A/SECOND-EXECUTABLE
+- name: third-process
+  executable: /I/AM/A/THIRD-EXECUTABLE
+  hooks: {}

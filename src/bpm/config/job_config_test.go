@@ -37,9 +37,9 @@ var _ = Describe("Config", func() {
 			expectedMemoryLimit := "100G"
 			expectedOpenFilesLimit := uint64(100)
 
-			Expect(cfg.Processes).To(HaveLen(2))
+			Expect(cfg.Processes).To(HaveLen(3))
 
-			Expect(cfg.Processes[0].Name).To(Equal("example"))
+			Expect(cfg.Processes[0].Name).To(Equal("first-process"))
 			Expect(cfg.Processes[0].Executable).To(Equal("/var/vcap/packages/program/bin/program-server"))
 			Expect(cfg.Processes[0].Args).To(ConsistOf("--port=2424", "--host=\"localhost\""))
 			Expect(cfg.Processes[0].Env).To(HaveKeyWithValue("FOO", "BAR"))
@@ -56,8 +56,13 @@ var _ = Describe("Config", func() {
 			Expect(cfg.Processes[0].PersistentDisk).To(BeTrue())
 			Expect(cfg.Processes[0].EphemeralDisk).To(BeTrue())
 
-			Expect(cfg.Processes[1].Name).To(Equal("alternate-example"))
-			Expect(cfg.Processes[1].Executable).To(Equal("/I/AM/AN/EXECUTABLE"))
+			Expect(cfg.Processes[1].Name).To(Equal("second-process"))
+			Expect(cfg.Processes[1].Executable).To(Equal("/I/AM/A/SECOND-EXECUTABLE"))
+			Expect(cfg.Processes[1].Hooks).To(BeNil())
+
+			Expect(cfg.Processes[2].Name).To(Equal("third-process"))
+			Expect(cfg.Processes[2].Executable).To(Equal("/I/AM/A/THIRD-EXECUTABLE"))
+			Expect(cfg.Processes[2].Hooks.PreStart).To(BeEmpty())
 		})
 
 		Context("when reading the file fails", func() {
@@ -84,25 +89,12 @@ var _ = Describe("Config", func() {
 
 		Context("when the configuration is not valid", func() {
 			BeforeEach(func() {
-				configPath = "fixtures/example-invalid.yml"
+				configPath = "fixtures/example-invalid-config.yml"
 			})
 
 			It("returns an error", func() {
 				_, err := config.ParseJobConfig(configPath)
 				Expect(err).To(HaveOccurred())
-			})
-		})
-
-		Context("when the configuration contains empty hooks", func() {
-			BeforeEach(func() {
-				configPath = "fixtures/example-empty-hook.yml"
-			})
-
-			It("creates a `Hooks` element with empty contents", func() {
-				cfg, err := config.ParseJobConfig(configPath)
-				Expect(err).NotTo(HaveOccurred())
-
-				Expect(cfg.Processes[0].Hooks.PreStart).To(BeEmpty())
 			})
 		})
 	})
