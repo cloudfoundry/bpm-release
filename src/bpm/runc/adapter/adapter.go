@@ -126,7 +126,7 @@ func (a *RuncAdapter) BuildSpec(
 	procCfg *config.ProcessConfig,
 	user specs.User,
 ) (specs.Spec, error) {
-	cwd := "/"
+	cwd := bpmCfg.JobDir()
 	if procCfg.WorkDir != "" {
 		cwd = procCfg.WorkDir
 	}
