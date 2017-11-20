@@ -29,7 +29,6 @@ import (
 
 	"code.cloudfoundry.org/clock"
 	"code.cloudfoundry.org/lager"
-	"code.cloudfoundry.org/lager/lagerflags"
 
 	"github.com/spf13/cobra"
 )
@@ -107,10 +106,12 @@ func setupBpmLogs(sessionName string) error {
 		return err
 	}
 
-	logger, _ = lagerflags.NewFromConfig("bpm", lagerflags.DefaultLagerConfig())
+	logger = lager.NewLogger("bpm")
 	logger.RegisterSink(lager.NewWriterSink(logFile, lager.INFO))
-	logger = logger.WithData(lager.Data{"job": bpmCfg.JobName(), "process": bpmCfg.ProcName()})
-	logger = logger.Session(sessionName)
+	logger = logger.Session(sessionName, lager.Data{
+		"job":     bpmCfg.JobName(),
+		"process": bpmCfg.ProcName(),
+	})
 
 	return nil
 }

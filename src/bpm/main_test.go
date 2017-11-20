@@ -53,8 +53,7 @@ var _ = Describe("bpm", func() {
 		cfgPath,
 		stdoutFileLocation,
 		stderrFileLocation,
-		runcRoot,
-		bpmLogFileLocation string
+		runcRoot string
 
 		cfg *config.JobConfig
 	)
@@ -124,6 +123,10 @@ var _ = Describe("bpm", func() {
 		}
 	}
 
+	var bpmLogFile = func(jobName string) string {
+		return filepath.Join(boshConfigPath, "sys", "log", jobName, "bpm.log")
+	}
+
 	BeforeEach(func() {
 		var err error
 
@@ -151,7 +154,6 @@ var _ = Describe("bpm", func() {
 
 		stdoutFileLocation = filepath.Join(boshConfigPath, "sys", "log", jobName, fmt.Sprintf("%s.out.log", jobName))
 		stderrFileLocation = filepath.Join(boshConfigPath, "sys", "log", jobName, fmt.Sprintf("%s.err.log", jobName))
-		bpmLogFileLocation = filepath.Join(boshConfigPath, "sys", "log", jobName, "bpm.log")
 
 		cfgPath = writeConfig(jobName, cfg)
 
@@ -249,14 +251,14 @@ var _ = Describe("bpm", func() {
 		})
 
 		It("logs bpm internal logs to a consistent location", func() {
-			Expect(bpmLogFileLocation).NotTo(BeAnExistingFile())
+			Expect(bpmLogFile(jobName)).NotTo(BeAnExistingFile())
 
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 			Eventually(session).Should(gexec.Exit(0))
 
-			Eventually(fileContents(bpmLogFileLocation)).Should(ContainSubstring("bpm.start.starting"))
-			Eventually(fileContents(bpmLogFileLocation)).Should(ContainSubstring("bpm.start.complete"))
+			Eventually(fileContents(bpmLogFile(jobName))).Should(ContainSubstring("bpm.start.starting"))
+			Eventually(fileContents(bpmLogFile(jobName))).Should(ContainSubstring("bpm.start.complete"))
 		})
 
 		Context("when a pre_start hook is specified", func() {
@@ -723,7 +725,8 @@ var _ = Describe("bpm", func() {
 				session, err := gexec.Start(start, GinkgoWriter, GinkgoWriter)
 				Expect(err).ShouldNot(HaveOccurred())
 				Eventually(session).Should(gexec.Exit(0))
-				Expect(session.Out).Should(gbytes.Say("process-already-running"))
+				Expect(fileContents(bpmLogFile(jobName))).Should(ContainSubstring("process-already-running"))
+
 				newPid := getContainerPid()
 				Expect(newPid).To(Equal(origPid))
 			})
@@ -879,8 +882,8 @@ var _ = Describe("bpm", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Eventually(session).Should(gexec.Exit(0))
 
-			Eventually(fileContents(bpmLogFileLocation)).Should(ContainSubstring("bpm.stop.starting"))
-			Eventually(fileContents(bpmLogFileLocation)).Should(ContainSubstring("bpm.stop.complete"))
+			Eventually(fileContents(bpmLogFile(jobName))).Should(ContainSubstring("bpm.stop.starting"))
+			Eventually(fileContents(bpmLogFile(jobName))).Should(ContainSubstring("bpm.stop.complete"))
 		})
 
 		Context("when the job name is not specified", func() {
@@ -909,21 +912,21 @@ var _ = Describe("bpm", func() {
 				Expect(err).ShouldNot(HaveOccurred())
 
 				Eventually(secondSession).Should(gexec.Exit(0))
-				Expect(secondSession.Out).Should(gbytes.Say("job-already-stopped"))
+				Expect(fileContents(bpmLogFile(jobName))).Should(ContainSubstring("job-already-stopped"))
 			})
 		})
 
-		Context("when an invalid job/process name is specified", func() {
+		Context("when the job-process doesn't not exist", func() {
 			BeforeEach(func() {
 				jobName = "some-bad-job-name"
 			})
 
-			It("returns successfully", func() {
+			It("ignores that and is successful", func() {
 				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 				Expect(err).ShouldNot(HaveOccurred())
 
 				Eventually(session).Should(gexec.Exit(0))
-				Expect(session.Out).Should(gbytes.Say("job-already-stopped"))
+				Expect(fileContents(bpmLogFile(jobName))).Should(ContainSubstring("job-already-stopped"))
 			})
 		})
 	})
@@ -1801,7 +1804,16 @@ func chownR(path string, uid, gid int) error {
 	})
 }
 
-func fileContents(path string) func() string {
+// fileContent allows the fileContents function to be used with both
+// synchronous and asynchronous ContainSubstring Ginkgo matchers by
+// implementing Stringer on the function.
+type fileContent func() string
+
+func (f fileContent) String() string {
+	return f()
+}
+
+func fileContents(path string) fileContent {
 	return func() string {
 		data, err := ioutil.ReadFile(path)
 		Expect(err).NotTo(HaveOccurred())
