@@ -62,14 +62,13 @@ func start(cmd *cobra.Command, _ []string) error {
 	jobCfg, err := config.ParseJobConfig(bpmCfg.JobConfig())
 	if err != nil {
 		logger.Error("failed-to-parse-config", err)
-		return err
+		return fmt.Errorf("failed to parse job configuration: %s", err)
 	}
 
 	procCfg, err := processByNameFromJobConfig(jobCfg, procName)
 	if err != nil {
-		err = fmt.Errorf("invalid-process: %s", procName)
 		logger.Error("process-not-defined", err)
-		return err
+		return fmt.Errorf("process %q not present in job configuration (%s)", procName, bpmCfg.JobConfig())
 	}
 
 	runcLifecycle := newRuncLifecycle()
@@ -89,13 +88,16 @@ func start(cmd *cobra.Command, _ []string) error {
 		return nil
 	case lifecycle.ContainerStateStopped:
 		logger.Info("removing-stopped-process")
-		removeErr := runcLifecycle.RemoveProcess(bpmCfg)
-		if removeErr != nil {
-			logger.Error("failed-to-cleanup", removeErr)
-			return removeErr
+		if err := runcLifecycle.RemoveProcess(bpmCfg); err != nil {
+			logger.Error("failed-to-cleanup", err)
+			return fmt.Errorf("failed to clean up stale job-process: %s", err)
 		}
 		fallthrough
 	default:
-		return runcLifecycle.StartProcess(logger, bpmCfg, procCfg)
+		if err := runcLifecycle.StartProcess(logger, bpmCfg, procCfg); err != nil {
+			return fmt.Errorf("failed to start job-process: %s", err)
+		}
 	}
+
+	return nil
 }

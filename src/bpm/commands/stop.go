@@ -16,6 +16,7 @@
 package commands
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -63,7 +64,7 @@ func stop(cmd *cobra.Command, _ []string) error {
 	job, err := runcLifecycle.GetProcess(bpmCfg)
 	if err != nil {
 		logger.Error("failed-to-get-job", err)
-		return err
+		return fmt.Errorf("failed to get job-process status: %s", err)
 	}
 
 	if job == nil {
@@ -76,5 +77,9 @@ func stop(cmd *cobra.Command, _ []string) error {
 		logger.Error("failed-to-stop", err)
 	}
 
-	return runcLifecycle.RemoveProcess(bpmCfg)
+	if err := runcLifecycle.RemoveProcess(bpmCfg); err != nil {
+		return fmt.Errorf("failed to cleanup job-process: %s", err)
+	}
+
+	return nil
 }

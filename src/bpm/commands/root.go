@@ -22,6 +22,7 @@ import (
 	"bpm/runc/lifecycle"
 	"bpm/usertools"
 	"errors"
+	"fmt"
 	"os"
 	"os/user"
 
@@ -180,5 +181,5 @@ func processByNameFromJobConfig(jobCfg *config.JobConfig, procName string) (*con
 		}
 	}
 
-	return nil, errors.New("process-not-found")
+	return nil, fmt.Errorf("invalid process: %s", procName)
 }

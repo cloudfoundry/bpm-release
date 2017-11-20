@@ -830,7 +830,7 @@ var _ = Describe("bpm", func() {
 				Expect(err).ShouldNot(HaveOccurred())
 				Eventually(session).Should(gexec.Exit(1))
 
-				Expect(session.Err).Should(gbytes.Say("invalid-process"))
+				Expect(session.Err).Should(gbytes.Say(`process "I DO NOT EXIST" not present in job configuration`))
 			})
 		})
 	})
