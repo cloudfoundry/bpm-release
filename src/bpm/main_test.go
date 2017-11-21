@@ -1335,10 +1335,12 @@ var _ = Describe("bpm", func() {
 			})
 
 			It("prints stderr logs", func() {
-				Eventually(session.Out).Should(gbytes.Say("BAR is Foo 26\n"))
-				Consistently(session.Out).ShouldNot(gbytes.Say("Foo is BAR 26\n"))
-				Consistently(session.Out).ShouldNot(gbytes.Say("BAR is Foo 1\n"))
 				Eventually(session).Should(gexec.Exit())
+				output := session.Out.Contents()
+
+				Expect(output).To(ContainSubstring("BAR is Foo 26\n"))
+				Expect(output).NotTo(ContainSubstring("Foo is BAR 26\n"))
+				Expect(output).NotTo(ContainSubstring("BAR is Foo 1\n"))
 			})
 
 			Context("when the -n flag is set", func() {
@@ -1347,14 +1349,15 @@ var _ = Describe("bpm", func() {
 				})
 
 				It("tails only the last n lines", func() {
-					Eventually(session.Out).Should(gbytes.Say("BAR is Foo 17\n"))
-					Eventually(session.Out).Should(gbytes.Say("BAR is Foo 26\n"))
-					Consistently(session.Out).ShouldNot(gbytes.Say("BAR is Foo 1\n"))
-					Consistently(session.Out).ShouldNot(gbytes.Say("BAR is Foo 16\n"))
-
-					Consistently(session.Out).ShouldNot(gbytes.Say("Foo is BAR 26\n"))
-
 					Eventually(session).Should(gexec.Exit())
+					output := session.Out.Contents()
+
+					Expect(output).To(ContainSubstring("BAR is Foo 17\n"))
+					Expect(output).To(ContainSubstring("BAR is Foo 26\n"))
+					Expect(output).NotTo(ContainSubstring("BAR is Foo 1\n"))
+					Expect(output).NotTo(ContainSubstring("BAR is Foo 16\n"))
+
+					Expect(output).NotTo(ContainSubstring("Foo is BAR 26\n"))
 				})
 			})
 		})
@@ -1365,35 +1368,38 @@ var _ = Describe("bpm", func() {
 			})
 
 			It("prints both stderr and stdout logs", func() {
-				Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf("==> %s <==\n", stdoutFileLocation)))
-				Eventually(session.Out).Should(gbytes.Say("Foo is BAR 2\n"))
-				Eventually(session.Out).Should(gbytes.Say("Foo is BAR 26\n"))
-				Consistently(session.Out).ShouldNot(gbytes.Say("Foo is BAR 1\n"))
-
-				Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf("==> %s <==\n", stderrFileLocation)))
-				Eventually(session.Out).Should(gbytes.Say("BAR is Foo 2\n"))
-				Eventually(session.Out).Should(gbytes.Say("BAR is Foo 26\n"))
-				Consistently(session.Out).ShouldNot(gbytes.Say("BAR is Foo 1\n"))
-
 				Eventually(session).Should(gexec.Exit())
+				output := session.Out.Contents()
+
+				Expect(output).To(ContainSubstring(fmt.Sprintf("==> %s <==\n", stdoutFileLocation)))
+				Expect(output).To(ContainSubstring("Foo is BAR 2\n"))
+				Expect(output).To(ContainSubstring("Foo is BAR 26\n"))
+				Expect(output).NotTo(ContainSubstring("Foo is BAR 1\n"))
+
+				Expect(output).To(ContainSubstring(fmt.Sprintf("==> %s <==\n", stderrFileLocation)))
+				Expect(output).To(ContainSubstring("BAR is Foo 2\n"))
+				Expect(output).To(ContainSubstring("BAR is Foo 26\n"))
+				Expect(output).NotTo(ContainSubstring("BAR is Foo 1\n"))
 			})
 
 			Context("when the -q flag is set", func() {
 				BeforeEach(func() {
 					commandArgs = append(commandArgs, "-q")
 				})
+
 				It("prints both stderr and stdout logs without the file name headers", func() {
-					Eventually(session.Out).ShouldNot(gbytes.Say(fmt.Sprintf("==> %s <==\n", stdoutFileLocation)))
-					Eventually(session.Out).Should(gbytes.Say("Foo is BAR 2\n"))
-					Eventually(session.Out).Should(gbytes.Say("Foo is BAR 26\n"))
-					Consistently(session.Out).ShouldNot(gbytes.Say("Foo is BAR 1\n"))
-
-					Eventually(session.Out).ShouldNot(gbytes.Say(fmt.Sprintf("==> %s <==\n", stderrFileLocation)))
-					Eventually(session.Out).Should(gbytes.Say("BAR is Foo 2\n"))
-					Eventually(session.Out).Should(gbytes.Say("BAR is Foo 26\n"))
-					Consistently(session.Out).ShouldNot(gbytes.Say("BAR is Foo 1\n"))
-
 					Eventually(session).Should(gexec.Exit())
+					output := session.Out.Contents()
+
+					Expect(output).NotTo(ContainSubstring(fmt.Sprintf("==> %s <==\n", stdoutFileLocation)))
+					Expect(output).To(ContainSubstring("Foo is BAR 2\n"))
+					Expect(output).To(ContainSubstring("Foo is BAR 26\n"))
+					Expect(output).NotTo(ContainSubstring("Foo is BAR 1\n"))
+
+					Expect(output).NotTo(ContainSubstring(fmt.Sprintf("==> %s <==\n", stderrFileLocation)))
+					Expect(output).To(ContainSubstring("BAR is Foo 2\n"))
+					Expect(output).To(ContainSubstring("BAR is Foo 26\n"))
+					Expect(output).NotTo(ContainSubstring("BAR is Foo 1\n"))
 				})
 			})
 
@@ -1403,19 +1409,20 @@ var _ = Describe("bpm", func() {
 				})
 
 				It("tails only the last n lines", func() {
-					Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf("==> %s <==\n", stdoutFileLocation)))
-					Eventually(session.Out).Should(gbytes.Say("Foo is BAR 17\n"))
-					Eventually(session.Out).Should(gbytes.Say("Foo is BAR 26\n"))
-					Consistently(session.Out).ShouldNot(gbytes.Say("Foo is BAR 1\n"))
-					Consistently(session.Out).ShouldNot(gbytes.Say("Foo is BAR 16\n"))
-
-					Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf("==> %s <==\n", stderrFileLocation)))
-					Eventually(session.Out).Should(gbytes.Say("BAR is Foo 17\n"))
-					Eventually(session.Out).Should(gbytes.Say("BAR is Foo 26\n"))
-					Consistently(session.Out).ShouldNot(gbytes.Say("BAR is Foo 1\n"))
-					Consistently(session.Out).ShouldNot(gbytes.Say("BAR is Foo 16\n"))
-
 					Eventually(session).Should(gexec.Exit())
+					output := session.Out.Contents()
+
+					Expect(output).To(ContainSubstring(fmt.Sprintf("==> %s <==\n", stdoutFileLocation)))
+					Expect(output).To(ContainSubstring("Foo is BAR 17\n"))
+					Expect(output).To(ContainSubstring("Foo is BAR 26\n"))
+					Expect(output).NotTo(ContainSubstring("Foo is BAR 1\n"))
+					Expect(output).NotTo(ContainSubstring("Foo is BAR 16\n"))
+
+					Expect(output).To(ContainSubstring(fmt.Sprintf("==> %s <==\n", stderrFileLocation)))
+					Expect(output).To(ContainSubstring("BAR is Foo 17\n"))
+					Expect(output).To(ContainSubstring("BAR is Foo 26\n"))
+					Expect(output).NotTo(ContainSubstring("BAR is Foo 1\n"))
+					Expect(output).NotTo(ContainSubstring("BAR is Foo 16\n"))
 				})
 			})
 		})
@@ -1426,17 +1433,18 @@ var _ = Describe("bpm", func() {
 			})
 
 			It("prints both stderr and stdout logs", func() {
-				Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf("==> %s <==\n", stdoutFileLocation)))
-				Eventually(session.Out).Should(gbytes.Say("Foo is BAR 2\n"))
-				Eventually(session.Out).Should(gbytes.Say("Foo is BAR 26\n"))
-				Consistently(session.Out).ShouldNot(gbytes.Say("Foo is BAR 1\n"))
-
-				Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf("==> %s <==\n", stderrFileLocation)))
-				Eventually(session.Out).Should(gbytes.Say("BAR is Foo 2\n"))
-				Eventually(session.Out).Should(gbytes.Say("BAR is Foo 26\n"))
-				Consistently(session.Out).ShouldNot(gbytes.Say("BAR is Foo 1\n"))
-
 				Eventually(session).Should(gexec.Exit())
+				output := session.Out.Contents()
+
+				Expect(output).To(ContainSubstring(fmt.Sprintf("==> %s <==\n", stdoutFileLocation)))
+				Expect(output).To(ContainSubstring("Foo is BAR 2\n"))
+				Expect(output).To(ContainSubstring("Foo is BAR 26\n"))
+				Expect(output).NotTo(ContainSubstring("Foo is BAR 1\n"))
+
+				Expect(output).To(ContainSubstring(fmt.Sprintf("==> %s <==\n", stderrFileLocation)))
+				Expect(output).To(ContainSubstring("BAR is Foo 2\n"))
+				Expect(output).To(ContainSubstring("BAR is Foo 26\n"))
+				Expect(output).NotTo(ContainSubstring("BAR is Foo 1\n"))
 			})
 		})
 
