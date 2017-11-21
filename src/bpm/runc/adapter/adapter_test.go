@@ -402,6 +402,23 @@ var _ = Describe("RuncAdapter", func() {
 				specs.LinuxNamespace{Type: "pid"},
 				specs.LinuxNamespace{Type: "uts"},
 			))
+
+			// This must be part of the existing It block to preven test pollution
+			By("the presence of /run/resolvconf on the host")
+
+			Expect(os.MkdirAll(adapter.ResolvConfDir, 0700)).To(Succeed())
+
+			specWithResolvConf, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(specWithResolvConf.Mounts).To(ContainElement(specs.Mount{
+				Destination: adapter.ResolvConfDir,
+				Type:        "bind",
+				Source:      adapter.ResolvConfDir,
+				Options:     []string{"nodev", "nosuid", "noexec", "bind", "ro"},
+			}))
+
+			Expect(os.RemoveAll(adapter.ResolvConfDir)).To(Succeed())
 		})
 
 		Context("when a user provides TMPDIR, LANG and PATH, and HOME environment variables", func() {
@@ -470,28 +487,6 @@ var _ = Describe("RuncAdapter", func() {
 					Type:        "bind",
 					Source:      filepath.Join(systemRoot, "data", "example"),
 					Options:     []string{"nodev", "nosuid", "noexec", "rbind", "rw"},
-				}))
-			})
-		})
-
-		Context("when the /run/resolvconf directory exists", func() {
-			BeforeEach(func() {
-				Expect(os.MkdirAll(adapter.ResolvConfDir, 0700)).To(Succeed())
-			})
-
-			AfterEach(func() {
-				Expect(os.RemoveAll(adapter.ResolvConfDir)).To(Succeed())
-			})
-
-			It("bind mounts the /run/resolvconf directory into the container", func() {
-				spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
-				Expect(err).NotTo(HaveOccurred())
-
-				Expect(spec.Mounts).To(ContainElement(specs.Mount{
-					Destination: adapter.ResolvConfDir,
-					Type:        "bind",
-					Source:      adapter.ResolvConfDir,
-					Options:     []string{"nodev", "nosuid", "noexec", "bind", "ro"},
 				}))
 			})
 		})
