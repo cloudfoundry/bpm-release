@@ -238,7 +238,7 @@ var _ = Describe("RuncAdapter", func() {
 			Expect(spec.Process.User).To(Equal(user))
 			Expect(spec.Process.Args).To(Equal(expectedProcessArgs))
 			Expect(spec.Process.Env).To(ConsistOf(expectedEnv))
-			Expect(spec.Process.Cwd).To(Equal("/"))
+			Expect(spec.Process.Cwd).To(Equal(bpmCfg.JobDir()))
 			Expect(spec.Process.Rlimits).To(Equal([]specs.POSIXRlimit{}))
 			Expect(spec.Process.NoNewPrivileges).To(Equal(true))
 			Expect(spec.Process.Capabilities).To(Equal(&specs.LinuxCapabilities{
