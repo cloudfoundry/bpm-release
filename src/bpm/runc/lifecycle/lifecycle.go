@@ -27,7 +27,7 @@ import (
 	"os/exec"
 	"time"
 
-	specs "github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/opencontainers/runtime-spec/specs-go"
 
 	"code.cloudfoundry.org/clock"
 	"code.cloudfoundry.org/lager"
