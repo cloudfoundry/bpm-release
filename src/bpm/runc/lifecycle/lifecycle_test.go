@@ -507,6 +507,11 @@ var _ = Describe("RuncJobLifecycle", func() {
 					InitProcessPid: 34567,
 					Status:         "running",
 				},
+				{
+					ID:             "job-process-3",
+					InitProcessPid: 0,
+					Status:         "stopped",
+				},
 			}
 			fakeRuncClient.ListContainersReturns(containerStates, nil)
 
@@ -516,6 +521,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 			Expect(bpmJobs).To(ConsistOf([]models.Process{
 				{Name: "job-process-2", Pid: 23456, Status: "created"},
 				{Name: "job-process-1", Pid: 34567, Status: "running"},
+				{Name: "job-process-3", Pid: 0, Status: "stopped"},
 			}))
 		})
 
