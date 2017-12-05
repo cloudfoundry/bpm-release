@@ -182,17 +182,17 @@ func (j *RuncLifecycle) ListProcesses() ([]models.Process, error) {
 		return nil, err
 	}
 
-	var jobs []models.Process
+	var processes []models.Process
 	for _, c := range containers {
-		job := models.Process{
+		process := models.Process{
 			Name:   c.ID,
 			Pid:    c.InitProcessPid,
 			Status: c.Status,
 		}
-		jobs = append(jobs, job)
+		processes = append(processes, process)
 	}
 
-	return jobs, nil
+	return processes, nil
 }
 
 func (j *RuncLifecycle) StopProcess(logger lager.Logger, cfg *config.BPMConfig, exitTimeout time.Duration) error {
