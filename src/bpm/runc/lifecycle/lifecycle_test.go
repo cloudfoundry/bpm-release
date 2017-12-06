@@ -174,7 +174,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 			Context("when the PreStart Hook fails", func() {
 				BeforeEach(func() {
-					fakeCommandRunner.RunReturns(errors.New("boom!"))
+					fakeCommandRunner.RunReturns(errors.New("fake test error"))
 				})
 
 				It("returns an error", func() {
@@ -214,7 +214,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 		Context("when looking up the vcap user fails", func() {
 			BeforeEach(func() {
-				fakeUserFinder.LookupReturns(specs.User{}, errors.New("boom"))
+				fakeUserFinder.LookupReturns(specs.User{}, errors.New("fake test error"))
 			})
 
 			It("returns an error", func() {
@@ -225,7 +225,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 		Context("when creating the system files fails", func() {
 			BeforeEach(func() {
-				fakeRuncAdapter.CreateJobPrerequisitesReturns(nil, nil, errors.New("boom"))
+				fakeRuncAdapter.CreateJobPrerequisitesReturns(nil, nil, errors.New("fake test error"))
 			})
 
 			It("returns an error", func() {
@@ -236,7 +236,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 		Context("when building the runc spec fails", func() {
 			BeforeEach(func() {
-				fakeRuncAdapter.BuildSpecReturns(specs.Spec{}, errors.New("boom"))
+				fakeRuncAdapter.BuildSpecReturns(specs.Spec{}, errors.New("fake test error"))
 			})
 
 			It("returns an error", func() {
@@ -247,7 +247,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 		Context("when building the bundle fails", func() {
 			BeforeEach(func() {
-				fakeRuncClient.CreateBundleReturns(errors.New("boom!"))
+				fakeRuncClient.CreateBundleReturns(errors.New("fake test error"))
 			})
 
 			It("returns an error", func() {
@@ -258,7 +258,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 		Context("when running the container fails", func() {
 			BeforeEach(func() {
-				fakeRuncClient.RunContainerReturns(errors.New("boom!"))
+				fakeRuncClient.RunContainerReturns(errors.New("fake test error"))
 			})
 
 			It("returns an error", func() {
@@ -376,7 +376,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 		Context("when fetching the container state fails", func() {
 			BeforeEach(func() {
-				fakeRuncClient.ContainerStateReturns(nil, errors.New("boom"))
+				fakeRuncClient.ContainerStateReturns(nil, errors.New("fake test error"))
 			})
 
 			It("keeps attempting to fetch the state", func() {
@@ -583,7 +583,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 		Context("when fetching the container state fails", func() {
 			BeforeEach(func() {
-				fakeRuncClient.ContainerStateReturns(nil, errors.New("boom!"))
+				fakeRuncClient.ContainerStateReturns(nil, errors.New("fake test error"))
 			})
 
 			It("returns an error", func() {
@@ -631,7 +631,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 		Context("when the exec command fails", func() {
 			BeforeEach(func() {
-				fakeRuncClient.ExecReturns(errors.New("boom!"))
+				fakeRuncClient.ExecReturns(errors.New("fake test error"))
 			})
 
 			It("returns an error", func() {
