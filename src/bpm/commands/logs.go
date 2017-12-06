@@ -31,8 +31,7 @@ var (
 	follow,
 	quiet bool
 
-	numLines         int
-	allowedTailFlags map[string]string
+	numLines int
 )
 
 func init() {
