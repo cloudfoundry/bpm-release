@@ -24,7 +24,7 @@ import (
 	"path/filepath"
 	"regexp"
 
-	specs "github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/opencontainers/runtime-spec/specs-go"
 )
 
 type Signal int

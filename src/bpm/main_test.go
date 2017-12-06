@@ -32,15 +32,15 @@ import (
 	"syscall"
 	"time"
 
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 
 	"github.com/kr/pty"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
-	specs "github.com/opencontainers/runtime-spec/specs-go"
-	uuid "github.com/satori/go.uuid"
+	"github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/satori/go.uuid"
 )
 
 var _ = Describe("bpm", func() {
