@@ -17,12 +17,12 @@ package handlers
 
 import (
 	"fmt"
-	"os/exec"
 	"net/http"
+	"os/exec"
 )
 
 func MaskedPaths(w http.ResponseWriter, r *http.Request) {
-	cmd := exec.Command("/bin/dd","if=/proc/sched_debug")
+	cmd := exec.Command("/bin/dd", "if=/proc/sched_debug")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -30,5 +30,5 @@ func MaskedPaths(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintln(w, string(output))
-	cmd.Process.Kill()  // as dd could run indefinitely and cause issues with other tests...
+	cmd.Process.Kill() // as dd could run indefinitely and cause issues with other tests...
 }
