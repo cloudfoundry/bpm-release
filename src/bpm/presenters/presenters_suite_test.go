@@ -13,15 +13,16 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 
-package models
+package presenters_test
 
-const (
-	ProcessStateRunning = "running"
-	ProcessStateFailed  = "failed"
+import (
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+
+	"testing"
 )
 
-type Process struct {
-	Name   string
-	Pid    int
-	Status string
+func TestPresenters(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "Presenters Suite")
 }

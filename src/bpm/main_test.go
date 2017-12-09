@@ -781,7 +781,7 @@ var _ = Describe("bpm", func() {
 				session, err = gexec.Start(command, GinkgoWriter, GinkgoWriter)
 				Expect(err).ShouldNot(HaveOccurred())
 				Eventually(session).Should(gexec.Exit(0))
-				Expect(session.Out).Should(gbytes.Say("stopped"))
+				Expect(session.Out).Should(gbytes.Say("failed"))
 			})
 
 			It("`bpm start` cleans up the associated container and artifacts and starts it", func() {
@@ -816,7 +816,7 @@ var _ = Describe("bpm", func() {
 					Expect(err).ShouldNot(HaveOccurred())
 					Eventually(session).Should(gexec.Exit(0))
 
-					Expect(session.Out).Should(gbytes.Say("stopped"))
+					Expect(session.Out).Should(gbytes.Say("failed"))
 				})
 			})
 		})

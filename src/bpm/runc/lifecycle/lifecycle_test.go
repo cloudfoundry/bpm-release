@@ -518,10 +518,10 @@ var _ = Describe("RuncJobLifecycle", func() {
 			bpmJobs, err := runcLifecycle.ListProcesses()
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(bpmJobs).To(ConsistOf([]models.Process{
+			Expect(bpmJobs).To(ConsistOf([]*models.Process{
 				{Name: "job-process-2", Pid: 23456, Status: "created"},
 				{Name: "job-process-1", Pid: 34567, Status: "running"},
-				{Name: "job-process-3", Pid: 0, Status: "stopped"},
+				{Name: "job-process-3", Pid: 0, Status: "failed"},
 			}))
 		})
 
@@ -542,16 +542,31 @@ var _ = Describe("RuncJobLifecycle", func() {
 		})
 
 		It("fetches the container state and translates it into a job", func() {
-			job, err := runcLifecycle.GetProcess(bpmCfg)
+			process, err := runcLifecycle.GetProcess(bpmCfg)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(fakeRuncClient.ContainerStateCallCount()).To(Equal(1))
 			Expect(fakeRuncClient.ContainerStateArgsForCall(0)).To(Equal(expectedContainerID))
-			Expect(job).NotTo(BeNil())
-			Expect(*job).To(Equal(models.Process{
+			Expect(process).To(Equal(&models.Process{
 				Name:   expectedContainerID,
 				Pid:    1234,
 				Status: "running",
 			}))
+		})
+
+		Context("when the container state is stopped", func() {
+			BeforeEach(func() {
+				fakeRuncClient.ContainerStateReturns(&specs.State{ID: expectedContainerID, Pid: 0, Status: "stopped"}, nil)
+			})
+
+			It("fetches the container state and translates it into a job", func() {
+				process, err := runcLifecycle.GetProcess(bpmCfg)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(process).To(Equal(&models.Process{
+					Name:   expectedContainerID,
+					Pid:    0,
+					Status: "failed",
+				}))
+			})
 		})
 
 		Context("when the process name is the same as the job name", func() {
@@ -574,10 +589,10 @@ var _ = Describe("RuncJobLifecycle", func() {
 			})
 
 			It("returns nil,nil", func() {
-				job, err := runcLifecycle.GetProcess(bpmCfg)
+				process, err := runcLifecycle.GetProcess(bpmCfg)
 				Expect(err).NotTo(HaveOccurred())
 
-				Expect(job).To(BeNil())
+				Expect(process).To(BeNil())
 			})
 		})
 

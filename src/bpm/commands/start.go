@@ -17,7 +17,7 @@ package commands
 
 import (
 	"bpm/config"
-	"bpm/runc/lifecycle"
+	"bpm/models"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -83,10 +83,10 @@ func start(cmd *cobra.Command, _ []string) error {
 	}
 
 	switch state {
-	case lifecycle.ContainerStateRunning:
+	case models.ProcessStateRunning:
 		logger.Info("process-already-running")
 		return nil
-	case lifecycle.ContainerStateStopped:
+	case models.ProcessStateFailed:
 		logger.Info("removing-stopped-process")
 		if err := runcLifecycle.RemoveProcess(bpmCfg); err != nil {
 			logger.Error("failed-to-cleanup", err)

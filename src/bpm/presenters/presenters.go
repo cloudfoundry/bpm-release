@@ -25,16 +25,22 @@ import (
 	"text/tabwriter"
 )
 
-func PrintJobs(jobs []models.Process, stdout io.Writer) error {
+func PrintJobs(processes []*models.Process, stdout io.Writer) error {
 	tw := tabwriter.NewWriter(stdout, 0, 0, 1, ' ', 0)
 
 	printRow(tw, "Name", "Pid", "Status")
-	for _, job := range jobs {
-		name, err := config.Decode(job.Name)
+	for _, process := range processes {
+		name, err := config.Decode(process.Name)
 		if err != nil {
 			return err
 		}
-		printRow(tw, name, strconv.Itoa(job.Pid), job.Status)
+
+		pid := "-"
+		if process.Pid > 0 {
+			pid = strconv.Itoa(process.Pid)
+		}
+
+		printRow(tw, name, pid, process.Status)
 	}
 
 	return tw.Flush()

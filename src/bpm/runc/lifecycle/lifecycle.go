@@ -165,31 +165,30 @@ func (j *RuncLifecycle) GetProcess(cfg *config.BPMConfig) (*models.Process, erro
 		return nil, nil
 	}
 
-	return &models.Process{
-		Name:   container.ID,
-		Pid:    container.Pid,
-		Status: container.Status,
-	}, nil
+	return newProcessFromContainerState(
+		container.ID,
+		container.Status,
+		container.Pid,
+	), nil
 }
 
 func (j *RuncLifecycle) OpenShell(cfg *config.BPMConfig, stdin io.Reader, stdout, stderr io.Writer) error {
 	return j.runcClient.Exec(cfg.ContainerID(true), "/bin/bash", stdin, stdout, stderr)
 }
 
-func (j *RuncLifecycle) ListProcesses() ([]models.Process, error) {
+func (j *RuncLifecycle) ListProcesses() ([]*models.Process, error) {
 	containers, err := j.runcClient.ListContainers()
 	if err != nil {
 		return nil, err
 	}
 
-	var processes []models.Process
+	var processes []*models.Process
 	for _, c := range containers {
-		process := models.Process{
-			Name:   c.ID,
-			Pid:    c.InitProcessPid,
-			Status: c.Status,
-		}
-		processes = append(processes, process)
+		processes = append(processes, newProcessFromContainerState(
+			c.ID,
+			c.Status,
+			c.InitProcessPid,
+		))
 	}
 
 	return processes, nil
@@ -205,7 +204,7 @@ func (j *RuncLifecycle) StopProcess(logger lager.Logger, cfg *config.BPMConfig, 
 	if err != nil {
 		logger.Error("failed-to-fetch-state", err)
 	} else {
-		if state.Status == "stopped" {
+		if state.Status == ContainerStateStopped {
 			return nil
 		}
 	}
@@ -221,7 +220,7 @@ func (j *RuncLifecycle) StopProcess(logger lager.Logger, cfg *config.BPMConfig, 
 			if err != nil {
 				logger.Error("failed-to-fetch-state", err)
 			} else {
-				if state.Status == "stopped" {
+				if state.Status == ContainerStateStopped {
 					return nil
 				}
 			}
@@ -244,6 +243,18 @@ func (j *RuncLifecycle) RemoveProcess(cfg *config.BPMConfig) error {
 	}
 
 	return j.runcClient.DestroyBundle(cfg.BundlePath())
+}
+
+func newProcessFromContainerState(id, status string, pid int) *models.Process {
+	if status == ContainerStateStopped {
+		status = "failed"
+	}
+
+	return &models.Process{
+		Name:   id,
+		Pid:    pid,
+		Status: status,
+	}
 }
 
 type commandRunner struct{}
