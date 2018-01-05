@@ -54,8 +54,8 @@ var _ = Describe("logs", func() {
 		Expect(os.Chmod(boshRoot, 0755)).To(Succeed())
 		runcRoot = setupBoshDirectories(boshRoot, job)
 
-		stdout = filepath.Join(boshRoot, "sys", "log", job, fmt.Sprintf("%s.out.log", job))
-		stderr = filepath.Join(boshRoot, "sys", "log", job, fmt.Sprintf("%s.err.log", job))
+		stdout = filepath.Join(boshRoot, "sys", "log", job, fmt.Sprintf("%s.stdout.log", job))
+		stderr = filepath.Join(boshRoot, "sys", "log", job, fmt.Sprintf("%s.stderr.log", job))
 
 		cfg = newJobConfig(job, logsBash)
 
@@ -241,8 +241,8 @@ var _ = Describe("logs", func() {
 				},
 			})
 
-			otherStdout = filepath.Join(boshRoot, "sys", "log", job, fmt.Sprintf("%s.out.log", process))
-			otherStderr = filepath.Join(boshRoot, "sys", "log", job, fmt.Sprintf("%s.err.log", process))
+			otherStdout = filepath.Join(boshRoot, "sys", "log", job, fmt.Sprintf("%s.stdout.log", process))
+			otherStderr = filepath.Join(boshRoot, "sys", "log", job, fmt.Sprintf("%s.stderr.log", process))
 
 			command = exec.Command(bpmPath, "logs", job, "-p", process)
 		})

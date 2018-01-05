@@ -54,7 +54,7 @@ var _ = Describe("capabilities", func() {
 		Expect(os.Chmod(boshRoot, 0755)).To(Succeed())
 		runcRoot = setupBoshDirectories(boshRoot, job)
 
-		stdout = filepath.Join(boshRoot, "sys", "log", job, fmt.Sprintf("%s.out.log", job))
+		stdout = filepath.Join(boshRoot, "sys", "log", job, fmt.Sprintf("%s.stdout.log", job))
 
 		cfg = newJobConfig(job, effectiveCapabiltiesBash)
 	})

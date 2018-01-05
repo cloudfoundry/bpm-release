@@ -34,8 +34,8 @@ your process while running the drain script.
 
 Your process should write logs to standard output and standard error file
 descriptors. This data will be written to
-`/var/vcap/sys/log/[job-name]/[process-name].out.log` and
-`/var/vcap/sys/log/[job-name]/[process-name].err.log` respectively.
+`/var/vcap/sys/log/[job-name]/[process-name].stdout.log` and
+`/var/vcap/sys/log/[job-name]/[process-name].stderr.log` respectively.
 
 Any other files which are written to `/var/vcap/sys/log/[job-name]` inside the
 container will be written to `/var/vcap/sys/log/[job-name]` in the host system.
