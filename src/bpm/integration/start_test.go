@@ -58,8 +58,8 @@ var _ = Describe("start", func() {
 		Expect(os.Chmod(boshRoot, 0755)).To(Succeed())
 		runcRoot = setupBoshDirectories(boshRoot, job)
 
-		stdout = filepath.Join(boshRoot, "sys", "log", job, fmt.Sprintf("%s.out.log", job))
-		stderr = filepath.Join(boshRoot, "sys", "log", job, fmt.Sprintf("%s.err.log", job))
+		stdout = filepath.Join(boshRoot, "sys", "log", job, fmt.Sprintf("%s.stdout.log", job))
+		stderr = filepath.Join(boshRoot, "sys", "log", job, fmt.Sprintf("%s.stderr.log", job))
 		bpmLog = filepath.Join(boshRoot, "sys", "log", job, "bpm.log")
 		logFile = filepath.Join(boshRoot, "sys", "log", job, "foo.log")
 		pidFile = filepath.Join(boshRoot, "sys", "run", "bpm", job, fmt.Sprintf("%s.pid", job))
@@ -153,8 +153,8 @@ var _ = Describe("start", func() {
 				},
 			})
 
-			stdout = filepath.Join(boshRoot, "sys", "log", job, fmt.Sprintf("%s.out.log", process))
-			stderr = filepath.Join(boshRoot, "sys", "log", job, fmt.Sprintf("%s.err.log", process))
+			stdout = filepath.Join(boshRoot, "sys", "log", job, fmt.Sprintf("%s.stdout.log", process))
+			stderr = filepath.Join(boshRoot, "sys", "log", job, fmt.Sprintf("%s.stderr.log", process))
 			pidFile = filepath.Join(boshRoot, "sys", "run", "bpm", job, fmt.Sprintf("%s.pid", process))
 		})
 

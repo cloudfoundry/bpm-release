@@ -82,11 +82,11 @@ func (c *BPMConfig) LogDir() string {
 }
 
 func (c *BPMConfig) Stdout() string {
-	return filepath.Join(c.LogDir(), fmt.Sprintf("%s.out.log", c.procName))
+	return filepath.Join(c.LogDir(), fmt.Sprintf("%s.stdout.log", c.procName))
 }
 
 func (c *BPMConfig) Stderr() string {
-	return filepath.Join(c.LogDir(), fmt.Sprintf("%s.err.log", c.procName))
+	return filepath.Join(c.LogDir(), fmt.Sprintf("%s.stderr.log", c.procName))
 }
 
 func (c *BPMConfig) PidDir() string {

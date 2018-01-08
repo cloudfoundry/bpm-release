@@ -55,7 +55,7 @@ var _ = Describe("stop", func() {
 		Expect(os.Chmod(boshRoot, 0755)).To(Succeed())
 		runcRoot = setupBoshDirectories(boshRoot, job)
 
-		stdout = filepath.Join(boshRoot, "sys", "log", job, fmt.Sprintf("%s.out.log", job))
+		stdout = filepath.Join(boshRoot, "sys", "log", job, fmt.Sprintf("%s.stdout.log", job))
 		bpmLog = filepath.Join(boshRoot, "sys", "log", job, "bpm.log")
 		logFile = filepath.Join(boshRoot, "sys", "log", job, "foo.log")
 

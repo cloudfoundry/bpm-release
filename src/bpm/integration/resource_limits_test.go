@@ -55,7 +55,7 @@ var _ = Describe("resource limits", func() {
 		Expect(os.Chmod(boshRoot, 0755)).To(Succeed())
 		runcRoot = setupBoshDirectories(boshRoot, job)
 
-		stderr = filepath.Join(boshRoot, "sys", "log", job, fmt.Sprintf("%s.err.log", job))
+		stderr = filepath.Join(boshRoot, "sys", "log", job, fmt.Sprintf("%s.stderr.log", job))
 	})
 
 	JustBeforeEach(func() {
