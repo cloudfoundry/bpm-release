@@ -44,11 +44,13 @@ processes:
     ephemeral_disk: true # mount /var/vcap/data/the_job ; default `false`
                          # NOTE: /var/vcap/data/the_job/tmp is always mounted `rw`
     additional_volumes:
-    - /var/vcap/data/certificates
+    - path: /var/vcap/data/certificates
+      writable: true # default `false`
     hooks:
       pre_start: /var/vcap/jobs/the_job/bin/server-setup
     capabilities:
     - NET_BIND_SERVICE
+
   - name: worker
     executable: /var/vcap/data/packages/worker/work.sh
     args:
@@ -56,7 +58,7 @@ processes:
     - 4
     persistent_disk: true # mount /var/vcap/store/the_job ; default `false`
     additional_volumes:
-    - name: /var/vcap/data/sockets
+    - path: /var/vcap/data/sockets
       writable: true # default `false`
     hooks:
       pre_start: /var/vcap/jobs/the_job/bin/worker-setup
