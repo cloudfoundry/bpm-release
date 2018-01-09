@@ -6,14 +6,27 @@ absolute_path() {
   (cd "$1" && pwd)
 }
 
+user_has_group() {
+  local user="$1"
+  local group="$2"
+
+  id -nG "${user}" | grep -qw "${group}"
+}
+
 scripts_path=$(absolute_path "$(dirname "$0")" )
 
-sudo docker pull pcfsecurity/bpm-ci:latest
+if user_has_group "$USER" "docker"; then
+  DOCKER="docker"
+else
+  DOCKER="sudo docker"
+fi
+
+$DOCKER pull pcfsecurity/bpm-ci:latest
 
 # On development workstations docker must run as root.
 # These settings are not related to the privileges that bpm creates runc containers with.
-sudo docker run \
+$DOCKER run \
   --privileged \
-  -v ${scripts_path}/..:/bpm \
+  -v "${scripts_path}/..:/bpm" \
   -t pcfsecurity/bpm-ci:latest \
   /bpm/scripts/test-unit "$@"
