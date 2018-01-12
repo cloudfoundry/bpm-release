@@ -5,4 +5,3 @@
 user_can_docker() {
   docker info 2>&1 | grep -qv "permission denied"
 }
-
