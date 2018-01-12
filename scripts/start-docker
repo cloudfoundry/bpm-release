@@ -3,14 +3,22 @@
 absolute_path() {
   (cd "$1" && pwd)
 }
-
 scripts_path=$(absolute_path "$(dirname "$0")" )
 
-sudo docker pull pcfsecurity/bpm-ci:latest
+. "$scripts_path/checkdocker.sh"
 
-sudo docker run \
+if user_can_docker; then
+  DOCKER="docker"
+else
+  # On development workstations docker must run as root.
+  # These settings are not related to the privileges that bpm creates runc containers with.
+  DOCKER="sudo docker"
+fi
+
+$DOCKER pull pcfsecurity/bpm-ci:latest
+$DOCKER run \
   --privileged \
-  -v  ${scripts_path}/..:/bpm \
+  -v  "${scripts_path}/..:/bpm" \
   -e "GOPATH=/bpm" \
   -it pcfsecurity/bpm-ci:latest \
   /bin/bash -c 'export PATH=$PATH:$GOPATH/bin; /bin/bash'
