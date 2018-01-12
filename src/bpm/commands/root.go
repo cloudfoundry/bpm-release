@@ -42,6 +42,7 @@ var (
 )
 
 var userFinder = usertools.NewUserFinder()
+var bosh = config.NewBosh(os.Getenv("BPM_BOSH_ROOT"))
 
 var RootCmd = &cobra.Command{
 	Long:              "A bosh process manager for starting and stopping release jobs",
@@ -81,7 +82,7 @@ func validateInput(args []string) error {
 		procName = jobName
 	}
 
-	bpmCfg = config.NewBPMConfig(config.BoshRoot(), jobName, procName)
+	bpmCfg = config.NewBPMConfig(bosh.Root(), jobName, procName)
 
 	return nil
 }
@@ -159,8 +160,8 @@ func releaseLifecycleLock() error {
 
 func newRuncLifecycle() *lifecycle.RuncLifecycle {
 	runcClient := client.NewRuncClient(
-		config.RuncPath(config.BoshRoot()),
-		config.RuncRoot(config.BoshRoot()),
+		config.RuncPath(bosh.Root()),
+		config.RuncRoot(bosh.Root()),
 	)
 	runcAdapter := adapter.NewRuncAdapter()
 	clock := clock.NewClock()

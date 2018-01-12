@@ -18,18 +18,8 @@ package config
 import (
 	"encoding/base32"
 	"fmt"
-	"os"
 	"path/filepath"
 )
-
-func BoshRoot() string {
-	boshRoot := os.Getenv("BPM_BOSH_ROOT")
-	if boshRoot == "" {
-		boshRoot = "/var/vcap"
-	}
-
-	return boshRoot
-}
 
 func RuncPath(boshRoot string) string {
 	return filepath.Join(boshRoot, "packages", "bpm", "bin", "runc")
