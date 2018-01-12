@@ -116,18 +116,18 @@ func (c *ProcessConfig) Validate() error {
 		if !pathIsIn(validDataVolumePrefix, volCleaned) && !pathIsIn(validStoreVolumePrefix, volCleaned) {
 			return fmt.Errorf(
 				"invalid volume path: %s must be within (%s,%s)",
-				vol,
+				vol.Path,
 				validDataVolumePrefix,
 				validStoreVolumePrefix,
 			)
 		}
 	}
 
-	for _, cap := range c.Capabilities {
-		if _, ok := validCaps[cap]; !ok {
+	for _, capabilities := range c.Capabilities {
+		if _, ok := validCaps[capabilities]; !ok {
 			return fmt.Errorf(
 				"invalid capability: %s",
-				cap,
+				capabilities,
 			)
 		}
 	}
