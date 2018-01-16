@@ -38,3 +38,5 @@ RUN \
 
 RUN \
   chown -R vcap:vcap /var/vcap
+
+WORKDIR /bpm
