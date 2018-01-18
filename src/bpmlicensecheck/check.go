@@ -1,4 +1,4 @@
-// Copyright (C) 2017-Present Pivotal Software, Inc. All rights reserved.
+// Copyright (C) 2017-Present CloudFoundry.org Foundation, Inc. All rights reserved.
 //
 // This program and the accompanying materials are made available under
 // the terms of the under the Apache License, Version 2.0 (the "License”);
@@ -16,13 +16,17 @@
 package bpmlicensecheck
 
 import (
-	"bufio"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 )
 
-const copyrightHeader = "Copyright (C) 2017-Present Pivotal Software, Inc. All rights reserved."
+var checks = []string{
+	"Copyright",
+	"CloudFoundry.org Foundation, Inc.",
+	"www.apache.org",
+}
 
 var exceptions = []string{
 	".gitignore",
@@ -45,24 +49,24 @@ func Check(directory string) ([]string, error) {
 			}
 		}
 
-		f, err := os.Open(path)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
-
-		r := bufio.NewReader(f)
-		line, _, err := r.ReadLine()
+		bs, err := ioutil.ReadFile(path)
 		if err != nil {
 			return err
 		}
 
-		if !strings.Contains(string(line), copyrightHeader) {
-			incompleteFiles = append(incompleteFiles, path)
+		// The check strings above should be near the top of the file.
+		bs = bs[:512]
+
+		for _, check := range checks {
+			if !strings.Contains(string(bs), check) {
+				incompleteFiles = append(incompleteFiles, path)
+				break
+			}
 		}
 
 		return nil
 	})
+
 	if err != nil {
 		return nil, err
 	}
