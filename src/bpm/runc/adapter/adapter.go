@@ -312,11 +312,15 @@ func userProvidedIdentityMounts(logger lager.Logger, bpmCfg *config.BPMConfig, v
 			logger.Info("duplicate-volume", lager.Data{"volume": vol.Path})
 			continue
 		}
-		if vol.Writable {
-			mnts = append(mnts, identityBindMountWithOptions(vol.Path, "nodev", "nosuid", "noexec", "rbind", "rw"))
-		} else {
-			mnts = append(mnts, identityBindMountWithOptions(vol.Path, "nodev", "nosuid", "noexec", "rbind", "ro"))
+		execOpt := "noexec"
+		if vol.Executions {
+			execOpt = "exec"
 		}
+		writeOpt := "ro"
+		if vol.Writable {
+			writeOpt = "rw"
+		}
+		mnts = append(mnts, identityBindMountWithOptions(vol.Path, "nodev", "nosuid", execOpt, "rbind", writeOpt))
 		mntsSeen[vol.Path] = true
 	}
 
