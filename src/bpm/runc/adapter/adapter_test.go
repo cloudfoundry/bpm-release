@@ -198,6 +198,7 @@ var _ = Describe("RuncAdapter", func() {
 				},
 				AdditionalVolumes: []config.Volume{
 					{Path: "/path/to/volume/1", Writable: true},
+					{Path: "/path/to/volume/jna-tmp", Writable: true, Executions: true},
 					// Testing duplicate volumes
 					{Path: "/path/to/volume/2"},
 					{Path: "/path/to/volume/2"},
@@ -349,6 +350,12 @@ var _ = Describe("RuncAdapter", func() {
 					Type:        "bind",
 					Source:      "/path/to/volume/1",
 					Options:     []string{"nodev", "nosuid", "noexec", "rbind", "rw"},
+				},
+				{
+					Destination: "/path/to/volume/jna-tmp",
+					Type:        "bind",
+					Source:      "/path/to/volume/jna-tmp",
+					Options:     []string{"nodev", "nosuid", "exec", "rbind", "rw"},
 				},
 				{
 					Destination: "/path/to/volume/2",
