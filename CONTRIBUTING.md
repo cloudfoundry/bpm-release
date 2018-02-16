@@ -49,7 +49,7 @@ automated system uses, then we manually make the Pull Request as having a CLA on
 1. To run the unit test suite in a docker image
 ```bash
 $ cd bpm-release
-$ ./script/test-with-docker
+$ ./scripts/test-with-docker
 ```
 
 2. To run the acceptance tests against docker
