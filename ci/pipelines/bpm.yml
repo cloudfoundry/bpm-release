@@ -3,6 +3,7 @@ groups:
   jobs:
   - test-unit
   - test-acceptance
+  - tracker
 - name: version
   jobs:
   - bump-patch
@@ -43,12 +44,12 @@ resources:
 #   source:
 #     name: bosh-google-kvm-ubuntu-trusty-go_agent
 
-# - name: tracker
-#   type: tracker
-#   source:
-#     token: ((sec-red-ci-creds-1/Notes/tracker-api-token))
-#     project_id: "2070399"
-#     tracker_url: "https://www.pivotaltracker.com"
+- name: tracker
+  type: tracker
+  source:
+    token: ((tracker-api-token))
+    project_id: "2070399"
+    tracker_url: "https://www.pivotaltracker.com"
 
 # - name: golang-linux
 #   type: s3
@@ -119,14 +120,16 @@ jobs:
 #     params:
 #       file: version/version
 
-# - name: tracker
-#   plan:
-#   - get: bpm-release
-#     passed: [run-cats]
-#     trigger: true
-#   - put: tracker
-#     params:
-#       repos: [bpm-release]
+- name: tracker
+  plan:
+  - get: bpm-release
+    passed:
+    - test-unit
+    - test-acceptance
+    trigger: true
+  - put: tracker
+    params:
+      repos: [bpm-release]
 
 # - name: bump-golang
 #   serial: true
