@@ -1,3 +1,13 @@
+groups:
+- name: tests
+  jobs:
+  - test-unit
+  - test-acceptance
+- name: version
+  jobs:
+  - bump-patch
+  - bump-minor
+  - bump-major
 resources:
 - name: bpm-release
   type: git
@@ -14,14 +24,14 @@ resources:
 #     regexp: bpm-(.*).tgz
 #     json_key: ((sec-red-ci-creds-2/Notes/bpm-bucket-gcp-key))
 
-# - name: version
-#   type: semver
-#   source:
-#     access_key_id: ((sec-red-ci-creds-1/Notes/sec-red-ci-access-key-id))
-#     secret_access_key: ((sec-red-ci-creds-1/Notes/sec-red-ci-secret-access-key))
-#     bucket: bpm-release-version
-#     initial_version: 0.1.0
-#     key: current-version
+- name: version
+  type: semver
+  source:
+    driver: gcs
+    bucket: bpm-release-version
+    key: current-version
+    initial_version: 0.0.0
+    json_key: ((bpm-version-gcs-json-key))
 
 - name: boshlite-stemcell
   type: bosh-io-stemcell
@@ -159,41 +169,39 @@ jobs:
 #   - put: bpm-release
 #     params: {repository: bumped-bosh-release, rebase: true}
 
-# - name: patch-bump
-#   serial_groups:
-#   - version
-#   plan:
-#   - get: version
-#     passed:
-#     - create-final-release
-#     trigger: true
-#     params:
-#       bump: patch
-#   - put: version
-#     params:
-#       file: version/version
+- name: bump-patch
+  serial_groups:
+  - version
+  plan:
+  - get: version
+    passed:
+    params:
+      bump: patch
+  - put: version
+    params:
+      file: version/version
 
-# - name: minor-bump
-#   serial_groups:
-#   - version
-#   plan:
-#   - get: version
-#     params:
-#       bump: minor
-#   - put: version
-#     params:
-#       file: version/version
+- name: bump-minor
+  serial_groups:
+  - version
+  plan:
+  - get: version
+    params:
+      bump: minor
+  - put: version
+    params:
+      file: version/version
 
-# - name: major-bump
-#   serial_groups:
-#   - version
-#   plan:
-#   - get: version
-#     params:
-#       bump: major
-#   - put: version
-#     params:
-#       file: version/version
+- name: bump-major
+  serial_groups:
+  - version
+  plan:
+  - get: version
+    params:
+      bump: major
+  - put: version
+    params:
+      file: version/version
 
 # - name: create-final-release
 #   serial_groups: [version]
