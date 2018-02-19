@@ -1,29 +1,26 @@
 groups:
 - name: tests
   jobs:
-  - test-unit
   - test-acceptance
+  - test-unit
   - tracker
 - name: version
   jobs:
-  - bump-patch
-  - bump-minor
   - bump-major
+  - bump-minor
+  - bump-patch
+- name: dependencies
+  jobs:
+  - bump-golang
+  - bump-runc
+
 resources:
 - name: bpm-release
   type: git
   source:
-    uri: https://github.com/cloudfoundry-incubator/bpm-release.git
     branch: master
-    # uri: git@github.com:cloudfoundry-incubator/bpm-release.git
-    # private_key: ((ci-bpm-deploy-key/Notes))
-
-# - name: bpm-rc
-#   type: gcs
-#   source:
-#     bucket: bpm-dev-releases
-#     regexp: bpm-(.*).tgz
-#     json_key: ((sec-red-ci-creds-2/Notes/bpm-bucket-gcp-key))
+    private_key: ((bpm-github-deploy-key))
+    uri: git@github.com:cloudfoundry-incubator/bpm-release.git
 
 - name: version
   type: semver
@@ -39,11 +36,6 @@ resources:
   source:
     name: bosh-warden-boshlite-ubuntu-trusty-go_agent
 
-# - name: gcp-stemcell
-#   type: bosh-io-stemcell
-#   source:
-#     name: bosh-google-kvm-ubuntu-trusty-go_agent
-
 - name: tracker
   type: tracker
   source:
@@ -51,31 +43,19 @@ resources:
     project_id: "2070399"
     tracker_url: "https://www.pivotaltracker.com"
 
-# - name: golang-linux
-#   type: s3
-#   source:
-#     endpoint: storage.googleapis.com
-#     bucket: golang
-#     regexp: 'go(1\.\d+(\.\d+)?)\.linux-amd64\.tar.gz'
+- name: golang-linux
+  type: s3
+  source:
+    endpoint: storage.googleapis.com
+    bucket: golang
+    regexp: 'go(1\.\d+(\.\d+)?)\.linux-amd64\.tar.gz'
 
-# - name: daily
-#   type: time
-#   source:
-#     interval: 24h
-
-# - name: runc-linux
-#   type: github-release
-#   source:
-#     owner: opencontainers
-#     repository: runc
-#     access_token: ((sec-red-ci-creds-1/Notes/github-ci-token))
-#     pre_release: true
-
-# resource_types:
-# - name: gcs
-#   type: docker-image
-#   source:
-#     repository: frodenas/gcs-resource
+- name: runc-linux
+  type: github-release
+  source:
+    owner: opencontainers
+    repository: runc
+    pre_release: true
 
 jobs:
 - name: test-unit
@@ -98,28 +78,6 @@ jobs:
       bosh-stemcell: boshlite-stemcell
     privileged: true
 
-# - name: create-rc
-#   serial_groups:
-#   - version
-#   plan:
-#   - aggregate:
-#     - get: bpm-release
-#       passed:
-#       - test-unit
-#       - test-acceptance
-#       trigger: true
-#     - get: version
-#       params:
-#         pre: rc
-#   - task: create-rc
-#     file: bpm-release/ci/create-rc.yml
-#   - put: bpm-rc
-#     params:
-#       file: bpm-rc/bpm-*.tgz
-#   - put: version
-#     params:
-#       file: version/version
-
 - name: tracker
   plan:
   - get: bpm-release
@@ -131,46 +89,46 @@ jobs:
     params:
       repos: [bpm-release]
 
-# - name: bump-golang
-#   serial: true
-#   plan:
-#   - aggregate:
-#     - get: golang-linux
-#       trigger: true
-#     - get: bpm-release
-#   - task: bump-blob
-#     input_mapping:
-#       bosh-release: bpm-release
-#       blob-dir: golang-linux
-#     file: bpm-release/ci/bump-blob.yml
-#     params:
-#       BLOB_NAME: golang-linux-amd64.tar.gz
-#       BLOB_VERSION_FILE: version
-#       BLOB_DESTINATION: golang
-#       BOSH_PRIVATE_CONFIG: ((sec-red-ci-creds-1/Notes/bpm-blobstore-private-yml))
-#   - put: bpm-release
-#     params: {repository: bumped-bosh-release, rebase: true}
+- name: bump-golang
+  serial: true
+  plan:
+  - aggregate:
+    - get: golang-linux
+      trigger: true
+    - get: bpm-release
+  - task: bump-blob
+    input_mapping:
+      bosh-release: bpm-release
+      blob-dir: golang-linux
+    file: bpm-release/ci/bump-blob.yml
+    params:
+      BLOB_NAME: golang-linux-amd64.tar.gz
+      BLOB_VERSION_FILE: version
+      BLOB_DESTINATION: golang
+      BOSH_PRIVATE_CONFIG: ((bpm-private-yml))
+  - put: bpm-release
+    params: {repository: bumped-bosh-release, rebase: true}
 
-# - name: bump-runc
-#   serial: true
-#   plan:
-#   - aggregate:
-#     - get: runc-linux
-#       trigger: true
-#     - get: bpm-release
-#   - task: bump-blob
-#     input_mapping:
-#       bosh-release: bpm-release
-#       blob-dir: runc-linux
-#     file: bpm-release/ci/bump-blob.yml
-#     params:
-#       BLOB_NAME: runc-linux-amd64
-#       BLOB_VERSION_FILE: version
-#       BLOB_DESTINATION: runc
-#       BLOB_DOWNLOAD_FILENAME: runc-linux-amd64
-#       BOSH_PRIVATE_CONFIG: ((sec-red-ci-creds-1/Notes/bpm-blobstore-private-yml))
-#   - put: bpm-release
-#     params: {repository: bumped-bosh-release, rebase: true}
+- name: bump-runc
+  serial: true
+  plan:
+  - aggregate:
+    - get: runc-linux
+      trigger: true
+    - get: bpm-release
+  - task: bump-blob
+    input_mapping:
+      bosh-release: bpm-release
+      blob-dir: runc-linux
+    file: bpm-release/ci/bump-blob.yml
+    params:
+      BLOB_NAME: runc-linux-amd64
+      BLOB_VERSION_FILE: version
+      BLOB_DESTINATION: runc
+      BLOB_DOWNLOAD_FILENAME: runc-linux-amd64
+      BOSH_PRIVATE_CONFIG: ((bpm-private-yml))
+  - put: bpm-release
+    params: {repository: bumped-bosh-release, rebase: true}
 
 - name: bump-patch
   serial_groups:
