@@ -2,4 +2,5 @@ name: bpm
 blobstore:
   provider: s3
   options:
-    bucket_name: bpm-blobs
+    bucket_name: bpm-release-blobs
+    host: storage.googleapis.com
