@@ -145,7 +145,7 @@ jobs:
       BLOB_NAME: runc-linux-amd64
       BLOB_VERSION_FILE: version
       BLOB_DESTINATION: runc
-      BLOB_DOWNLOAD_FILENAME: runc-linux-amd64
+      BLOB_DOWNLOAD_FILENAME: runc.amd64
       BOSH_PRIVATE_CONFIG: ((bpm-private-yml))
   - put: bpm-release
     params: {repository: bumped-bosh-release, rebase: true}
