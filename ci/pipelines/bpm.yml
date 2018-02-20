@@ -4,6 +4,7 @@ groups:
   - test-acceptance
   - test-unit
   - tracker
+  - create-final-release
 - name: version
   jobs:
   - bump-major
@@ -183,42 +184,32 @@ jobs:
     params:
       file: version/version
 
-# - name: create-final-release
-#   serial_groups: [version]
-#   plan:
-#   - aggregate:
-#     - get: bpm-release
-#       passed:
-#       - run-cats
-#       - run-vizzini
-#       trigger: false
-#     - get: bpm-rc
-#       passed:
-#       - run-cats
-#       - run-vizzini
-#       trigger: false
-#     - get: version
-#       params:
-#         bump: final
-#       passed:
-#       - run-cats
-#       - run-vizzini
-#       trigger: false
-#   - task: finalize-release
-#     file: bpm-release/ci/finalize-release.yml
-#     params:
-#       RELEASE_NAME: bpm
-#       BLOBSTORE_PRIVATE_YML: ((sec-red-ci-creds-1/Notes/bpm-blobstore-private-yml))
-#   - aggregate:
-#     - put: bpm-release
-#       get_params:
-#         submodules: none
-#       params:
-#         repository: final-release-repo
-#         submodules: none
-#         rebase: true
-#         tag: version/version
-#         tag_prefix: v
+- name: create-final-release
+  serial_groups: [version]
+  plan:
+  - aggregate:
+    - get: bpm-release
+      passed:
+      - test-acceptance
+      - test-unit
+    - get: version
+      params:
+        bump: final
+  - task: finalize-release
+    file: bpm-release/ci/finalize-release.yml
+    params:
+      RELEASE_NAME: bpm
+      BLOBSTORE_PRIVATE_YML: ((bpm-private-yml))
+  - aggregate:
+    - put: bpm-release
+      get_params:
+        submodules: none
+      params:
+        repository: final-release-repo
+        submodules: none
+        rebase: true
+        tag: version/version
+        tag_prefix: v
 
 # - name: build-bpm-ci
 #   serial: true

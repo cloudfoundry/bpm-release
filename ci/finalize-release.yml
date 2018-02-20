@@ -8,7 +8,6 @@ image_resource:
 
 inputs:
 - name: bpm-release
-- name: bpm-rc
 - name: version
 
 outputs:

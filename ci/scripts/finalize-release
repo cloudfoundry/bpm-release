@@ -3,7 +3,6 @@
 set -e
 
 # inputs
-CANDIDATE_DIR=$PWD/bpm-rc
 BOSH_RELEASE_DIR=$PWD/bpm-release
 
 # outputs
@@ -23,8 +22,8 @@ git clone $BOSH_RELEASE_DIR $FINAL_RELEASE_REPO
   IFS=''
   echo $BLOBSTORE_PRIVATE_YML >> $FINAL_RELEASE_REPO/config/private.yml
 }
-git config --global user.email "ci@localhost"
-git config --global user.name "CI Bot"
+git config --global user.email "cf-bpm+final-releaser@pivotal.io"
+git config --global user.name "CF BPM"
 
 cd $FINAL_RELEASE_REPO
 
@@ -32,8 +31,8 @@ RELEASE_YML=$PWD/releases/$RELEASE_NAME/$RELEASE_NAME-${VERSION}.yml
 
 # be idempotent
 if ! [ -e ${RELEASE_YML} ]; then
-  echo "finalizing release"
-  bosh -n finalize-release --version "$VERSION" ${CANDIDATE_DIR}/$RELEASE_NAME-*.tgz
+  echo "creating final release"
+  bosh -n create-release --final --version "${VERSION}"
   git add -A
   git commit -m "release v${VERSION}"
   git tag -f "v${VERSION}"
