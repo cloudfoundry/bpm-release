@@ -192,6 +192,8 @@ jobs:
       passed:
       - test-acceptance
       - test-unit
+      params:
+        submodules: none
     - get: version
       params:
         bump: final
