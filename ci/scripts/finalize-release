@@ -16,11 +16,16 @@ if [ -z "$VERSION" ]; then
 fi
 
 FINAL_RELEASE_TARBALL="${FINAL_RELEASE_TARBALL_DIR}/${RELEASE_NAME}-${VERSION}.tgz"
+
+# This is necessary in order to copy hidden files
+shopt -s dotglob
 cp -r ${BOSH_RELEASE_DIR}/* ${FINAL_RELEASE_REPO}
+
 {
   IFS=''
   echo $BLOBSTORE_PRIVATE_YML >> $FINAL_RELEASE_REPO/config/private.yml
 }
+
 git config --global user.email "cf-bpm+final-releaser@pivotal.io"
 git config --global user.name "CF BPM"
 
