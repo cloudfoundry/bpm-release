@@ -313,7 +313,7 @@ func userProvidedIdentityMounts(logger lager.Logger, bpmCfg *config.BPMConfig, v
 			continue
 		}
 		execOpt := "noexec"
-		if vol.Executions {
+		if vol.AllowExecutions {
 			execOpt = "exec"
 		}
 		writeOpt := "ro"

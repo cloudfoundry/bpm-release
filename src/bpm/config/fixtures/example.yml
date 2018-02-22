@@ -18,7 +18,7 @@ processes:
     writable: false
   - path: /var/vcap/data/jna-tmp
     writable: true
-    executions: true
+    allow_executions: true
   hooks:
     pre_start: /var/vcap/jobs/program/bin/pre
   capabilities:

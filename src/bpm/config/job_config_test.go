@@ -49,7 +49,7 @@ var _ = Describe("Config", func() {
 			Expect(cfg.Processes[0].AdditionalVolumes).To(ConsistOf(
 				config.Volume{Path: "/var/vcap/data/program/foobar", Writable: true},
 				config.Volume{Path: "/var/vcap/data/alternate-program"},
-				config.Volume{Path: "/var/vcap/data/jna-tmp", Writable: true, Executions: true},
+				config.Volume{Path: "/var/vcap/data/jna-tmp", Writable: true, AllowExecutions: true},
 			))
 			Expect(cfg.Processes[0].Hooks.PreStart).To(Equal("/var/vcap/jobs/program/bin/pre"))
 			Expect(cfg.Processes[0].Capabilities).To(ConsistOf("NET_BIND_SERVICE"))
