@@ -198,7 +198,7 @@ var _ = Describe("RuncAdapter", func() {
 				},
 				AdditionalVolumes: []config.Volume{
 					{Path: "/path/to/volume/1", Writable: true},
-					{Path: "/path/to/volume/jna-tmp", Writable: true, Executions: true},
+					{Path: "/path/to/volume/jna-tmp", Writable: true, AllowExecutions: true},
 					// Testing duplicate volumes
 					{Path: "/path/to/volume/2"},
 					{Path: "/path/to/volume/2"},

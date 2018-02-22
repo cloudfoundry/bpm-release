@@ -54,9 +54,9 @@ type Hooks struct {
 }
 
 type Volume struct {
-	Path       string `yaml:"path"`
-	Writable   bool   `yaml:"writable"`
-	Executions bool   `yaml:"executions"`
+	Path            string `yaml:"path"`
+	Writable        bool   `yaml:"writable"`
+	AllowExecutions bool   `yaml:"allow_executions"`
 }
 
 func ParseJobConfig(configPath string) (*JobConfig, error) {
