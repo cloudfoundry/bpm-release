@@ -104,6 +104,8 @@ var _ = Describe("resource limits", func() {
 		}
 
 		It("gets OOMed when it exceeds its memory limit", func() {
+			fmt.Fprintln(GinkgoWriter, "If this test fails then make sure you enable swap accounting! Details are in the README.")
+
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 			Eventually(session).Should(gexec.Exit(0))
