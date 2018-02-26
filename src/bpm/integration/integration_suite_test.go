@@ -45,7 +45,7 @@ func TestBpm(t *testing.T) {
 var bpmPath string
 
 var _ = SynchronizedBeforeSuite(func() []byte {
-	bpmPath, err := gexec.Build("bpm")
+	bpmPath, err := gexec.Build("bpm/cmd/bpm")
 	Expect(err).NotTo(HaveOccurred())
 
 	Expect(os.MkdirAll(bpmTmpDir, 0755)).To(Succeed())
