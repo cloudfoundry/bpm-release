@@ -25,7 +25,7 @@ import (
 	"runtime/pprof"
 	"syscall"
 
-	"bpm-acceptance/fixtures/test-server/handlers"
+	"bpm/acceptance/fixtures/test-server/handlers"
 )
 
 var (

@@ -57,5 +57,5 @@ $ ./scripts/test-with-docker
 $ cd bpm-release
 $ ./scripts/start-docker # this will launch you into the docker shell
 /go# /bpm/scripts/start-test-agent
-/go# ginkgo -r -p -race /bpm/src/bpm-acceptance/ -- --agent-uri="http://127.0.0.1:1337"
+/go# ginkgo -r -p -race /bpm/src/bpm/acceptance -- --agent-uri="http://127.0.0.1:1337"
 ```
