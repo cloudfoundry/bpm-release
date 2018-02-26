@@ -28,8 +28,14 @@ import (
 )
 
 var _ = Describe("BpmAcceptance", func() {
+	BeforeEach(func() {
+		if *agentURI == "" {
+			Skip("-agent-uri must be provided")
+		}
+	})
+
 	It("returns a 200 response with a body", func() {
-		resp, err := client.Get(agentURI)
+		resp, err := client.Get(*agentURI)
 		Expect(err).NotTo(HaveOccurred())
 		defer resp.Body.Close()
 
@@ -41,7 +47,7 @@ var _ = Describe("BpmAcceptance", func() {
 	})
 
 	It("runs as the vcap user", func() {
-		resp, err := client.Get(fmt.Sprintf("%s/whoami", agentURI))
+		resp, err := client.Get(fmt.Sprintf("%s/whoami", *agentURI))
 		Expect(err).NotTo(HaveOccurred())
 		defer resp.Body.Close()
 
@@ -51,7 +57,7 @@ var _ = Describe("BpmAcceptance", func() {
 	})
 
 	It("has the correct bosh mounts", func() {
-		resp, err := client.Get(fmt.Sprintf("%s/mounts", agentURI))
+		resp, err := client.Get(fmt.Sprintf("%s/mounts", *agentURI))
 		Expect(err).NotTo(HaveOccurred())
 		defer resp.Body.Close()
 
@@ -86,7 +92,7 @@ var _ = Describe("BpmAcceptance", func() {
 	})
 
 	It("has the correct read only system mounts", func() {
-		resp, err := client.Get(fmt.Sprintf("%s/mounts", agentURI))
+		resp, err := client.Get(fmt.Sprintf("%s/mounts", *agentURI))
 		Expect(err).NotTo(HaveOccurred())
 		defer resp.Body.Close()
 
@@ -108,7 +114,7 @@ var _ = Describe("BpmAcceptance", func() {
 	})
 
 	It("doesn't allow processes to read data from masked paths", func() {
-		resp, err := client.Get(fmt.Sprintf("%s/masked-paths", agentURI))
+		resp, err := client.Get(fmt.Sprintf("%s/masked-paths", *agentURI))
 		Expect(err).NotTo(HaveOccurred())
 		defer resp.Body.Close()
 
@@ -120,7 +126,7 @@ var _ = Describe("BpmAcceptance", func() {
 	})
 
 	It("only has access to store, data, jobs, sys, and packages in /var/vcap", func() {
-		resp, err := client.Get(fmt.Sprintf("%s/var-vcap", agentURI))
+		resp, err := client.Get(fmt.Sprintf("%s/var-vcap", *agentURI))
 		Expect(err).NotTo(HaveOccurred())
 		defer resp.Body.Close()
 
@@ -131,7 +137,7 @@ var _ = Describe("BpmAcceptance", func() {
 	})
 
 	It("only has access to its own data directory", func() {
-		resp, err := client.Get(fmt.Sprintf("%s/var-vcap-data", agentURI))
+		resp, err := client.Get(fmt.Sprintf("%s/var-vcap-data", *agentURI))
 		Expect(err).NotTo(HaveOccurred())
 		defer resp.Body.Close()
 
@@ -142,7 +148,7 @@ var _ = Describe("BpmAcceptance", func() {
 	})
 
 	It("only has access to its own job directory", func() {
-		resp, err := client.Get(fmt.Sprintf("%s/var-vcap-jobs", agentURI))
+		resp, err := client.Get(fmt.Sprintf("%s/var-vcap-jobs", *agentURI))
 		Expect(err).NotTo(HaveOccurred())
 		defer resp.Body.Close()
 
@@ -153,7 +159,7 @@ var _ = Describe("BpmAcceptance", func() {
 	})
 
 	It("is contained in a pid namespace", func() {
-		resp, err := client.Get(fmt.Sprintf("%s/processes", agentURI))
+		resp, err := client.Get(fmt.Sprintf("%s/processes", *agentURI))
 		Expect(err).NotTo(HaveOccurred())
 		defer resp.Body.Close()
 
@@ -167,7 +173,7 @@ var _ = Describe("BpmAcceptance", func() {
 	})
 
 	It("has the default path env variable", func() {
-		req, err := http.NewRequest("GET", fmt.Sprintf("%s/env", agentURI), strings.NewReader("PATH"))
+		req, err := http.NewRequest("GET", fmt.Sprintf("%s/env", *agentURI), strings.NewReader("PATH"))
 		Expect(err).NotTo(HaveOccurred())
 
 		resp, err := client.Do(req)
@@ -180,7 +186,7 @@ var _ = Describe("BpmAcceptance", func() {
 	})
 
 	It("has the default home env variable", func() {
-		req, err := http.NewRequest("GET", fmt.Sprintf("%s/env", agentURI), strings.NewReader("HOME"))
+		req, err := http.NewRequest("GET", fmt.Sprintf("%s/env", *agentURI), strings.NewReader("HOME"))
 		Expect(err).NotTo(HaveOccurred())
 
 		resp, err := client.Do(req)
@@ -194,7 +200,7 @@ var _ = Describe("BpmAcceptance", func() {
 
 	Context("seccomp filters", func() {
 		It("accepts an allowed syscall", func() {
-			resp, err := client.Get(fmt.Sprintf("%s/syscall-allowed", agentURI))
+			resp, err := client.Get(fmt.Sprintf("%s/syscall-allowed", *agentURI))
 			Expect(err).NotTo(HaveOccurred())
 			defer resp.Body.Close()
 
@@ -206,7 +212,7 @@ var _ = Describe("BpmAcceptance", func() {
 		})
 
 		It("does not accept a disallowed syscall", func() {
-			resp, err := client.Get(fmt.Sprintf("%s/syscall-disallowed", agentURI))
+			resp, err := client.Get(fmt.Sprintf("%s/syscall-disallowed", *agentURI))
 			Expect(err).NotTo(HaveOccurred())
 			defer resp.Body.Close()
 
@@ -219,7 +225,7 @@ var _ = Describe("BpmAcceptance", func() {
 	})
 
 	It("it can communicate with the public internet", func() {
-		req, err := http.NewRequest("GET", fmt.Sprintf("%s/curl", agentURI), strings.NewReader("http://www.google.com"))
+		req, err := http.NewRequest("GET", fmt.Sprintf("%s/curl", *agentURI), strings.NewReader("http://www.google.com"))
 		Expect(err).NotTo(HaveOccurred())
 
 		resp, err := client.Do(req)

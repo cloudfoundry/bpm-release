@@ -17,7 +17,6 @@ package bpm_acceptance_test
 
 import (
 	"flag"
-	"log"
 	"net/http"
 	"time"
 
@@ -27,26 +26,21 @@ import (
 	"testing"
 )
 
-func TestBpmAcceptance(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "BpmAcceptance Suite")
-}
-
 var (
-	agentURI string
 	client   *http.Client
+	agentURI = flag.String("agent-uri", "", "HTTP address of the test-server")
 )
 
-func init() {
-	flag.StringVar(&agentURI, "agent-uri", "", "http address of the test-server")
+func TestBPMAcceptance(t *testing.T) {
 	flag.Parse()
 
-	if agentURI == "" {
-		log.Fatal("Agent URI must be provided")
-	}
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "BPM Acceptance Suite")
 }
 
+
 var _ = BeforeSuite(func() {
+
 	client = &http.Client{
 		Timeout: 10 * time.Second,
 	}
