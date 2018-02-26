@@ -22,8 +22,4 @@ pushd "${GOPATH}" > /dev/null
     go generate ./...
     ginkgo -r -p -race -randomizeAllSpecs -skipPackage "acceptance" "$@"
   popd > /dev/null
-
-  pushd "src/bpmlicensecheck" > /dev/null
-    ginkgo -r -p -race -randomizeAllSpecs "$@" -- --packages="bpm"
-  popd > /dev/null
 popd
