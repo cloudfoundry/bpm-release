@@ -7,5 +7,5 @@ dependencies:
 files:
   - bpm/acceptance/fixtures/test-server/*.go # gosub
   - bpm/acceptance/fixtures/test-server/handlers/*.go # gosub
-  - golang.org/x/sys/unix/*.go # gosub
-  - golang.org/x/sys/unix/*.s # gosub
+  - bpm/vendor/golang.org/x/sys/unix/*.go # gosub
+  - bpm/vendor/golang.org/x/sys/unix/*.s # gosub
