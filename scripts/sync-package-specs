@@ -38,7 +38,7 @@ function sync_package() {
   )
 }
 
-sync_package bpm -app bpm &
+sync_package bpm -app bpm/cmd/bpm &
 sync_package test-server -app bpm/acceptance/fixtures/test-server &
 
 wait
