@@ -47,6 +47,11 @@ var _ = Describe("our go source code", func() {
 				return err
 			}
 
+			// Do not check our vendored code
+			if strings.HasPrefix(path, "vendor/") {
+				return filepath.SkipDir
+			}
+
 			// Ignore directories
 			if info.IsDir() {
 				return nil

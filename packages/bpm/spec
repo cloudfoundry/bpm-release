@@ -15,13 +15,13 @@ files:
   - bpm/runc/client/*.go # gosub
   - bpm/runc/lifecycle/*.go # gosub
   - bpm/usertools/*.go # gosub
-  - code.cloudfoundry.org/bytefmt/*.go # gosub
-  - code.cloudfoundry.org/clock/*.go # gosub
-  - code.cloudfoundry.org/lager/*.go # gosub
-  - github.com/inconshreveable/mousetrap/*.go # gosub
-  - github.com/opencontainers/runtime-spec/specs-go/*.go # gosub
-  - github.com/spf13/cobra/*.go # gosub
-  - github.com/spf13/pflag/*.go # gosub
-  - golang.org/x/sys/unix/*.go # gosub
-  - golang.org/x/sys/unix/*.s # gosub
-  - gopkg.in/yaml.v2/*.go # gosub
+  - bpm/vendor/code.cloudfoundry.org/bytefmt/*.go # gosub
+  - bpm/vendor/code.cloudfoundry.org/clock/*.go # gosub
+  - bpm/vendor/code.cloudfoundry.org/lager/*.go # gosub
+  - bpm/vendor/github.com/inconshreveable/mousetrap/*.go # gosub
+  - bpm/vendor/github.com/opencontainers/runtime-spec/specs-go/*.go # gosub
+  - bpm/vendor/github.com/spf13/cobra/*.go # gosub
+  - bpm/vendor/github.com/spf13/pflag/*.go # gosub
+  - bpm/vendor/golang.org/x/sys/unix/*.go # gosub
+  - bpm/vendor/golang.org/x/sys/unix/*.s # gosub
+  - bpm/vendor/gopkg.in/yaml.v2/*.go # gosub
