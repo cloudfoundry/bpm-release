@@ -16,8 +16,11 @@
 package commands
 
 import (
+	"bpm/config"
+	"bpm/models"
 	"bpm/presenters"
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 )
@@ -36,18 +39,62 @@ var listCommandCommand = &cobra.Command{
 func listContainers(cmd *cobra.Command, _ []string) error {
 	cmd.SilenceUsage = true
 
+	processes := []*models.Process{}
+	for _, job := range bosh.JobNames() {
+		bpmCfg := config.NewBPMConfig(bosh.Root(), job, "")
+		jobCfg, err := config.ParseJobConfig(bpmCfg.JobConfig())
+		if os.IsNotExist(err) {
+			continue
+		}
+
+		if err != nil {
+			fmt.Fprintf(cmd.OutOrStderr(), "invalid config for %s: %s", job, err.Error())
+			continue
+		}
+
+		for _, process := range jobCfg.Processes {
+			procCfg := config.NewBPMConfig(bosh.Root(), job, process.Name)
+			processes = append(processes, &models.Process{
+				Name:   procCfg.ContainerID(),
+				Status: models.ProcessStateStopped,
+			})
+		}
+	}
+
 	runcLifecycle := newRuncLifecycle()
-	jobs, err := runcLifecycle.ListProcesses()
+	runningProcesses, err := runcLifecycle.ListProcesses()
 	if err != nil {
 		fmt.Fprintf(cmd.OutOrStderr(), "failed to list jobs: %s\n", err.Error())
 		return err
 	}
 
-	err = presenters.PrintJobs(jobs, cmd.OutOrStdout())
+	for _, process := range runningProcesses {
+		processes, err = updateProcess(processes, process)
+		if err != nil {
+			fmt.Fprintf(cmd.OutOrStderr(), "extra process running: %s", err.Error())
+		}
+	}
+
+	err = presenters.PrintJobs(processes, cmd.OutOrStdout())
 	if err != nil {
 		fmt.Fprintf(cmd.OutOrStderr(), "failed to display jobs: %s\n", err.Error())
 		return err
 	}
 
 	return nil
+}
+
+func updateProcess(processes []*models.Process, process *models.Process) ([]*models.Process, error) {
+	for i := range processes {
+		if processes[i].Name == process.Name {
+			processes[i] = process
+			return processes, nil
+		}
+	}
+
+	decodedName, err := config.Decode(process.Name)
+	if err != nil {
+		return processes, err
+	}
+	return processes, fmt.Errorf("process (%s) not defined", decodedName)
 }

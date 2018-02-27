@@ -40,19 +40,17 @@ func (b *Bosh) Root() string {
 	return b.root
 }
 
-func (b *Bosh) JobPaths() []string {
-	var jobDirs []string
+func (b *Bosh) JobNames() []string {
+	var jobs []string
 
-	dirInfos, err := ioutil.ReadDir(b.root)
+	fileInfos, err := ioutil.ReadDir(filepath.Join(b.root, "jobs"))
 	if err != nil {
-		return jobDirs
+		return jobs
 	}
 
-	for _, dirInfo := range dirInfos {
-		if dirInfo.IsDir() {
-			jobDirs = append(jobDirs, filepath.Join(b.root, dirInfo.Name()))
-		}
+	for _, info := range fileInfos {
+		jobs = append(jobs, info.Name())
 	}
 
-	return jobDirs
+	return jobs
 }

@@ -139,6 +139,14 @@ func writeConfig(root, job string, cfg config.JobConfig) {
 	Expect(ioutil.WriteFile(configPath, data, 0644)).To(Succeed())
 }
 
+func writeInvalidConfig(root, job string) {
+	configDir := filepath.Join(root, "jobs", job, "config")
+	Expect(os.MkdirAll(configDir, 0755)).To(Succeed())
+
+	configPath := filepath.Join(configDir, "bpm.yml")
+	Expect(ioutil.WriteFile(configPath, []byte("{{"), 0644)).To(Succeed())
+}
+
 func startJob(root, bpmPath, j string) {
 	startCommand := exec.Command(bpmPath, "start", j)
 	startCommand.Env = append(startCommand.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", root))
