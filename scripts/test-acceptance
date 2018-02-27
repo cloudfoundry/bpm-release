@@ -23,7 +23,7 @@ bosh deploy \
 export GOPATH="$PWD/bpm-release"
 export PATH=$GOPATH/bin:$PATH
 
-go install github.com/onsi/ginkgo/ginkgo
+go install bpm/vendor/github.com/onsi/ginkgo/ginkgo
 
 # This is the IP of the first VM in the bosh in the concourse container.
 # It will not change unless we deploy more instances/jobs etc or the upstream
