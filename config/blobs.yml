@@ -3,6 +3,6 @@ golang/golang-linux-amd64.tar.gz:
   object_id: 884478a9-814d-4bc7-47e4-4a275f53d9e0
   sha: 693e2dfd99ef2d608b41c450efd9d277bf2a7f2f
 runc/runc-linux-amd64:
-  size: 13473904
-  object_id: cf22a53e-1444-4bbb-6222-58f5aa041984
-  sha: f71c827ff1fb47b9246479ae1be2ada76a6d31fb
+  size: 12269056
+  object_id: d5e6a064-b600-4106-535c-eaf909fe4027
+  sha: e00757b42a19f1042411fbc33bcad2589c24cc31
