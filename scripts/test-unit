@@ -8,23 +8,19 @@ absolute_path() {
 
 scripts_path=$(absolute_path "$(dirname "$0")" )
 
-go get -u github.com/maxbrunsfeld/counterfeiter
-
 export GOPATH=$scripts_path/..
 export PATH=$GOPATH/bin:$PATH
 
 ${scripts_path}/mountgroups.sh
 
 pushd "${GOPATH}" > /dev/null
-  go install github.com/onsi/ginkgo/ginkgo
+  pushd "src/bpm" > /dev/null
+    go install ./vendor/github.com/onsi/ginkgo/ginkgo
+    go install ./vendor/github.com/maxbrunsfeld/counterfeiter
+  popd > /dev/null
 
   pushd "src/bpm" > /dev/null
     go generate ./...
-    ginkgo -r -p -race -randomizeAllSpecs "$@"
-  popd > /dev/null
-
-  pushd "src/bpmlicensecheck" > /dev/null
-    ginkgo -r -p -race -randomizeAllSpecs "$@" -- \
-      --packages="bpm,bpm-acceptance"
+    ginkgo -r -p -race -randomizeAllSpecs -skipPackage "acceptance" "$@"
   popd > /dev/null
 popd

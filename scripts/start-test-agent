@@ -12,7 +12,7 @@ export PATH=$GOPATH/bin:$PATH
 ${scripts_path}/mountgroups.sh
 
 go install bpm
-go install bpm-acceptance/fixtures/test-server
+go install bpm/acceptance/fixtures/test-server
 
 mkdir -p /var/vcap/packages/test-server/bin
 

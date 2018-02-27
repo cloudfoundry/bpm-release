@@ -21,9 +21,10 @@ function sync_package() {
 
       for package in $(gosub list "$@"); do
         repo=$(echo ${2} | cut -f1-3 -d/)
-        if [ -d "../../src/${repo}/Godeps/_workspace/src/${package}" ]; then
-          package="${repo}/Godeps/_workspace/src/${package}"
+        if [ -d "../../src/${repo}/vendor/${package}" ]; then
+          package="${repo}/vendor/${package}"
         fi
+
         echo ${package} | sed -e 's/\(.*\)/  - \1\/*.go # gosub/g'
         if ls ../../src/${package}/*.s >/dev/null 2>&1; then
           echo ${package} | sed -e 's/\(.*\)/  - \1\/*.s # gosub/g'
@@ -38,8 +39,8 @@ function sync_package() {
   )
 }
 
-sync_package bpm -app bpm &
-sync_package test-server -app bpm-acceptance/fixtures/test-server &
+sync_package bpm -app bpm/cmd/bpm &
+sync_package test-server -app bpm/acceptance/fixtures/test-server &
 
 wait
 
