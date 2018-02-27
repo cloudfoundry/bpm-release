@@ -49,14 +49,9 @@ var _ = Describe("Config", func() {
 					bpmCfg = config.NewBPMConfig("", "foo", "foo")
 				})
 
-				It("encodes when passed true", func() {
-					encoded := bpmCfg.ContainerID(true)
+				It("encodes", func() {
+					encoded := bpmCfg.ContainerID()
 					Expect(encoded).To(Equal("MZXW6---"))
-				})
-
-				It("doesn't encode when passed false", func() {
-					plain := bpmCfg.ContainerID(false)
-					Expect(plain).To(Equal("foo"))
 				})
 			})
 
@@ -65,14 +60,9 @@ var _ = Describe("Config", func() {
 					bpmCfg = config.NewBPMConfig("", "foo", "bar")
 				})
 
-				It("encodes when passed the true", func() {
-					encoded := bpmCfg.ContainerID(true)
+				It("encodes", func() {
+					encoded := bpmCfg.ContainerID()
 					Expect(encoded).To(Equal("MZXW6LTCMFZA----"))
-				})
-
-				It("doesn't encode when passed false", func() {
-					encoded := bpmCfg.ContainerID(false)
-					Expect(encoded).To(Equal("foo.bar"))
 				})
 			})
 		})
