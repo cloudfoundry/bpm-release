@@ -54,22 +54,15 @@ var _ = Describe("Bosh", func() {
 		})
 	})
 
-	Describe("JobPaths", func() {
+	Describe("JobNames", func() {
 		BeforeEach(func() {
-			Expect(os.Mkdir(filepath.Join(root, "job-a"), 0700)).To(Succeed())
-			Expect(os.Mkdir(filepath.Join(root, "job-b"), 0700)).To(Succeed())
-
-			_, err := os.Create(filepath.Join(root, "not-a-directory"))
-			Expect(err).NotTo(HaveOccurred())
+			Expect(os.MkdirAll(filepath.Join(root, "jobs", "job-a"), 0700)).To(Succeed())
+			Expect(os.MkdirAll(filepath.Join(root, "jobs", "job-b"), 0700)).To(Succeed())
 		})
 
 		It("returns a list of BOSH job directories", func() {
-			paths := config.NewBosh(root).JobPaths()
-
-			Expect(paths).To(ConsistOf(
-				filepath.Join(root, "job-a"),
-				filepath.Join(root, "job-b"),
-			))
+			paths := config.NewBosh(root).JobNames()
+			Expect(paths).To(ConsistOf("job-a", "job-b"))
 		})
 	})
 })
