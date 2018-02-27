@@ -103,12 +103,8 @@ func (c *BPMConfig) JobDir() string {
 	return filepath.Join(c.boshRoot, "jobs", c.jobName)
 }
 
-func (c *BPMConfig) ConfigDir() string {
-	return filepath.Join(c.JobDir(), "config")
-}
-
 func (c *BPMConfig) JobConfig() string {
-	return filepath.Join(c.ConfigDir(), "bpm.yml")
+	return filepath.Join(c.JobDir(), "config", "bpm.yml")
 }
 
 func (c *BPMConfig) BPMLog() string {
@@ -123,7 +119,7 @@ func (c *BPMConfig) RootFSPath() string {
 	return filepath.Join(c.BundlePath(), "rootfs")
 }
 
-func (c *BPMConfig) ContainerID(encoded bool) string {
+func (c *BPMConfig) ContainerID() string {
 	var containerID string
 
 	if c.jobName == c.procName {
@@ -132,15 +128,11 @@ func (c *BPMConfig) ContainerID(encoded bool) string {
 		containerID = fmt.Sprintf("%s.%s", c.jobName, c.procName)
 	}
 
-	if encoded {
-		containerID = Encode(containerID)
-	}
-
-	return containerID
+	// runc spec only allows `^[\w+-\.]+$`
+	// https://github.com/opencontainers/runc/blob/master/libcontainer/factory_linux.go
+	return Encode(containerID)
 }
 
-// runc spec only allows `^[\w+-\.]+$`
-// https://github.com/opencontainers/runc/blob/master/libcontainer/factory_linux.go
 func Encode(containerID string) string {
 	enc := base32.StdEncoding
 	enc = enc.WithPadding('-')
