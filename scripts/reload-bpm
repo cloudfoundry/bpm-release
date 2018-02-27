@@ -1,8 +1,0 @@
-#!/bin/bash
-set -eux
-
-bpm stop test-server
-
-/bpm/scripts/start-test-agent
-
-bpm shell test-server
