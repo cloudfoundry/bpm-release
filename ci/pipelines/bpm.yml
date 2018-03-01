@@ -89,6 +89,7 @@ resources:
 
 jobs:
 - name: test-unit
+  public: true
   plan:
   - get: bpm-release
     trigger: true
@@ -97,6 +98,7 @@ jobs:
     privileged: true
 
 - name: test-acceptance
+  public: true
   plan:
   - aggregate:
     - get: bpm-release
