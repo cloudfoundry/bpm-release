@@ -17,10 +17,10 @@ else
   DOCKER="sudo docker"
 fi
 
-$DOCKER pull pcfsecurity/bpm-ci:latest
+$DOCKER pull cfbpm/bpm-ci:latest
 
 $DOCKER run \
   --privileged \
   -v "${scripts_path}/..:/bpm" \
-  -t pcfsecurity/bpm-ci:latest \
+  -t cfbpm/bpm-ci:latest \
   /bpm/scripts/test-unit "$@"

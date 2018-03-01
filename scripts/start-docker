@@ -15,10 +15,10 @@ else
   DOCKER="sudo docker"
 fi
 
-$DOCKER pull pcfsecurity/bpm-ci:latest
+$DOCKER pull cfbpm/bpm-ci:latest
 $DOCKER run \
   --privileged \
   -v  "${scripts_path}/..:/bpm" \
   -e "GOPATH=/bpm" \
-  -it pcfsecurity/bpm-ci:latest \
+  -it cfbpm/bpm-ci:latest \
   /bin/bash -c 'export PATH=$PATH:$GOPATH/bin; /bin/bash'

@@ -3,7 +3,7 @@ platform: linux
 image_resource:
   type: docker-image
   source:
-    repository: pcfsecurity/bpm-ci
+    repository: cfbpm/bpm-ci
     tag: latest
 
 inputs:
