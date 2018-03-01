@@ -1,5 +1,5 @@
 FROM golang:latest
-MAINTAINER PCF Security Enablement <pcf-security-enablement@pivotal.io>
+MAINTAINER CF BPM <cf-bpm@pivotal.io>
 
 # install libseccomp
 # The GPG key added is Paul Moore's PGP key.

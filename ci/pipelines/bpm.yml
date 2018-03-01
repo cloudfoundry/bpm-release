@@ -14,9 +14,9 @@ groups:
   jobs:
   - bump-golang
   - bump-runc
-# - name: images
-#   jobs:
-#   - build-bpm-ci
+- name: images
+  jobs:
+  - build-bpm-ci
 
 resources:
 - name: bpm-release
@@ -61,21 +61,31 @@ resources:
     repository: runc
     pre_release: true
 
-# - name: bpm-ci
-#   type: git
-#   source:
-#     uri: git@github.com:cloudfoundry-incubator/bpm-release
-#     branch: master
-#     paths: [ci/Dockerfile]
-#     private_key: ((bpm-github-deploy-key))
-#
-# - name: bpm-ci-image
-#   type: docker-image
-#   source:
-#     repository: pcfsecurity/bpm-ci
-#     username: ((docker-username))
-#     email: ((docker-email))
-#     password: ((docker-password))
+- name: bpm-ci
+  type: git
+  source:
+    uri: git@github.com:cloudfoundry-incubator/bpm-release
+    branch: master
+    paths: [ci/Dockerfile]
+    private_key: ((bpm-github-deploy-key))
+
+- name: bpm-ci-image
+  type: docker-image
+  source:
+    repository: cloudfoundry/bpm-ci
+    username: ((docker-username))
+    email: ((docker-email))
+    password: ((docker-password))
+
+- name: golang-image
+  type: docker-image
+  source:
+    repository: golang
+
+- name: daily
+  type: time
+  source:
+    interval: 24h
 
 jobs:
 - name: test-unit
@@ -211,19 +221,21 @@ jobs:
         tag: version/version
         tag_prefix: v
 
-# - name: build-bpm-ci
-#   serial: true
-#   plan:
-#   - aggregate:
-#     - get: bpm-ci
-#       trigger: true
-#     - get: golang
-#       trigger: true
-#       params: {save: true}
-#     - get: runc-linux
-#       trigger: true
-#   - put: bpm-ci-image
-#     params:
-#       load_base: golang
-#       build: .
-#       dockerfile: bpm-ci/ci/Dockerfile
+- name: build-bpm-ci
+  serial: true
+  plan:
+  - aggregate:
+    - get: daily
+      trigger: true
+    - get: bpm-ci
+      trigger: true
+    - get: golang-image
+      trigger: true
+      params: {save: true}
+    - get: runc-linux
+      trigger: true
+  - put: bpm-ci-image
+    params:
+      load_base: golang
+      build: .
+      dockerfile: bpm-ci/ci/Dockerfile
