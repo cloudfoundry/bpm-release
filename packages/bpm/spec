@@ -6,6 +6,7 @@ dependencies:
   - bpm-runc
 
 files:
+  - version
   - bpm/cmd/bpm/*.go # gosub
   - bpm/commands/*.go # gosub
   - bpm/config/*.go # gosub

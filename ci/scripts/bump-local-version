@@ -1,0 +1,31 @@
+#!/bin/bash
+
+set -e
+
+# inputs
+BOSH_RELEASE_DIR=$PWD/bpm-release
+
+VERSION=$(cat ./version/version)
+if [ -z "$VERSION" ]; then
+  echo "Version number not found in ./version/version"
+  exit 1
+fi
+
+# outputs
+RELEASE_REPO="${PWD}/release-repo"
+
+# This is necessary in order to copy hidden files
+shopt -s dotglob
+cp -r "${BOSH_RELEASE_DIR}"/* "${RELEASE_REPO}"
+
+git config --global user.email "cf-bpm+final-releaser@pivotal.io"
+git config --global user.name "CF BPM"
+
+cd "${RELEASE_REPO}"
+echo -n "${VERSION}" > "${RELEASE_REPO}/src/version"
+if [[ ${DEV} == "true" ]]; then
+  echo -n "+dev" >> "${RELEASE_REPO}/src/version"
+fi
+
+git add -A
+git commit -m "bumping version file to $(cat "${RELEASE_REPO}/src/version")"
