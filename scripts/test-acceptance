@@ -25,10 +25,7 @@ export PATH=$GOPATH/bin:$PATH
 
 go install bpm/vendor/github.com/onsi/ginkgo/ginkgo
 
-# This is the IP of the first VM in the bosh in the concourse container.
-# It will not change unless we deploy more instances/jobs etc or the upstream
-# docker image changes its cloudconfig.
-AGENT_HOST="${AGENT_HOST:-"10.245.0.2"}"
+AGENT_HOST="$(bosh -d bpm instances | grep running | awk '{ print $4 }')"
 agent_port=1337
 
 pushd "${GOPATH}/src/bpm/acceptance" > /dev/null
