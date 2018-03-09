@@ -1,4 +1,4 @@
-# bpm [![wings.concourse.ci](https://wings.concourse.ci/api/v1/teams/bpm/pipelines/bpm/jobs/test-acceptance/badge)](https://wings.concourse.ci/teams/bpm/pipelines/bpm?groups=tests)
+# bpm [![wings.concourse-ci.org](https://wings.concourse-ci.org/api/v1/teams/bpm/pipelines/bpm/jobs/test-acceptance/badge)](https://wings.concourse-ci.org/teams/bpm/pipelines/bpm?groups=tests)
 
 > Isolated BOSH Jobs
 
