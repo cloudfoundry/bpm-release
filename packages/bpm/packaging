@@ -6,7 +6,9 @@ export GOPATH=$BOSH_INSTALL_TARGET
 
 export GOROOT=$(readlink -nf /var/vcap/packages/golang)
 export PATH=$GOROOT/bin:$PATH
-go install bpm/cmd/bpm
+
+version="$(cat ${BOSH_INSTALL_TARGET}/src/version)"
+go install -ldflags "-X bpm/commands.Version=${version}" bpm/cmd/bpm
 
 # clean up source artifacts
 rm -rf ${BOSH_INSTALL_TARGET}/src ${BOSH_INSTALL_TARGET}/pkg

@@ -35,14 +35,18 @@ import (
 )
 
 var (
-	procName string
-
-	bpmCfg *config.BPMConfig
-	logger lager.Logger
+	bpmCfg      *config.BPMConfig
+	logger      lager.Logger
+	procName    string
+	showVersion bool
 )
 
 var userFinder = usertools.NewUserFinder()
 var bosh = config.NewBosh(os.Getenv("BPM_BOSH_ROOT"))
+
+func init() {
+	RootCmd.PersistentFlags().BoolVar(&showVersion, "version", false, "Prints the BPM version")
+}
 
 var RootCmd = &cobra.Command{
 	Long:              "A bosh process manager for starting and stopping release jobs",
@@ -54,6 +58,11 @@ var RootCmd = &cobra.Command{
 }
 
 func rootPre(cmd *cobra.Command, _ []string) error {
+	if showVersion {
+		version(cmd, []string{})
+		os.Exit(0)
+	}
+
 	usr, err := user.Current()
 	if err != nil {
 		return err
