@@ -11,6 +11,7 @@ files:
   - bpm/commands/*.go # gosub
   - bpm/config/*.go # gosub
   - bpm/models/*.go # gosub
+  - bpm/mount/*.go # gosub
   - bpm/presenters/*.go # gosub
   - bpm/runc/adapter/*.go # gosub
   - bpm/runc/client/*.go # gosub

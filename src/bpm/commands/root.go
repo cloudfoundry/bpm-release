@@ -17,6 +17,7 @@ package commands
 
 import (
 	"bpm/config"
+	"bpm/mount"
 	"bpm/runc/adapter"
 	"bpm/runc/client"
 	"bpm/runc/lifecycle"
@@ -25,6 +26,7 @@ import (
 	"fmt"
 	"os"
 	"os/user"
+	"path/filepath"
 
 	"golang.org/x/sys/unix"
 
@@ -73,7 +75,7 @@ func rootPre(cmd *cobra.Command, _ []string) error {
 		return errors.New("bpm must be run as root. Please run 'sudo -i' to become the root user.")
 	}
 
-	return nil
+	return mountCgroups()
 }
 
 func root(cmd *cobra.Command, args []string) error {
@@ -192,4 +194,50 @@ func processByNameFromJobConfig(jobCfg *config.JobConfig, procName string) (*con
 	}
 
 	return nil, fmt.Errorf("invalid process: %s", procName)
+}
+
+const cgroupFilesystem = "cgroup"
+
+var subsystems = []string{"blkio", "cpu", "cpuacct", "cpuset", "devices", "freezer", "hugetlb", "memory", "perf_event", "pids"}
+
+func mountCgroups() error {
+	mnts, err := mount.Mounts()
+	if err != nil {
+		return err
+	}
+
+	for _, subsystem := range subsystems {
+		err := mountCgroupSubsystemIfNotPresent(mnts, subsystem)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func mountCgroupSubsystemIfNotPresent(mnts []mount.Mnt, subsystem string) error {
+	for _, mnt := range mnts {
+		if mnt.Filesystem == cgroupFilesystem && containsElement(mnt.Options, subsystem) {
+			return nil
+		}
+	}
+
+	mountPoint := filepath.Join("/cgroup", "bpm", subsystem)
+	err := os.MkdirAll(mountPoint, 0700)
+	if err != nil {
+		return err
+	}
+
+	return mount.Mount(cgroupFilesystem, mountPoint, cgroupFilesystem, 0, subsystem)
+}
+
+func containsElement(elements []string, element string) bool {
+	for _, e := range elements {
+		if e == element {
+			return true
+		}
+	}
+
+	return false
 }
