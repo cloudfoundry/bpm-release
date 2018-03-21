@@ -1,3 +1,7 @@
+# v0.6.0
+
+* change ownership of `/etc/profile.d/bpm.sh` to `vcap` group
+
 # v0.5.0
 
 * mount cgroup subsystems when executing `bpm` command
