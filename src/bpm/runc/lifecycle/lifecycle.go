@@ -16,10 +16,6 @@
 package lifecycle
 
 import (
-	"bpm/config"
-	"bpm/models"
-	"bpm/runc/client"
-	"bpm/usertools"
 	"errors"
 	"fmt"
 	"io"
@@ -27,21 +23,34 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/opencontainers/runtime-spec/specs-go"
+	specs "github.com/opencontainers/runtime-spec/specs-go"
 
 	"code.cloudfoundry.org/clock"
 	"code.cloudfoundry.org/lager"
+
+	"bpm/config"
+	"bpm/models"
+	"bpm/runc/client"
+	"bpm/usertools"
 )
 
 const (
 	ContainerSigQuitGracePeriod = 5 * time.Second
 	ContainerStatePollInterval  = 1 * time.Second
-	ContainerStateRunning       = "running"
-	ContainerStatePaused        = "paused"
-	ContainerStateStopped       = "stopped"
+
+	ContainerStateRunning = "running"
+	ContainerStatePaused  = "paused"
+	ContainerStateStopped = "stopped"
 )
 
-var TimeoutError = errors.New("failed to stop job within timeout")
+var (
+	timeoutError    = errors.New("failed to stop job within timeout")
+	isNotExistError = errors.New("process is not running or could not be found")
+)
+
+func IsNotExist(err error) bool {
+	return err == isNotExistError
+}
 
 //go:generate counterfeiter . UserFinder
 
@@ -151,18 +160,14 @@ func (j *RuncLifecycle) StartProcess(logger lager.Logger, bpmCfg *config.BPMConf
 	)
 }
 
-// GetProcess returns the following:
-// - process, nil if the process is running (and no errors were encountered)
-// - nil,nil if the process is not running and there is no other error
-// - nil,error if there is any other error getting the process beyond it not running
-func (j *RuncLifecycle) GetProcess(cfg *config.BPMConfig) (*models.Process, error) {
+func (j *RuncLifecycle) StatProcess(cfg *config.BPMConfig) (*models.Process, error) {
 	container, err := j.runcClient.ContainerState(cfg.ContainerID())
 	if err != nil {
 		return nil, err
 	}
 
 	if container == nil {
-		return nil, nil
+		return nil, isNotExistError
 	}
 
 	return newProcessFromContainerState(
@@ -231,7 +236,7 @@ func (j *RuncLifecycle) StopProcess(logger lager.Logger, cfg *config.BPMConfig, 
 			}
 
 			j.clock.Sleep(ContainerSigQuitGracePeriod)
-			return TimeoutError
+			return timeoutError
 		}
 	}
 }

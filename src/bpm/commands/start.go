@@ -18,6 +18,7 @@ package commands
 import (
 	"bpm/config"
 	"bpm/models"
+	"bpm/runc/lifecycle"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -72,14 +73,15 @@ func start(cmd *cobra.Command, _ []string) error {
 	}
 
 	runcLifecycle := newRuncLifecycle()
-	job, err := runcLifecycle.GetProcess(bpmCfg)
-	if err != nil {
+	process, err := runcLifecycle.StatProcess(bpmCfg)
+	if err != nil && !lifecycle.IsNotExist(err) {
 		logger.Error("failed-getting-job", err)
+		return err
 	}
 
 	var state string
-	if job != nil {
-		state = job.Status
+	if process != nil {
+		state = process.Status
 	}
 
 	switch state {

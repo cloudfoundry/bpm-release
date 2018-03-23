@@ -1,6 +1,7 @@
 # v0.6.0
 
 * change ownership of `/etc/profile.d/bpm.sh` to `vcap` group
+* improved consistency of error messages
 
 # v0.5.0
 

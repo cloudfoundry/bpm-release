@@ -20,6 +20,9 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+
+	"bpm/models"
+	"bpm/runc/lifecycle"
 )
 
 func init() {
@@ -43,20 +46,14 @@ func pidForJob(cmd *cobra.Command, _ []string) error {
 	cmd.SilenceUsage = true
 
 	runcLifecycle := newRuncLifecycle()
-	job, err := runcLifecycle.GetProcess(bpmCfg)
-	if err != nil {
-		return fmt.Errorf("failed to get job: %s", err.Error())
+	process, err := runcLifecycle.StatProcess(bpmCfg)
+	if lifecycle.IsNotExist(err) || process.Status == models.ProcessStateFailed {
+		return errors.New("process is not running or could not be found")
+	} else if err != nil {
+		return fmt.Errorf("failed to get job: %s", err)
 	}
 
-	if job == nil {
-		return errors.New("job is not running")
-	}
-
-	if job.Pid <= 0 {
-		return errors.New("no pid for job")
-	}
-
-	fmt.Fprintf(cmd.OutOrStdout(), "%d\n", job.Pid)
+	fmt.Fprintf(cmd.OutOrStdout(), "%d\n", process.Pid)
 
 	return nil
 }

@@ -125,7 +125,7 @@ var _ = Describe("start", func() {
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
 			Eventually(session).Should(gexec.Exit(1))
-			Expect(session.Err).Should(gbytes.Say("does not exist"))
+			Expect(session.Err).Should(gbytes.Say("process is not running or could not be found"))
 		})
 	})
 

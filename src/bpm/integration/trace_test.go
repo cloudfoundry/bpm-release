@@ -94,7 +94,7 @@ var _ = Describe("trace", func() {
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
 			Eventually(session).Should(gexec.Exit(1))
-			Expect(session.Err).Should(gbytes.Say("Error: no pid for job"))
+			Expect(session.Err).Should(gbytes.Say("Error: process is not running or could not be found"))
 		})
 	})
 
@@ -103,7 +103,7 @@ var _ = Describe("trace", func() {
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
 			Eventually(session).Should(gexec.Exit(1))
-			Expect(session.Err).Should(gbytes.Say("Error: job is not running"))
+			Expect(session.Err).Should(gbytes.Say("Error: process is not running or could not be found"))
 		})
 	})
 

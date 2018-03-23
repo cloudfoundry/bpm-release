@@ -16,12 +16,6 @@
 package lifecycle_test
 
 import (
-	"bpm/config"
-	"bpm/models"
-	"bpm/runc/client"
-	"bpm/runc/lifecycle"
-	"bpm/runc/lifecycle/lifecyclefakes"
-	"bpm/usertools"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -30,13 +24,21 @@ import (
 	"path/filepath"
 	"time"
 
+	specs "github.com/opencontainers/runtime-spec/specs-go"
+
 	"code.cloudfoundry.org/clock/fakeclock"
 	"code.cloudfoundry.org/lager/lagertest"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
-	"github.com/opencontainers/runtime-spec/specs-go"
+
+	"bpm/config"
+	"bpm/models"
+	"bpm/runc/client"
+	"bpm/runc/lifecycle"
+	"bpm/runc/lifecycle/lifecyclefakes"
+	"bpm/usertools"
 )
 
 var _ = Describe("RuncJobLifecycle", func() {
@@ -369,7 +371,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 					var actualError error
 					Eventually(errChan).Should(Receive(&actualError))
-					Expect(actualError).To(Equal(lifecycle.TimeoutError))
+					Expect(actualError).To(MatchError("failed to stop job within timeout"))
 				})
 			})
 		})
@@ -410,7 +412,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 				var actualError error
 				Eventually(errChan).Should(Receive(&actualError))
-				Expect(actualError).To(Equal(lifecycle.TimeoutError))
+				Expect(actualError).To(MatchError("failed to stop job within timeout"))
 			})
 		})
 
@@ -536,13 +538,13 @@ var _ = Describe("RuncJobLifecycle", func() {
 		})
 	})
 
-	Describe("GetProcess", func() {
+	Describe("StatProcess", func() {
 		BeforeEach(func() {
 			fakeRuncClient.ContainerStateReturns(&specs.State{ID: expectedContainerID, Pid: 1234, Status: "running"}, nil)
 		})
 
 		It("fetches the container state and translates it into a job", func() {
-			process, err := runcLifecycle.GetProcess(bpmCfg)
+			process, err := runcLifecycle.StatProcess(bpmCfg)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(fakeRuncClient.ContainerStateCallCount()).To(Equal(1))
 			Expect(fakeRuncClient.ContainerStateArgsForCall(0)).To(Equal(expectedContainerID))
@@ -559,7 +561,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 			})
 
 			It("fetches the container state and translates it into a job", func() {
-				process, err := runcLifecycle.GetProcess(bpmCfg)
+				process, err := runcLifecycle.StatProcess(bpmCfg)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(process).To(Equal(&models.Process{
 					Name:   expectedContainerID,
@@ -575,7 +577,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 			})
 
 			It("simplifies the container id", func() {
-				_, err := runcLifecycle.GetProcess(bpmCfg)
+				_, err := runcLifecycle.StatProcess(bpmCfg)
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(fakeRuncClient.ContainerStateCallCount()).To(Equal(1))
@@ -588,22 +590,26 @@ var _ = Describe("RuncJobLifecycle", func() {
 				fakeRuncClient.ContainerStateReturns(nil, nil)
 			})
 
-			It("returns nil,nil", func() {
-				process, err := runcLifecycle.GetProcess(bpmCfg)
-				Expect(err).NotTo(HaveOccurred())
-
+			It("returns nil and an 'IsNotExist' error", func() {
+				process, err := runcLifecycle.StatProcess(bpmCfg)
+				Expect(err).To(HaveOccurred())
 				Expect(process).To(BeNil())
+
+				Expect(lifecycle.IsNotExist(err)).To(BeTrue())
 			})
 		})
 
 		Context("when fetching the container state fails", func() {
+			err := errors.New("fake test error")
+
 			BeforeEach(func() {
-				fakeRuncClient.ContainerStateReturns(nil, errors.New("fake test error"))
+				fakeRuncClient.ContainerStateReturns(nil, err)
 			})
 
-			It("returns an error", func() {
-				_, err := runcLifecycle.GetProcess(bpmCfg)
-				Expect(err).To(HaveOccurred())
+			It("returns the underlying error", func() {
+				_, err := runcLifecycle.StatProcess(bpmCfg)
+				Expect(err).To(MatchError(err))
+				Expect(lifecycle.IsNotExist(err)).To(BeFalse())
 			})
 		})
 	})

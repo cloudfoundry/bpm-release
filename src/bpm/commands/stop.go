@@ -20,6 +20,8 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+
+	"bpm/runc/lifecycle"
 )
 
 const DefaultStopTimeout = 20 * time.Second
@@ -61,19 +63,16 @@ func stop(cmd *cobra.Command, _ []string) error {
 	defer logger.Info("complete")
 
 	runcLifecycle := newRuncLifecycle()
-	job, err := runcLifecycle.GetProcess(bpmCfg)
-	if err != nil {
+
+	if _, err := runcLifecycle.StatProcess(bpmCfg); lifecycle.IsNotExist(err) {
+		logger.Info("job-already-stopped")
+		return nil
+	} else if err != nil {
 		logger.Error("failed-to-get-job", err)
 		return fmt.Errorf("failed to get job-process status: %s", err)
 	}
 
-	if job == nil {
-		logger.Info("job-already-stopped")
-		return nil
-	}
-
-	err = runcLifecycle.StopProcess(logger, bpmCfg, DefaultStopTimeout)
-	if err != nil {
+	if err := runcLifecycle.StopProcess(logger, bpmCfg, DefaultStopTimeout); err != nil {
 		logger.Error("failed-to-stop", err)
 	}
 
