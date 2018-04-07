@@ -1,0 +1,6 @@
+processes:
+- name: errand
+  executable: /bin/bash
+  args:
+  - -c
+  - "echo stdout; echo stderr >&2"

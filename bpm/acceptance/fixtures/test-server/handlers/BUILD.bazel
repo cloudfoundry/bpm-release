@@ -1,0 +1,21 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "curl.go",
+        "env.go",
+        "hello.go",
+        "masked_paths.go",
+        "mounts.go",
+        "processes.go",
+        "syscall_allowed.go",
+        "syscall_disallowed.go",
+        "syslog.go",
+        "varvcap.go",
+        "whoami.go",
+    ],
+    importpath = "bpm/acceptance/fixtures/test-server/handlers",
+    visibility = ["//visibility:public"],
+    deps = ["//bpm/vendor/golang.org/x/sys/unix:go_default_library"],
+)

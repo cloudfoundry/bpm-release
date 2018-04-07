@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "locate_function.go",
+        "locate_interface.go",
+        "locator.go",
+        "package_locator.go",
+    ],
+    importmap = "bpm/vendor/github.com/maxbrunsfeld/counterfeiter/locator",
+    importpath = "github.com/maxbrunsfeld/counterfeiter/locator",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//bpm/vendor/github.com/maxbrunsfeld/counterfeiter/astutil:go_default_library",
+        "//bpm/vendor/github.com/maxbrunsfeld/counterfeiter/model:go_default_library",
+    ],
+)

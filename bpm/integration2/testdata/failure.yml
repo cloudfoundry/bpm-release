@@ -1,0 +1,3 @@
+processes:
+- name: oops
+  executable: /bin/false

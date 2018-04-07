@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["sysfeat.go"],
+    importpath = "bpm/sysfeat",
+    visibility = ["//visibility:public"],
+    deps = ["//bpm/vendor/github.com/opencontainers/runc/libcontainer/cgroups:go_default_library"],
+)

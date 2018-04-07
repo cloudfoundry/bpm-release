@@ -1,0 +1,23 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["mountutil.go"],
+    importpath = "bpm/mount",
+    visibility = ["//visibility:public"],
+    deps = ["//bpm/vendor/golang.org/x/sys/unix:go_default_library"],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = [
+        "mountutil_suite_test.go",
+        "mountutil_test.go",
+    ],
+    embed = [":go_default_library"],
+    tags = ["manual"],
+    deps = [
+        "//bpm/vendor/github.com/onsi/ginkgo:go_default_library",
+        "//bpm/vendor/github.com/onsi/gomega:go_default_library",
+    ],
+)

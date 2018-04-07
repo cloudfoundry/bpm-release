@@ -1,0 +1,25 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["cgroup.go"],
+    importpath = "bpm/cgroups",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//bpm/mount:go_default_library",
+        "//bpm/vendor/golang.org/x/sys/unix:go_default_library",
+    ],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = [
+        "cgroup_test.go",
+        "cgroups_suite_test.go",
+    ],
+    embed = [":go_default_library"],
+    deps = [
+        "//bpm/vendor/github.com/onsi/ginkgo:go_default_library",
+        "//bpm/vendor/github.com/onsi/gomega:go_default_library",
+    ],
+)

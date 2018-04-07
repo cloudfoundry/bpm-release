@@ -1,0 +1,29 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "bosh.go",
+        "bpm_config.go",
+        "job_config.go",
+    ],
+    importpath = "bpm/config",
+    visibility = ["//visibility:public"],
+    deps = ["//bpm/vendor/gopkg.in/yaml.v2:go_default_library"],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = [
+        "bosh_test.go",
+        "bpm_config_test.go",
+        "config_suite_test.go",
+        "job_config_test.go",
+    ],
+    embed = [":go_default_library"],
+    tags = ["manual"],
+    deps = [
+        "//bpm/vendor/github.com/onsi/ginkgo:go_default_library",
+        "//bpm/vendor/github.com/onsi/gomega:go_default_library",
+    ],
+)

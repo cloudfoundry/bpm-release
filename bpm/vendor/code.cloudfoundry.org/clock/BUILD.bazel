@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "clock.go",
+        "package.go",
+        "ticker.go",
+        "timer.go",
+    ],
+    importmap = "bpm/vendor/code.cloudfoundry.org/clock",
+    importpath = "code.cloudfoundry.org/clock",
+    visibility = ["//visibility:public"],
+)

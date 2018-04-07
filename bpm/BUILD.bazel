@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_test")
+
+# gazelle:prefix bpm
+
+go_test(
+    name = "go_default_test",
+    srcs = ["license_test.go"],
+    deps = [
+        "//bpm/vendor/github.com/onsi/ginkgo:go_default_library",
+        "//bpm/vendor/github.com/onsi/gomega:go_default_library",
+    ],
+)

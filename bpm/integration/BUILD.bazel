@@ -1,0 +1,36 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_test")
+
+go_test(
+    name = "go_default_test",
+    srcs = [
+        "bash_test.go",
+        "capabilities_test.go",
+        "integration_suite_test.go",
+        "integration_test.go",
+        "list_test.go",
+        "logs_test.go",
+        "namespaces_test.go",
+        "pid_test.go",
+        "privileged_test.go",
+        "resource_limits_test.go",
+        "shell_test.go",
+        "start_stop_parallelization_test.go",
+        "start_test.go",
+        "stop_test.go",
+        "trace_test.go",
+        "version_test.go",
+    ],
+    tags = ["manual"],
+    deps = [
+        "//bpm/config:go_default_library",
+        "//bpm/models:go_default_library",
+        "//bpm/vendor/github.com/kr/pty:go_default_library",
+        "//bpm/vendor/github.com/onsi/ginkgo:go_default_library",
+        "//bpm/vendor/github.com/onsi/gomega:go_default_library",
+        "//bpm/vendor/github.com/onsi/gomega/gbytes:go_default_library",
+        "//bpm/vendor/github.com/onsi/gomega/gexec:go_default_library",
+        "//bpm/vendor/github.com/opencontainers/runtime-spec/specs-go:go_default_library",
+        "//bpm/vendor/github.com/satori/go.uuid:go_default_library",
+        "//bpm/vendor/gopkg.in/yaml.v2:go_default_library",
+    ],
+)

@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_test")
+
+go_test(
+    name = "go_default_test",
+    srcs = ["run_test.go"],
+    data = glob(["testdata/**"]),
+    tags = ["manual"],
+    deps = ["//bpm/vendor/github.com/onsi/gomega/gexec:go_default_library"],
+)

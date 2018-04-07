@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "capabilities.go",
+        "seccomp.go",
+        "specbuilder.go",
+    ],
+    importpath = "bpm/runc/specbuilder",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//bpm/sysfeat:go_default_library",
+        "//bpm/vendor/github.com/opencontainers/runtime-spec/specs-go:go_default_library",
+    ],
+)

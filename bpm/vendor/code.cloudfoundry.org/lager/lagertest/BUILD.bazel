@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "package.go",
+        "test_sink.go",
+    ],
+    importmap = "bpm/vendor/code.cloudfoundry.org/lager/lagertest",
+    importpath = "code.cloudfoundry.org/lager/lagertest",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//bpm/vendor/code.cloudfoundry.org/lager:go_default_library",
+        "//bpm/vendor/code.cloudfoundry.org/lager/lagerctx:go_default_library",
+        "//bpm/vendor/github.com/onsi/ginkgo:go_default_library",
+        "//bpm/vendor/github.com/onsi/gomega/gbytes:go_default_library",
+    ],
+)

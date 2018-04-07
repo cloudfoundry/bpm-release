@@ -1,0 +1,28 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "blkio_device.go",
+        "cgroup_unix.go",
+        "cgroup_unsupported.go",
+        "cgroup_windows.go",
+        "config.go",
+        "config_unix.go",
+        "device.go",
+        "device_defaults.go",
+        "hugepage_limit.go",
+        "interface_priority_map.go",
+        "mount.go",
+        "namespaces.go",
+        "namespaces_syscall.go",
+        "namespaces_syscall_unsupported.go",
+        "namespaces_unix.go",
+        "namespaces_unsupported.go",
+        "network.go",
+    ],
+    importmap = "bpm/vendor/github.com/opencontainers/runc/libcontainer/configs",
+    importpath = "github.com/opencontainers/runc/libcontainer/configs",
+    visibility = ["//visibility:public"],
+    deps = ["//bpm/vendor/github.com/Sirupsen/logrus:go_default_library"],
+)

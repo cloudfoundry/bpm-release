@@ -1,0 +1,46 @@
+load("@com_github_xoebus_rules_bosh//bosh:def.bzl", "bosh_package", "bosh_release")
+
+bosh_package(
+    name = "bpm",
+    srcs = [
+        "//bpm/cmd/bpm",
+    ],
+)
+
+bosh_package(
+    name = "test-server",
+    srcs = [
+        "//bpm/acceptance/fixtures/test-server",
+    ],
+)
+
+bosh_package(
+    name = "bpm-runc",
+    srcs = [
+        ":runc_rename",
+    ],
+)
+
+genrule(
+    name = "runc_rename",
+    srcs = [
+        "@runc//file",
+    ],
+    outs = ["runc"],
+    cmd = "cp $(location @runc//file) $@",
+)
+
+bosh_release(
+    name = "bpmrelease",
+    jobs = [
+        "//bosh/jobs/bpm:bpm",
+        "//bosh/jobs/test-server:test-server",
+    ],
+    packages = [
+        ":bpm",
+        ":bpm-runc",
+        ":test-server",
+    ],
+    stemcell_distro = "ubuntu-trusty",
+    stemcell_version = "1234",
+)

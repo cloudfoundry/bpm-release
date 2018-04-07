@@ -1,0 +1,35 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "list.go",
+        "logs.go",
+        "pid.go",
+        "root.go",
+        "run.go",
+        "shell.go",
+        "start.go",
+        "stop.go",
+        "trace.go",
+        "version.go",
+    ],
+    importpath = "bpm/commands",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//bpm/cgroups:go_default_library",
+        "//bpm/config:go_default_library",
+        "//bpm/exitstatus:go_default_library",
+        "//bpm/models:go_default_library",
+        "//bpm/presenters:go_default_library",
+        "//bpm/runc/adapter:go_default_library",
+        "//bpm/runc/client:go_default_library",
+        "//bpm/runc/lifecycle:go_default_library",
+        "//bpm/sysfeat:go_default_library",
+        "//bpm/usertools:go_default_library",
+        "//bpm/vendor/code.cloudfoundry.org/clock:go_default_library",
+        "//bpm/vendor/code.cloudfoundry.org/lager:go_default_library",
+        "//bpm/vendor/github.com/spf13/cobra:go_default_library",
+        "//bpm/vendor/golang.org/x/sys/unix:go_default_library",
+    ],
+)

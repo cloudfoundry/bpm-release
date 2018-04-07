@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "context.go",
+        "package.go",
+    ],
+    importmap = "bpm/vendor/code.cloudfoundry.org/lager/lagerctx",
+    importpath = "code.cloudfoundry.org/lager/lagerctx",
+    visibility = ["//visibility:public"],
+    deps = ["//bpm/vendor/code.cloudfoundry.org/lager:go_default_library"],
+)

@@ -1,0 +1,11 @@
+load("@com_github_xoebus_rules_bosh//bosh:def.bzl", "bosh_job")
+
+bosh_job(
+    name = "test-server",
+    monit = ":monit",
+    spec = ":spec",
+    templates = [
+        "templates/bpm.yml.erb",
+    ],
+    visibility = ["//bosh:__pkg__"],
+)

@@ -1,0 +1,40 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["lifecycle.go"],
+    importpath = "bpm/runc/lifecycle",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//bpm/config:go_default_library",
+        "//bpm/models:go_default_library",
+        "//bpm/runc/client:go_default_library",
+        "//bpm/usertools:go_default_library",
+        "//bpm/vendor/code.cloudfoundry.org/clock:go_default_library",
+        "//bpm/vendor/code.cloudfoundry.org/lager:go_default_library",
+        "//bpm/vendor/github.com/opencontainers/runtime-spec/specs-go:go_default_library",
+    ],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = [
+        "lifecycle_suite_test.go",
+        "lifecycle_test.go",
+    ],
+    embed = [":go_default_library"],
+    deps = [
+        "//bpm/config:go_default_library",
+        "//bpm/models:go_default_library",
+        "//bpm/runc/client:go_default_library",
+        "//bpm/runc/lifecycle/lifecyclefakes:go_default_library",
+        "//bpm/usertools:go_default_library",
+        "//bpm/vendor/code.cloudfoundry.org/clock/fakeclock:go_default_library",
+        "//bpm/vendor/code.cloudfoundry.org/lager:go_default_library",
+        "//bpm/vendor/code.cloudfoundry.org/lager/lagertest:go_default_library",
+        "//bpm/vendor/github.com/onsi/ginkgo:go_default_library",
+        "//bpm/vendor/github.com/onsi/gomega:go_default_library",
+        "//bpm/vendor/github.com/onsi/gomega/gbytes:go_default_library",
+        "//bpm/vendor/github.com/opencontainers/runtime-spec/specs-go:go_default_library",
+    ],
+)

@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "generator.go",
+        "interface_generator.go",
+        "real_generator.go",
+    ],
+    importmap = "bpm/vendor/github.com/maxbrunsfeld/counterfeiter/generator",
+    importpath = "github.com/maxbrunsfeld/counterfeiter/generator",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//bpm/vendor/github.com/maxbrunsfeld/counterfeiter/astutil:go_default_library",
+        "//bpm/vendor/github.com/maxbrunsfeld/counterfeiter/model:go_default_library",
+        "//bpm/vendor/golang.org/x/tools/imports:go_default_library",
+    ],
+)

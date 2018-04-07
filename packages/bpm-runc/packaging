@@ -1,5 +1,0 @@
-set -e
-
-mkdir -p ${BOSH_INSTALL_TARGET}/bin
-
-install runc/runc-linux-amd64 ${BOSH_INSTALL_TARGET}/bin/runc

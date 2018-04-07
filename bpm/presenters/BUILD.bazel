@@ -1,0 +1,28 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["presenters.go"],
+    importpath = "bpm/presenters",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//bpm/config:go_default_library",
+        "//bpm/models:go_default_library",
+    ],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = [
+        "presenters_suite_test.go",
+        "presenters_test.go",
+    ],
+    embed = [":go_default_library"],
+    deps = [
+        "//bpm/config:go_default_library",
+        "//bpm/models:go_default_library",
+        "//bpm/vendor/github.com/onsi/ginkgo:go_default_library",
+        "//bpm/vendor/github.com/onsi/gomega:go_default_library",
+        "//bpm/vendor/github.com/onsi/gomega/gbytes:go_default_library",
+    ],
+)

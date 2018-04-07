@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["async_assertion.go"],
+    importmap = "bpm/vendor/github.com/onsi/gomega/internal/asyncassertion",
+    importpath = "github.com/onsi/gomega/internal/asyncassertion",
+    visibility = ["//bpm/vendor/github.com/onsi/gomega:__subpackages__"],
+    deps = [
+        "//bpm/vendor/github.com/onsi/gomega/internal/oraclematcher:go_default_library",
+        "//bpm/vendor/github.com/onsi/gomega/types:go_default_library",
+    ],
+)
