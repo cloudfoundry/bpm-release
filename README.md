@@ -58,10 +58,9 @@ changes.
 
 ## Usage
 
-bpm is now ready for experimentation and should be usable for the majority of
-BOSH jobs. However, the project is still in an *alpha* state and the
-configuration or runtime environment may change in a backwards incompatible
-manner at any time.
+bpm is almost at 1.0 and should be usable for the majority of BOSH jobs. We
+have stabilized the configuration format and do not plan on making any more
+backwards incompatible changes before 1.0.
 
 You can start to read about the [ethos and glossary](docs/bpm.md), [runtime
 environment](docs/runtime.md) which bpm provides to your job, the
