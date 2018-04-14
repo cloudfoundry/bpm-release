@@ -2,6 +2,7 @@
 
 * change ownership of `/etc/profile.d/bpm.sh` to `vcap` group
 * improved consistency of error messages
+* add `/sbin` to the default system mounts
 
 # v0.5.0
 

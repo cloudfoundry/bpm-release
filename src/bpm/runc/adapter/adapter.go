@@ -25,7 +25,7 @@ import (
 	"code.cloudfoundry.org/bytefmt"
 	"code.cloudfoundry.org/lager"
 
-	"github.com/opencontainers/runtime-spec/specs-go"
+	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
 const (
@@ -265,10 +265,11 @@ func requiredMounts() []specs.Mount {
 func systemIdentityMounts(mountResolvConf bool) []specs.Mount {
 	mounts := []specs.Mount{
 		identityBindMountWithOptions("/bin", "nosuid", "nodev", "bind", "ro"),
-		identityBindMountWithOptions("/usr", "nosuid", "nodev", "bind", "ro"),
 		identityBindMountWithOptions("/etc", "nosuid", "nodev", "bind", "ro"),
 		identityBindMountWithOptions("/lib", "nosuid", "nodev", "bind", "ro"),
 		identityBindMountWithOptions("/lib64", "nosuid", "nodev", "bind", "ro"),
+		identityBindMountWithOptions("/sbin", "nosuid", "nodev", "bind", "ro"),
+		identityBindMountWithOptions("/usr", "nosuid", "nodev", "bind", "ro"),
 	}
 
 	if mountResolvConf {
@@ -280,13 +281,13 @@ func systemIdentityMounts(mountResolvConf bool) []specs.Mount {
 
 func boshMounts(bpmCfg *config.BPMConfig, mountData, mountStore bool) []specs.Mount {
 	mounts := []specs.Mount{
+		bindMountWithOptions("/tmp", bpmCfg.TempDir(), "nodev", "nosuid", "noexec", "rbind", "rw"),
+		bindMountWithOptions("/var/tmp", bpmCfg.TempDir(), "nodev", "nosuid", "noexec", "rbind", "rw"),
 		identityBindMountWithOptions(bpmCfg.DataPackageDir(), "nodev", "nosuid", "bind", "ro"),
 		identityBindMountWithOptions(bpmCfg.JobDir(), "nodev", "nosuid", "bind", "ro"),
 		identityBindMountWithOptions(bpmCfg.LogDir(), "nodev", "nosuid", "noexec", "rbind", "rw"),
 		identityBindMountWithOptions(bpmCfg.PackageDir(), "nodev", "nosuid", "bind", "ro"),
 		identityBindMountWithOptions(bpmCfg.TempDir(), "nodev", "nosuid", "noexec", "rbind", "rw"),
-		bindMountWithOptions("/var/tmp", bpmCfg.TempDir(), "nodev", "nosuid", "noexec", "rbind", "rw"),
-		bindMountWithOptions("/tmp", bpmCfg.TempDir(), "nodev", "nosuid", "noexec", "rbind", "rw"),
 	}
 
 	if mountData {

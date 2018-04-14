@@ -101,7 +101,7 @@ var _ = Describe("BpmAcceptance", func() {
 
 		mounts := parseMounts(string(body))
 
-		expectedMountPaths := []string{"/bin", "/etc", "/lib", "/lib64", "/usr"}
+		expectedMountPaths := []string{"/bin", "/etc", "/lib", "/lib64", "/sbin", "/usr"}
 		var found []string
 		for _, mount := range mounts {
 			if containsString(expectedMountPaths, mount.path) {

@@ -29,7 +29,8 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/opencontainers/runtime-spec/specs-go"
+
+	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
 var _ = Describe("RuncAdapter", func() {
@@ -254,133 +255,138 @@ var _ = Describe("RuncAdapter", func() {
 				Path: bpmCfg.RootFSPath(),
 			}))
 
-			Expect(spec.Mounts).To(ConsistOf([]specs.Mount{
-				{
-					Destination: "/proc",
-					Type:        "proc",
-					Source:      "proc",
-					Options:     nil,
-				},
-				{
-					Destination: "/dev",
-					Type:        "tmpfs",
-					Source:      "tmpfs",
-					Options:     []string{"nosuid", "noexec", "mode=755", "size=65536k"},
-				},
-				{
-					Destination: "/dev/pts",
-					Type:        "devpts",
-					Source:      "devpts",
-					Options:     []string{"nosuid", "noexec", "newinstance", "ptmxmode=0666", "mode=0620", "gid=5"},
-				},
-				{
-					Destination: "/dev/shm",
-					Type:        "tmpfs",
-					Source:      "shm",
-					Options:     []string{"nosuid", "noexec", "nodev", "mode=1777", "size=65536k"},
-				},
-				{
-					Destination: "/dev/mqueue",
-					Type:        "mqueue",
-					Source:      "mqueue",
-					Options:     []string{"nosuid", "noexec", "nodev"},
-				},
-				{
-					Destination: "/sys",
-					Type:        "sysfs",
-					Source:      "sysfs",
-					Options:     []string{"nosuid", "noexec", "nodev", "ro"},
-				},
-				{
-					Destination: "/bin",
-					Type:        "bind",
-					Source:      "/bin",
-					Options:     []string{"nosuid", "nodev", "bind", "ro"},
-				},
-				{
-					Destination: "/etc",
-					Type:        "bind",
-					Source:      "/etc",
-					Options:     []string{"nosuid", "nodev", "bind", "ro"},
-				},
-				{
-					Destination: "/usr",
-					Type:        "bind",
-					Source:      "/usr",
-					Options:     []string{"nosuid", "nodev", "bind", "ro"},
-				},
-				{
-					Destination: "/lib",
-					Type:        "bind",
-					Source:      "/lib",
-					Options:     []string{"nosuid", "nodev", "bind", "ro"},
-				},
-				{
-					Destination: "/lib64",
-					Type:        "bind",
-					Source:      "/lib64",
-					Options:     []string{"nosuid", "nodev", "bind", "ro"},
-				},
-				{
-					Destination: filepath.Join(systemRoot, "data", "packages"),
-					Type:        "bind",
-					Source:      filepath.Join(systemRoot, "data", "packages"),
-					Options:     []string{"nodev", "nosuid", "bind", "ro"},
-				},
-				{
-					Destination: filepath.Join(systemRoot, "jobs", "example"),
-					Type:        "bind",
-					Source:      filepath.Join(systemRoot, "jobs", "example"),
-					Options:     []string{"nodev", "nosuid", "bind", "ro"},
-				},
-				{
-					Destination: filepath.Join(systemRoot, "packages"),
-					Type:        "bind",
-					Source:      filepath.Join(systemRoot, "packages"),
-					Options:     []string{"nodev", "nosuid", "bind", "ro"},
-				},
-				{
-					Destination: filepath.Join(systemRoot, "sys", "log", jobName),
-					Type:        "bind",
-					Source:      filepath.Join(systemRoot, "sys", "log", jobName),
-					Options:     []string{"nodev", "nosuid", "noexec", "rbind", "rw"},
-				},
-				{
-					Destination: "/path/to/volume/1",
-					Type:        "bind",
-					Source:      "/path/to/volume/1",
-					Options:     []string{"nodev", "nosuid", "noexec", "rbind", "rw"},
-				},
-				{
-					Destination: "/path/to/volume/jna-tmp",
-					Type:        "bind",
-					Source:      "/path/to/volume/jna-tmp",
-					Options:     []string{"nodev", "nosuid", "exec", "rbind", "rw"},
-				},
-				{
-					Destination: "/path/to/volume/2",
-					Type:        "bind",
-					Source:      "/path/to/volume/2",
-					Options:     []string{"nodev", "nosuid", "noexec", "rbind", "ro"},
-				},
-				{
-					Destination: filepath.Join(systemRoot, "data", "example", "tmp"),
-					Type:        "bind",
-					Source:      filepath.Join(systemRoot, "data", "example", "tmp"),
-					Options:     []string{"nodev", "nosuid", "noexec", "rbind", "rw"},
-				},
-				{
-					Destination: "/var/tmp",
-					Type:        "bind",
-					Source:      filepath.Join(systemRoot, "data", "example", "tmp"),
-					Options:     []string{"nodev", "nosuid", "noexec", "rbind", "rw"},
-				},
-				{
-					Destination: "/tmp",
-					Type:        "bind",
-					Source:      filepath.Join(systemRoot, "data", "example", "tmp"),
-					Options:     []string{"nodev", "nosuid", "noexec", "rbind", "rw"},
-				},
+			Expect(spec.Mounts).To(HaveLen(22))
+			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+				Destination: "/proc",
+				Type:        "proc",
+				Source:      "proc",
+				Options:     nil,
+			}))
+			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+				Destination: "/dev",
+				Type:        "tmpfs",
+				Source:      "tmpfs",
+				Options:     []string{"nosuid", "noexec", "mode=755", "size=65536k"},
+			}))
+			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+				Destination: "/dev/pts",
+				Type:        "devpts",
+				Source:      "devpts",
+				Options:     []string{"nosuid", "noexec", "newinstance", "ptmxmode=0666", "mode=0620", "gid=5"},
+			}))
+			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+				Destination: "/dev/shm",
+				Type:        "tmpfs",
+				Source:      "shm",
+				Options:     []string{"nosuid", "noexec", "nodev", "mode=1777", "size=65536k"},
+			}))
+			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+				Destination: "/dev/mqueue",
+				Type:        "mqueue",
+				Source:      "mqueue",
+				Options:     []string{"nosuid", "noexec", "nodev"},
+			}))
+			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+				Destination: "/sys",
+				Type:        "sysfs",
+				Source:      "sysfs",
+				Options:     []string{"nosuid", "noexec", "nodev", "ro"},
+			}))
+			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+				Destination: "/bin",
+				Type:        "bind",
+				Source:      "/bin",
+				Options:     []string{"nosuid", "nodev", "bind", "ro"},
+			}))
+			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+				Destination: "/etc",
+				Type:        "bind",
+				Source:      "/etc",
+				Options:     []string{"nosuid", "nodev", "bind", "ro"},
+			}))
+			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+				Destination: "/usr",
+				Type:        "bind",
+				Source:      "/usr",
+				Options:     []string{"nosuid", "nodev", "bind", "ro"},
+			}))
+			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+				Destination: "/lib",
+				Type:        "bind",
+				Source:      "/lib",
+				Options:     []string{"nosuid", "nodev", "bind", "ro"},
+			}))
+			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+				Destination: "/lib64",
+				Type:        "bind",
+				Source:      "/lib64",
+				Options:     []string{"nosuid", "nodev", "bind", "ro"},
+			}))
+			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+				Destination: "/sbin",
+				Type:        "bind",
+				Source:      "/sbin",
+				Options:     []string{"nosuid", "nodev", "bind", "ro"},
+			}))
+			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+				Destination: filepath.Join(systemRoot, "data", "packages"),
+				Type:        "bind",
+				Source:      filepath.Join(systemRoot, "data", "packages"),
+				Options:     []string{"nodev", "nosuid", "bind", "ro"},
+			}))
+			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+				Destination: filepath.Join(systemRoot, "jobs", "example"),
+				Type:        "bind",
+				Source:      filepath.Join(systemRoot, "jobs", "example"),
+				Options:     []string{"nodev", "nosuid", "bind", "ro"},
+			}))
+			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+				Destination: filepath.Join(systemRoot, "packages"),
+				Type:        "bind",
+				Source:      filepath.Join(systemRoot, "packages"),
+				Options:     []string{"nodev", "nosuid", "bind", "ro"},
+			}))
+			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+				Destination: filepath.Join(systemRoot, "sys", "log", jobName),
+				Type:        "bind",
+				Source:      filepath.Join(systemRoot, "sys", "log", jobName),
+				Options:     []string{"nodev", "nosuid", "noexec", "rbind", "rw"},
+			}))
+			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+				Destination: "/path/to/volume/1",
+				Type:        "bind",
+				Source:      "/path/to/volume/1",
+				Options:     []string{"nodev", "nosuid", "noexec", "rbind", "rw"},
+			}))
+			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+				Destination: "/path/to/volume/jna-tmp",
+				Type:        "bind",
+				Source:      "/path/to/volume/jna-tmp",
+				Options:     []string{"nodev", "nosuid", "exec", "rbind", "rw"},
+			}))
+			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+				Destination: "/path/to/volume/2",
+				Type:        "bind",
+				Source:      "/path/to/volume/2",
+				Options:     []string{"nodev", "nosuid", "noexec", "rbind", "ro"},
+			}))
+			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+				Destination: filepath.Join(systemRoot, "data", "example", "tmp"),
+				Type:        "bind",
+				Source:      filepath.Join(systemRoot, "data", "example", "tmp"),
+				Options:     []string{"nodev", "nosuid", "noexec", "rbind", "rw"},
+			}))
+			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+				Destination: "/var/tmp",
+				Type:        "bind",
+				Source:      filepath.Join(systemRoot, "data", "example", "tmp"),
+				Options:     []string{"nodev", "nosuid", "noexec", "rbind", "rw"},
+			}))
+			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+				Destination: "/tmp",
+				Type:        "bind",
+				Source:      filepath.Join(systemRoot, "data", "example", "tmp"),
+				Options:     []string{"nodev", "nosuid", "noexec", "rbind", "rw"},
 			}))
 
 			Expect(spec.Linux.RootfsPropagation).To(Equal("private"))
