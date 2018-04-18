@@ -98,3 +98,13 @@ const waitForSigUSR1Bash = `trap "kill -9 $child" SIGUSR1;
 sleep 100 &
 child=$!;
 wait $child`
+
+const privilegedBash = `trap "kill -9 $child" SIGTERM;
+echo "Running as $(whoami)"
+echo "Privileges: $(cat /proc/1/status | grep CapEff)"
+if ! grep nosuid /proc/mounts; then
+	echo "No nosuid mounts"
+fi
+sleep 100 &
+child=$!;
+wait $child`

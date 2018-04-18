@@ -41,6 +41,7 @@ type ProcessConfig struct {
 	Limits            *Limits           `yaml:"limits"`
 	PersistentDisk    bool              `yaml:"persistent_disk"`
 	WorkDir           string            `yaml:"workdir"`
+	Unsafe            *Unsafe           `yaml:"unsafe"`
 }
 
 type Limits struct {
@@ -57,6 +58,10 @@ type Volume struct {
 	Path            string `yaml:"path"`
 	Writable        bool   `yaml:"writable"`
 	AllowExecutions bool   `yaml:"allow_executions"`
+}
+
+type Unsafe struct {
+	Privileged bool `yaml:"privileged"`
 }
 
 func ParseJobConfig(configPath string) (*JobConfig, error) {

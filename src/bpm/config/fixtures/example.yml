@@ -26,6 +26,8 @@ processes:
   workdir: /I/AM/A/WORKDIR
   persistent_disk: true
   ephemeral_disk: true
+  unsafe:
+    privileged: true
 - name: second-process
   executable: /I/AM/A/SECOND-EXECUTABLE
 - name: third-process

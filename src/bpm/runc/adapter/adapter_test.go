@@ -13,11 +13,11 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 
-package adapter_test
+package adapter
 
 import (
 	"bpm/config"
-	"bpm/runc/adapter"
+	"bpm/runc/specbuilder"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -35,7 +35,7 @@ import (
 
 var _ = Describe("RuncAdapter", func() {
 	var (
-		runcAdapter *adapter.RuncAdapter
+		runcAdapter *RuncAdapter
 
 		jobName,
 		procName,
@@ -49,7 +49,7 @@ var _ = Describe("RuncAdapter", func() {
 
 	BeforeEach(func() {
 		logger = lagertest.NewTestLogger("adapter")
-		runcAdapter = adapter.NewRuncAdapter()
+		runcAdapter = NewRuncAdapter()
 
 		jobName = "example"
 		procName = "server"
@@ -231,8 +231,8 @@ var _ = Describe("RuncAdapter", func() {
 			expectedProcessArgs := append([]string{procCfg.Executable}, procCfg.Args...)
 			expectedEnv := convertEnv(procCfg.Env)
 			expectedEnv = append(expectedEnv, fmt.Sprintf("TMPDIR=%s", bpmCfg.TempDir()))
-			expectedEnv = append(expectedEnv, fmt.Sprintf("LANG=%s", adapter.DefaultLang))
-			expectedEnv = append(expectedEnv, fmt.Sprintf("PATH=%s", adapter.DefaultPath(bpmCfg)))
+			expectedEnv = append(expectedEnv, fmt.Sprintf("LANG=%s", defaultLang))
+			expectedEnv = append(expectedEnv, fmt.Sprintf("PATH=%s", defaultPath(bpmCfg)))
 			expectedEnv = append(expectedEnv, fmt.Sprintf("HOME=%s", bpmCfg.DataDir()))
 
 			Expect(spec.Process.Terminal).To(Equal(false))
@@ -241,11 +241,11 @@ var _ = Describe("RuncAdapter", func() {
 			Expect(spec.Process.Args).To(Equal(expectedProcessArgs))
 			Expect(spec.Process.Env).To(ConsistOf(expectedEnv))
 			Expect(spec.Process.Cwd).To(Equal(bpmCfg.JobDir()))
-			Expect(spec.Process.Rlimits).To(Equal([]specs.POSIXRlimit{}))
+			Expect(spec.Process.Rlimits).To(BeNil())
 			Expect(spec.Process.NoNewPrivileges).To(Equal(true))
 			Expect(spec.Process.Capabilities).To(Equal(&specs.LinuxCapabilities{
 				Bounding:    []string{"CAP_TAIN", "CAP_SAICIN"},
-				Effective:   []string{},
+				Effective:   nil,
 				Inheritable: []string{"CAP_TAIN", "CAP_SAICIN"},
 				Permitted:   []string{"CAP_TAIN", "CAP_SAICIN"},
 				Ambient:     []string{"CAP_TAIN", "CAP_SAICIN"},
@@ -419,19 +419,19 @@ var _ = Describe("RuncAdapter", func() {
 			// This must be part of the existing It block to preven test pollution
 			By("the presence of /run/resolvconf on the host")
 
-			Expect(os.MkdirAll(adapter.ResolvConfDir, 0700)).To(Succeed())
+			Expect(os.MkdirAll(resolvConfDir, 0700)).To(Succeed())
 
 			specWithResolvConf, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(specWithResolvConf.Mounts).To(ContainElement(specs.Mount{
-				Destination: adapter.ResolvConfDir,
+				Destination: resolvConfDir,
 				Type:        "bind",
-				Source:      adapter.ResolvConfDir,
+				Source:      resolvConfDir,
 				Options:     []string{"nodev", "nosuid", "noexec", "bind", "ro"},
 			}))
 
-			Expect(os.RemoveAll(adapter.ResolvConfDir)).To(Succeed())
+			Expect(os.RemoveAll(resolvConfDir)).To(Succeed())
 		})
 
 		Context("when a user provides TMPDIR, LANG and PATH, and HOME environment variables", func() {
@@ -446,8 +446,8 @@ var _ = Describe("RuncAdapter", func() {
 				spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(spec.Process.Env).NotTo(ContainElement(fmt.Sprintf("TMPDIR=%s", bpmCfg.TempDir())))
-				Expect(spec.Process.Env).NotTo(ContainElement(fmt.Sprintf("LANG=%s", adapter.DefaultLang)))
-				Expect(spec.Process.Env).NotTo(ContainElement(fmt.Sprintf("PATH=%s", adapter.DefaultPath(bpmCfg))))
+				Expect(spec.Process.Env).NotTo(ContainElement(fmt.Sprintf("LANG=%s", defaultLang)))
+				Expect(spec.Process.Env).NotTo(ContainElement(fmt.Sprintf("PATH=%s", defaultPath(bpmCfg))))
 				Expect(spec.Process.Env).NotTo(ContainElement(fmt.Sprintf("HOME=%s", bpmCfg.DataDir())))
 				Expect(spec.Process.Env).To(ContainElement("TMPDIR=/I/AM/A/TMPDIR"))
 				Expect(spec.Process.Env).To(ContainElement("LANG=esperanto"))
@@ -504,7 +504,7 @@ var _ = Describe("RuncAdapter", func() {
 			})
 		})
 
-		Context("Limits", func() {
+		Context("when limits are provided", func() {
 			BeforeEach(func() {
 				procCfg.Limits = &config.Limits{}
 			})
@@ -600,7 +600,63 @@ var _ = Describe("RuncAdapter", func() {
 			It("does not set a memory limit", func() {
 				spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
 				Expect(err).NotTo(HaveOccurred())
-				Expect(spec.Linux.Resources).To(BeNil())
+				Expect(spec.Linux.Resources.Memory).To(BeNil())
+			})
+		})
+
+		Context("when the user requests a privileged container", func() {
+			BeforeEach(func() {
+				procCfg.Unsafe = &config.Unsafe{Privileged: true}
+			})
+
+			It("uses the root user", func() {
+				spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(spec.Process.User).To(Equal(specs.User{UID: 0, GID: 0}))
+			})
+
+			It("does not restrict new privileges", func() {
+				spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(spec.Process.NoNewPrivileges).To(BeFalse())
+			})
+
+			It("does not set seccomp", func() {
+				spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(spec.Linux.Seccomp).To(BeNil())
+			})
+
+			It("does not restrict /proc and /sys", func() {
+				spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(spec.Linux.MaskedPaths).To(Equal([]string{}))
+				Expect(spec.Linux.ReadonlyPaths).To(Equal([]string{}))
+			})
+
+			It("does not restrict capabilities", func() {
+				spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
+				Expect(err).NotTo(HaveOccurred())
+
+				expectedCapabilities := append(
+					[]string{"CAP_TAIN", "CAP_SAICIN"},
+					specbuilder.DefaultPrivilegedCapabilities()...,
+				)
+				Expect(spec.Process.Capabilities).To(Equal(&specs.LinuxCapabilities{
+					Ambient:     expectedCapabilities,
+					Bounding:    expectedCapabilities,
+					Effective:   nil,
+					Inheritable: expectedCapabilities,
+					Permitted:   expectedCapabilities,
+				}))
+			})
+
+			It("removes the nosuid option from all mounts", func() {
+				spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
+				Expect(err).NotTo(HaveOccurred())
+				for _, mount := range spec.Mounts {
+					Expect(mount.Options).NotTo(ContainElement("nosuid"))
+				}
 			})
 		})
 	})
