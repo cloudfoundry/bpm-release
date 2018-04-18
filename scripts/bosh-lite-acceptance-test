@@ -2,26 +2,33 @@
 
 set -eux
 
+absolute_path() {
+  (cd "$1" && pwd)
+}
+
+scripts_path=$(absolute_path "$(dirname "$0")" )
+release_dir="${scripts_path}/.."
+
 export BOSH_DEPLOYMENT=bpm
 export BOSH_NON_INTERACTIVE=true
 export BOSH_ENVIRONMENT=vbox
 
 bosh create-release \
-  --dir "$PWD" --force
+  --dir "${release_dir}" --force
 
 # Currently bosh will upload event if it has it, so check first
-STEMCELL=`bosh stemcells | grep warden | awk '{print $1}'`
+STEMCELL=$(bosh stemcells | grep warden | awk '{print $1}')
 if [ -z "$STEMCELL" ]; then
   bosh upload-stemcell https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-trusty-go_agent?v=3541.9 --sha1 44138ff5e30cc1d7724d88eaa70fab955b8011bd
 fi
 
 bosh upload-release \
-  --dir "$PWD"
+  --dir "${release_dir}"
 
 bosh deploy \
-  "$PWD/example-manifests/bosh-lite.yml"
+  "${release_dir}/example-manifests/bosh-lite.yml"
 
-export GOPATH="$PWD"
+export GOPATH="${release_dir}"
 export PATH=$GOPATH/bin:$PATH
 
 
