@@ -13,7 +13,7 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 
-package adapter_test
+package adapter
 
 import (
 	. "github.com/onsi/ginkgo"

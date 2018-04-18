@@ -16,6 +16,7 @@ files:
   - bpm/runc/adapter/*.go # gosub
   - bpm/runc/client/*.go # gosub
   - bpm/runc/lifecycle/*.go # gosub
+  - bpm/runc/specbuilder/*.go # gosub
   - bpm/usertools/*.go # gosub
   - bpm/vendor/code.cloudfoundry.org/bytefmt/*.go # gosub
   - bpm/vendor/code.cloudfoundry.org/clock/*.go # gosub

@@ -17,6 +17,7 @@ package adapter
 
 import (
 	"bpm/config"
+	"bpm/runc/specbuilder"
 	"errors"
 	"fmt"
 	"os"
@@ -29,8 +30,8 @@ import (
 )
 
 const (
-	ResolvConfDir string = "/run/resolvconf"
-	DefaultLang   string = "en_US.UTF-8"
+	resolvConfDir = "/run/resolvconf"
+	defaultLang   = "en_US.UTF-8"
 )
 
 type RuncAdapter struct{}
@@ -131,135 +132,57 @@ func (a *RuncAdapter) BuildSpec(
 		cwd = procCfg.WorkDir
 	}
 
-	process := &specs.Process{
-		User:            user,
-		Args:            append([]string{procCfg.Executable}, procCfg.Args...),
-		Env:             processEnvironment(procCfg.Env, bpmCfg),
-		Cwd:             cwd,
-		Rlimits:         []specs.POSIXRlimit{},
-		NoNewPrivileges: true,
-		Capabilities:    processCapabilities(procCfg.Capabilities),
-	}
-
-	mountResolvConf, err := checkDirExists(ResolvConfDir)
+	mountResolvConf, err := checkDirExists(resolvConfDir)
 	if err != nil {
 		return specs.Spec{}, err
 	}
 
-	mounts := requiredMounts()
+	var mounts []specs.Mount
 	mounts = append(mounts, systemIdentityMounts(mountResolvConf)...)
 	mounts = append(mounts, boshMounts(bpmCfg, procCfg.EphemeralDisk, procCfg.PersistentDisk)...)
 	mounts = append(mounts, userProvidedIdentityMounts(logger, bpmCfg, procCfg.AdditionalVolumes)...)
 
-	var resources *specs.LinuxResources
-	if procCfg.Limits != nil {
-		resources = &specs.LinuxResources{}
+	spec := specbuilder.Build(
+		specbuilder.WithRootFilesystem(bpmCfg.RootFSPath()),
+		specbuilder.WithUser(user),
+		specbuilder.WithProcess(
+			procCfg.Executable,
+			procCfg.Args,
+			processEnvironment(procCfg.Env, bpmCfg),
+			cwd,
+		),
+		specbuilder.WithCapabilities(processCapabilities(procCfg.Capabilities)),
+		specbuilder.WithMounts(mounts),
+		specbuilder.WithNamespace("ipc"),
+		specbuilder.WithNamespace("mount"),
+		specbuilder.WithNamespace("pid"),
+		specbuilder.WithNamespace("uts"),
+	)
 
+	if procCfg.Limits != nil {
 		if procCfg.Limits.Memory != nil {
 			memLimit, err := bytefmt.ToBytes(*procCfg.Limits.Memory)
 			if err != nil {
 				return specs.Spec{}, err
 			}
 
-			signedMemLimit := int64(memLimit)
-			resources.Memory = &specs.LinuxMemory{
-				Limit: &signedMemLimit,
-				Swap:  &signedMemLimit,
-			}
+			specbuilder.Apply(spec, specbuilder.WithMemoryLimit(int64(memLimit)))
 		}
 
 		if procCfg.Limits.Processes != nil {
-			resources.Pids = &specs.LinuxPids{
-				Limit: *procCfg.Limits.Processes,
-			}
+			specbuilder.Apply(spec, specbuilder.WithPidLimit(*procCfg.Limits.Processes))
 		}
 
 		if procCfg.Limits.OpenFiles != nil {
-			process.Rlimits = append(process.Rlimits, specs.POSIXRlimit{
-				Type: "RLIMIT_NOFILE",
-				Hard: uint64(*procCfg.Limits.OpenFiles),
-				Soft: uint64(*procCfg.Limits.OpenFiles),
-			})
+			specbuilder.Apply(spec, specbuilder.WithOpenFileLimit(*procCfg.Limits.OpenFiles))
 		}
 	}
 
-	return specs.Spec{
-		Version: specs.Version,
-		Process: process,
-		Root: &specs.Root{
-			Path: bpmCfg.RootFSPath(),
-		},
-		Mounts: mounts,
-		Linux: &specs.Linux{
-			MaskedPaths: []string{
-				"/etc/sv",
-				"/proc/kcore",
-				"/proc/latency_stats",
-				"/proc/sched_debug",
-				"/proc/timer_list",
-				"/proc/timer_stats",
-				"/sys/firmware",
-			},
-			Namespaces: []specs.LinuxNamespace{
-				{Type: "ipc"},
-				{Type: "mount"},
-				{Type: "pid"},
-				{Type: "uts"},
-			},
-			Seccomp: seccomp,
-			ReadonlyPaths: []string{
-				"/proc/asound",
-				"/proc/bus",
-				"/proc/fs",
-				"/proc/irq",
-				"/proc/sys",
-				"/proc/sysrq-trigger",
-			},
-			Resources:         resources,
-			RootfsPropagation: "private",
-		},
-	}, nil
-}
-
-func requiredMounts() []specs.Mount {
-	return []specs.Mount{
-		{
-			Destination: "/proc",
-			Type:        "proc",
-			Source:      "proc",
-			Options:     nil,
-		},
-		{
-			Destination: "/dev",
-			Type:        "tmpfs",
-			Source:      "tmpfs",
-			Options:     []string{"nosuid", "noexec", "mode=755", "size=65536k"},
-		},
-		{
-			Destination: "/dev/pts",
-			Type:        "devpts",
-			Source:      "devpts",
-			Options:     []string{"nosuid", "noexec", "newinstance", "ptmxmode=0666", "mode=0620", "gid=5"},
-		},
-		{
-			Destination: "/dev/shm",
-			Type:        "tmpfs",
-			Source:      "shm",
-			Options:     []string{"nosuid", "noexec", "nodev", "mode=1777", "size=65536k"},
-		},
-		{
-			Destination: "/dev/mqueue",
-			Type:        "mqueue",
-			Source:      "mqueue",
-			Options:     []string{"nosuid", "noexec", "nodev"},
-		},
-		{
-			Destination: "/sys",
-			Type:        "sysfs",
-			Source:      "sysfs",
-			Options:     []string{"nosuid", "noexec", "nodev", "ro"},
-		},
+	if procCfg.Unsafe != nil && procCfg.Unsafe.Privileged {
+		specbuilder.Apply(spec, specbuilder.WithPrivileged())
 	}
+
+	return *spec, nil
 }
 
 func systemIdentityMounts(mountResolvConf bool) []specs.Mount {
@@ -353,11 +276,11 @@ func processEnvironment(env map[string]string, cfg *config.BPMConfig) []string {
 	}
 
 	if _, ok := env["LANG"]; !ok {
-		environ = append(environ, fmt.Sprintf("LANG=%s", DefaultLang))
+		environ = append(environ, fmt.Sprintf("LANG=%s", defaultLang))
 	}
 
 	if _, ok := env["PATH"]; !ok {
-		environ = append(environ, fmt.Sprintf("PATH=%s", DefaultPath(cfg)))
+		environ = append(environ, fmt.Sprintf("PATH=%s", defaultPath(cfg)))
 	}
 
 	if _, ok := env["HOME"]; !ok {
@@ -367,22 +290,14 @@ func processEnvironment(env map[string]string, cfg *config.BPMConfig) []string {
 	return environ
 }
 
-// Returns the specs.LinuxCapabilities for a given slice of Capabilities.
-// We do not set the Effective set, as it is computed dynamically by the
-// kernel from the other sets.
-func processCapabilities(caps []string) *specs.LinuxCapabilities {
-	capsWithPrefix := make([]string, len(caps))
-	for i := 0; i < len(caps); i++ {
-		capsWithPrefix[i] = fmt.Sprintf("CAP_%s", caps[i])
+func processCapabilities(caps []string) []string {
+	var capsWithPrefix []string
+
+	for _, cap := range caps {
+		capsWithPrefix = append(capsWithPrefix, fmt.Sprintf("CAP_%s", cap))
 	}
 
-	return &specs.LinuxCapabilities{
-		Ambient:     capsWithPrefix,
-		Bounding:    capsWithPrefix,
-		Effective:   []string{},
-		Inheritable: capsWithPrefix,
-		Permitted:   capsWithPrefix,
-	}
+	return capsWithPrefix
 }
 
 func checkDirExists(dir string) (bool, error) {
@@ -396,7 +311,7 @@ func checkDirExists(dir string) (bool, error) {
 	return false, nil
 }
 
-func DefaultPath(cfg *config.BPMConfig) string {
+func defaultPath(cfg *config.BPMConfig) string {
 	defaultPath := "%s:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin:."
 	defaultPath = fmt.Sprintf(defaultPath, filepath.Join(cfg.JobDir(), "bin"))
 

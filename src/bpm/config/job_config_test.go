@@ -56,14 +56,17 @@ var _ = Describe("Config", func() {
 			Expect(cfg.Processes[0].WorkDir).To(Equal("/I/AM/A/WORKDIR"))
 			Expect(cfg.Processes[0].PersistentDisk).To(BeTrue())
 			Expect(cfg.Processes[0].EphemeralDisk).To(BeTrue())
+			Expect(cfg.Processes[0].Unsafe.Privileged).To(BeTrue())
 
 			Expect(cfg.Processes[1].Name).To(Equal("second-process"))
 			Expect(cfg.Processes[1].Executable).To(Equal("/I/AM/A/SECOND-EXECUTABLE"))
 			Expect(cfg.Processes[1].Hooks).To(BeNil())
+			Expect(cfg.Processes[1].Unsafe).To(BeNil())
 
 			Expect(cfg.Processes[2].Name).To(Equal("third-process"))
 			Expect(cfg.Processes[2].Executable).To(Equal("/I/AM/A/THIRD-EXECUTABLE"))
 			Expect(cfg.Processes[2].Hooks.PreStart).To(BeEmpty())
+			Expect(cfg.Processes[2].Unsafe).To(BeNil())
 		})
 
 		Context("when reading the file fails", func() {
