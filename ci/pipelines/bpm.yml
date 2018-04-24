@@ -216,22 +216,28 @@ jobs:
     params:
       RELEASE_NAME: bpm
       BLOBSTORE_PRIVATE_YML: ((bpm-private-yml))
+  - put: bpm-release
+    get_params:
+      submodules: none
+    params:
+      repository: final-release-repo
+      submodules: none
+      rebase: true
+      tag: version/version
+      tag_prefix: v
   - task: bump-local-version
     file: bpm-release/ci/bump-local-version.yml
     input_mapping:
       bpm-release: final-release-repo
     params:
       DEV: true
-  - aggregate:
-    - put: bpm-release
-      get_params:
-        submodules: none
-      params:
-        repository: release-repo
-        submodules: none
-        rebase: true
-        tag: version/version
-        tag_prefix: v
+  - put: bpm-release
+    get_params:
+      submodules: none
+    params:
+      repository: release-repo
+      submodules: none
+      rebase: true
 
 - name: build-bpm-ci
   serial: true
