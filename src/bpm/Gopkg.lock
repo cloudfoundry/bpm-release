@@ -133,7 +133,7 @@
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
-  revision = "d6449816ce06963d9d136eee5a56fca5b0616e7e"
+  revision = "2b6c08872f4b66da917bb4ce98df4f0307330f78"
 
 [[projects]]
   branch = "master"
@@ -143,7 +143,7 @@
     "html/atom",
     "html/charset"
   ]
-  revision = "61147c48b25b599e5b561d2e9c4f3e1ef489ca41"
+  revision = "5f9ae10d9af5b1c89ae6904293b14b064d4ada23"
 
 [[projects]]
   branch = "master"
@@ -152,7 +152,7 @@
     "unix",
     "windows"
   ]
-  revision = "f6f352972f061230a99fbf49d1eb8073ebdb36cb"
+  revision = "79b0c6888797020a994db17c8510466c72fe75d9"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -183,9 +183,10 @@
   name = "golang.org/x/tools"
   packages = [
     "go/ast/astutil",
-    "imports"
+    "imports",
+    "internal/fastwalk"
   ]
-  revision = "d11f6ec946130207fd66b479a9a6def585b5110b"
+  revision = "c1def519f03ddf76f16b3e444ee1095d73afa01b"
 
 [[projects]]
   name = "gopkg.in/yaml.v2"
