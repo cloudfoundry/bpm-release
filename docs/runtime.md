@@ -26,28 +26,28 @@ your process while running the drain script.
 
 ## Environment Variables
 
-| *Name* | *Value*                                            |
-|--------|----------------------------------------------------|
-| TMPDIR | `/var/vcap/data/[job-name]/tmp`                    |
+| *Name* | *Value*                          |
+|--------|----------------------------------|
+| TMPDIR | `/var/vcap/data/JOB/tmp`         |
 
 ## Logging
 
 Your process should write logs to standard output and standard error file
 descriptors. This data will be written to
-`/var/vcap/sys/log/[job-name]/[process-name].stdout.log` and
-`/var/vcap/sys/log/[job-name]/[process-name].stderr.log` respectively.
+`/var/vcap/sys/log/JOB/PROCESS.stdout.log` and
+`/var/vcap/sys/log/JOB/PROCESS.stderr.log` respectively.
 
-Any other files which are written to `/var/vcap/sys/log/[job-name]` inside the
-container will be written to `/var/vcap/sys/log/[job-name]` in the host system.
+Any other files which are written to `/var/vcap/sys/log/JOB` inside the
+container will be written to `/var/vcap/sys/log/JOB` in the host system.
 
 ## Storing Data
 
 ### Temporary Files
 
 Applications may store temporary files in either `/tmp` or
-`/var/vcap/data/[job-name]/tmp` (as per the BOSH recommendation). Both paths,
+`/var/vcap/data/JOB/tmp` (as per the BOSH recommendation). Both paths,
 and `/var/tmp` are mapped onto the same host volume
-(`/var/vcap/data/[job-name]/tmp`) and changes made to one will instantly appear
+(`/var/vcap/data/JOB/tmp`) and changes made to one will instantly appear
 in the other.
 
 bpm will set the `TMPDIR` environment variable when execuring your job to one
@@ -59,7 +59,7 @@ majority of in-use standard libraries used by Cloud Foundry.
 
 ### Ephemeral Data
 
-You should store ephemeral data in `/var/vcap/data/[job-name]`. There are no
+You should store ephemeral data in `/var/vcap/data/JOB`. There are no
 guarantees that this data will be present in a different invocation of your
 job.  The lifecycle of this data is tied with the underlying BOSH stemcell.
 
@@ -73,15 +73,15 @@ does not collide.
 ### Persistent Data
 
 When the path `/var/vcap/store` exists bpm will mount the path
-`/var/vcap/store/[job-name]` into the job filesystem. As with
-`/var/vcap/data/[job-name]` bpm will create the leaf directory if it does not
+`/var/vcap/store/JOB` into the job filesystem. As with
+`/var/vcap/data/JOB` bpm will create the leaf directory if it does not
 exist.
 
-> **NOTE:** Because persistent data access defaults to the `/[job-name]`
-> subdirectory of `/var/vcap/store` if the job name changes persistent data
-> will no longer be accessible.  When changing the name of a job the BOSH
-> `pre-start` script should idempotently move the persistent data from
-> `/var/vcap/store/[old-name]` to `/var/vcap/store/[new-name]`.
+> **NOTE:** Because persistent data access defaults to `/var/vcap/store/JOB`,
+> job name changes will cause persistent data to no longer be accessible.  When
+> changing the name of a job the BOSH `pre-start` script should idempotently
+> move the persistent data from `/var/vcap/store/OLD-JOB` to
+> `/var/vcap/store/NEW-JOB`.
 
 ### Shared Data
 
