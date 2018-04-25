@@ -80,3 +80,21 @@ host and not just the contained job we like to keep them separate.
 
 Your startup hook must finish with time to spare before the `monit start`
 timeout (30s by default). We're looking into ways to make this less vague.
+
+## Privileged Jobs
+
+Processes can be marked as privileged by setting the `unsafe: {privileged:
+true}` attribute in their configuration. Jobs should almost never use this
+configuration option as it was only added for jobs which truly need to run as a
+superuser such as Garden.
+
+Running a privilieged job removes some of the safeguards which surround a bpm
+process. The full list of effects is:
+
+* run the job as user `root` and group `root`
+* grant a larger list of privileges (taken from docker's privileged list)
+* allow new privileges to be gained
+* remove seccomp limitations
+* remove masked and readonly paths (still applies to volumes and
+  `/var/vcap/{data,store}`)
+* all mounts have their nosuid option removed
