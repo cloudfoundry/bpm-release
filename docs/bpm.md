@@ -17,9 +17,9 @@ nouns and semantics used by bpm.
 Jobs in bpm are identical semantically to those in BOSH. A job is an
 independently schedule-able server or collection of servers which provide some
 kind of service. Jobs can be collocated with other jobs but should not require
-this. They should be able to speak over the network abstractly to wherever the
-other job is located. However, a tiny minority jobs are designed to be deployed
-as a sidecar to other jobs so this definition isn't perfect.
+this. They should be able to speak over the network to wherever the other job
+is located. However, a minority jobs are designed to be deployed as a sidecar
+to other jobs so this definition isn't perfect.
 
 bpm isolates collocated jobs from one another. Namespaces are applied to the
 host filesystem and process tables such that jobs are not aware of each other.
@@ -35,11 +35,11 @@ i.e. Envoy, linkerd, Istio.
 
 ### Processes
 
-Jobs are made up of multiple processes though most jobs will only have a single
-process. Processes are isolated from one another via process table and can have
-independent performance restrictions imposed upon them but, importantly,
-processes can share portions of the filesystem. Processes are *always*
-collocated on the same machine as each other.
+Jobs can made up of multiple processes though most jobs will only have a single
+process. Processes are isolated from one another and can have independent
+performance restrictions imposed upon them but processes do share portions of
+the filesystem. Processes are *always* collocated on the same machine as each
+other.
 
 Due to how common the case of a single process per job is you can generally
 omit the process argument from many of the `bpm` commands. In this case the job
