@@ -226,18 +226,23 @@ This also can be achieved using an operation file similar to the following:
   path: /instance_groups/name=<job>/jobs/name=<job>/properties/bpm?/enabled?
   value: true
 ```
-## Post deployment checklist
 
-Once the deployment is completed, you can run the following steps to confirm if the job is now running in the bpm namespace:
-1. Log in to the VM using `bosh -d <deployment> ssh <vm>`
-1. Run `sudo -i`
-1. Check if the processes are running in bpm using the `bpm list` command.
-You should see an output like the below with the job specific process names:
-```
-bpm/f085aa36-1700-44a4-a08e-af749b46036a:~# bpm list
-Name                        Pid   Status
-test-server                 24244 running
-test-server.alt-test-server 24279 running
-```
-1. To look at the streaming logs of a bpm process, run `bpm logs --all -f <process name>`. 
-For eg: `bpm logs --all -f test-server` which would show both the stdout and stderr logs for the process `test-server`.
+## Log Forwarding
+
+Some `_ctl` scripts forward the output and error streams from their server to
+the `logger` program which sends those logs to syslog. BPM does not forward
+logs and so you should use something like the [syslog release][syslog-release]
+to send your logs from the machine to an external log aggregator and store.
+
+This decision was made to encourage consistency and to keep features in one
+place: BPM puts logs in the BOSH log directory and the syslog release takes
+those logs and puts them somewhere else. This means this if we need to fix a
+bug in the syslog forwarding then we don't need to bump every release.
+
+[syslog-release]: https://github.com/cloudfoundry/syslog-release
+
+## Post Deployment Checklist
+
+You can use the `bpm list` command to verify that your jobs are all running as
+expected. If you'd like to tail the logs for a particular job then you can run
+`bpm logs --all -f JOB`.
