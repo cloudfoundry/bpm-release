@@ -24,6 +24,7 @@ import (
 
 	"code.cloudfoundry.org/clock"
 	"code.cloudfoundry.org/lager"
+	"github.com/docker/docker/pkg/sysinfo"
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/unix"
 
@@ -173,7 +174,8 @@ func newRuncLifecycle() *lifecycle.RuncLifecycle {
 		config.RuncPath(bosh.Root()),
 		config.RuncRoot(bosh.Root()),
 	)
-	runcAdapter := adapter.NewRuncAdapter()
+	info := sysinfo.New(true)
+	runcAdapter := adapter.NewRuncAdapter(*info)
 	clock := clock.NewClock()
 
 	return lifecycle.NewRuncLifecycle(
