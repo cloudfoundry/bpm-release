@@ -16,7 +16,6 @@
 package integration_test
 
 import (
-	"bpm/config"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -30,6 +29,8 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
 	uuid "github.com/satori/go.uuid"
+
+	"bpm/config"
 )
 
 var _ = Describe("resource limits", func() {

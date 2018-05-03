@@ -16,13 +16,14 @@
 package presenters
 
 import (
-	"bpm/config"
-	"bpm/models"
 	"fmt"
 	"io"
 	"strconv"
 	"strings"
 	"text/tabwriter"
+
+	"bpm/config"
+	"bpm/models"
 )
 
 func PrintJobs(processes []*models.Process, stdout io.Writer) error {

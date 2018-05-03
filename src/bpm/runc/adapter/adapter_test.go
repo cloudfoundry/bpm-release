@@ -16,8 +16,6 @@
 package adapter
 
 import (
-	"bpm/config"
-	"bpm/runc/specbuilder"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -26,11 +24,12 @@ import (
 
 	"code.cloudfoundry.org/bytefmt"
 	"code.cloudfoundry.org/lager/lagertest"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-
 	specs "github.com/opencontainers/runtime-spec/specs-go"
+
+	"bpm/config"
+	"bpm/runc/specbuilder"
 )
 
 var _ = Describe("RuncAdapter", func() {

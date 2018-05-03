@@ -16,8 +16,6 @@
 package adapter
 
 import (
-	"bpm/config"
-	"bpm/runc/specbuilder"
 	"errors"
 	"fmt"
 	"os"
@@ -25,8 +23,10 @@ import (
 
 	"code.cloudfoundry.org/bytefmt"
 	"code.cloudfoundry.org/lager"
-
 	specs "github.com/opencontainers/runtime-spec/specs-go"
+
+	"bpm/config"
+	"bpm/runc/specbuilder"
 )
 
 const (

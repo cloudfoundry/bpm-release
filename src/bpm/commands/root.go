@@ -16,24 +16,23 @@
 package commands
 
 import (
-	"bpm/config"
-	"bpm/mount"
-	"bpm/runc/adapter"
-	"bpm/runc/client"
-	"bpm/runc/lifecycle"
-	"bpm/usertools"
 	"errors"
 	"fmt"
 	"os"
 	"os/user"
 	"path/filepath"
 
-	"golang.org/x/sys/unix"
-
 	"code.cloudfoundry.org/clock"
 	"code.cloudfoundry.org/lager"
-
 	"github.com/spf13/cobra"
+	"golang.org/x/sys/unix"
+
+	"bpm/config"
+	"bpm/mount"
+	"bpm/runc/adapter"
+	"bpm/runc/client"
+	"bpm/runc/lifecycle"
+	"bpm/usertools"
 )
 
 var (

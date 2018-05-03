@@ -16,7 +16,6 @@
 package integration_test
 
 import (
-	"bpm/config"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -31,6 +30,8 @@ import (
 	"github.com/onsi/gomega/gexec"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	yaml "gopkg.in/yaml.v2"
+
+	"bpm/config"
 )
 
 // This needs to be different than /tmp as /tmp is bind mounted into the

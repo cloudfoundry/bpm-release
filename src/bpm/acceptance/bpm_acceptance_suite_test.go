@@ -38,7 +38,6 @@ func TestBPMAcceptance(t *testing.T) {
 	RunSpecs(t, "BPM Acceptance Suite")
 }
 
-
 var _ = BeforeSuite(func() {
 
 	client = &http.Client{

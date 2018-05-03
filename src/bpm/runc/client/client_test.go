@@ -16,7 +16,6 @@
 package client_test
 
 import (
-	"bpm/runc/client"
 	"encoding/json"
 	"io/ioutil"
 	"os"
@@ -26,6 +25,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/opencontainers/runtime-spec/specs-go"
+
+	"bpm/runc/client"
 )
 
 var _ = Describe("RuncClient", func() {

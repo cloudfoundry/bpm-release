@@ -16,14 +16,15 @@
 package presenters_test
 
 import (
-	"bpm/config"
-	"bpm/models"
-	"bpm/presenters"
 	"fmt"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
+
+	"bpm/config"
+	"bpm/models"
+	"bpm/presenters"
 )
 
 var _ = Describe("Presenters", func() {

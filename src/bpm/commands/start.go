@@ -16,12 +16,13 @@
 package commands
 
 import (
-	"bpm/config"
-	"bpm/models"
-	"bpm/runc/lifecycle"
 	"fmt"
 
 	"github.com/spf13/cobra"
+
+	"bpm/config"
+	"bpm/models"
+	"bpm/runc/lifecycle"
 )
 
 func init() {

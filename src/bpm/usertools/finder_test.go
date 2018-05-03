@@ -16,11 +16,11 @@
 package usertools_test
 
 import (
-	"bpm/usertools"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/opencontainers/runtime-spec/specs-go"
+	specs "github.com/opencontainers/runtime-spec/specs-go"
+
+	"bpm/usertools"
 )
 
 var _ = Describe("UserIDFinder", func() {

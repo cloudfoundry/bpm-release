@@ -16,13 +16,14 @@
 package config_test
 
 import (
-	"bpm/config"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"bpm/config"
 )
 
 var _ = Describe("Bosh", func() {

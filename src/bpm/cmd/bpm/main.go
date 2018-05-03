@@ -16,9 +16,10 @@
 package main
 
 import (
-	"bpm/commands"
 	"fmt"
 	"os"
+
+	"bpm/commands"
 )
 
 func main() {

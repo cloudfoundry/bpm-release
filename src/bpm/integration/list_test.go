@@ -16,8 +16,6 @@
 package integration_test
 
 import (
-	"bpm/config"
-	"bpm/models"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -29,6 +27,9 @@ import (
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
 	uuid "github.com/satori/go.uuid"
+
+	"bpm/config"
+	"bpm/models"
 )
 
 var _ = Describe("list", func() {

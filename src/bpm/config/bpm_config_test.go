@@ -16,10 +16,10 @@
 package config_test
 
 import (
-	"bpm/config"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"bpm/config"
 )
 
 var _ = Describe("Config", func() {
