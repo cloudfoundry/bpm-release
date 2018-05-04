@@ -1,3 +1,7 @@
+# v0.7.0
+
+* do not limit swap space on hosts which do not support it
+
 # v0.6.0
 
 * change ownership of `/etc/profile.d/bpm.sh` to `vcap` group
