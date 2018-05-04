@@ -24,6 +24,7 @@ import (
 
 	"code.cloudfoundry.org/bytefmt"
 	"code.cloudfoundry.org/lager/lagertest"
+	"github.com/docker/docker/pkg/sysinfo"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
@@ -40,6 +41,7 @@ var _ = Describe("RuncAdapter", func() {
 		procName,
 		systemRoot string
 		user specs.User
+		info sysinfo.SysInfo
 
 		bpmCfg  *config.BPMConfig
 		procCfg *config.ProcessConfig
@@ -48,7 +50,7 @@ var _ = Describe("RuncAdapter", func() {
 
 	BeforeEach(func() {
 		logger = lagertest.NewTestLogger("adapter")
-		runcAdapter = NewRuncAdapter()
+		info = sysinfo.SysInfo{}
 
 		jobName = "example"
 		procName = "server"
@@ -67,6 +69,10 @@ var _ = Describe("RuncAdapter", func() {
 		}
 
 		Expect(os.MkdirAll(filepath.Join(systemRoot, "store"), 0700)).To(Succeed())
+	})
+
+	JustBeforeEach(func() {
+		runcAdapter = NewRuncAdapter(info)
 	})
 
 	AfterEach(func() {
@@ -521,17 +527,41 @@ var _ = Describe("RuncAdapter", func() {
 					procCfg.Limits.Memory = &expectedMemoryLimit
 				})
 
-				It("sets the memory limit on the container", func() {
-					spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
-					Expect(err).NotTo(HaveOccurred())
+				Context("when the system supports swap", func() {
+					BeforeEach(func() {
+						info.SwapLimit = true
+					})
 
-					expectedMemoryLimitInBytes, err := bytefmt.ToBytes(expectedMemoryLimit)
-					Expect(err).NotTo(HaveOccurred())
-					signedExpectedMemoryLimitInBytes := int64(expectedMemoryLimitInBytes)
-					Expect(spec.Linux.Resources.Memory).To(Equal(&specs.LinuxMemory{
-						Limit: &signedExpectedMemoryLimitInBytes,
-						Swap:  &signedExpectedMemoryLimitInBytes,
-					}))
+					It("sets the memory limit on the container", func() {
+						spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
+						Expect(err).NotTo(HaveOccurred())
+
+						expectedMemoryLimitInBytes, err := bytefmt.ToBytes(expectedMemoryLimit)
+						Expect(err).NotTo(HaveOccurred())
+						signedExpectedMemoryLimitInBytes := int64(expectedMemoryLimitInBytes)
+						Expect(spec.Linux.Resources.Memory).To(Equal(&specs.LinuxMemory{
+							Limit: &signedExpectedMemoryLimitInBytes,
+							Swap:  &signedExpectedMemoryLimitInBytes,
+						}))
+					})
+				})
+
+				Context("when the system does not support swap", func() {
+					BeforeEach(func() {
+						info.SwapLimit = false
+					})
+
+					It("sets the memory (but not swap) limit on the container", func() {
+						spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
+						Expect(err).NotTo(HaveOccurred())
+
+						expectedMemoryLimitInBytes, err := bytefmt.ToBytes(expectedMemoryLimit)
+						Expect(err).NotTo(HaveOccurred())
+						signedExpectedMemoryLimitInBytes := int64(expectedMemoryLimitInBytes)
+						Expect(spec.Linux.Resources.Memory).To(Equal(&specs.LinuxMemory{
+							Limit: &signedExpectedMemoryLimitInBytes,
+						}))
+					})
 				})
 
 				Context("when the memory limit is invalid", func() {

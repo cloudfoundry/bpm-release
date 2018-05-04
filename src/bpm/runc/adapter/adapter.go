@@ -23,6 +23,7 @@ import (
 
 	"code.cloudfoundry.org/bytefmt"
 	"code.cloudfoundry.org/lager"
+	"github.com/docker/docker/pkg/sysinfo"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 
 	"bpm/config"
@@ -34,10 +35,14 @@ const (
 	defaultLang   = "en_US.UTF-8"
 )
 
-type RuncAdapter struct{}
+type RuncAdapter struct {
+	info sysinfo.SysInfo
+}
 
-func NewRuncAdapter() *RuncAdapter {
-	return &RuncAdapter{}
+func NewRuncAdapter(info sysinfo.SysInfo) *RuncAdapter {
+	return &RuncAdapter{
+		info: info,
+	}
 }
 
 func (a *RuncAdapter) CreateJobPrerequisites(
@@ -166,7 +171,7 @@ func (a *RuncAdapter) BuildSpec(
 				return specs.Spec{}, err
 			}
 
-			specbuilder.Apply(spec, specbuilder.WithMemoryLimit(int64(memLimit)))
+			specbuilder.Apply(spec, specbuilder.WithMemoryLimit(int64(memLimit), a.info))
 		}
 
 		if procCfg.Limits.Processes != nil {

@@ -27,6 +27,20 @@
   version = "v1.0.0"
 
 [[projects]]
+  name = "github.com/docker/docker"
+  packages = [
+    "pkg/parsers",
+    "pkg/sysinfo"
+  ]
+  revision = "e890301e4f84d55c3e045904eb0223c23fd70d19"
+
+[[projects]]
+  name = "github.com/docker/go-units"
+  packages = ["."]
+  revision = "47565b4f722fb6ceae66b95f853feed578a4a51c"
+  version = "v0.3.3"
+
+[[projects]]
   name = "github.com/inconshreveable/mousetrap"
   packages = ["."]
   revision = "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75"
@@ -106,6 +120,15 @@
   version = "v1.3.0"
 
 [[projects]]
+  name = "github.com/opencontainers/runc"
+  packages = [
+    "libcontainer/cgroups",
+    "libcontainer/configs"
+  ]
+  revision = "4fc53a81fb7c994640722ac585fa9ca548971871"
+  version = "v1.0.0-rc5"
+
+[[projects]]
   name = "github.com/opencontainers/runtime-spec"
   packages = ["specs-go"]
   revision = "4e3b9264a330d094b0386c3703c5f379119711e8"
@@ -116,6 +139,12 @@
   packages = ["."]
   revision = "f58768cc1a7a7e77a3bd49e98cdd21419399b6a3"
   version = "v1.2.0"
+
+[[projects]]
+  name = "github.com/sirupsen/logrus"
+  packages = ["."]
+  revision = "d682213848ed68c0a260ca37d6dd5ace8423f5ba"
+  version = "v1.0.4"
 
 [[projects]]
   name = "github.com/spf13/cobra"
@@ -197,6 +226,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "5a046f1f302944dd047e46fbe1efc6b2de12504a81e201af0d3cdb2980f11c69"
+  inputs-digest = "471795283b7a29de3197c13dae766474d3000bd910e9c39d34d98a15f276b537"
   solver-name = "gps-cdcl"
   solver-version = 1
