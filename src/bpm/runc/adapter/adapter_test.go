@@ -202,16 +202,18 @@ var _ = Describe("RuncAdapter", func() {
 					"RAVE": "true",
 					"ONE":  "two",
 				},
+				EphemeralDisk:  true,
+				PersistentDisk: false,
 				AdditionalVolumes: []config.Volume{
 					{Path: "/path/to/volume/1", Writable: true},
 					{Path: "/path/to/volume/jna-tmp", Writable: true, AllowExecutions: true},
-					// Testing duplicate volumes
+					// Duplicate volumes
 					{Path: "/path/to/volume/2"},
 					{Path: "/path/to/volume/2"},
-					// Testing duplicate store mount and ignore writable flag
+					// Duplicate data mount
 					{Path: bpmCfg.DataDir()},
-					// Testing duplicate data mount
-					{Path: bpmCfg.StoreDir(), Writable: true},
+					// Testing store mount override
+					{Path: bpmCfg.StoreDir(), Writable: true, AllowExecutions: true},
 				},
 				Capabilities: []string{"TAIN", "SAICIN"},
 			}
@@ -260,7 +262,7 @@ var _ = Describe("RuncAdapter", func() {
 				Path: bpmCfg.RootFSPath(),
 			}))
 
-			Expect(spec.Mounts).To(HaveLen(22))
+			Expect(spec.Mounts).To(HaveLen(24))
 			Expect(spec.Mounts).To(ContainElement(specs.Mount{
 				Destination: "/proc",
 				Type:        "proc",
@@ -392,6 +394,18 @@ var _ = Describe("RuncAdapter", func() {
 				Type:        "bind",
 				Source:      filepath.Join(systemRoot, "data", "example", "tmp"),
 				Options:     []string{"nodev", "nosuid", "noexec", "rbind", "rw"},
+			}))
+			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+				Destination: filepath.Join(systemRoot, "data", "example"),
+				Type:        "bind",
+				Source:      filepath.Join(systemRoot, "data", "example"),
+				Options:     []string{"nodev", "nosuid", "noexec", "rbind", "rw"},
+			}))
+			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+				Destination: filepath.Join(systemRoot, "store", "example"),
+				Type:        "bind",
+				Source:      filepath.Join(systemRoot, "store", "example"),
+				Options:     []string{"nodev", "nosuid", "exec", "rbind", "rw"},
 			}))
 
 			Expect(spec.Linux.RootfsPropagation).To(Equal("private"))

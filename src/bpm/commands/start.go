@@ -60,7 +60,7 @@ func start(cmd *cobra.Command, _ []string) error {
 	logger.Info("starting")
 	defer logger.Info("complete")
 
-	jobCfg, err := config.ParseJobConfig(bpmCfg.JobConfig())
+	jobCfg, err := config.ParseJobConfig(bpmCfg.JobName(), bpmCfg.JobConfig())
 	if err != nil {
 		logger.Error("failed-to-parse-config", err)
 		return fmt.Errorf("failed to parse job configuration: %s", err)

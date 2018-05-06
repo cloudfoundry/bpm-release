@@ -64,7 +64,7 @@ type Unsafe struct {
 	Privileged bool `yaml:"privileged"`
 }
 
-func ParseJobConfig(configPath string) (*JobConfig, error) {
+func ParseJobConfig(jobName, configPath string) (*JobConfig, error) {
 	data, err := ioutil.ReadFile(configPath)
 	if err != nil {
 		return nil, err
@@ -77,7 +77,7 @@ func ParseJobConfig(configPath string) (*JobConfig, error) {
 		return nil, err
 	}
 
-	err = cfg.Validate()
+	err = cfg.Validate(jobName)
 	if err != nil {
 		return nil, err
 	}
@@ -95,9 +95,9 @@ var validCaps = map[string]bool{
 	"SYS_TIME": true,
 }
 
-func (c *JobConfig) Validate() error {
+func (c *JobConfig) Validate(jobName string) error {
 	for _, v := range c.Processes {
-		if err := v.Validate(); err != nil {
+		if err := v.Validate(jobName); err != nil {
 			return err
 		}
 	}
@@ -105,7 +105,7 @@ func (c *JobConfig) Validate() error {
 	return nil
 }
 
-func (c *ProcessConfig) Validate() error {
+func (c *ProcessConfig) Validate(jobName string) error {
 	if c.Name == "" {
 		return errors.New("invalid config: name")
 	}
@@ -120,9 +120,16 @@ func (c *ProcessConfig) Validate() error {
 			return fmt.Errorf("volume path must be canonical, expected %s but got %s", volCleaned, vol.Path)
 		}
 
+		if volCleaned == filepath.Join("/var/vcap/data", jobName) || volCleaned == filepath.Join("/var/vcap/store", jobName) {
+			return fmt.Errorf(
+				"invalid volume path: %s cannot conflict with default job data or store directories",
+				vol.Path,
+			)
+		}
+
 		if !pathIsIn(validDataVolumePrefix, volCleaned) && !pathIsIn(validStoreVolumePrefix, volCleaned) {
 			return fmt.Errorf(
-				"invalid volume path: %s must be within (%s,%s)",
+				"invalid volume path: %s must be within (%s, %s)",
 				vol.Path,
 				validDataVolumePrefix,
 				validStoreVolumePrefix,
