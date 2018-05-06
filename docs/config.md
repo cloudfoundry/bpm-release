@@ -26,6 +26,62 @@ check process worker
 
 ## Job Configuration
 
+Your job configuration must be in a file called `bpm.yml` in the `config`
+directory of your job.
+
+### Schema
+
+| **Property** | **Type**  | **Required?** | **Description**                                          |
+|--------------|-----------|---------------|----------------------------------------------------------|
+| `processes`  | process[] | Yes           | A top-level listing of all of the processes in your job. |
+
+#### `process` Schema
+
+| **Property**         | **Type**         | **Required?** | **Description**                                                                                                                |
+|----------------------|------------------|---------------|--------------------------------------------------------------------------------------------------------------------------------|
+| `name`               | string           | Yes           | The name of this process.                                                                                                      |
+| `executable`         | string           | Yes           | The path to the executable file for this process.                                                                              |
+| `args`               | string[]         | No            | The arguments which will be passed to the `executable` of this process.                                                        |
+| `env`                | string => string | No            | Any additional environment variables to be included in the environment of this process.                                        |
+| `workdir`            | string           | No            | The working directory for this process. If not specified this is the value `/var/vcap/jobs/JOB`.                               |
+| `hooks`              | hooks            | No            | The hook configuration for this process (see below).                                                                           |
+| `capabilities`       | string[]         | No            | The list of capabilities which should be granted to this process. Currently only the `NET_BIND_SERVICE` capability is allowed. |
+| `limits`             | limits           | No            | The limit configuration for this process (see below).                                                                          |
+| `ephemeral_disk`     | boolean          | No            | Whether or not an ephemeral disk should be mounted into the container at `/var/vcap/data/JOB`.                                 |
+| `persistent_disk`    | boolean          | No            | Whether or not an persistent disk should be mounted into the container at `/var/vcap/store/JOB`.                               |
+| `additional_volumes` | volume[]         | No            | A list of additional volumes to mount inside this process (see below).                                                         |
+| `unsafe`             | unsafe           | No            | The unsafe configuration for this process (see below).                                                                         |
+
+#### `hooks` Schema
+
+| **Property** | **Type** | **Required** | **Description**                                                                       |
+|--------------|----------|--------------|---------------------------------------------------------------------------------------|
+| `pre_start`  | string   | No           | The path to an executable to run before starting the main executable of this process. |
+
+#### `limits` Schema
+
+| **Property** | **Type** | **Required** | **Description**                                                                                                             |
+|--------------|----------|--------------|-----------------------------------------------------------------------------------------------------------------------------|
+| `memory`     | string   | No           | The memory limit to apply to this process. It is formatted as a number and then a single character for units e.g. 1G, 256M. |
+| `open_files` | int      | No           | The number of files this process is allowed to have open at any one time.                                                   |
+| `processes`  | int      | No           | The number of processes which this process is allowed to have running at any one moment (inclusive of the main process).    |
+
+#### `volume` Schema
+
+| **Property**       | **Type** | **Required** | **Description**                                                                                      |
+|--------------------|----------|--------------|------------------------------------------------------------------------------------------------------|
+| `path`             | string   | Yes          | The path of the volume inside this process. It must be inside `/var/vcap/data` or `/var/vcap/store`. |
+| `writable`         | boolean  | No           | Whether or not this volume is writable by the process.                                               |
+| `allow_executions` | boolean  | No           | Whether or not executable files can be executed from this volume.                                    |
+
+#### `unsafe` Schema
+
+| **Property** | **Type** | **Required** | **Description**                                                                           |
+|--------------|----------|--------------|-------------------------------------------------------------------------------------------|
+| `privileged` | boolean  | No           | Whether or not this process should execute with increased privileges (see details below). |
+
+### Example
+
 ```yaml
 # /var/vcap/jobs/server/config/bpm.yml
 processes:
@@ -34,19 +90,19 @@ processes:
   args:
   - --port
   - 2424
+
   env:
     FOO: BAR
+
   limits:
-    memory: 3G
     processes: 10
-    open_files: 100
-  ephemeral_disk: true # mount /var/vcap/data/server ; default `false`
-                       # NOTE: /var/vcap/data/server/tmp is always mounted `rw`
+
+  ephemeral_disk: true
+
   additional_volumes:
-  - path: /var/vcap/data/certificates
-    writable: true # default `false`
-  hooks:
-    pre_start: /var/vcap/jobs/server/bin/server-setup
+  - path: /var/vcap/data/sockets
+    writable: true
+
   capabilities:
   - NET_BIND_SERVICE
 
@@ -55,10 +111,11 @@ processes:
   args:
   - --queues
   - 4
-  persistent_disk: true # mount /var/vcap/store/server ; default `false`
+
   additional_volumes:
   - path: /var/vcap/data/sockets
-    writable: true # default `false`
+    writable: true
+
   hooks:
     pre_start: /var/vcap/jobs/server/bin/worker-setup
 ```
