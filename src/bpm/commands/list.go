@@ -42,7 +42,7 @@ func listContainers(cmd *cobra.Command, _ []string) error {
 	processes := []*models.Process{}
 	for _, job := range bosh.JobNames() {
 		bpmCfg := config.NewBPMConfig(bosh.Root(), job, "")
-		jobCfg, err := config.ParseJobConfig(bpmCfg.JobConfig())
+		jobCfg, err := config.ParseJobConfig(bpmCfg.JobName(), bpmCfg.JobConfig())
 		if os.IsNotExist(err) {
 			continue
 		}

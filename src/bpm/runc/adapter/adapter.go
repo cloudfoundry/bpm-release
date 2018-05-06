@@ -142,10 +142,10 @@ func (a *RuncAdapter) BuildSpec(
 		return specs.Spec{}, err
 	}
 
-	var mounts []specs.Mount
-	mounts = append(mounts, systemIdentityMounts(mountResolvConf)...)
-	mounts = append(mounts, boshMounts(bpmCfg, procCfg.EphemeralDisk, procCfg.PersistentDisk)...)
-	mounts = append(mounts, userProvidedIdentityMounts(logger, bpmCfg, procCfg.AdditionalVolumes)...)
+	ms := newMountDedup(logger)
+	ms.addMounts(systemIdentityMounts(mountResolvConf))
+	ms.addMounts(boshMounts(bpmCfg, procCfg.EphemeralDisk, procCfg.PersistentDisk))
+	ms.addMounts(userProvidedIdentityMounts(bpmCfg, procCfg.AdditionalVolumes))
 
 	spec := specbuilder.Build(
 		specbuilder.WithRootFilesystem(bpmCfg.RootFSPath()),
@@ -157,7 +157,7 @@ func (a *RuncAdapter) BuildSpec(
 			cwd,
 		),
 		specbuilder.WithCapabilities(processCapabilities(procCfg.Capabilities)),
-		specbuilder.WithMounts(mounts),
+		specbuilder.WithMounts(ms.mounts()),
 		specbuilder.WithNamespace("ipc"),
 		specbuilder.WithNamespace("mount"),
 		specbuilder.WithNamespace("pid"),
@@ -229,18 +229,10 @@ func boshMounts(bpmCfg *config.BPMConfig, mountData, mountStore bool) []specs.Mo
 	return mounts
 }
 
-func userProvidedIdentityMounts(logger lager.Logger, bpmCfg *config.BPMConfig, volumes []config.Volume) []specs.Mount {
+func userProvidedIdentityMounts(bpmCfg *config.BPMConfig, volumes []config.Volume) []specs.Mount {
 	var mnts []specs.Mount
-	mntsSeen := map[string]bool{
-		bpmCfg.DataDir():  true,
-		bpmCfg.StoreDir(): true,
-	}
 
 	for _, vol := range volumes {
-		if _, ok := mntsSeen[vol.Path]; ok {
-			logger.Info("duplicate-volume", lager.Data{"volume": vol.Path})
-			continue
-		}
 		execOpt := "noexec"
 		if vol.AllowExecutions {
 			execOpt = "exec"
@@ -250,7 +242,6 @@ func userProvidedIdentityMounts(logger lager.Logger, bpmCfg *config.BPMConfig, v
 			writeOpt = "rw"
 		}
 		mnts = append(mnts, identityBindMountWithOptions(vol.Path, "nodev", "nosuid", execOpt, "rbind", writeOpt))
-		mntsSeen[vol.Path] = true
 	}
 
 	return mnts
@@ -267,6 +258,37 @@ func bindMountWithOptions(dest, src string, options ...string) specs.Mount {
 		Source:      src,
 		Options:     options,
 	}
+}
+
+type dedupMounts struct {
+	set    map[string]specs.Mount
+	logger lager.Logger
+}
+
+func newMountDedup(logger lager.Logger) *dedupMounts {
+	return &dedupMounts{
+		set:    make(map[string]specs.Mount),
+		logger: logger,
+	}
+}
+
+func (d *dedupMounts) addMounts(ms []specs.Mount) {
+	for _, mount := range ms {
+		dst := mount.Destination
+		if _, ok := d.set[dst]; ok {
+			d.logger.Info("duplicate-mount", lager.Data{"mount": dst})
+			continue
+		}
+		d.set[dst] = mount
+	}
+}
+
+func (d *dedupMounts) mounts() []specs.Mount {
+	var ms []specs.Mount
+	for _, mount := range d.set {
+		ms = append(ms, mount)
+	}
+	return ms
 }
 
 func processEnvironment(env map[string]string, cfg *config.BPMConfig) []string {

@@ -1,6 +1,7 @@
 # v0.7.0
 
 * do not limit swap space on hosts which do not support it
+* mounting reserved directories provides a more useful validation error
 
 # v0.6.0
 
