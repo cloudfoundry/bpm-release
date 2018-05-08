@@ -1,3 +1,7 @@
+# v0.8.0
+
+* add the `bpm run` command for executing processes as short-lived commands
+
 # v0.7.0
 
 * do not limit swap space on hosts which do not support it

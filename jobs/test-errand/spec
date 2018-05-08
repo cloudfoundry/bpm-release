@@ -1,0 +1,10 @@
+---
+name: test-errand
+
+templates:
+  bpm.yml.erb: config/bpm.yml
+  run.sh: bin/run
+
+packages: []
+
+properties: {}

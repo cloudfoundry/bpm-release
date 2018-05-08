@@ -1,0 +1,7 @@
+processes:
+- name: odd
+  executable: /bin/bash
+  args:
+  - -e
+  - -c
+  - "exit 6"

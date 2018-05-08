@@ -134,6 +134,31 @@ YAML.dump(config)
 %>
 ```
 
+### Errands
+
+The `bpm run` command can be used to run short-lived processes in the same
+environment as other long-lived processes. Each errand's conversion is going to
+be slightly different but most will follow these approximate steps.
+
+1. Rename the `run` script to describe what it does. e.g. `drop_database.sh`
+2. Add a `bpm.yml` file by following the other advice in this file. The
+   `executable:` should be the script from step one.
+3. Re-add the `run` script but change the contents to include the snippet from
+   below.
+4. Update the templates in the `spec` for all your new files.
+
+```bash
+#!/bin/bash
+
+set -e
+
+/var/vcap/jobs/bpm/bin/bpm run <job> [-p <process>]"
+```
+
+The `bpm run` command will exit with the same exit status as the internal
+executable. It will tee logs to both standard out and standard error as well as
+the typical log files.
+
 ## Feature Flagging
 
 We have found that in order to integrate `bpm` into certain releases, it needs

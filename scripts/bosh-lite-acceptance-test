@@ -41,3 +41,8 @@ agent_port=1337
 pushd "${GOPATH}/src/bpm/acceptance" > /dev/null
   ginkgo -r -p -race -randomizeAllSpecs -- --agent-uri="http://${AGENT_HOST}:${agent_port}"
 popd > /dev/null
+
+# We run the errand twice to make sure there is no state left on the VM which
+# would prevent this.
+bosh run-errand test-errand
+bosh run-errand test-errand
