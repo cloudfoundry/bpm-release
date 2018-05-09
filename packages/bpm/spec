@@ -17,12 +17,11 @@ files:
   - bpm/runc/client/*.go # gosub
   - bpm/runc/lifecycle/*.go # gosub
   - bpm/runc/specbuilder/*.go # gosub
+  - bpm/sysfeat/*.go # gosub
   - bpm/usertools/*.go # gosub
   - bpm/vendor/code.cloudfoundry.org/bytefmt/*.go # gosub
   - bpm/vendor/code.cloudfoundry.org/clock/*.go # gosub
   - bpm/vendor/code.cloudfoundry.org/lager/*.go # gosub
-  - bpm/vendor/github.com/docker/docker/pkg/parsers/*.go # gosub
-  - bpm/vendor/github.com/docker/docker/pkg/sysinfo/*.go # gosub
   - bpm/vendor/github.com/docker/go-units/*.go # gosub
   - bpm/vendor/github.com/inconshreveable/mousetrap/*.go # gosub
   - bpm/vendor/github.com/opencontainers/runc/libcontainer/cgroups/*.go # gosub
@@ -34,6 +33,4 @@ files:
   - bpm/vendor/golang.org/x/crypto/ssh/terminal/*.go # gosub
   - bpm/vendor/golang.org/x/sys/unix/*.go # gosub
   - bpm/vendor/golang.org/x/sys/unix/*.s # gosub
-  - bpm/vendor/golang.org/x/sys/windows/*.go # gosub
-  - bpm/vendor/golang.org/x/sys/windows/*.s # gosub
   - bpm/vendor/gopkg.in/yaml.v2/*.go # gosub

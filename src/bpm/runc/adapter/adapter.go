@@ -23,11 +23,11 @@ import (
 
 	"code.cloudfoundry.org/bytefmt"
 	"code.cloudfoundry.org/lager"
-	"github.com/docker/docker/pkg/sysinfo"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 
 	"bpm/config"
 	"bpm/runc/specbuilder"
+	"bpm/sysfeat"
 )
 
 const (
@@ -36,12 +36,12 @@ const (
 )
 
 type RuncAdapter struct {
-	info sysinfo.SysInfo
+	features sysfeat.Features
 }
 
-func NewRuncAdapter(info sysinfo.SysInfo) *RuncAdapter {
+func NewRuncAdapter(features sysfeat.Features) *RuncAdapter {
 	return &RuncAdapter{
-		info: info,
+		features: features,
 	}
 }
 
@@ -171,7 +171,7 @@ func (a *RuncAdapter) BuildSpec(
 				return specs.Spec{}, err
 			}
 
-			specbuilder.Apply(spec, specbuilder.WithMemoryLimit(int64(memLimit), a.info))
+			specbuilder.Apply(spec, specbuilder.WithMemoryLimit(int64(memLimit), a.features))
 		}
 
 		if procCfg.Limits.Processes != nil {

@@ -62,7 +62,10 @@ func stop(cmd *cobra.Command, _ []string) error {
 	logger.Info("starting")
 	defer logger.Info("complete")
 
-	runcLifecycle := newRuncLifecycle()
+	runcLifecycle, err := newRuncLifecycle()
+	if err != nil {
+		return err
+	}
 
 	if _, err := runcLifecycle.StatProcess(bpmCfg); lifecycle.IsNotExist(err) {
 		logger.Info("job-already-stopped")

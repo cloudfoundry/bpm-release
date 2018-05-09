@@ -27,14 +27,6 @@
   version = "v1.0.0"
 
 [[projects]]
-  name = "github.com/docker/docker"
-  packages = [
-    "pkg/parsers",
-    "pkg/sysinfo"
-  ]
-  revision = "e890301e4f84d55c3e045904eb0223c23fd70d19"
-
-[[projects]]
   name = "github.com/docker/go-units"
   packages = ["."]
   revision = "47565b4f722fb6ceae66b95f853feed578a4a51c"
@@ -226,6 +218,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "471795283b7a29de3197c13dae766474d3000bd910e9c39d34d98a15f276b537"
+  inputs-digest = "b4fbbfc3f63646e45cb4e6cf331baf9e809e6d1d5b5b5db09206a4eab432c183"
   solver-name = "gps-cdcl"
   solver-version = 1

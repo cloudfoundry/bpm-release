@@ -24,13 +24,13 @@ import (
 
 	"code.cloudfoundry.org/bytefmt"
 	"code.cloudfoundry.org/lager/lagertest"
-	"github.com/docker/docker/pkg/sysinfo"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 
 	"bpm/config"
 	"bpm/runc/specbuilder"
+	"bpm/sysfeat"
 )
 
 var _ = Describe("RuncAdapter", func() {
@@ -40,8 +40,8 @@ var _ = Describe("RuncAdapter", func() {
 		jobName,
 		procName,
 		systemRoot string
-		user specs.User
-		info sysinfo.SysInfo
+		user     specs.User
+		features sysfeat.Features
 
 		bpmCfg  *config.BPMConfig
 		procCfg *config.ProcessConfig
@@ -50,7 +50,7 @@ var _ = Describe("RuncAdapter", func() {
 
 	BeforeEach(func() {
 		logger = lagertest.NewTestLogger("adapter")
-		info = sysinfo.SysInfo{}
+		features = sysfeat.Features{}
 
 		jobName = "example"
 		procName = "server"
@@ -72,7 +72,7 @@ var _ = Describe("RuncAdapter", func() {
 	})
 
 	JustBeforeEach(func() {
-		runcAdapter = NewRuncAdapter(info)
+		runcAdapter = NewRuncAdapter(features)
 	})
 
 	AfterEach(func() {
@@ -529,7 +529,7 @@ var _ = Describe("RuncAdapter", func() {
 
 				Context("when the system supports swap", func() {
 					BeforeEach(func() {
-						info.SwapLimit = true
+						features.SwapLimitSupported = true
 					})
 
 					It("sets the memory limit on the container", func() {
@@ -548,7 +548,7 @@ var _ = Describe("RuncAdapter", func() {
 
 				Context("when the system does not support swap", func() {
 					BeforeEach(func() {
-						info.SwapLimit = false
+						features.SwapLimitSupported = false
 					})
 
 					It("sets the memory (but not swap) limit on the container", func() {

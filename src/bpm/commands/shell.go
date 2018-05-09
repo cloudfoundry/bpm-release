@@ -46,7 +46,10 @@ func shellPre(cmd *cobra.Command, args []string) error {
 func shell(cmd *cobra.Command, _ []string) error {
 	cmd.SilenceUsage = true
 
-	runcLifecycle := newRuncLifecycle()
+	runcLifecycle, err := newRuncLifecycle()
+	if err != nil {
+		return err
+	}
 
 	process, err := runcLifecycle.StatProcess(bpmCfg)
 	if lifecycle.IsNotExist(err) || process.Status == models.ProcessStateFailed {

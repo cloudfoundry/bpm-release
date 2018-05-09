@@ -24,7 +24,6 @@ import (
 
 	"code.cloudfoundry.org/clock"
 	"code.cloudfoundry.org/lager"
-	"github.com/docker/docker/pkg/sysinfo"
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/unix"
 
@@ -33,6 +32,7 @@ import (
 	"bpm/runc/adapter"
 	"bpm/runc/client"
 	"bpm/runc/lifecycle"
+	"bpm/sysfeat"
 	"bpm/usertools"
 )
 
@@ -169,13 +169,16 @@ func releaseLifecycleLock() error {
 	return nil
 }
 
-func newRuncLifecycle() *lifecycle.RuncLifecycle {
+func newRuncLifecycle() (*lifecycle.RuncLifecycle, error) {
 	runcClient := client.NewRuncClient(
 		config.RuncPath(bosh.Root()),
 		config.RuncRoot(bosh.Root()),
 	)
-	info := sysinfo.New(true)
-	runcAdapter := adapter.NewRuncAdapter(*info)
+	features, err := sysfeat.Fetch()
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch system features: %q", err)
+	}
+	runcAdapter := adapter.NewRuncAdapter(*features)
 	clock := clock.NewClock()
 
 	return lifecycle.NewRuncLifecycle(
@@ -184,7 +187,7 @@ func newRuncLifecycle() *lifecycle.RuncLifecycle {
 		userFinder,
 		lifecycle.NewCommandRunner(),
 		clock,
-	)
+	), nil
 }
 
 func processByNameFromJobConfig(jobCfg *config.JobConfig, procName string) (*config.ProcessConfig, error) {
