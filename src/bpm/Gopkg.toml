@@ -47,12 +47,6 @@ required = [
   branch = "v2"
   name = "gopkg.in/yaml.v2"
 
-# Moby hasn't had a recent tagged release so let's anchor ourselves to a recent
-# SHA for now. Maybe we could extract only the pieces we need.
-[[constraint]]
-  name = "github.com/docker/docker"
-  revision = "e890301e4f84d55c3e045904eb0223c23fd70d19"
-
 [prune]
   go-tests = true
   non-go = true

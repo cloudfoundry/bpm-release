@@ -45,7 +45,10 @@ func pidPre(cmd *cobra.Command, args []string) error {
 func pidForJob(cmd *cobra.Command, _ []string) error {
 	cmd.SilenceUsage = true
 
-	runcLifecycle := newRuncLifecycle()
+	runcLifecycle, err := newRuncLifecycle()
+	if err != nil {
+		return err
+	}
 	process, err := runcLifecycle.StatProcess(bpmCfg)
 	if lifecycle.IsNotExist(err) || process.Status == models.ProcessStateFailed {
 		return errors.New("process is not running or could not be found")

@@ -73,7 +73,10 @@ func start(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("process %q not present in job configuration (%s)", procName, bpmCfg.JobConfig())
 	}
 
-	runcLifecycle := newRuncLifecycle()
+	runcLifecycle, err := newRuncLifecycle()
+	if err != nil {
+		return err
+	}
 	process, err := runcLifecycle.StatProcess(bpmCfg)
 	if err != nil && !lifecycle.IsNotExist(err) {
 		logger.Error("failed-getting-job", err)

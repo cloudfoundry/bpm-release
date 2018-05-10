@@ -16,8 +16,9 @@
 package specbuilder
 
 import (
-	"github.com/docker/docker/pkg/sysinfo"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
+
+	"bpm/sysfeat"
 )
 
 func DefaultSpec() *specs.Spec {
@@ -154,13 +155,13 @@ func WithMounts(mounts []specs.Mount) SpecOption {
 	}
 }
 
-func WithMemoryLimit(limit int64, info sysinfo.SysInfo) SpecOption {
+func WithMemoryLimit(limit int64, features sysfeat.Features) SpecOption {
 	return func(spec *specs.Spec) {
 		spec.Linux.Resources.Memory = &specs.LinuxMemory{
 			Limit: &limit,
 		}
 
-		if info.SwapLimit {
+		if features.SwapLimitSupported {
 			spec.Linux.Resources.Memory.Swap = &limit
 		}
 	}
