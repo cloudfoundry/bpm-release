@@ -26,14 +26,13 @@ import (
 )
 
 func init() {
-	pidCommand.Flags().StringVarP(&procName, "process", "p", "", "The optional process name.")
+	pidCommand.Flags().StringVarP(&procName, "process", "p", "", "optional process name")
 	RootCmd.AddCommand(pidCommand)
 }
 
 var pidCommand = &cobra.Command{
-	Long:    "Displays the PID for a given job",
 	RunE:    pidForJob,
-	Short:   "PID for job",
+	Short:   "displays the pid for a given job",
 	Use:     "pid <job-name>",
 	PreRunE: pidPre,
 }

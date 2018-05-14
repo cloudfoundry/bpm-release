@@ -27,14 +27,13 @@ import (
 const DefaultStopTimeout = 20 * time.Second
 
 func init() {
-	stopCommand.Flags().StringVarP(&procName, "process", "p", "", "The optional process name.")
+	stopCommand.Flags().StringVarP(&procName, "process", "p", "", "optional process name")
 	RootCmd.AddCommand(stopCommand)
 }
 
 var stopCommand = &cobra.Command{
-	Long:     "Stops a BOSH Process",
 	RunE:     stop,
-	Short:    "Stops a BOSH Process",
+	Short:    "stops a BOSH Process",
 	Use:      "stop <job-name>",
 	PreRunE:  stopPre,
 	PostRunE: stopPost,

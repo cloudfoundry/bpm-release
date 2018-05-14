@@ -40,7 +40,7 @@ traces a BOSH Process
 `
 
 func init() {
-	traceCommand.Flags().StringVarP(&procName, "process", "p", "", "The optional process name.")
+	traceCommand.Flags().StringVarP(&procName, "process", "p", "", "optional process name")
 	RootCmd.AddCommand(traceCommand)
 }
 

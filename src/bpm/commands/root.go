@@ -47,7 +47,7 @@ var userFinder = usertools.NewUserFinder()
 var bosh = config.NewBosh(os.Getenv("BPM_BOSH_ROOT"))
 
 func init() {
-	RootCmd.PersistentFlags().BoolVar(&showVersion, "version", false, "Prints the BPM version")
+	RootCmd.PersistentFlags().BoolVar(&showVersion, "version", false, "print BPM version")
 }
 
 var RootCmd = &cobra.Command{

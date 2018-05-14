@@ -29,9 +29,8 @@ func init() {
 }
 
 var versionCommand = &cobra.Command{
-	Long:  "Prints the BPM version",
 	Run:   version,
-	Short: "Prints the BPM version",
+	Short: "prints the BPM version",
 	Use:   "version",
 }
 

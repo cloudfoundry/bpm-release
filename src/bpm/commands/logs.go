@@ -35,20 +35,19 @@ var (
 )
 
 func init() {
-	logsCommand.Flags().BoolVarP(&allLogs, "all", "a", false, "Tail both error and stdout logs.")
-	logsCommand.Flags().BoolVarP(&errLogs, "err", "e", false, "Tail error logs.")
-	logsCommand.Flags().BoolVarP(&follow, "follow", "f", false, "Tail and follow specified logs.")
-	logsCommand.Flags().IntVarP(&numLines, "lines", "n", 25, "Number of lines to tail.")
-	logsCommand.Flags().StringVarP(&procName, "process", "p", "", "The optional process name.")
-	logsCommand.Flags().BoolVarP(&quiet, "quiet", "q", false, "Suppress filename headers.")
+	logsCommand.Flags().BoolVarP(&allLogs, "all", "a", false, "show both stdout and stderr")
+	logsCommand.Flags().BoolVarP(&errLogs, "err", "e", false, "show stderr")
+	logsCommand.Flags().BoolVarP(&follow, "follow", "f", false, "show and follow specified logs")
+	logsCommand.Flags().IntVarP(&numLines, "lines", "n", 25, "number of lines to show")
+	logsCommand.Flags().StringVarP(&procName, "process", "p", "", "optional process name")
+	logsCommand.Flags().BoolVarP(&quiet, "quiet", "q", false, "suppress filename headers")
 
 	RootCmd.AddCommand(logsCommand)
 }
 
 var logsCommand = &cobra.Command{
-	Long:    "Streams the logs for a given job",
 	RunE:    logsForJob,
-	Short:   "logs for job",
+	Short:   "streams the logs for a given job",
 	Use:     "logs <job-name>",
 	PreRunE: logsPre,
 }

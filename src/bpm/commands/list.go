@@ -31,9 +31,8 @@ func init() {
 }
 
 var listCommandCommand = &cobra.Command{
-	Long:  "Lists the state of bpm containers",
 	RunE:  listContainers,
-	Short: "List containers",
+	Short: "list the state of bpm containers",
 	Use:   "list",
 }
 

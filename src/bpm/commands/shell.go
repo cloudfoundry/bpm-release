@@ -27,12 +27,11 @@ import (
 )
 
 func init() {
-	shellCommand.Flags().StringVarP(&procName, "process", "p", "", "The optional process name.")
+	shellCommand.Flags().StringVarP(&procName, "process", "p", "", "optional process name")
 	RootCmd.AddCommand(shellCommand)
 }
 
 var shellCommand = &cobra.Command{
-	Long:    "start a shell inside the process container",
 	RunE:    shell,
 	Short:   "start a shell inside the process container",
 	Use:     "shell <job-name>",

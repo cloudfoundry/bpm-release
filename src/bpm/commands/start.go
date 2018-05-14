@@ -26,14 +26,13 @@ import (
 )
 
 func init() {
-	startCommand.Flags().StringVarP(&procName, "process", "p", "", "The optional process name.")
+	startCommand.Flags().StringVarP(&procName, "process", "p", "", "optional process name")
 	RootCmd.AddCommand(startCommand)
 }
 
 var startCommand = &cobra.Command{
-	Long:     "Starts a BOSH Process",
 	RunE:     start,
-	Short:    "Starts a BOSH Process",
+	Short:    "starts a BOSH Process",
 	Use:      "start <job-name>",
 	PreRunE:  startPre,
 	PostRunE: startPost,
