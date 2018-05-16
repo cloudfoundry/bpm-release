@@ -23,6 +23,7 @@ processes:
     pre_start: /var/vcap/jobs/program/bin/pre
   capabilities:
   - NET_BIND_SERVICE
+  - SYS_TIME
   workdir: /I/AM/A/WORKDIR
   persistent_disk: true
   ephemeral_disk: true

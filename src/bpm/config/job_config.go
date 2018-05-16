@@ -92,6 +92,7 @@ const (
 
 var validCaps = map[string]bool{
 	"NET_BIND_SERVICE": true,
+	"SYS_TIME": true,
 }
 
 func (c *JobConfig) Validate() error {

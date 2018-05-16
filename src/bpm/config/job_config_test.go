@@ -52,7 +52,7 @@ var _ = Describe("Config", func() {
 				config.Volume{Path: "/var/vcap/data/jna-tmp", Writable: true, AllowExecutions: true},
 			))
 			Expect(cfg.Processes[0].Hooks.PreStart).To(Equal("/var/vcap/jobs/program/bin/pre"))
-			Expect(cfg.Processes[0].Capabilities).To(ConsistOf("NET_BIND_SERVICE"))
+			Expect(cfg.Processes[0].Capabilities).To(ConsistOf("NET_BIND_SERVICE", "SYS_TIME"))
 			Expect(cfg.Processes[0].WorkDir).To(Equal("/I/AM/A/WORKDIR"))
 			Expect(cfg.Processes[0].PersistentDisk).To(BeTrue())
 			Expect(cfg.Processes[0].EphemeralDisk).To(BeTrue())
