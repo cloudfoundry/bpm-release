@@ -18,7 +18,8 @@ export BOSH_DEPLOYMENT=bpm
 export BOSH_NON_INTERACTIVE=true
 
 bosh deploy \
-  "$PWD/bpm-release/example-manifests/bosh-lite-ci.yml"
+  "$PWD/bpm-release/example-manifests/bosh-lite-ci.yml" \
+  -v "stemcell_name=${STEMCELL_NAME}"
 
 export GOPATH="$PWD/bpm-release"
 export PATH=$GOPATH/bin:$PATH

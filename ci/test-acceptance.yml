@@ -10,5 +10,8 @@ inputs:
 - name: bpm-release
 - name: bosh-stemcell
 
+params:
+  STEMCELL_NAME: ubuntu-trusty
+
 run:
   path: bpm-release/scripts/test-acceptance

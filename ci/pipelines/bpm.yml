@@ -2,6 +2,7 @@ groups:
 - name: tests
   jobs:
   - test-acceptance
+  - test-acceptance-xenial
   - test-unit
   - tracker
   - create-final-release
@@ -39,6 +40,11 @@ resources:
   type: bosh-io-stemcell
   source:
     name: bosh-warden-boshlite-ubuntu-trusty-go_agent
+
+- name: bosh-lite-xenial-stemcell
+  type: bosh-io-stemcell
+  source:
+    name: bosh-warden-boshlite-ubuntu-xenial-go_agent
 
 - name: tracker
   type: tracker
@@ -106,16 +112,34 @@ jobs:
     - get: boshlite-stemcell
   - task: test-acceptance
     file: bpm-release/ci/test-acceptance.yml
+    params:
+      STEMCELL_NAME: ubuntu-trusty
     input_mapping:
       bosh-stemcell: boshlite-stemcell
+    privileged: true
+
+- name: test-acceptance-xenial
+  public: true
+  plan:
+  - aggregate:
+    - get: bpm-release
+      trigger: true
+    - get: boshlite-xenial-stemcell
+  - task: test-acceptance
+    file: bpm-release/ci/test-acceptance.yml
+    params:
+      STEMCELL_NAME: ubuntu-xenial
+    input_mapping:
+      bosh-stemcell: boshlite-xenial-stemcell
     privileged: true
 
 - name: tracker
   plan:
   - get: bpm-release
     passed:
-    - test-unit
     - test-acceptance
+    - test-acceptance-xenial
+    - test-unit
     trigger: true
   - put: tracker
     params:
@@ -203,6 +227,7 @@ jobs:
     - get: bpm-release
       passed:
       - test-acceptance
+      - test-acceptance-xenail
       - test-unit
     - get: version
       params:
