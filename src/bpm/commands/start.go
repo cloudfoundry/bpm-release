@@ -20,7 +20,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"bpm/config"
 	"bpm/models"
 	"bpm/runc/lifecycle"
 )
@@ -60,7 +59,7 @@ func start(cmd *cobra.Command, _ []string) error {
 	logger.Info("starting")
 	defer logger.Info("complete")
 
-	jobCfg, err := config.ParseJobConfig(bpmCfg.JobName(), bpmCfg.JobConfig())
+	jobCfg, err := bpmCfg.ParseJobConfig()
 	if err != nil {
 		logger.Error("failed-to-parse-config", err)
 		return fmt.Errorf("failed to parse job configuration: %s", err)
