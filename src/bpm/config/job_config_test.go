@@ -37,7 +37,7 @@ var _ = Describe("Config", func() {
 		})
 
 		It("parses a yaml file into a bpm config", func() {
-			cfg, err := config.ParseJobConfig(jobName, configPath)
+			cfg, err := config.ParseJobConfig(configPath)
 			Expect(err).NotTo(HaveOccurred())
 
 			expectedMemoryLimit := "100G"
@@ -81,7 +81,7 @@ var _ = Describe("Config", func() {
 			})
 
 			It("returns an error", func() {
-				_, err := config.ParseJobConfig(jobName, configPath)
+				_, err := config.ParseJobConfig(configPath)
 				Expect(err).To(HaveOccurred())
 			})
 		})
@@ -92,18 +92,7 @@ var _ = Describe("Config", func() {
 			})
 
 			It("returns an error", func() {
-				_, err := config.ParseJobConfig(jobName, configPath)
-				Expect(err).To(HaveOccurred())
-			})
-		})
-
-		Context("when the configuration is not valid", func() {
-			BeforeEach(func() {
-				configPath = "fixtures/example-invalid-config.yml"
-			})
-
-			It("returns an error", func() {
-				_, err := config.ParseJobConfig(jobName, configPath)
+				_, err := config.ParseJobConfig(configPath)
 				Expect(err).To(HaveOccurred())
 			})
 		})
@@ -125,7 +114,7 @@ var _ = Describe("Config", func() {
 		})
 
 		It("does not error on a valid config", func() {
-			Expect(jobCfg.Validate(jobName)).To(Succeed())
+			Expect(jobCfg.Validate([]string{})).To(Succeed())
 		})
 
 		Context("when the config has additional_volumes that are not nested in `/var/vcap`", func() {
@@ -134,43 +123,40 @@ var _ = Describe("Config", func() {
 					{Path: "/var/vcap/data/valid"},
 					{Path: "/bin"},
 				}
-				Expect(jobCfg.Validate(jobName)).To(HaveOccurred())
+				Expect(jobCfg.Validate([]string{})).To(HaveOccurred())
 
 				jobCfg.Processes[0].AdditionalVolumes = []config.Volume{
 					{Path: "/var/vcap/data/valid"},
 					{Path: "/var/vcap/invalid"},
 				}
-				Expect(jobCfg.Validate(jobName)).To(HaveOccurred())
+				Expect(jobCfg.Validate([]string{})).To(HaveOccurred())
 
 				jobCfg.Processes[0].AdditionalVolumes = []config.Volume{
 					{Path: "/var/vcap/data/valid"},
 					{Path: "/var/vcap/data"},
 				}
-				Expect(jobCfg.Validate(jobName)).To(HaveOccurred())
+				Expect(jobCfg.Validate([]string{})).To(HaveOccurred())
 
 				jobCfg.Processes[0].AdditionalVolumes = []config.Volume{
 					{Path: "/var/vcap/store"},
 				}
-				Expect(jobCfg.Validate(jobName)).To(HaveOccurred())
+				Expect(jobCfg.Validate([]string{})).To(HaveOccurred())
 
 				jobCfg.Processes[0].AdditionalVolumes = []config.Volume{
 					{Path: "//var/vcap/data/valid"},
 				}
-				Expect(jobCfg.Validate(jobName)).To(HaveOccurred())
+				Expect(jobCfg.Validate([]string{})).To(HaveOccurred())
 			})
 		})
 
-		Context("when the config has additional_volumes that conflict with the default store and data directories", func() {
+		Context("when the config has additional_volumes that conflict with default volumes", func() {
 			It("returns a validation error", func() {
 				jobCfg.Processes[0].AdditionalVolumes = []config.Volume{
 					{Path: "/var/vcap/data/job-name"},
 				}
-				Expect(jobCfg.Validate(jobName)).To(HaveOccurred())
-
-				jobCfg.Processes[0].AdditionalVolumes = []config.Volume{
-					{Path: "/var/vcap/store/job-name"},
-				}
-				Expect(jobCfg.Validate(jobName)).To(HaveOccurred())
+				Expect(jobCfg.Validate([]string{
+					"/var/vcap/data/job-name",
+				})).To(HaveOccurred())
 			})
 		})
 
@@ -180,14 +166,14 @@ var _ = Describe("Config", func() {
 			})
 
 			It("returns an error", func() {
-				Expect(jobCfg.Validate(jobName)).To(HaveOccurred())
+				Expect(jobCfg.Validate([]string{})).To(HaveOccurred())
 			})
 		})
 
 		Context("when the process does not have a name", func() {
 			It("returns an error", func() {
 				jobCfg.Processes[0].Name = ""
-				Expect(jobCfg.Validate(jobName)).To(HaveOccurred())
+				Expect(jobCfg.Validate([]string{})).To(HaveOccurred())
 			})
 		})
 
@@ -197,7 +183,7 @@ var _ = Describe("Config", func() {
 			})
 
 			It("returns an error", func() {
-				Expect(jobCfg.Validate(jobName)).To(HaveOccurred())
+				Expect(jobCfg.Validate([]string{})).To(HaveOccurred())
 			})
 		})
 	})
