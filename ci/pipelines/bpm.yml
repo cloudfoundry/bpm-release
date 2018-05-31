@@ -36,7 +36,7 @@ resources:
     initial_version: 0.0.0
     json_key: ((bpm-version-gcs-json-key))
 
-- name: boshlite-stemcell
+- name: boshlite-trusty-stemcell
   type: bosh-io-stemcell
   source:
     name: bosh-warden-boshlite-ubuntu-trusty-go_agent
@@ -109,14 +109,14 @@ jobs:
   - aggregate:
     - get: bpm-release
       trigger: true
-    - get: boshlite-stemcell
+    - get: boshlite-trusty-stemcell
       trigger: true
   - task: test-acceptance
     file: bpm-release/ci/test-acceptance.yml
     params:
       STEMCELL_NAME: ubuntu-trusty
     input_mapping:
-      bosh-stemcell: boshlite-stemcell
+      bosh-stemcell: boshlite-trusty-stemcell
     privileged: true
 
 - name: test-acceptance-xenial
