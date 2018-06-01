@@ -1,11 +1,12 @@
 groups:
 - name: tests
   jobs:
+  - create-final-release
   - test-acceptance-trusty
   - test-acceptance-xenial
   - test-unit
+  - test-upgrade
   - tracker
-  - create-final-release
 - name: version
   jobs:
   - bump-major
@@ -93,6 +94,11 @@ resources:
   source:
     interval: 24h
 
+- name: bpm-bosh-io
+  type: bosh-io-release
+  source:
+    repository: cloudfoundry-incubator/bpm-release
+
 jobs:
 - name: test-unit
   public: true
@@ -129,6 +135,23 @@ jobs:
       trigger: true
   - task: test-acceptance
     file: bpm-release/ci/test-acceptance.yml
+    params:
+      STEMCELL_NAME: ubuntu-xenial
+    input_mapping:
+      bosh-stemcell: boshlite-xenial-stemcell
+    privileged: true
+
+- name: test-upgrade
+  public: true
+  plan:
+  - aggregate:
+    - get: bpm-release
+      trigger: true
+    - get: boshlite-xenial-stemcell
+      trigger: true
+    - get: bpm-bosh-io
+  - task: test-acceptance
+    file: bpm-release/ci/test-upgrade.yml
     params:
       STEMCELL_NAME: ubuntu-xenial
     input_mapping:
