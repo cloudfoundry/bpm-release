@@ -23,16 +23,10 @@ import (
 )
 
 var _ = Describe("Config", func() {
-	var jobName string
-	BeforeEach(func() {
-		jobName = "job-name"
-	})
-
 	Describe("ParseJobConfig", func() {
 		var configPath string
 
 		BeforeEach(func() {
-			jobName = "job-name"
 			configPath = "fixtures/example.yml"
 		})
 
