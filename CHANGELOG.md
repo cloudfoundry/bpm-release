@@ -1,3 +1,7 @@
+# v0.8.0
+
+* add support for unrestricted volumes in unsafe configuration
+
 # v0.7.0
 
 * do not limit swap space on hosts which do not support it

@@ -57,6 +57,11 @@ var _ = Describe("Config", func() {
 			Expect(cfg.Processes[0].PersistentDisk).To(BeTrue())
 			Expect(cfg.Processes[0].EphemeralDisk).To(BeTrue())
 			Expect(cfg.Processes[0].Unsafe.Privileged).To(BeTrue())
+			Expect(cfg.Processes[0].Unsafe.UnrestrictedVolumes).To(ConsistOf(
+				config.Volume{Path: "/", Writable: true},
+				config.Volume{Path: "/etc"},
+				config.Volume{Path: "/foobar", Writable: true, AllowExecutions: true},
+			))
 
 			Expect(cfg.Processes[1].Name).To(Equal("second-process"))
 			Expect(cfg.Processes[1].Executable).To(Equal("/I/AM/A/SECOND-EXECUTABLE"))

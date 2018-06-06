@@ -29,6 +29,14 @@ processes:
   ephemeral_disk: true
   unsafe:
     privileged: true
+    unrestricted_volumes:
+    - path: /
+      writable: true
+    - path: /etc
+      writable: false
+    - path: /foobar
+      writable: true
+      allow_executions: true
 - name: second-process
   executable: /I/AM/A/SECOND-EXECUTABLE
 - name: third-process
