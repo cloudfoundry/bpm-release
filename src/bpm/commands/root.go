@@ -120,7 +120,7 @@ func setupBpmLogs(sessionName string) error {
 	}
 
 	logger = lager.NewLogger("bpm")
-	logger.RegisterSink(lager.NewWriterSink(logFile, lager.INFO))
+	logger.RegisterSink(lager.NewPrettySink(logFile, lager.INFO))
 	logger = logger.Session(sessionName, lager.Data{
 		"job":     bpmCfg.JobName(),
 		"process": bpmCfg.ProcName(),
