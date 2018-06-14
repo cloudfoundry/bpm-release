@@ -22,7 +22,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 )
 
 type JobConfig struct {
@@ -85,11 +85,6 @@ const (
 	validStoreVolumePrefix = "/var/vcap/store"
 )
 
-var validCaps = map[string]bool{
-	"NET_BIND_SERVICE": true,
-	"SYS_TIME":         true,
-}
-
 func (c *JobConfig) Validate(defaultVolumes []string) error {
 	for _, v := range c.Processes {
 		if err := v.Validate(defaultVolumes); err != nil {
@@ -128,15 +123,6 @@ func (c *ProcessConfig) Validate(defaultVolumes []string) error {
 				vol.Path,
 				validDataVolumePrefix,
 				validStoreVolumePrefix,
-			)
-		}
-	}
-
-	for _, capabilities := range c.Capabilities {
-		if _, ok := validCaps[capabilities]; !ok {
-			return fmt.Errorf(
-				"invalid capability: %s",
-				capabilities,
 			)
 		}
 	}

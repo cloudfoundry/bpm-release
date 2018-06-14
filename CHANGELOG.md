@@ -2,7 +2,7 @@
 
 * do not limit swap space on hosts which do not support it
 * mounting reserved directories provides a more useful validation error
-* allow granting the SYS_TIME capability
+* remove the restriction on allowed capabilities
 
 # v0.6.0
 
