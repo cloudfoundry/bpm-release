@@ -154,16 +154,6 @@ var _ = Describe("Config", func() {
 			})
 		})
 
-		Context("when the capabilities are not permitted", func() {
-			BeforeEach(func() {
-				jobCfg.Processes[0].Capabilities = []string{"YO_DOG_CAP"}
-			})
-
-			It("returns an error", func() {
-				Expect(jobCfg.Validate([]string{})).To(HaveOccurred())
-			})
-		})
-
 		Context("when the process does not have a name", func() {
 			It("returns an error", func() {
 				jobCfg.Processes[0].Name = ""

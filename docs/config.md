@@ -45,12 +45,14 @@ directory of your job.
 | `env`                | string => string | No            | Any additional environment variables to be included in the environment of this process.           |
 | `workdir`            | string           | No            | The working directory for this process. If not specified this is the value `/var/vcap/jobs/JOB`.  |
 | `hooks`              | hooks            | No            | The hook configuration for this process (see below).                                              |
-| `capabilities`       | string[]         | No            | The list of [capabilities](#capabilities) which should be granted to this process.                |
+| `capabilities`       | string[]         | No            | The list of [capabilities][capabilities] (without CAP_) which should be granted to this process.  |
 | `limits`             | limits           | No            | The limit configuration for this process (see below).                                             |
 | `ephemeral_disk`     | boolean          | No            | Whether or not an ephemeral disk should be mounted into the container at `/var/vcap/data/JOB`.    |
 | `persistent_disk`    | boolean          | No            | Whether or not an persistent disk should be mounted into the container at `/var/vcap/store/JOB`.  |
 | `additional_volumes` | volume[]         | No            | A list of additional volumes to mount inside this process (see below).                            |
 | `unsafe`             | unsafe           | No            | The unsafe configuration for this process (see below).                                            |
+
+[capabilities]: http://man7.org/linux/man-pages/man7/capabilities.7.html
 
 #### `hooks` Schema
 
@@ -79,13 +81,6 @@ directory of your job.
 | **Property** | **Type** | **Required** | **Description**                                                                           |
 |--------------|----------|--------------|-------------------------------------------------------------------------------------------|
 | `privileged` | boolean  | No           | Whether or not this process should execute with increased privileges (see details below). |
-
-#### <a id="capabilities">Capabilities</a>
-
-| **Capability**     | **Description**                                                                            |
-| ------------------ | ------------------------------------------------------------------------------------------ |
-| `NET_BIND_SERVICE` | Bind a socket to Internet domain privileged ports (port numbers less than 1024).           |
-| `SYS_TIME`         | Set system clock (settimeofday(2), stime(2), adjtimex(2)); set real-time (hardware) clock. |
 
 ### Example
 
