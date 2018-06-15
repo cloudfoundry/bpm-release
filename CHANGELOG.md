@@ -1,3 +1,7 @@
+# v0.7.1
+
+* sort mounts by ascending length of elements in destination path
+
 # v0.7.0
 
 * do not limit swap space on hosts which do not support it
