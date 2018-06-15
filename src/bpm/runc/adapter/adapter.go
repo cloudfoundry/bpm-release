@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
+	"strings"
 
 	"code.cloudfoundry.org/bytefmt"
 	"code.cloudfoundry.org/lager"
@@ -237,10 +239,12 @@ func userProvidedIdentityMounts(bpmCfg *config.BPMConfig, volumes []config.Volum
 		if vol.AllowExecutions {
 			execOpt = "exec"
 		}
+
 		writeOpt := "ro"
 		if vol.Writable {
 			writeOpt = "rw"
 		}
+
 		mnts = append(mnts, identityBindMountWithOptions(vol.Path, "nodev", "nosuid", execOpt, "rbind", writeOpt))
 	}
 
@@ -285,9 +289,17 @@ func (d *dedupMounts) addMounts(ms []specs.Mount) {
 
 func (d *dedupMounts) mounts() []specs.Mount {
 	var ms []specs.Mount
+
 	for _, mount := range d.set {
 		ms = append(ms, mount)
 	}
+
+	sort.Slice(ms, func(i, j int) bool {
+		iElems := strings.Split(ms[i].Destination, "/")
+		jElems := strings.Split(ms[j].Destination, "/")
+		return len(iElems) < len(jElems)
+	})
+
 	return ms
 }
 

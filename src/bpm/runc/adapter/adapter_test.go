@@ -20,6 +20,8 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sort"
+	"strings"
 	"syscall"
 
 	"code.cloudfoundry.org/bytefmt"
@@ -407,6 +409,15 @@ var _ = Describe("RuncAdapter", func() {
 				Source:      filepath.Join(systemRoot, "store", "example"),
 				Options:     []string{"nodev", "nosuid", "exec", "rbind", "rw"},
 			}))
+
+			// The mounts provided in the default spec are always first and not
+			// necessarily sorted.  See specbuilder.DefaultSpec for more information
+			nonDefaultMounts := spec.Mounts[5:]
+			Expect(sort.SliceIsSorted(nonDefaultMounts, func(i, j int) bool {
+				iElems := strings.Split(nonDefaultMounts[i].Destination, "/")
+				jElems := strings.Split(nonDefaultMounts[j].Destination, "/")
+				return len(iElems) < len(jElems)
+			})).To(BeTrue())
 
 			Expect(spec.Linux.RootfsPropagation).To(Equal("private"))
 			Expect(spec.Linux.MaskedPaths).To(ConsistOf([]string{
