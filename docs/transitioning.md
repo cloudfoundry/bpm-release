@@ -230,14 +230,48 @@ This also can be achieved using an operation file similar to the following:
 ## Log Forwarding
 
 Some `_ctl` scripts forward the output and error streams from their server to
-the `logger` program which sends those logs to syslog. BPM does not forward
-logs and so you should use something like the [syslog release][syslog-release]
-to send your logs from the machine to an external log aggregator and store.
+the `logger` program which sends those logs to syslog. 
+
+For example, your job's `_ctl` script may look like this:
+
+```bash
+log_dir=/var/vcap/sys/log/<job>
+
+/var/vcap/packages/<package>/bin/<job> \
+  -config=$conf_dir/<job>.json \
+  2> >(tee -a $log_dir/<job>.stderr.log | logger -p user.error -t vcap.<job>) \
+  1> >(tee -a $log_dir/<job>.stdout.log | logger -p user.info -t vcap.<job>) & echo $! > $pidfile
+```
+
+
+BPM does not forward logs and so you should use something like the [syslog release][syslog-release]
+to send your logs from the machine to an external log aggregator and store:
+
+```yaml
+ jobs:
+  - name: syslog_forwarder
+    properties:
+      syslog:
+        address: ((syslog_address))
+        custom_rule: |
+          if ($programname startswith "vcap.") then stop
+        port: ((syslog_port))
+        transport: ((syslog_transport))
+    release: syslog
+  - name: <job>
+    ...
+```
 
 This decision was made to encourage consistency and to keep features in one
 place: BPM puts logs in the BOSH log directory and the syslog release takes
 those logs and puts them somewhere else. This means this if we need to fix a
 bug in the syslog forwarding then we don't need to bump every release.
+
+If you have some jobs using bpm, but they are co-located with other jobs using
+`_ctl` scripts, avoid double logs by adding providing a `custom_rule` argument
+to filter out messages originating from logger. `_ctl` scripts write to logger
+with the program name `vcap.[JOB_NAME]`, so we can filter out logs where the
+program name starts with `vcap`.
 
 [syslog-release]: https://github.com/cloudfoundry/syslog-release
 
