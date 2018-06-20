@@ -23,8 +23,9 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"syscall"
 
-	"github.com/opencontainers/runtime-spec/specs-go"
+	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
 type Signal int
@@ -95,21 +96,28 @@ func (*RuncClient) CreateBundle(
 	return enc.Encode(&jobSpec)
 }
 
-func (c *RuncClient) RunContainer(pidFilePath, bundlePath, containerID string, stdout, stderr io.Writer) error {
-	runcCmd := exec.Command(
-		c.runcPath,
-		"--root", c.runcRoot,
-		"run",
-		"--bundle", bundlePath,
-		"--pid-file", pidFilePath,
-		"--detach",
-		containerID,
-	)
+func (c *RuncClient) RunContainer(pidFilePath, bundlePath, containerID string, detach bool, stdout, stderr io.Writer) (int, error) {
+	args := []string{"--root", c.runcRoot, "run", "--bundle", bundlePath, "--pid-file", pidFilePath}
+	if detach {
+		args = append(args, "--detach")
+	}
+	args = append(args, containerID)
 
+	runcCmd := exec.Command(c.runcPath, args...)
 	runcCmd.Stdout = stdout
 	runcCmd.Stderr = stderr
 
-	return runcCmd.Run()
+	if err := runcCmd.Run(); err != nil {
+		if status, ok := runcCmd.ProcessState.Sys().(syscall.WaitStatus); ok {
+			return status.ExitStatus(), err
+		}
+
+		// If we can't get the exit status for some reason then make
+		// sure to at least return a generic failure.
+		return 1, err
+	}
+
+	return 0, nil
 }
 
 // Exec assumes you are launching an interactive shell.

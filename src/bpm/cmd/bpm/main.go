@@ -20,13 +20,13 @@ import (
 	"os"
 
 	"bpm/commands"
+	"bpm/exitstatus"
 )
 
 func main() {
-	err := commands.RootCmd.Execute()
-	if err != nil {
+	if err := commands.RootCmd.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %s\n", err.Error())
-		os.Exit(1)
+		os.Exit(exitstatus.FromError(err))
 	}
 
 	os.Exit(0)

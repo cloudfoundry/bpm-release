@@ -27,6 +27,7 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 
 	"code.cloudfoundry.org/clock/fakeclock"
+	"code.cloudfoundry.org/lager"
 	"code.cloudfoundry.org/lager/lagertest"
 
 	. "github.com/onsi/ginkgo"
@@ -119,6 +120,113 @@ var _ = Describe("RuncJobLifecycle", func() {
 		Expect(os.RemoveAll(expectedStderr.Name())).To(Succeed())
 	})
 
+	var ItSetsUpAndRunsAProcess = func(run func(logger lager.Logger, bpmCfg *config.BPMConfig, procCfg *config.ProcessConfig) error) {
+		Context("when a PreStart Hook is provided", func() {
+			BeforeEach(func() {
+				procCfg.Hooks = &config.Hooks{
+					PreStart: "/please/execute/me",
+				}
+			})
+
+			It("executes the pre start hook", func() {
+				err := run(logger, bpmCfg, procCfg)
+				Expect(err).NotTo(HaveOccurred())
+
+				expectedCommand := exec.Command(procCfg.Hooks.PreStart)
+				expectedCommand.Stdout = expectedStdout
+				expectedCommand.Stderr = expectedStderr
+				expectedCommand.Env = []string{"foo=bar"}
+
+				Expect(fakeCommandRunner.RunCallCount()).To(Equal(1))
+				Expect(fakeCommandRunner.RunArgsForCall(0)).To(Equal(expectedCommand))
+			})
+
+			Context("when the PreStart Hook fails", func() {
+				BeforeEach(func() {
+					fakeCommandRunner.RunReturns(errors.New("fake test error"))
+				})
+
+				It("returns an error", func() {
+					err := run(logger, bpmCfg, procCfg)
+					Expect(err).To(HaveOccurred())
+				})
+			})
+		})
+
+		Context("when PreStart Hook is empty", func() {
+			BeforeEach(func() {
+				procCfg.Hooks = &config.Hooks{
+					PreStart: "",
+				}
+			})
+
+			It("ignores the pre start hook", func() {
+				err := run(logger, bpmCfg, procCfg)
+				Expect(err).NotTo(HaveOccurred())
+			})
+		})
+
+		Context("when the process name is the same as the job name", func() {
+			BeforeEach(func() {
+				bpmCfg = config.NewBPMConfig(expectedSystemRoot, expectedJobName, expectedJobName)
+			})
+
+			It("simplifies the container ID", func() {
+				err := run(logger, bpmCfg, procCfg)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(fakeRuncClient.RunContainerCallCount()).To(Equal(1))
+				_, _, cid, _, _, _ := fakeRuncClient.RunContainerArgsForCall(0)
+				Expect(cid).To(Equal(config.Encode(expectedJobName)))
+			})
+		})
+
+		Context("when looking up the vcap user fails", func() {
+			BeforeEach(func() {
+				fakeUserFinder.LookupReturns(specs.User{}, errors.New("fake test error"))
+			})
+
+			It("returns an error", func() {
+				err := run(logger, bpmCfg, procCfg)
+				Expect(err).To(HaveOccurred())
+			})
+		})
+
+		Context("when creating the system files fails", func() {
+			BeforeEach(func() {
+				fakeRuncAdapter.CreateJobPrerequisitesReturns(nil, nil, errors.New("fake test error"))
+			})
+
+			It("returns an error", func() {
+				err := run(logger, bpmCfg, procCfg)
+				Expect(err).To(HaveOccurred())
+			})
+		})
+
+		Context("when building the runc spec fails", func() {
+			BeforeEach(func() {
+				fakeRuncAdapter.BuildSpecReturns(specs.Spec{}, errors.New("fake test error"))
+			})
+
+			It("returns an error", func() {
+				err := run(logger, bpmCfg, procCfg)
+				Expect(err).To(HaveOccurred())
+			})
+		})
+
+		Context("when building the bundle fails", func() {
+			BeforeEach(func() {
+				fakeRuncClient.CreateBundleReturns(errors.New("fake test error"))
+			})
+
+			It("returns an error", func() {
+				err := run(logger, bpmCfg, procCfg)
+				Expect(err).To(HaveOccurred())
+			})
+		})
+
+	}
+
 	Describe("StartProcess", func() {
 		It("builds the runc spec, bundle, and runs the container", func() {
 			err := runcLifecycle.StartProcess(logger, bpmCfg, procCfg)
@@ -146,77 +254,18 @@ var _ = Describe("RuncJobLifecycle", func() {
 			Expect(user).To(Equal(expectedUser))
 
 			Expect(fakeRuncClient.RunContainerCallCount()).To(Equal(1))
-			pidFilePath, bundlePath, cid, stdout, stderr := fakeRuncClient.RunContainerArgsForCall(0)
+			pidFilePath, bundlePath, cid, detach, stdout, stderr := fakeRuncClient.RunContainerArgsForCall(0)
 			Expect(pidFilePath).To(Equal(bpmCfg.PidFile()))
 			Expect(bundlePath).To(Equal(filepath.Join(expectedSystemRoot, "data", "bpm", "bundles", expectedJobName, expectedProcName)))
 			Expect(cid).To(Equal(expectedContainerID))
+			Expect(detach).To(BeTrue())
 			Expect(stdout).To(Equal(expectedStdout))
 			Expect(stderr).To(Equal(expectedStderr))
 		})
 
-		Context("when a PreStart Hook is provided", func() {
+		Context("when running the container fails", func() {
 			BeforeEach(func() {
-				procCfg.Hooks = &config.Hooks{
-					PreStart: "/please/execute/me",
-				}
-			})
-
-			It("executes the pre start hook", func() {
-				err := runcLifecycle.StartProcess(logger, bpmCfg, procCfg)
-				Expect(err).NotTo(HaveOccurred())
-
-				expectedCommand := exec.Command(procCfg.Hooks.PreStart)
-				expectedCommand.Stdout = expectedStdout
-				expectedCommand.Stderr = expectedStderr
-				expectedCommand.Env = []string{"foo=bar"}
-
-				Expect(fakeCommandRunner.RunCallCount()).To(Equal(1))
-				Expect(fakeCommandRunner.RunArgsForCall(0)).To(Equal(expectedCommand))
-			})
-
-			Context("when the PreStart Hook fails", func() {
-				BeforeEach(func() {
-					fakeCommandRunner.RunReturns(errors.New("fake test error"))
-				})
-
-				It("returns an error", func() {
-					err := runcLifecycle.StartProcess(logger, bpmCfg, procCfg)
-					Expect(err).To(HaveOccurred())
-				})
-			})
-		})
-
-		Context("when PreStart Hook is empty", func() {
-			BeforeEach(func() {
-				procCfg.Hooks = &config.Hooks{
-					PreStart: "",
-				}
-			})
-
-			It("ignores the pre start hook", func() {
-				err := runcLifecycle.StartProcess(logger, bpmCfg, procCfg)
-				Expect(err).NotTo(HaveOccurred())
-			})
-		})
-
-		Context("when the process name is the same as the job name", func() {
-			BeforeEach(func() {
-				bpmCfg = config.NewBPMConfig(expectedSystemRoot, expectedJobName, expectedJobName)
-			})
-
-			It("simplifies the container ID", func() {
-				err := runcLifecycle.StartProcess(logger, bpmCfg, procCfg)
-				Expect(err).NotTo(HaveOccurred())
-
-				Expect(fakeRuncClient.RunContainerCallCount()).To(Equal(1))
-				_, _, cid, _, _ := fakeRuncClient.RunContainerArgsForCall(0)
-				Expect(cid).To(Equal(config.Encode(expectedJobName)))
-			})
-		})
-
-		Context("when looking up the vcap user fails", func() {
-			BeforeEach(func() {
-				fakeUserFinder.LookupReturns(specs.User{}, errors.New("fake test error"))
+				fakeRuncClient.RunContainerReturns(1, errors.New("fake test error"))
 			})
 
 			It("returns an error", func() {
@@ -225,48 +274,62 @@ var _ = Describe("RuncJobLifecycle", func() {
 			})
 		})
 
-		Context("when creating the system files fails", func() {
-			BeforeEach(func() {
-				fakeRuncAdapter.CreateJobPrerequisitesReturns(nil, nil, errors.New("fake test error"))
-			})
-
-			It("returns an error", func() {
-				err := runcLifecycle.StartProcess(logger, bpmCfg, procCfg)
-				Expect(err).To(HaveOccurred())
-			})
+		ItSetsUpAndRunsAProcess(func(logger lager.Logger, bpmCfg *config.BPMConfig, procCfg *config.ProcessConfig) error {
+			return runcLifecycle.StartProcess(logger, bpmCfg, procCfg)
 		})
+	})
 
-		Context("when building the runc spec fails", func() {
-			BeforeEach(func() {
-				fakeRuncAdapter.BuildSpecReturns(specs.Spec{}, errors.New("fake test error"))
-			})
+	Describe("RunProcess", func() {
+		It("builds the runc spec, bundle, and runs the container", func() {
+			status, err := runcLifecycle.RunProcess(logger, bpmCfg, procCfg)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(status).To(Equal(0))
 
-			It("returns an error", func() {
-				err := runcLifecycle.StartProcess(logger, bpmCfg, procCfg)
-				Expect(err).To(HaveOccurred())
-			})
-		})
+			Expect(fakeUserFinder.LookupCallCount()).To(Equal(1))
+			Expect(fakeUserFinder.LookupArgsForCall(0)).To(Equal(usertools.VcapUser))
 
-		Context("when building the bundle fails", func() {
-			BeforeEach(func() {
-				fakeRuncClient.CreateBundleReturns(errors.New("fake test error"))
-			})
+			Expect(fakeRuncAdapter.CreateJobPrerequisitesCallCount()).To(Equal(1))
+			actualBPMCfg, actualProcCfg, user := fakeRuncAdapter.CreateJobPrerequisitesArgsForCall(0)
+			Expect(actualBPMCfg).To(Equal(bpmCfg))
+			Expect(actualProcCfg).To(Equal(procCfg))
+			Expect(user).To(Equal(expectedUser))
 
-			It("returns an error", func() {
-				err := runcLifecycle.StartProcess(logger, bpmCfg, procCfg)
-				Expect(err).To(HaveOccurred())
-			})
+			Expect(fakeRuncAdapter.BuildSpecCallCount()).To(Equal(1))
+			_, actualBPMCfg, actualProcCfg, user = fakeRuncAdapter.BuildSpecArgsForCall(0)
+			Expect(actualBPMCfg).To(Equal(bpmCfg))
+			Expect(actualProcCfg).To(Equal(procCfg))
+			Expect(user).To(Equal(expectedUser))
+
+			Expect(fakeRuncClient.CreateBundleCallCount()).To(Equal(1))
+			bundlePath, spec, user := fakeRuncClient.CreateBundleArgsForCall(0)
+			Expect(bundlePath).To(Equal(filepath.Join(expectedSystemRoot, "data", "bpm", "bundles", expectedJobName, expectedProcName)))
+			Expect(spec).To(Equal(jobSpec))
+			Expect(user).To(Equal(expectedUser))
+
+			Expect(fakeRuncClient.RunContainerCallCount()).To(Equal(1))
+			pidFilePath, bundlePath, cid, detach, _, _ := fakeRuncClient.RunContainerArgsForCall(0)
+			Expect(pidFilePath).To(Equal(bpmCfg.PidFile()))
+			Expect(bundlePath).To(Equal(filepath.Join(expectedSystemRoot, "data", "bpm", "bundles", expectedJobName, expectedProcName)))
+			Expect(cid).To(Equal(expectedContainerID))
+			Expect(detach).To(BeFalse())
 		})
 
 		Context("when running the container fails", func() {
 			BeforeEach(func() {
-				fakeRuncClient.RunContainerReturns(errors.New("fake test error"))
+				fakeRuncClient.RunContainerReturns(1, errors.New("fake test error"))
 			})
 
 			It("returns an error", func() {
-				err := runcLifecycle.StartProcess(logger, bpmCfg, procCfg)
+				status, err := runcLifecycle.RunProcess(logger, bpmCfg, procCfg)
 				Expect(err).To(HaveOccurred())
+				Expect(status).To(Equal(1))
 			})
+		})
+
+		ItSetsUpAndRunsAProcess(func(logger lager.Logger, bpmCfg *config.BPMConfig, procCfg *config.ProcessConfig) error {
+			// status is tested seperately
+			_, err := runcLifecycle.RunProcess(logger, bpmCfg, procCfg)
+			return err
 		})
 	})
 

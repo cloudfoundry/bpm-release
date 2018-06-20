@@ -1,3 +1,7 @@
+# v0.8.0
+
+* add the `bpm run` command for executing processes as short-lived commands
+
 # v0.7.1
 
 * sort mounts by ascending length of elements in destination path
