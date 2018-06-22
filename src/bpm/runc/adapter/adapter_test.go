@@ -728,7 +728,6 @@ var _ = Describe("RuncAdapter", func() {
 				spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
 				Expect(err).NotTo(HaveOccurred())
 
-				Expect(spec.Mounts).To(HaveLen(26))
 				Expect(spec.Mounts).To(ContainElement(specs.Mount{
 					Destination: "/this/is/an/unrestricted/path",
 					Type:        "bind",
