@@ -148,6 +148,9 @@ func (a *RuncAdapter) BuildSpec(
 	ms.addMounts(systemIdentityMounts(mountResolvConf))
 	ms.addMounts(boshMounts(bpmCfg, procCfg.EphemeralDisk, procCfg.PersistentDisk))
 	ms.addMounts(userProvidedIdentityMounts(bpmCfg, procCfg.AdditionalVolumes))
+	if procCfg.Unsafe != nil && len(procCfg.Unsafe.UnrestrictedVolumes) > 0 {
+		ms.addMounts(userProvidedIdentityMounts(bpmCfg, procCfg.Unsafe.UnrestrictedVolumes))
+	}
 
 	spec := specbuilder.Build(
 		specbuilder.WithRootFilesystem(bpmCfg.RootFSPath()),
@@ -288,7 +291,7 @@ func (d *dedupMounts) addMounts(ms []specs.Mount) {
 }
 
 func (d *dedupMounts) mounts() []specs.Mount {
-	var ms []specs.Mount
+	ms := make([]specs.Mount, 0, len(d.set))
 
 	for _, mount := range d.set {
 		ms = append(ms, mount)

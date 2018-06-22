@@ -713,5 +713,35 @@ var _ = Describe("RuncAdapter", func() {
 				}
 			})
 		})
+
+		Context("when the user requests unrestricted volumes", func() {
+			BeforeEach(func() {
+				procCfg.Unsafe = &config.Unsafe{
+					UnrestrictedVolumes: []config.Volume{
+						{Path: "/this/is/an/unrestricted/path"},
+						{Path: "/writable/executable/path", Writable: true, AllowExecutions: true},
+					},
+				}
+			})
+
+			It("adds the volumes to the list of mounts", func() {
+				spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(spec.Mounts).To(HaveLen(26))
+				Expect(spec.Mounts).To(ContainElement(specs.Mount{
+					Destination: "/this/is/an/unrestricted/path",
+					Type:        "bind",
+					Source:      "/this/is/an/unrestricted/path",
+					Options:     []string{"nodev", "nosuid", "noexec", "rbind", "ro"},
+				}))
+				Expect(spec.Mounts).To(ContainElement(specs.Mount{
+					Destination: "/writable/executable/path",
+					Type:        "bind",
+					Source:      "/writable/executable/path",
+					Options:     []string{"nodev", "nosuid", "exec", "rbind", "rw"},
+				}))
+			})
+		})
 	})
 })

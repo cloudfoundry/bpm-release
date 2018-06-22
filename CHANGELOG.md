@@ -1,6 +1,7 @@
 # v0.8.0
 
 * add the `bpm run` command for executing processes as short-lived commands
+* add support for unrestricted volumes in unsafe configuration
 
 # v0.7.1
 
