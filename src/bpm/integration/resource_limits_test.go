@@ -148,7 +148,7 @@ var _ = Describe("resource limits", func() {
 	Context("processes", func() {
 		BeforeEach(func() {
 			cfg = newJobConfig(job, processLeakBash)
-			limit := int64(1000)
+			limit := int64(50)
 			cfg.Processes[0].Limits = &config.Limits{Processes: &limit}
 		})
 

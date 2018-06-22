@@ -67,7 +67,7 @@ const processLeakBash = `trap "if [ \"$child\" ]; then kill $child; fi" SIGTERM;
 sleep 100 &
 child=$!;
 wait $child;
-for i in $(seq 1 999); do sleep 100 & done;
+for i in $(seq 1 49); do sleep 100 & done;
 wait`
 
 func messageQueueBash(id int) string {
