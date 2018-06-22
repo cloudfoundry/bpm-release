@@ -92,7 +92,7 @@ func start(cmd *cobra.Command, _ []string) error {
 		return nil
 	case models.ProcessStateFailed:
 		logger.Info("removing-stopped-process")
-		if err := runcLifecycle.RemoveProcess(bpmCfg); err != nil {
+		if err := runcLifecycle.RemoveProcess(logger, bpmCfg); err != nil {
 			logger.Error("failed-to-cleanup", err)
 			return fmt.Errorf("failed to clean up stale job-process: %s", err)
 		}

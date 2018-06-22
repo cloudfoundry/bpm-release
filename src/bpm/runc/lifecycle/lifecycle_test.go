@@ -496,7 +496,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 	Describe("RemoveProcess", func() {
 		It("deletes the container", func() {
-			err := runcLifecycle.RemoveProcess(bpmCfg)
+			err := runcLifecycle.RemoveProcess(logger, bpmCfg)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(fakeRuncClient.DeleteContainerCallCount()).To(Equal(1))
@@ -505,7 +505,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 		})
 
 		It("destroys the bundle", func() {
-			err := runcLifecycle.RemoveProcess(bpmCfg)
+			err := runcLifecycle.RemoveProcess(logger, bpmCfg)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(fakeRuncClient.DestroyBundleCallCount()).To(Equal(1))
@@ -519,7 +519,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 			})
 
 			It("simplifies the container id", func() {
-				err := runcLifecycle.RemoveProcess(bpmCfg)
+				err := runcLifecycle.RemoveProcess(logger, bpmCfg)
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(fakeRuncClient.DeleteContainerCallCount()).To(Equal(1))
@@ -537,7 +537,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 			})
 
 			It("returns an error", func() {
-				err := runcLifecycle.RemoveProcess(bpmCfg)
+				err := runcLifecycle.RemoveProcess(logger, bpmCfg)
 				Expect(err).To(Equal(expectedErr))
 			})
 		})
@@ -546,7 +546,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 			It("returns an error", func() {
 				expectedErr := errors.New("an error2")
 				fakeRuncClient.DestroyBundleReturns(expectedErr)
-				err := runcLifecycle.RemoveProcess(bpmCfg)
+				err := runcLifecycle.RemoveProcess(logger, bpmCfg)
 				Expect(err).To(Equal(expectedErr))
 			})
 		})

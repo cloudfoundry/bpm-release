@@ -276,12 +276,14 @@ func (j *RuncLifecycle) StopProcess(logger lager.Logger, cfg *config.BPMConfig, 
 	}
 }
 
-func (j *RuncLifecycle) RemoveProcess(cfg *config.BPMConfig) error {
+func (j *RuncLifecycle) RemoveProcess(logger lager.Logger, cfg *config.BPMConfig) error {
+	logger.Info("forcefully-deleting-container")
 	err := j.runcClient.DeleteContainer(cfg.ContainerID())
 	if err != nil {
 		return err
 	}
 
+	logger.Info("destroying-bundle")
 	return j.runcClient.DestroyBundle(cfg.BundlePath())
 }
 
