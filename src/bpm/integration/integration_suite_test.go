@@ -54,7 +54,7 @@ var _ = SynchronizedBeforeSuite(func() []byte {
 	return []byte(bpmPath)
 }, func(data []byte) {
 	bpmPath = string(data)
-	SetDefaultEventuallyTimeout(2 * time.Second)
+	SetDefaultEventuallyTimeout(5 * time.Second)
 })
 
 var _ = SynchronizedAfterSuite(func() {}, func() {
