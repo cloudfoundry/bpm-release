@@ -50,7 +50,7 @@ and `/var/tmp` are mapped onto the same host volume
 (`/var/vcap/data/JOB/tmp`) and changes made to one will instantly appear
 in the other.
 
-bpm will set the `TMPDIR` environment variable when execuring your job to one
+bpm will set the `TMPDIR` environment variable when executing your job to one
 of the paths listed above. This environment variable is respected by the
 majority of in-use standard libraries used by Cloud Foundry.
 
