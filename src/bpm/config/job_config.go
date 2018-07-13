@@ -58,6 +58,7 @@ type Volume struct {
 	Path            string `yaml:"path"`
 	Writable        bool   `yaml:"writable"`
 	AllowExecutions bool   `yaml:"allow_executions"`
+	MountOnly       bool   `yaml:"mount_only"`
 }
 
 type Unsafe struct {

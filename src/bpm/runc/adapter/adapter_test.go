@@ -144,6 +144,26 @@ var _ = Describe("RuncAdapter", func() {
 			}
 		})
 
+		Context("when a volume should be mounted only", func() {
+			BeforeEach(func() {
+				procCfg.AdditionalVolumes = append(procCfg.AdditionalVolumes, config.Volume{
+					Path:      filepath.Join(systemRoot, "mount", "only"),
+					MountOnly: true,
+				})
+			})
+
+			It("does not create that directory", func() {
+				_, _, err := runcAdapter.CreateJobPrerequisites(bpmCfg, procCfg, user)
+				Expect(err).NotTo(HaveOccurred())
+
+				for _, vol := range procCfg.AdditionalVolumes {
+					if vol.MountOnly {
+						Expect(vol.Path).NotTo(BeADirectory())
+					}
+				}
+			})
+		})
+
 		Context("when the user requests a persistent disk", func() {
 			BeforeEach(func() {
 				procCfg.PersistentDisk = true

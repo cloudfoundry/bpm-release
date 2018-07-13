@@ -57,19 +57,22 @@ func (a *RuncAdapter) CreateJobPrerequisites(
 		return nil, nil, err
 	}
 
-	var directories []string
+	var dirsToCreate []string
 	for _, vol := range procCfg.AdditionalVolumes {
-		directories = append(directories, vol.Path)
+		if vol.MountOnly {
+			continue
+		}
+		dirsToCreate = append(dirsToCreate, vol.Path)
 	}
 
-	directories = append(
-		directories,
+	dirsToCreate = append(
+		dirsToCreate,
 		bpmCfg.LogDir(),
 		bpmCfg.TempDir(),
 	)
 
 	if procCfg.EphemeralDisk {
-		directories = append(directories, bpmCfg.DataDir())
+		dirsToCreate = append(dirsToCreate, bpmCfg.DataDir())
 	}
 
 	if procCfg.PersistentDisk {
@@ -82,10 +85,10 @@ func (a *RuncAdapter) CreateJobPrerequisites(
 			return nil, nil, errors.New("requested persistent disk does not exist")
 		}
 
-		directories = append(directories, bpmCfg.StoreDir())
+		dirsToCreate = append(dirsToCreate, bpmCfg.StoreDir())
 	}
 
-	for _, dir := range directories {
+	for _, dir := range dirsToCreate {
 		err = createDirFor(dir, int(user.UID), int(user.GID))
 		if err != nil {
 			return nil, nil, err
