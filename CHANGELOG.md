@@ -1,6 +1,7 @@
 # v0.9.0
 
 * decrease the time between SIGTERM and SIGKILL to 15 seconds from 20 seconds
+* add the `mount_only` option for volumes
 
 # v0.8.0
 
