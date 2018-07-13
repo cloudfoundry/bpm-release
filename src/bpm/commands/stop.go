@@ -24,7 +24,7 @@ import (
 	"bpm/runc/lifecycle"
 )
 
-const DefaultStopTimeout = 20 * time.Second
+const DefaultStopTimeout = 15 * time.Second
 
 func init() {
 	stopCommand.Flags().StringVarP(&procName, "process", "p", "", "optional process name")

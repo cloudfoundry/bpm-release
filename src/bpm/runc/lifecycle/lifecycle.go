@@ -35,7 +35,7 @@ import (
 )
 
 const (
-	ContainerSigQuitGracePeriod = 5 * time.Second
+	ContainerSigQuitGracePeriod = 2 * time.Second
 	ContainerStatePollInterval  = 1 * time.Second
 
 	ContainerStateRunning = "running"
