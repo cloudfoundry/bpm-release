@@ -165,6 +165,7 @@ jobs:
     - test-acceptance-trusty
     - test-acceptance-xenial
     - test-unit
+    - test-upgrade
     trigger: true
   - put: tracker
     params:
@@ -254,6 +255,7 @@ jobs:
       - test-acceptance-trusty
       - test-acceptance-xenial
       - test-unit
+      - test-upgrade
     - get: version
       params:
         bump: final
