@@ -252,6 +252,24 @@ This also can be achieved using an operation file similar to the following:
   value: true
 ```
 
+### Using an Addon
+
+Instead of manually weaving BPM onto each instance group on the system you can
+use [addons in the BOSH runtime configuration][addons] to deploy with BPM.
+
+```yaml
+releases:
+- name: bpm
+  version: latest
+
+- name: bpm
+  jobs:
+  - name: bpm
+    release: bpm
+```
+
+[addons]: https://bosh.io/docs/runtime-config/
+
 ## Log Forwarding
 
 Some `_ctl` scripts forward the output and error streams from their server to
