@@ -27,8 +27,9 @@ import (
 const cgroupFilesystem = "cgroup"
 
 var (
-	cgroupRoot = filepath.Join("/sys", "fs", "cgroup")
-	subsystems = []string{"blkio", "cpu", "cpuacct", "cpuset", "devices", "freezer", "hugetlb", "memory", "perf_event", "pids"}
+	cgroupRoot       = filepath.Join("/sys", "fs", "cgroup")
+	legacyCgroupRoot = filepath.Join("/cgroup", "bpm")
+	subsystems       = []string{"blkio", "cpu", "cpuacct", "cpuset", "devices", "freezer", "hugetlb", "memory", "perf_event", "pids"}
 )
 
 func Setup() error {
@@ -47,6 +48,13 @@ func Setup() error {
 		if err != nil {
 			return err
 		}
+	}
+
+	// JM: This exists for the legacy code cgroup mount point
+	// This should be deleted when v1 is released.
+	err = chmodLegacyMountPointIfPresent()
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -96,4 +104,28 @@ func containsElement(elements []string, element string) bool {
 	}
 
 	return false
+}
+
+func chmodLegacyMountPointIfPresent() error {
+	err := chmodIfExists(legacyCgroupRoot)
+	if err != nil {
+		return err
+	}
+
+	for _, subsystem := range subsystems {
+		err := chmodIfExists(filepath.Join(legacyCgroupRoot, subsystem))
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func chmodIfExists(path string) error {
+	err := os.Chmod(path, 0755)
+	if os.IsNotExist(err) {
+		return nil
+	}
+	return err
 }
