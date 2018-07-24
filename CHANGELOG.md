@@ -1,3 +1,7 @@
+# v0.10.0
+
+* mount cgroup subsystems at canonical location 
+
 # v0.9.0
 
 * decrease the time between SIGTERM and SIGKILL to 15 seconds from 20 seconds
