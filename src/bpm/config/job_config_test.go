@@ -104,47 +104,50 @@ var _ = Describe("Config", func() {
 			jobCfg = &config.JobConfig{
 				Processes: []*config.ProcessConfig{
 					{
-						Name:              "example",
-						Executable:        "executable",
-						AdditionalVolumes: []config.Volume{},
+						Name:       "example",
+						Executable: "executable",
+						AdditionalVolumes: []config.Volume{
+							{Path: "/var/vcap/data/valid"},
+							{Path: "/var/vcap/store/valid"},
+						},
 					},
 				},
 			}
 		})
 
 		It("does not error on a valid config", func() {
-			Expect(jobCfg.Validate([]string{})).To(Succeed())
+			Expect(jobCfg.Validate("/var/vcap", []string{})).To(Succeed())
 		})
 
-		Context("when the config has additional_volumes that are not nested in `/var/vcap`", func() {
+		Context("when the config has additional_volumes that are not nested in the bosh root", func() {
 			It("returns a validation error", func() {
 				jobCfg.Processes[0].AdditionalVolumes = []config.Volume{
 					{Path: "/var/vcap/data/valid"},
 					{Path: "/bin"},
 				}
-				Expect(jobCfg.Validate([]string{})).To(HaveOccurred())
+				Expect(jobCfg.Validate("/var/vcap", []string{})).To(HaveOccurred())
 
 				jobCfg.Processes[0].AdditionalVolumes = []config.Volume{
 					{Path: "/var/vcap/data/valid"},
 					{Path: "/var/vcap/invalid"},
 				}
-				Expect(jobCfg.Validate([]string{})).To(HaveOccurred())
+				Expect(jobCfg.Validate("/var/vcap", []string{})).To(HaveOccurred())
 
 				jobCfg.Processes[0].AdditionalVolumes = []config.Volume{
 					{Path: "/var/vcap/data/valid"},
 					{Path: "/var/vcap/data"},
 				}
-				Expect(jobCfg.Validate([]string{})).To(HaveOccurred())
+				Expect(jobCfg.Validate("/var/vcap", []string{})).To(HaveOccurred())
 
 				jobCfg.Processes[0].AdditionalVolumes = []config.Volume{
 					{Path: "/var/vcap/store"},
 				}
-				Expect(jobCfg.Validate([]string{})).To(HaveOccurred())
+				Expect(jobCfg.Validate("/var/vcap", []string{})).To(HaveOccurred())
 
 				jobCfg.Processes[0].AdditionalVolumes = []config.Volume{
 					{Path: "//var/vcap/data/valid"},
 				}
-				Expect(jobCfg.Validate([]string{})).To(HaveOccurred())
+				Expect(jobCfg.Validate("/var/vcap", []string{})).To(HaveOccurred())
 			})
 		})
 
@@ -153,7 +156,7 @@ var _ = Describe("Config", func() {
 				jobCfg.Processes[0].AdditionalVolumes = []config.Volume{
 					{Path: "/var/vcap/data/job-name"},
 				}
-				Expect(jobCfg.Validate([]string{
+				Expect(jobCfg.Validate("/var/vcap", []string{
 					"/var/vcap/data/job-name",
 				})).To(HaveOccurred())
 			})
@@ -162,7 +165,7 @@ var _ = Describe("Config", func() {
 		Context("when the process does not have a name", func() {
 			It("returns an error", func() {
 				jobCfg.Processes[0].Name = ""
-				Expect(jobCfg.Validate([]string{})).To(HaveOccurred())
+				Expect(jobCfg.Validate("", []string{})).To(HaveOccurred())
 			})
 		})
 
@@ -172,7 +175,7 @@ var _ = Describe("Config", func() {
 			})
 
 			It("returns an error", func() {
-				Expect(jobCfg.Validate([]string{})).To(HaveOccurred())
+				Expect(jobCfg.Validate("", []string{})).To(HaveOccurred())
 			})
 		})
 	})
