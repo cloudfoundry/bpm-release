@@ -115,7 +115,7 @@ func (c *BPMConfig) ParseJobConfig() (*JobConfig, error) {
 
 	defaultVolumes := []string{c.DataDir(), c.StoreDir()}
 
-	err = cfg.Validate(defaultVolumes)
+	err = cfg.Validate(c.boshRoot, defaultVolumes)
 	if err != nil {
 		return nil, err
 	}

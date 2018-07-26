@@ -1,6 +1,7 @@
 # v0.10.0
 
-* mount cgroup subsystems at canonical location 
+* allow users to specify regular files in `additional_volumes`
+* mount cgroup subsystems at canonical location
 
 # v0.9.0
 

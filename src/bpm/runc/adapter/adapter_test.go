@@ -144,6 +144,37 @@ var _ = Describe("RuncAdapter", func() {
 			}
 		})
 
+		Context("when a volume provided is a regular file", func() {
+			var tempFilePath string
+
+			BeforeEach(func() {
+				f, err := ioutil.TempFile(systemRoot, "temp-file")
+				Expect(err).NotTo(HaveOccurred())
+				defer f.Close()
+
+				tempFilePath = f.Name()
+
+				_, err = f.Write([]byte("some data"))
+				Expect(err).NotTo(HaveOccurred())
+
+				procCfg.AdditionalVolumes = append(procCfg.AdditionalVolumes, config.Volume{
+					Path: tempFilePath,
+				})
+			})
+
+			It("only chowns the file to be owned by vcap", func() {
+				_, _, err := runcAdapter.CreateJobPrerequisites(bpmCfg, procCfg, user)
+				Expect(err).NotTo(HaveOccurred())
+
+				info, err := os.Stat(tempFilePath)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(info.IsDir()).To(BeFalse())
+				Expect(info.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(200)))
+				Expect(info.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
+			})
+		})
+
 		Context("when a volume should be mounted only", func() {
 			BeforeEach(func() {
 				procCfg.AdditionalVolumes = append(procCfg.AdditionalVolumes, config.Volume{

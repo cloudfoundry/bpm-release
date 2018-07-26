@@ -82,14 +82,9 @@ func ParseJobConfig(configPath string) (*JobConfig, error) {
 	return &cfg, nil
 }
 
-const (
-	validDataVolumePrefix  = "/var/vcap/data"
-	validStoreVolumePrefix = "/var/vcap/store"
-)
-
-func (c *JobConfig) Validate(defaultVolumes []string) error {
+func (c *JobConfig) Validate(boshRoot string, defaultVolumes []string) error {
 	for _, v := range c.Processes {
-		if err := v.Validate(defaultVolumes); err != nil {
+		if err := v.Validate(boshRoot, defaultVolumes); err != nil {
 			return err
 		}
 	}
@@ -97,7 +92,7 @@ func (c *JobConfig) Validate(defaultVolumes []string) error {
 	return nil
 }
 
-func (c *ProcessConfig) Validate(defaultVolumes []string) error {
+func (c *ProcessConfig) Validate(boshRoot string, defaultVolumes []string) error {
 	if c.Name == "" {
 		return errors.New("invalid config: name")
 	}
@@ -105,6 +100,9 @@ func (c *ProcessConfig) Validate(defaultVolumes []string) error {
 	if c.Executable == "" {
 		return errors.New("invalid config: executable")
 	}
+
+	validDataVolumePrefix := filepath.Join(boshRoot, "data")
+	validStoreVolumePrefix := filepath.Join(boshRoot, "store")
 
 	for _, vol := range c.AdditionalVolumes {
 		volCleaned := filepath.Clean(vol.Path)
