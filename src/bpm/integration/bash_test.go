@@ -108,3 +108,11 @@ fi
 sleep 100 &
 child=$!;
 wait $child`
+
+func catBash(path string) string {
+	return fmt.Sprintf(`trap "echo 'Received a Signal' && kill -9 $child" SIGTERM;
+cat %s;
+sleep 100 &
+child=$!;
+wait $child`, path)
+}

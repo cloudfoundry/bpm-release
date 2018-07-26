@@ -313,4 +313,34 @@ var _ = Describe("start", func() {
 			Expect(session.Err).Should(gbytes.Say(`process "I DO NOT EXIST" not present in job configuration`))
 		})
 	})
+
+	Context("when the volume specified is a file", func() {
+		BeforeEach(func() {
+			randomFile := filepath.Join(boshRoot, "data", job, "random-file")
+			f, err := os.OpenFile(randomFile, os.O_CREATE|os.O_RDWR, 0777)
+			Expect(err).NotTo(HaveOccurred())
+
+			_, err = f.Write([]byte("i am a random file"))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(f.Close()).To(Succeed())
+
+			cfg.Processes[0].AdditionalVolumes = []config.Volume{
+				{Path: randomFile},
+			}
+
+			cfg.Processes[0].Args = []string{
+				"-c",
+				catBash(randomFile),
+			}
+		})
+
+		It("properly bind mounts the file into the container", func() {
+			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+			Expect(err).ShouldNot(HaveOccurred())
+			Eventually(session).Should(gexec.Exit(0))
+
+			Eventually(stdout).Should(BeAnExistingFile())
+			Eventually(fileContents(stdout)).Should(ContainSubstring("i am a random file"))
+		})
+	})
 })

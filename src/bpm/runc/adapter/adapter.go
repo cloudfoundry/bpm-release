@@ -57,12 +57,23 @@ func (a *RuncAdapter) CreateJobPrerequisites(
 		return nil, nil, err
 	}
 
-	var dirsToCreate []string
+	var dirsToCreate, pathsToChown []string
 	for _, vol := range procCfg.AdditionalVolumes {
 		if vol.MountOnly {
 			continue
 		}
-		dirsToCreate = append(dirsToCreate, vol.Path)
+
+		_, err = os.Stat(vol.Path)
+		if os.IsNotExist(err) {
+			dirsToCreate = append(dirsToCreate, vol.Path)
+			continue
+		}
+
+		if err != nil {
+			return nil, nil, err
+		}
+
+		pathsToChown = append(pathsToChown, vol.Path)
 	}
 
 	dirsToCreate = append(
@@ -76,7 +87,8 @@ func (a *RuncAdapter) CreateJobPrerequisites(
 	}
 
 	if procCfg.PersistentDisk {
-		storeExists, err := checkDirExists(filepath.Dir(bpmCfg.StoreDir()))
+		var storeExists bool
+		storeExists, err = checkDirExists(filepath.Dir(bpmCfg.StoreDir()))
 		if err != nil {
 			return nil, nil, err
 		}
@@ -88,13 +100,51 @@ func (a *RuncAdapter) CreateJobPrerequisites(
 		dirsToCreate = append(dirsToCreate, bpmCfg.StoreDir())
 	}
 
-	for _, dir := range dirsToCreate {
-		err = createDirFor(dir, int(user.UID), int(user.GID))
+	err = createDirs(dirsToCreate, user)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	err = chownPaths(pathsToChown, user)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return createLogFiles(bpmCfg, user)
+}
+
+func createDirs(dirs []string, user specs.User) error {
+	for _, dir := range dirs {
+		err := createDirFor(dir, int(user.UID), int(user.GID))
 		if err != nil {
-			return nil, nil, err
+			return err
 		}
 	}
 
+	return nil
+}
+
+func createDirFor(path string, uid, gid int) error {
+	err := os.MkdirAll(path, 0700)
+	if err != nil {
+		return err
+	}
+
+	return os.Chown(path, uid, gid)
+}
+
+func chownPaths(paths []string, user specs.User) error {
+	for _, path := range paths {
+		err := os.Chown(path, int(user.UID), int(user.GID))
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func createLogFiles(bpmCfg *config.BPMConfig, user specs.User) (*os.File, *os.File, error) {
 	files := make([]*os.File, 2)
 	paths := []string{bpmCfg.Stdout(), bpmCfg.Stderr()}
 	for i, path := range paths {
@@ -106,15 +156,6 @@ func (a *RuncAdapter) CreateJobPrerequisites(
 	}
 
 	return files[0], files[1], nil
-}
-
-func createDirFor(path string, uid, gid int) error {
-	err := os.MkdirAll(path, 0700)
-	if err != nil {
-		return err
-	}
-
-	return os.Chown(path, uid, gid)
 }
 
 func createFileFor(path string, uid, gid int) (*os.File, error) {
