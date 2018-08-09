@@ -40,6 +40,33 @@ descriptors. This data will be written to
 Any other files which are written to `/var/vcap/sys/log/JOB` inside the
 container will be written to `/var/vcap/sys/log/JOB` in the host system.
 
+## Resource Limits
+
+bpm can enforce various [resource limits][limits] on your processes. There are
+currently 3 different types: memory, open files, and processes.
+
+### Memory
+
+If your process tries to allocate more memory that your configuration allows
+then it will be immediately killed by the OOM killer. This setting is more
+useful for agent jobs which do not use more memory under user load and do not
+want to affect the more important user-facing processes.
+
+### Open Files
+
+The open files setting sets a limit on the number of open files (including
+network connections) which your job is allowed to have open at once. This is
+equivalent to setting `ulimit -n` for your process.
+
+### Processes
+
+This setting places a limit on the number of PIDs which your process is allowed
+to create. This is to protect against fork-bombs and other resource exhaustion
+mistakes or attacks. Threads also count towards this limit as they are
+also given PIDs.
+
+[limits]: config.md#limits-schema
+
 ## Storing Data
 
 ### Temporary Files
