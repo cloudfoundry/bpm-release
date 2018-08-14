@@ -11,8 +11,6 @@ scripts_path=$(absolute_path "$(dirname "$0")" )
 export GOPATH=$scripts_path/..
 export PATH=$GOPATH/bin:$PATH
 
-${scripts_path}/mountgroups.sh
-
 pushd "${GOPATH}" > /dev/null
   pushd "src/bpm" > /dev/null
     go install ./vendor/github.com/onsi/ginkgo/ginkgo
