@@ -47,6 +47,10 @@ required = [
   branch = "v2"
   name = "gopkg.in/yaml.v2"
 
+[[override]]
+  name = "gopkg.in/fsnotify.v1"
+  source = "https://github.com/fsnotify/fsnotify.git"
+
 [prune]
   go-tests = true
   non-go = true
