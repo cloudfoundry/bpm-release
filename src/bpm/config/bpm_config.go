@@ -107,15 +107,17 @@ func (c *BPMConfig) JobConfig() string {
 	return filepath.Join(c.JobDir(), "config", "bpm.yml")
 }
 
+func (c *BPMConfig) DefaultVolumes() []string {
+	return []string{c.DataDir(), c.StoreDir()}
+}
+
 func (c *BPMConfig) ParseJobConfig() (*JobConfig, error) {
 	cfg, err := ParseJobConfig(c.JobConfig())
 	if err != nil {
 		return nil, err
 	}
 
-	defaultVolumes := []string{c.DataDir(), c.StoreDir()}
-
-	err = cfg.Validate(c.boshRoot, defaultVolumes)
+	err = cfg.Validate(c.boshRoot, c.DefaultVolumes())
 	if err != nil {
 		return nil, err
 	}

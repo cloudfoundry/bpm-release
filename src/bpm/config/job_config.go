@@ -130,6 +130,44 @@ func (c *ProcessConfig) Validate(boshRoot string, defaultVolumes []string) error
 	return nil
 }
 
+func (c *ProcessConfig) AddVolumes(
+	volumes []string,
+	boshRoot string,
+	defaultVolumes []string,
+) error {
+	for _, volume := range volumes {
+		fields := strings.Split(volume, ":")
+
+		if len(fields) > 2 {
+			return fmt.Errorf("invalid volume definition (format: <path>[:<options>]): %s", volume)
+		}
+
+		v := Volume{
+			Path: fields[0],
+		}
+
+		if len(fields) == 2 {
+			options := strings.Split(fields[1], ",")
+			for _, option := range options {
+				switch option {
+				case "writable":
+					v.Writable = true
+				case "mount_only":
+					v.MountOnly = true
+				case "allow_executions":
+					v.AllowExecutions = true
+				default:
+					return fmt.Errorf("invalid volume option: %s", option)
+				}
+			}
+		}
+
+		c.AdditionalVolumes = append(c.AdditionalVolumes, v)
+	}
+
+	return c.Validate(boshRoot, defaultVolumes)
+}
+
 func contains(elements []string, s string) bool {
 	for _, elem := range elements {
 		if s == elem {
