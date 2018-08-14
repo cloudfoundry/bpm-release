@@ -179,4 +179,97 @@ var _ = Describe("Config", func() {
 			})
 		})
 	})
+
+	Describe("AddVolumes", func() {
+		var cfg *config.ProcessConfig
+
+		BeforeEach(func() {
+			cfg = &config.ProcessConfig{
+				Name:       "name",
+				Executable: "executable",
+			}
+		})
+
+		It("adds the volumes to the list of AdditionalVolumes", func() {
+			err := cfg.AddVolumes(
+				[]string{
+					"/path/to/data/volume1",
+					"/path/to/store/volume2:writable",
+					"/path/to/data/volume3:mount_only",
+					"/path/to/store/volume4:allow_executions",
+					"/path/to/data/volume5:writable,mount_only,allow_executions",
+				},
+				"/path/to",
+				[]string{},
+			)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(cfg.AdditionalVolumes).To(HaveLen(5))
+			Expect(cfg.AdditionalVolumes).To(ContainElement(config.Volume{
+				Path: "/path/to/data/volume1",
+			}))
+			Expect(cfg.AdditionalVolumes).To(ContainElement(config.Volume{
+				Path:     "/path/to/store/volume2",
+				Writable: true,
+			}))
+			Expect(cfg.AdditionalVolumes).To(ContainElement(config.Volume{
+				Path:      "/path/to/data/volume3",
+				MountOnly: true,
+			}))
+			Expect(cfg.AdditionalVolumes).To(ContainElement(config.Volume{
+				Path:            "/path/to/store/volume4",
+				AllowExecutions: true,
+			}))
+			Expect(cfg.AdditionalVolumes).To(ContainElement(config.Volume{
+				Path:            "/path/to/data/volume5",
+				Writable:        true,
+				MountOnly:       true,
+				AllowExecutions: true,
+			}))
+		})
+
+		Context("when the volume definition contains an invalid option", func() {
+			It("returns an error", func() {
+				err := cfg.AddVolumes(
+					[]string{"/path/to/volume1:non_existant"},
+					"/path/to",
+					[]string{},
+				)
+				Expect(err).To(HaveOccurred())
+			})
+		})
+
+		Context("when the volume has too many fields", func() {
+			It("returns an error", func() {
+				err := cfg.AddVolumes(
+					[]string{"/path/to/volume1:writable:invalid_field"},
+					"/path/to",
+					[]string{},
+				)
+				Expect(err).To(HaveOccurred())
+			})
+		})
+
+		Context("when the volumes are invalid", func() {
+			It("returns an error", func() {
+				Expect(cfg.AddVolumes(
+					[]string{"/outside/volume1:writable"},
+					"/path/to",
+					[]string{},
+				)).To(HaveOccurred())
+
+				Expect(cfg.AddVolumes(
+					[]string{"/path/to/volume1:writable"},
+					"/path/to",
+					[]string{},
+				)).To(HaveOccurred())
+
+				Expect(cfg.AddVolumes(
+					[]string{"/path/to/data:writable"},
+					"/path/to",
+					[]string{"/path/to/data"},
+				)).To(HaveOccurred())
+			})
+		})
+	})
 })

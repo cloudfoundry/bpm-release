@@ -1,5 +1,6 @@
 # v0.10.0
 
+* allow users to specify additional volumes through flags on `bpm run`
 * allow users to specify regular files in `additional_volumes`
 * mount cgroup subsystems at canonical location
 

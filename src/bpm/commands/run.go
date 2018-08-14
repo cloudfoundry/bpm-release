@@ -26,8 +26,11 @@ import (
 	"bpm/runc/lifecycle"
 )
 
+var volumes []string
+
 func init() {
 	runCommand.Flags().StringVarP(&procName, "process", "p", "", "the optional process name")
+	runCommand.Flags().StringSliceVarP(&volumes, "volume", "v", []string{}, "Optional list of volumes (format: <path>[:<options>])")
 	RootCmd.AddCommand(runCommand)
 }
 
@@ -71,6 +74,11 @@ func run(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		logger.Error("process-not-defined", err)
 		return fmt.Errorf("process %q not present in job configuration (%s)", procName, bpmCfg.JobConfig())
+	}
+
+	if err = procCfg.AddVolumes(volumes, bosh.Root(), bpmCfg.DefaultVolumes()); err != nil {
+		logger.Error("invalid-volume-definition", err)
+		return err
 	}
 
 	runcLifecycle, err := newRuncLifecycle()
