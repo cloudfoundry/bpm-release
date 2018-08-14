@@ -145,7 +145,7 @@ run`. This is useful to mount volumes which you don't know about until runtime.
 The syntax for this is:
 
 ```
-bpm -v /var/vcap/data/database:writable,allow_executions -v ... [...]
+bpm run -v /var/vcap/data/database:writable,allow_executions -v ... [...]
 ```
 
 The volume flag can be specified multiple times and can use the `writable`,
