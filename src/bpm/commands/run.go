@@ -27,7 +27,7 @@ import (
 )
 
 func init() {
-	runCommand.Flags().StringVarP(&procName, "process", "p", "", "The optional process name.")
+	runCommand.Flags().StringVarP(&procName, "process", "p", "", "the optional process name")
 	RootCmd.AddCommand(runCommand)
 }
 
