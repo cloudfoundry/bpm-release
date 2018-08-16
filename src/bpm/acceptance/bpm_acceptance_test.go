@@ -234,6 +234,17 @@ var _ = Describe("BpmAcceptance", func() {
 
 		Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	})
+
+	It("logs to syslog", func() {
+		req, err := http.NewRequest("GET", fmt.Sprintf("%s/syslog", *agentURI), nil)
+		Expect(err).NotTo(HaveOccurred())
+
+		resp, err := client.Do(req)
+		Expect(err).NotTo(HaveOccurred())
+		defer resp.Body.Close()
+
+		Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	})
 })
 
 func containsString(list []string, item string) bool {

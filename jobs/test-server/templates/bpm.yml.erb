@@ -11,6 +11,10 @@ processes:
     open_files: 1024
   ephemeral_disk: true
   persistent_disk: true
+  unsafe:
+    unrestricted_volumes:
+    - path: /dev/log
+      mount_only: true
 - name: alt-test-server
   executable: /var/vcap/packages/test-server/bin/test-server
   args:
