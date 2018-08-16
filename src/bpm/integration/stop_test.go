@@ -92,6 +92,14 @@ var _ = Describe("stop", func() {
 		Eventually(fileContents(stdout)).Should(ContainSubstring("Received a Signal"))
 	})
 
+	It("removes the pid file", func() {
+		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+		Expect(err).ToNot(HaveOccurred())
+		Eventually(session).Should(gexec.Exit(0))
+
+		Expect(filepath.Join(boshRoot, "sys", "run", "bpm", job, fmt.Sprintf("%s.pid", job))).ToNot(BeAnExistingFile())
+	})
+
 	It("removes the container and its corresponding process", func() {
 		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 		Expect(err).ToNot(HaveOccurred())

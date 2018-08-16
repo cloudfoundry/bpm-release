@@ -1,3 +1,7 @@
+# v0.11.0
+
+* delete the pidfile when the job is shutting down
+
 # v0.10.0
 
 * allow users to specify additional volumes through flags on `bpm run`
