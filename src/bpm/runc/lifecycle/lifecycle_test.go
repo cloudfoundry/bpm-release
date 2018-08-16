@@ -48,6 +48,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 		fakeRuncClient    *lifecyclefakes.FakeRuncClient
 		fakeUserFinder    *lifecyclefakes.FakeUserFinder
 		fakeCommandRunner *lifecyclefakes.FakeCommandRunner
+		fakeFileRemover   *fileRemover
 
 		logger *lagertest.TestLogger
 
@@ -75,6 +76,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 		fakeRuncClient = &lifecyclefakes.FakeRuncClient{}
 		fakeUserFinder = &lifecyclefakes.FakeUserFinder{}
 		fakeCommandRunner = &lifecyclefakes.FakeCommandRunner{}
+		fakeFileRemover = &fileRemover{}
 
 		logger = lagertest.NewTestLogger("lifecycle")
 
@@ -111,6 +113,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 			fakeUserFinder,
 			fakeCommandRunner,
 			fakeClock,
+			fakeFileRemover.Remove,
 		)
 		bpmCfg = config.NewBPMConfig(expectedSystemRoot, expectedJobName, expectedProcName)
 	})
@@ -513,6 +516,13 @@ var _ = Describe("RuncJobLifecycle", func() {
 			Expect(bundlePath).To(Equal(filepath.Join(expectedSystemRoot, "data", "bpm", "bundles", expectedJobName, expectedProcName)))
 		})
 
+		It("deletes the pidfile", func() {
+			err := runcLifecycle.RemoveProcess(logger, bpmCfg)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(fakeFileRemover.deletedFiles).To(ConsistOf(bpmCfg.PidFile()))
+		})
+
 		Context("when the process name is the same as the job name", func() {
 			BeforeEach(func() {
 				bpmCfg = config.NewBPMConfig(expectedSystemRoot, expectedJobName, expectedJobName)
@@ -725,3 +735,12 @@ var _ = Describe("RuncJobLifecycle", func() {
 		})
 	})
 })
+
+type fileRemover struct {
+	deletedFiles []string
+}
+
+func (f *fileRemover) Remove(path string) error {
+	f.deletedFiles = append(f.deletedFiles, path)
+	return nil
+}

@@ -90,6 +90,7 @@ type RuncLifecycle struct {
 	runcAdapter   RuncAdapter
 	runcClient    RuncClient
 	userFinder    UserFinder
+	deleteFile    func(string) error
 }
 
 func NewRuncLifecycle(
@@ -98,6 +99,7 @@ func NewRuncLifecycle(
 	userFinder UserFinder,
 	commandRunner CommandRunner,
 	clock clock.Clock,
+	deleteFile func(string) error,
 ) *RuncLifecycle {
 	return &RuncLifecycle{
 		clock:         clock,
@@ -105,6 +107,7 @@ func NewRuncLifecycle(
 		runcAdapter:   runcAdapter,
 		userFinder:    userFinder,
 		commandRunner: commandRunner,
+		deleteFile:    deleteFile,
 	}
 }
 
@@ -278,13 +281,17 @@ func (j *RuncLifecycle) StopProcess(logger lager.Logger, cfg *config.BPMConfig, 
 
 func (j *RuncLifecycle) RemoveProcess(logger lager.Logger, cfg *config.BPMConfig) error {
 	logger.Info("forcefully-deleting-container")
-	err := j.runcClient.DeleteContainer(cfg.ContainerID())
-	if err != nil {
+	if err := j.runcClient.DeleteContainer(cfg.ContainerID()); err != nil {
 		return err
 	}
 
 	logger.Info("destroying-bundle")
-	return j.runcClient.DestroyBundle(cfg.BundlePath())
+	if err := j.runcClient.DestroyBundle(cfg.BundlePath()); err != nil {
+		return err
+	}
+
+	logger.Info("deleting-pidfile")
+	return j.deleteFile(cfg.PidFile())
 }
 
 func newProcessFromContainerState(id, status string, pid int) *models.Process {
