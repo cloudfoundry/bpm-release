@@ -44,7 +44,6 @@ chronic bazel run :gazelle
 echo "pending failing tests..."
 chronic buildozer 'add tags manual' \
   //bpm/acceptance:go_default_test \
-  //bpm/config:go_default_test \
   //bpm/integration:go_default_test \
   //bpm/integration2:go_default_test \
   //bpm/mount:go_default_test \
