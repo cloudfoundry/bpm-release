@@ -88,7 +88,7 @@ func trace(cmd *cobra.Command, _ []string) error {
 		errCh <- straceCmd.Wait()
 	}()
 
-	signals := make(chan os.Signal)
+	signals := make(chan os.Signal, 1)
 	signal.Notify(signals)
 
 	for {
