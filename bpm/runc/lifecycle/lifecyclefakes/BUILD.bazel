@@ -1,0 +1,20 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "fake_command_runner.go",
+        "fake_runc_adapter.go",
+        "fake_runc_client.go",
+        "fake_user_finder.go",
+    ],
+    importpath = "bpm/runc/lifecycle/lifecyclefakes",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//bpm/config:go_default_library",
+        "//bpm/runc/client:go_default_library",
+        "//bpm/runc/lifecycle:go_default_library",
+        "//bpm/vendor/code.cloudfoundry.org/lager:go_default_library",
+        "//bpm/vendor/github.com/opencontainers/runtime-spec/specs-go:go_default_library",
+    ],
+)
