@@ -14,6 +14,7 @@ go_test(
         "mountutil_suite_test.go",
         "mountutil_test.go",
     ],
+    data = glob(["testdata/**"]),
     embed = [":go_default_library"],
     tags = ["manual"],
     deps = [

@@ -31,7 +31,7 @@ var _ = Describe("Mount", func() {
 
 	Describe("parseMountFile", func() {
 		It("returns a slice of mounts", func() {
-			mnts, err := parseMountFile("fixtures/mount")
+			mnts, err := parseMountFile("testdata/mount")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(mnts).To(ConsistOf(
 				Mnt{
@@ -57,7 +57,7 @@ var _ = Describe("Mount", func() {
 
 		Context("when the file contains an invalid mount format", func() {
 			It("returns an error", func() {
-				_, err := parseMountFile("fixtures/invalid-mount")
+				_, err := parseMountFile("testdata/invalid-mount")
 				Expect(err).To(HaveOccurred())
 			})
 		})
