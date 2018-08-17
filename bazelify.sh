@@ -19,6 +19,10 @@ mv src/bpm bpm
 rm -r src
 git add src
 
+# remove superfluous files
+echo "remove superfluous files..."
+rm bpm/.gitignore
+
 # setup the monorepo imports
 echo "setting up monorepo imports..."
 echo "# gazelle:prefix bpm" > bpm/BUILD.bazel
