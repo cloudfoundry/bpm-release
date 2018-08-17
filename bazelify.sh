@@ -54,6 +54,9 @@ chronic buildozer 'add tags manual' \
   //bpm/runc/client:go_default_test \
   //bpm/usertools:go_default_test \
 
+echo "making non-standard modifications..."
+chronic buildozer 'set pure "on"' //bpm/cmd/bpm:bpm
+
 # check it all worked
 echo "checking it all worked..."
 chronic bazel build //...

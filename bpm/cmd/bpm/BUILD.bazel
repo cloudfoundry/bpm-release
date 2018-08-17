@@ -14,5 +14,6 @@ go_library(
 go_binary(
     name = "bpm",
     embed = [":go_default_library"],
+    pure = "on",
     visibility = ["//visibility:public"],
 )
