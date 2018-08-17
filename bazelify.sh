@@ -50,7 +50,6 @@ chronic buildozer 'add tags manual' \
   //bpm/acceptance:go_default_test \
   //bpm/integration:go_default_test \
   //bpm/integration2:go_default_test \
-  //bpm/mount:go_default_test \
   //bpm/runc/adapter:go_default_test \
   //bpm/runc/client:go_default_test \
   //bpm/usertools:go_default_test \
