@@ -12,5 +12,5 @@ before_install:
 - sudo apt-get -y install bazel
 
 script:
-- bazel build ...
+- bazel build ... --noshow_progress --verbose_failures
 - bazel test ... --noshow_progress --verbose_failures --test_output=errors
