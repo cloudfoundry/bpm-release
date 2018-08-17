@@ -27,7 +27,7 @@ var _ = Describe("Config", func() {
 		var configPath string
 
 		BeforeEach(func() {
-			configPath = "fixtures/example.yml"
+			configPath = "testdata/example.yml"
 		})
 
 		It("parses a yaml file into a bpm config", func() {
@@ -87,7 +87,7 @@ var _ = Describe("Config", func() {
 
 		Context("when the yaml is invalid", func() {
 			BeforeEach(func() {
-				configPath = "fixtures/example-invalid-yaml.yml"
+				configPath = "testdata/example-invalid-yaml.yml"
 			})
 
 			It("returns an error", func() {
