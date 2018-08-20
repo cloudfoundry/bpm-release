@@ -61,7 +61,7 @@ func main() {
 	http.HandleFunc("/env", handlers.Env)
 	http.HandleFunc("/syslog", handlers.Syslog)
 
-	signals := make(chan os.Signal)
+	signals := make(chan os.Signal, 1)
 	signal.Notify(signals)
 
 	go handleSignals(signals)
