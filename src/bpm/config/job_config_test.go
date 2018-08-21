@@ -272,4 +272,45 @@ var _ = Describe("Config", func() {
 			})
 		})
 	})
+
+	Describe("AddEnvVars", func() {
+		var cfg *config.ProcessConfig
+
+		BeforeEach(func() {
+			cfg = &config.ProcessConfig{
+				Name:       "name",
+				Executable: "executable",
+				Env:        map[string]string{},
+			}
+		})
+
+		It("adds the environment variables to the Env map", func() {
+			err := cfg.AddEnvVars(
+				[]string{
+					"SIMPLE=values",
+					"KEY=will-be-overridden",
+					"KEY=later-wins",
+					"OTHER=handles=equals=signs",
+				},
+				"/bosh/root",
+				[]string{},
+			)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(cfg.Env).To(HaveKeyWithValue("SIMPLE", "values"))
+			Expect(cfg.Env).To(HaveKeyWithValue("KEY", "later-wins"))
+			Expect(cfg.Env).To(HaveKeyWithValue("OTHER", "handles=equals=signs"))
+		})
+
+		Context("when the environment definition contains an invalid option", func() {
+			It("returns an error", func() {
+				err := cfg.AddEnvVars(
+					[]string{"INVALID"},
+					"/bosh/root",
+					[]string{},
+				)
+				Expect(err).To(HaveOccurred())
+			})
+		})
+	})
 })

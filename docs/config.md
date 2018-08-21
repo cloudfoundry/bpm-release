@@ -138,20 +138,25 @@ sysctl -e -w net.ipv4.tcp_tw_reuse 1
 You could set these in your bpm `pre_start` but since these affect the entire
 host and not just the contained job we like to keep them separate.
 
-## Passing Volumes at Runtime
+## Passing Configuration at Runtime
 
-You are also able to pass volumes to mount into the process when using `bpm
-run`. This is useful to mount volumes which you don't know about until runtime.
-The syntax for this is:
+You are also able to pass volumes to mount and environment variables into the
+process when using `bpm run`. This is useful to mount volumes and pass
+configuration which you don't know about until runtime.  The syntax for this
+is:
 
 ```
 bpm run -v /var/vcap/data/database:writable,allow_executions -v ... [...]
 ```
 
-The volume flag can be specified multiple times and can use the `writable`,
-`mount_only`, or `allow_executions` options.
+```
+bpm run -e KEY=value -e ... [...]
+```
 
-The same validations and limitations which apply to the volumes in the
+The both flags can be specified multiple times. The volume flag can use the
+`writable`, `mount_only`, or `allow_executions` options.
+
+The same validations and limitations which apply to the file-based
 configuration also apply here.
 
 ## Hooks

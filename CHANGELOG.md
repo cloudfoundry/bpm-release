@@ -1,3 +1,8 @@
+# v0.12.0
+
+* allow users to specify additional environment variables through flags on `bpm
+  run`
+
 # v0.11.0
 
 * delete the pidfile when the job is shutting down
