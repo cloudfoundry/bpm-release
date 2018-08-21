@@ -4,9 +4,9 @@
 
 ## About
 
-bpm is a layer between `monit` and your BOSH jobs which adds additional
-features while removing nearly all boilerplate startup scripts. It is backwards
-compatible with any BOSH version released in the past few years.
+bpm (BOSH process manager) is a layer between `monit` and your BOSH jobs which
+adds additional features while removing nearly all boilerplate startup scripts.
+It is backwards compatible with any BOSH version released in the past few years.
 
 ### Well-defined Lifecycle
 
