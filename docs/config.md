@@ -153,6 +153,9 @@ bpm run -v /var/vcap/data/database:writable,allow_executions -v ... [...]
 bpm run -e KEY=value -e ... [...]
 ```
 
+**Note:** The environment variable flag should not be used for secret values as
+these strings will appear in the process table.
+
 The both flags can be specified multiple times. The volume flag can use the
 `writable`, `mount_only`, or `allow_executions` options.
 
