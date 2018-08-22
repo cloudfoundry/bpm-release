@@ -1,3 +1,7 @@
+# v0.12.2
+
+* allow multiple volume options to be passed as a flag without quoting
+
 # v0.12.1
 
 * fix the environment variable flag from v0.12.0
