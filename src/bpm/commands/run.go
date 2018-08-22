@@ -88,7 +88,7 @@ func run(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	if err = procCfg.AddEnvVars(volumes, bosh.Root(), bpmCfg.DefaultVolumes()); err != nil {
+	if err = procCfg.AddEnvVars(env, bosh.Root(), bpmCfg.DefaultVolumes()); err != nil {
 		logger.Error("invalid-environment-definition", err)
 		return err
 	}
