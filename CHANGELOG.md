@@ -1,3 +1,7 @@
+# v0.12.1
+
+* fix the environment variable flag from v0.12.0
+
 # v0.12.0
 
 * allow users to specify additional environment variables through flags on `bpm
