@@ -17,8 +17,9 @@ package mount
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
-	"os"
+	"io/ioutil"
 	"strings"
 
 	"golang.org/x/sys/unix"
@@ -40,19 +41,20 @@ func Unmount(target string, flags int) error {
 }
 
 func Mounts() ([]Mnt, error) {
-	return parseMountFile("/proc/mounts")
-}
-
-func parseMountFile(procMountpath string) ([]Mnt, error) {
-	f, err := os.Open(procMountpath)
+	bs, err := ioutil.ReadFile("/proc/mounts")
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
+	return ParseFstab(bs)
+}
 
-	mnts := []Mnt{}
+// ParseFstab parses byte slices which contain the contents of files formatted
+// as described by fstab(5).
+func ParseFstab(contents []byte) ([]Mnt, error) {
+	var mnts []Mnt
 
-	scanner := bufio.NewScanner(f)
+	r := bytes.NewBuffer(contents)
+	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
 		fields := strings.Fields(scanner.Text())
 		if len(fields) < 6 {

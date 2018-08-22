@@ -28,6 +28,8 @@ import (
 	"testing"
 
 	"github.com/onsi/gomega/gexec"
+
+	"bpm/mount"
 )
 
 var runcExe = flag.String("runcExe", "/var/vcap/packages/bpm/bin/runc", "path to the runc executable")
@@ -84,15 +86,36 @@ func TestRun(t *testing.T) {
 	}
 }
 
-func TestRunWithVolumeAndEnvrionmentFlags(t *testing.T) {
+func TestRunWithEnvFlags(t *testing.T) {
+	t.Parallel()
+	s := NewSandbox(t)
+	defer s.Cleanup()
+
+	s.LoadFixture("errand", "testdata/env-flag.yml")
+	sentinel := "sentinel"
+
+	cmd := s.BPMCmd(
+		"run",
+		"errand",
+		"-e", fmt.Sprintf("ENVKEY=%s", sentinel),
+	)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("failed to run bpm: %s", output)
+	}
+	if contents, sentinel := string(output), sentinel; !strings.Contains(contents, sentinel) {
+		t.Errorf("output did not contain %q; contents: %q", sentinel, contents)
+	}
+}
+
+func TestRunWithVolumeFlags(t *testing.T) {
 	t.Parallel()
 	s := NewSandbox(t)
 	defer s.Cleanup()
 
 	s.LoadFixture("errand", "testdata/volume-flag.yml")
-
 	extraVolumeDir := filepath.Join(s.root, "data", "extra-volume")
-	extraVolumeFile := filepath.Join(s.root, "data", "extra-volume", "data.txt")
+	extraVolumeFile := filepath.Join(extraVolumeDir, "data.txt")
 
 	cmd := s.BPMCmd(
 		"run",
@@ -104,20 +127,28 @@ func TestRunWithVolumeAndEnvrionmentFlags(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to run bpm: %s", output)
 	}
+	mounts, err := mount.ParseFstab(output)
+	if err != nil {
+		t.Fatalf("could not parse output as fstab (%q): %q", output, err)
+	}
+	if len(mounts) != 1 {
+		t.Fatalf("more than one mount was grepped, got: %d", len(mounts))
+	}
+	mnt := mounts[0]
 
 	// check the path of the mount
-	if contents, sentinel := string(output), extraVolumeDir; !strings.Contains(contents, sentinel) {
-		t.Errorf("mount did not contain %q, contents: %q", sentinel, contents)
+	if have, want := mnt.MountPoint, extraVolumeDir; have != want {
+		t.Errorf("mountpoint did not contain %q, have: %q", want, have)
 	}
 
 	// check the mount has no read only option
-	if contents, sentinel := string(output), "ro"; strings.Contains(contents, sentinel) {
-		t.Errorf("mount contained read only option, contents: %q", contents)
+	if mountHasOption(mnt, "ro") {
+		t.Errorf("mount contained read only option, contents: %q", mnt.Options)
 	}
 
 	// check the mount has no noexec option
-	if contents, sentinel := string(output), "noexec"; strings.Contains(contents, sentinel) {
-		t.Errorf("mount contained read only option, contents: %q", contents)
+	if mountHasOption(mnt, "noexec") {
+		t.Errorf("mount contained read only option, contents: %s", mnt.Options)
 	}
 
 	fileContents, err := ioutil.ReadFile(extraVolumeFile)
@@ -127,6 +158,16 @@ func TestRunWithVolumeAndEnvrionmentFlags(t *testing.T) {
 	if contents, sentinel := string(fileContents), "success"; !strings.Contains(contents, sentinel) {
 		t.Errorf("extra volume file did not contain %q, contents: %q", sentinel, contents)
 	}
+}
+
+func mountHasOption(m mount.Mnt, opt string) bool {
+	for _, o := range m.Options {
+		if o == opt {
+			return true
+		}
+	}
+
+	return false
 }
 
 func TestRunFailure(t *testing.T) {
