@@ -1,8 +1,5 @@
 # Configuration Format
 
-**Note:** This is not the final configuration format and is subject to change at
-any time.
-
 ## Example `monit` Configuration
 
 bpm still sits on top of `monit` as part of the current BOSH job API. However,
