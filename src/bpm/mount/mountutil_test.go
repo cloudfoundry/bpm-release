@@ -16,6 +16,8 @@
 package mount
 
 import (
+	"io/ioutil"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -31,7 +33,7 @@ var _ = Describe("Mount", func() {
 
 	Describe("parseMountFile", func() {
 		It("returns a slice of mounts", func() {
-			mnts, err := parseMountFile("testdata/mount")
+			mnts, err := ParseFstab(fileContents("testdata/mount"))
 			Expect(err).NotTo(HaveOccurred())
 			Expect(mnts).To(ConsistOf(
 				Mnt{
@@ -57,16 +59,15 @@ var _ = Describe("Mount", func() {
 
 		Context("when the file contains an invalid mount format", func() {
 			It("returns an error", func() {
-				_, err := parseMountFile("testdata/invalid-mount")
-				Expect(err).To(HaveOccurred())
-			})
-		})
-
-		Context("when the file doesn't exist", func() {
-			It("returns an error", func() {
-				_, err := parseMountFile("this-is-non-existant")
+				_, err := ParseFstab(fileContents("testdata/invalid-mount"))
 				Expect(err).To(HaveOccurred())
 			})
 		})
 	})
 })
+
+func fileContents(path string) []byte {
+	bs, err := ioutil.ReadFile(path)
+	Expect(err).ToNot(HaveOccurred())
+	return bs
+}
