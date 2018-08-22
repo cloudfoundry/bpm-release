@@ -168,6 +168,26 @@ func (c *ProcessConfig) AddVolumes(
 	return c.Validate(boshRoot, defaultVolumes)
 }
 
+// AddEnvVars allows additional environment variables to be added to a process
+// configuration after parsing the configuration file. The environment
+// variables take the form of "KEY=VALUE". If a key is specified multiple times
+// then the last valeu wins.
+func (c *ProcessConfig) AddEnvVars(
+	env []string,
+	boshRoot string,
+	defaultVolumes []string,
+) error {
+	for _, e := range env {
+		parts := strings.SplitN(e, "=", 2)
+		if len(parts) < 2 {
+			return fmt.Errorf("invalid envionment variable definition (format should be KEY=value): %q", e)
+		}
+		key, value := parts[0], parts[1]
+		c.Env[key] = value
+	}
+	return c.Validate(boshRoot, defaultVolumes)
+}
+
 func contains(elements []string, s string) bool {
 	for _, elem := range elements {
 		if s == elem {

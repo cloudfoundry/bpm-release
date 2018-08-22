@@ -26,11 +26,18 @@ import (
 	"bpm/runc/lifecycle"
 )
 
-var volumes []string
+var (
+	// Volumes which come from command-line flags.
+	volumes []string
+
+	// Environment variables which come from command-line flags.
+	env []string
+)
 
 func init() {
 	runCommand.Flags().StringVarP(&procName, "process", "p", "", "the optional process name")
 	runCommand.Flags().StringSliceVarP(&volumes, "volume", "v", []string{}, "Optional list of volumes (format: <path>[:<options>])")
+	runCommand.Flags().StringSliceVarP(&env, "env", "e", []string{}, "Additional environment variables (format: KEY=VALUE")
 	RootCmd.AddCommand(runCommand)
 }
 
@@ -78,6 +85,11 @@ func run(cmd *cobra.Command, _ []string) error {
 
 	if err = procCfg.AddVolumes(volumes, bosh.Root(), bpmCfg.DefaultVolumes()); err != nil {
 		logger.Error("invalid-volume-definition", err)
+		return err
+	}
+
+	if err = procCfg.AddEnvVars(volumes, bosh.Root(), bpmCfg.DefaultVolumes()); err != nil {
+		logger.Error("invalid-environment-definition", err)
 		return err
 	}
 
