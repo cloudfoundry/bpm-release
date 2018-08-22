@@ -1,0 +1,7 @@
+---
+processes:
+- name: errand
+  executable: /bin/bash
+  args:
+  - -c
+  - "cat /proc/mounts | grep extra-volume; echo success > $FILE_TO_WRITE_TO"

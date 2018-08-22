@@ -84,6 +84,51 @@ func TestRun(t *testing.T) {
 	}
 }
 
+func TestRunWithVolumeAndEnvrionmentFlags(t *testing.T) {
+	t.Parallel()
+	s := NewSandbox(t)
+	defer s.Cleanup()
+
+	s.LoadFixture("errand", "testdata/volume-flag.yml")
+
+	extraVolumeDir := filepath.Join(s.root, "data", "extra-volume")
+	extraVolumeFile := filepath.Join(s.root, "data", "extra-volume", "data.txt")
+
+	cmd := s.BPMCmd(
+		"run",
+		"errand",
+		"-v", fmt.Sprintf("%s:writable,allow_executions", extraVolumeDir),
+		"-e", fmt.Sprintf("FILE_TO_WRITE_TO=%s", extraVolumeFile),
+	)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("failed to run bpm: %s", output)
+	}
+
+	// check the path of the mount
+	if contents, sentinel := string(output), extraVolumeDir; !strings.Contains(contents, sentinel) {
+		t.Errorf("mount did not contain %q, contents: %q", sentinel, contents)
+	}
+
+	// check the mount has no read only option
+	if contents, sentinel := string(output), "ro"; strings.Contains(contents, sentinel) {
+		t.Errorf("mount contained read only option, contents: %q", contents)
+	}
+
+	// check the mount has no noexec option
+	if contents, sentinel := string(output), "noexec"; strings.Contains(contents, sentinel) {
+		t.Errorf("mount contained read only option, contents: %q", contents)
+	}
+
+	fileContents, err := ioutil.ReadFile(extraVolumeFile)
+	if err != nil {
+		t.Fatalf("failed to read extra volume file: %v", err)
+	}
+	if contents, sentinel := string(fileContents), "success"; !strings.Contains(contents, sentinel) {
+		t.Errorf("extra volume file did not contain %q, contents: %q", sentinel, contents)
+	}
+}
+
 func TestRunFailure(t *testing.T) {
 	t.Parallel()
 	s := NewSandbox(t)

@@ -36,8 +36,8 @@ var (
 
 func init() {
 	runCommand.Flags().StringVarP(&procName, "process", "p", "", "the optional process name")
-	runCommand.Flags().StringSliceVarP(&volumes, "volume", "v", []string{}, "Optional list of volumes (format: <path>[:<options>])")
-	runCommand.Flags().StringSliceVarP(&env, "env", "e", []string{}, "Additional environment variables (format: KEY=VALUE")
+	runCommand.Flags().StringArrayVarP(&volumes, "volume", "v", []string{}, "Optional list of volumes (format: <path>[:<options>])")
+	runCommand.Flags().StringArrayVarP(&env, "env", "e", []string{}, "Additional environment variables (format: KEY=VALUE")
 	RootCmd.AddCommand(runCommand)
 }
 
