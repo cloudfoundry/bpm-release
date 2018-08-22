@@ -280,7 +280,6 @@ var _ = Describe("Config", func() {
 			cfg = &config.ProcessConfig{
 				Name:       "name",
 				Executable: "executable",
-				Env:        map[string]string{},
 			}
 		})
 
@@ -310,6 +309,18 @@ var _ = Describe("Config", func() {
 					[]string{},
 				)
 				Expect(err).To(HaveOccurred())
+			})
+		})
+
+		Context("when the process config has environment variables", func() {
+			It("adds the environment variables to the Env map", func() {
+				cfg.Env = map[string]string{"SIMPLE": "values"}
+
+				err := cfg.AddEnvVars([]string{"ANOTHER=value"}, "/bosh/root", []string{})
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(cfg.Env).To(HaveKeyWithValue("SIMPLE", "values"))
+				Expect(cfg.Env).To(HaveKeyWithValue("ANOTHER", "value"))
 			})
 		})
 	})

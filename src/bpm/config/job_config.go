@@ -177,6 +177,9 @@ func (c *ProcessConfig) AddEnvVars(
 	boshRoot string,
 	defaultVolumes []string,
 ) error {
+	if c.Env == nil {
+		c.Env = map[string]string{}
+	}
 	for _, e := range env {
 		parts := strings.SplitN(e, "=", 2)
 		if len(parts) < 2 {
