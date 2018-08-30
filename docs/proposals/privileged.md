@@ -1,9 +1,9 @@
 # Privileged Jobs
 
-Aram Price
-Christopher Brown
-James Myers
-February 2018
+Aram Price  
+Christopher Brown  
+James Myers  
+*February 2018*
 
 ## Background
 Although we’d like to avoid running BOSH jobs as the root user it is sometimes
