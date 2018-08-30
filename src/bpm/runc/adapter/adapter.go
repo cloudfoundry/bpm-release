@@ -38,12 +38,14 @@ const (
 )
 
 type RuncAdapter struct {
-	features sysfeat.Features
+	features    sysfeat.Features
+	mountSharer func(string) error
 }
 
-func NewRuncAdapter(features sysfeat.Features) *RuncAdapter {
+func NewRuncAdapter(features sysfeat.Features, mountSharer func(string) error) *RuncAdapter {
 	return &RuncAdapter{
-		features: features,
+		features:    features,
+		mountSharer: mountSharer,
 	}
 }
 
@@ -82,6 +84,12 @@ func (a *RuncAdapter) CreateJobPrerequisites(
 
 		if err := prepareVolume(vol.Path, user); err != nil {
 			return nil, nil, err
+		}
+
+		if vol.Shared {
+			if err := a.mountSharer(vol.Path); err != nil {
+				return nil, nil, err
+			}
 		}
 	}
 

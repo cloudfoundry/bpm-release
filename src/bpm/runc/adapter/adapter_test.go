@@ -16,6 +16,7 @@
 package adapter
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -42,8 +43,9 @@ var _ = Describe("RuncAdapter", func() {
 		jobName,
 		procName,
 		systemRoot string
-		user     specs.User
-		features sysfeat.Features
+		user        specs.User
+		features    sysfeat.Features
+		mountSharer *fakeMountSharer
 
 		bpmCfg  *config.BPMConfig
 		procCfg *config.ProcessConfig
@@ -53,6 +55,7 @@ var _ = Describe("RuncAdapter", func() {
 	BeforeEach(func() {
 		logger = lagertest.NewTestLogger("adapter")
 		features = sysfeat.Features{}
+		mountSharer = &fakeMountSharer{}
 
 		jobName = "example"
 		procName = "server"
@@ -74,7 +77,7 @@ var _ = Describe("RuncAdapter", func() {
 	})
 
 	JustBeforeEach(func() {
-		runcAdapter = NewRuncAdapter(features)
+		runcAdapter = NewRuncAdapter(features, mountSharer.MakeShared)
 	})
 
 	AfterEach(func() {
@@ -192,6 +195,37 @@ var _ = Describe("RuncAdapter", func() {
 						Expect(vol.Path).NotTo(BeADirectory())
 					}
 				}
+			})
+		})
+
+		Context("when a volume should be shared", func() {
+			BeforeEach(func() {
+				procCfg.AdditionalVolumes = append(procCfg.AdditionalVolumes, config.Volume{
+					Path:   filepath.Join(systemRoot, "shared"),
+					Shared: true,
+				})
+			})
+
+			It("shares the mount point", func() {
+				_, _, err := runcAdapter.CreateJobPrerequisites(bpmCfg, procCfg, user)
+				Expect(err).NotTo(HaveOccurred())
+
+				for _, vol := range procCfg.AdditionalVolumes {
+					if vol.Shared {
+						Expect(mountSharer.sharedMounts).To(ContainElement(vol.Path))
+					}
+				}
+			})
+
+			Context("when the mount sharing fails", func() {
+				BeforeEach(func() {
+					mountSharer.err = errors.New("disaster")
+				})
+
+				It("returns an error", func() {
+					_, _, err := runcAdapter.CreateJobPrerequisites(bpmCfg, procCfg, user)
+					Expect(err).To(HaveOccurred())
+				})
 			})
 		})
 
@@ -795,3 +829,16 @@ var _ = Describe("RuncAdapter", func() {
 		})
 	})
 })
+
+type fakeMountSharer struct {
+	sharedMounts []string
+	err          error
+}
+
+func (ms *fakeMountSharer) MakeShared(path string) error {
+	if ms.err != nil {
+		return ms.err
+	}
+	ms.sharedMounts = append(ms.sharedMounts, path)
+	return nil
+}

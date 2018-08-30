@@ -28,6 +28,7 @@ import (
 
 	"bpm/cgroups"
 	"bpm/config"
+	"bpm/mount"
 	"bpm/runc/adapter"
 	"bpm/runc/client"
 	"bpm/runc/lifecycle"
@@ -177,7 +178,7 @@ func newRuncLifecycle() (*lifecycle.RuncLifecycle, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch system features: %q", err)
 	}
-	runcAdapter := adapter.NewRuncAdapter(*features)
+	runcAdapter := adapter.NewRuncAdapter(*features, mount.MakeShared)
 	clock := clock.NewClock()
 
 	return lifecycle.NewRuncLifecycle(

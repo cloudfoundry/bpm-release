@@ -198,13 +198,14 @@ var _ = Describe("Config", func() {
 					"/path/to/data/volume3:mount_only",
 					"/path/to/store/volume4:allow_executions",
 					"/path/to/data/volume5:writable,mount_only,allow_executions",
+					"/path/to/data/volume6:shared",
 				},
 				"/path/to",
 				[]string{},
 			)
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(cfg.AdditionalVolumes).To(HaveLen(5))
+			Expect(cfg.AdditionalVolumes).To(HaveLen(6))
 			Expect(cfg.AdditionalVolumes).To(ContainElement(config.Volume{
 				Path: "/path/to/data/volume1",
 			}))
@@ -225,6 +226,10 @@ var _ = Describe("Config", func() {
 				Writable:        true,
 				MountOnly:       true,
 				AllowExecutions: true,
+			}))
+			Expect(cfg.AdditionalVolumes).To(ContainElement(config.Volume{
+				Path:   "/path/to/data/volume6",
+				Shared: true,
 			}))
 		})
 

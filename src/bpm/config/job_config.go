@@ -59,6 +59,7 @@ type Volume struct {
 	Writable        bool   `yaml:"writable"`
 	AllowExecutions bool   `yaml:"allow_executions"`
 	MountOnly       bool   `yaml:"mount_only"`
+	Shared          bool   `yaml:"shared"`
 }
 
 type Unsafe struct {
@@ -156,6 +157,8 @@ func (c *ProcessConfig) AddVolumes(
 					v.MountOnly = true
 				case "allow_executions":
 					v.AllowExecutions = true
+				case "shared":
+					v.Shared = true
 				default:
 					return fmt.Errorf("invalid volume option: %s", option)
 				}

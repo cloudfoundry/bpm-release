@@ -1,3 +1,8 @@
+# v0.13.0
+
+* add shared volumes which will share the mountpoints they contain with other
+  jobs which mount the same volume
+
 # v0.12.2
 
 * allow multiple volume options to be passed as a flag without quoting
