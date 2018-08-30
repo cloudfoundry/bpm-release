@@ -31,6 +31,23 @@ var _ = Describe("Mount", func() {
 		})
 	})
 
+	Describe("IsMountpoint", func() {
+		It("returns whether or not the given path has anything mounted on it", func() {
+			mounts := []Mnt{
+				{MountPoint: "/"},
+				{MountPoint: "/tmp"},
+				{MountPoint: "/mnt/cdrom"},
+			}
+
+			Expect(isMountpoint(mounts, "/")).To(BeTrue())
+			Expect(isMountpoint(mounts, "/tmp")).To(BeTrue())
+			Expect(isMountpoint(mounts, "/mnt/cdrom")).To(BeTrue())
+
+			Expect(isMountpoint(mounts, "/home/user")).To(BeFalse())
+			Expect(isMountpoint(mounts, "")).To(BeFalse())
+		})
+	})
+
 	Describe("parseMountFile", func() {
 		It("returns a slice of mounts", func() {
 			mnts, err := ParseFstab(fileContents("testdata/mount"))

@@ -40,6 +40,26 @@ func Unmount(target string, flags int) error {
 	return unix.Unmount(target, flags)
 }
 
+// IsMountpoint returns whether or not the given path is a mount point on the
+// system.
+func IsMountpoint(path string) (bool, error) {
+	ms, err := Mounts()
+	if err != nil {
+		return false, err
+	}
+
+	return isMountpoint(ms, path), nil
+}
+
+func isMountpoint(ms []Mnt, path string) bool {
+	for _, m := range ms {
+		if m.MountPoint == path {
+			return true
+		}
+	}
+	return false
+}
+
 func Mounts() ([]Mnt, error) {
 	bs, err := ioutil.ReadFile("/proc/mounts")
 	if err != nil {
@@ -72,4 +92,31 @@ func ParseFstab(contents []byte) ([]Mnt, error) {
 	}
 
 	return mnts, nil
+}
+
+// MakeShared takes a path and turns it into a shared mountpoint. Due to the
+// requirement of only being able to share an existing mountpoint this function
+// will also bind mount a path to itself if it is not already a mountpoint. In
+// the case of an error in making the mountpoint shared this identity mount
+// will be rolled back.
+func MakeShared(path string) error {
+	isMount, err := IsMountpoint(path)
+	if err != nil {
+		return err
+	}
+
+	if !isMount {
+		if err := Mount(path, path, "", unix.MS_BIND, ""); err != nil {
+			return err
+		}
+	}
+
+	if err := Mount("none", path, "", unix.MS_SHARED, ""); err != nil {
+		if !isMount {
+			_ = Unmount(path, 0)
+			return err
+		}
+	}
+
+	return nil
 }
