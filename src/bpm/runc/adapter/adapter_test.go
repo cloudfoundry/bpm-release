@@ -470,7 +470,7 @@ var _ = Describe("RuncAdapter", func() {
 				return len(iElems) < len(jElems)
 			})).To(BeTrue())
 
-			Expect(spec.Linux.RootfsPropagation).To(Equal("private"))
+			Expect(spec.Linux.RootfsPropagation).To(Equal("shared"))
 			Expect(spec.Linux.MaskedPaths).To(ConsistOf([]string{
 				"/etc/sv",
 				"/proc/kcore",

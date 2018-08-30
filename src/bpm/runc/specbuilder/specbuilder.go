@@ -105,11 +105,12 @@ func Apply(spec *specs.Spec, opts ...SpecOption) {
 	}
 }
 
-func WithRootFilesystem(path string) SpecOption {
+func WithRootFilesystem(path, propagation string) SpecOption {
 	return func(spec *specs.Spec) {
 		spec.Root = &specs.Root{
 			Path: path,
 		}
+		spec.Linux.RootfsPropagation = propagation
 	}
 }
 

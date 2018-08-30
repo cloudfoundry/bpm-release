@@ -197,7 +197,7 @@ func (a *RuncAdapter) BuildSpec(
 	}
 
 	spec := specbuilder.Build(
-		specbuilder.WithRootFilesystem(bpmCfg.RootFSPath()),
+		specbuilder.WithRootFilesystem(bpmCfg.RootFSPath(), "shared"),
 		specbuilder.WithUser(user),
 		specbuilder.WithProcess(
 			procCfg.Executable,
