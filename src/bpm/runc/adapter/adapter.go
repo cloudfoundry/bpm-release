@@ -47,48 +47,60 @@ func NewRuncAdapter(features sysfeat.Features) *RuncAdapter {
 	}
 }
 
+func prepareVolume(path string, user specs.User) error {
+	exists, err := checkDirExists(path)
+	if err != nil {
+		return err
+	}
+
+	if !exists {
+		if err := os.MkdirAll(path, 0700); err != nil {
+			return err
+		}
+	}
+
+	if err := os.Chown(path, int(user.UID), int(user.GID)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (a *RuncAdapter) CreateJobPrerequisites(
 	bpmCfg *config.BPMConfig,
 	procCfg *config.ProcessConfig,
 	user specs.User,
 ) (*os.File, *os.File, error) {
-	err := os.MkdirAll(bpmCfg.PidDir(), 0700)
-	if err != nil {
+	if err := os.MkdirAll(bpmCfg.PidDir(), 0700); err != nil {
 		return nil, nil, err
 	}
 
-	var dirsToCreate, pathsToChown []string
 	for _, vol := range procCfg.AdditionalVolumes {
 		if vol.MountOnly {
 			continue
 		}
 
-		_, err = os.Stat(vol.Path)
-		if os.IsNotExist(err) {
-			dirsToCreate = append(dirsToCreate, vol.Path)
-			continue
-		}
-
-		if err != nil {
+		if err := prepareVolume(vol.Path, user); err != nil {
 			return nil, nil, err
 		}
-
-		pathsToChown = append(pathsToChown, vol.Path)
 	}
 
-	dirsToCreate = append(
-		dirsToCreate,
-		bpmCfg.LogDir(),
-		bpmCfg.TempDir(),
-	)
+	if err := prepareVolume(bpmCfg.LogDir(), user); err != nil {
+		return nil, nil, err
+	}
+
+	if err := prepareVolume(bpmCfg.TempDir(), user); err != nil {
+		return nil, nil, err
+	}
 
 	if procCfg.EphemeralDisk {
-		dirsToCreate = append(dirsToCreate, bpmCfg.DataDir())
+		if err := prepareVolume(bpmCfg.DataDir(), user); err != nil {
+			return nil, nil, err
+		}
 	}
 
 	if procCfg.PersistentDisk {
-		var storeExists bool
-		storeExists, err = checkDirExists(filepath.Dir(bpmCfg.StoreDir()))
+		storeExists, err := checkDirExists(filepath.Dir(bpmCfg.StoreDir()))
 		if err != nil {
 			return nil, nil, err
 		}
@@ -97,51 +109,12 @@ func (a *RuncAdapter) CreateJobPrerequisites(
 			return nil, nil, errors.New("requested persistent disk does not exist")
 		}
 
-		dirsToCreate = append(dirsToCreate, bpmCfg.StoreDir())
-	}
-
-	err = createDirs(dirsToCreate, user)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	err = chownPaths(pathsToChown, user)
-	if err != nil {
-		return nil, nil, err
+		if err := prepareVolume(bpmCfg.StoreDir(), user); err != nil {
+			return nil, nil, err
+		}
 	}
 
 	return createLogFiles(bpmCfg, user)
-}
-
-func createDirs(dirs []string, user specs.User) error {
-	for _, dir := range dirs {
-		err := createDirFor(dir, int(user.UID), int(user.GID))
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func createDirFor(path string, uid, gid int) error {
-	err := os.MkdirAll(path, 0700)
-	if err != nil {
-		return err
-	}
-
-	return os.Chown(path, uid, gid)
-}
-
-func chownPaths(paths []string, user specs.User) error {
-	for _, path := range paths {
-		err := os.Chown(path, int(user.UID), int(user.GID))
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 func createLogFiles(bpmCfg *config.BPMConfig, user specs.User) (*os.File, *os.File, error) {
@@ -240,13 +213,17 @@ func (a *RuncAdapter) BuildSpec(
 }
 
 func systemIdentityMounts(mountResolvConf bool) []specs.Mount {
+	systemMount := func(path string) specs.Mount {
+		return identityBindMountWithOptions(path, "nosuid", "nodev", "bind", "ro")
+	}
+
 	mounts := []specs.Mount{
-		identityBindMountWithOptions("/bin", "nosuid", "nodev", "bind", "ro"),
-		identityBindMountWithOptions("/etc", "nosuid", "nodev", "bind", "ro"),
-		identityBindMountWithOptions("/lib", "nosuid", "nodev", "bind", "ro"),
-		identityBindMountWithOptions("/lib64", "nosuid", "nodev", "bind", "ro"),
-		identityBindMountWithOptions("/sbin", "nosuid", "nodev", "bind", "ro"),
-		identityBindMountWithOptions("/usr", "nosuid", "nodev", "bind", "ro"),
+		systemMount("/bin"),
+		systemMount("/etc"),
+		systemMount("/lib"),
+		systemMount("/lib64"),
+		systemMount("/sbin"),
+		systemMount("/usr"),
 	}
 
 	if mountResolvConf {
