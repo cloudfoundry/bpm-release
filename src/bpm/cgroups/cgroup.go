@@ -170,11 +170,13 @@ func mountCgroupTmpfsIfNotPresent(mnts []mount.Mnt) error {
 
 func mountCgroupSubsystem(subsystem string) error {
 	mountPoint := filepath.Join(cgroupRoot, subsystem)
-	if err := os.MkdirAll(mountPoint, 0755); err != nil {
-		return err
-	}
-	if err := os.Chmod(mountPoint, 0755); err != nil {
-		return err
+	if _, err := os.Stat(mountPoint); os.IsNotExist(err) {
+		if err := os.MkdirAll(mountPoint, 0755); err != nil {
+			return err
+		}
+		if err := os.Chmod(mountPoint, 0755); err != nil {
+			return err
+		}
 	}
 
 	err := mount.Mount("cgroup", mountPoint, "cgroup", 0, subsystem)
