@@ -56,6 +56,7 @@ resources:
 
 - name: golang-linux
   type: s3
+  check_every: 24h
   source:
     endpoint: storage.googleapis.com
     bucket: golang
@@ -63,10 +64,12 @@ resources:
 
 - name: runc-linux
   type: github-release
+  check_every: 24h
   source:
     owner: opencontainers
     repository: runc
     pre_release: true
+    access_token: ((bpm-machine-github-token))
 
 - name: bpm-ci
   type: git
