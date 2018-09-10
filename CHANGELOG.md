@@ -1,3 +1,7 @@
+# v0.12.3
+
+* do not try and create cgroup directories if they already exist
+
 # v0.12.2
 
 * allow multiple volume options to be passed as a flag without quoting
