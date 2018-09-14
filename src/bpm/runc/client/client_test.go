@@ -167,6 +167,50 @@ var _ = Describe("RuncClient", func() {
 		})
 	})
 
+	Describe("ListContainers", func() {
+		var (
+			tempDir      string
+			fakeRuncPath string
+		)
+
+		BeforeEach(func() {
+			var err error
+			tempDir, err = ioutil.TempDir("", "")
+			Expect(err).NotTo(HaveOccurred())
+
+			fakeRuncPath = filepath.Join(tempDir, "fakeRunc")
+
+			runcClient = client.NewRuncClient(fakeRuncPath, "/path/to/things")
+		})
+
+		AfterEach(func() {
+			err := os.RemoveAll(tempDir)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		// RunC has a race condition where it will try and put a container in
+		// the list before it can fetch the state for that container which
+		// dumps errors in stderr.
+		Context("when runc returns an error as well as a list", func() {
+			BeforeEach(func() {
+				contents := []byte(`#!/bin/sh
+echo -n 'error: could not list' >&2
+echo -n '[]'
+exit 0
+`)
+
+				err := ioutil.WriteFile(fakeRuncPath, contents, 0700)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			It("ignores the error", func() {
+				containers, err := runcClient.ListContainers()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(containers).To(BeEmpty())
+			})
+		})
+	})
+
 	Describe("ContainerState", func() {
 		var (
 			tempDir      string
@@ -195,7 +239,7 @@ echo -n 'container "foo" does not exist'
 exit 1
 `)
 
-				err := ioutil.WriteFile(fakeRuncPath, contents, os.ModePerm)
+				err := ioutil.WriteFile(fakeRuncPath, contents, 0700)
 				Expect(err).NotTo(HaveOccurred())
 			})
 
@@ -214,7 +258,7 @@ echo '         container "foo" does not exist     '
 exit 1
 `)
 
-					err := ioutil.WriteFile(fakeRuncPath, contents, os.ModePerm)
+					err := ioutil.WriteFile(fakeRuncPath, contents, 0700)
 					Expect(err).NotTo(HaveOccurred())
 				})
 
@@ -234,7 +278,7 @@ echo -n 'some unrelated error'
 exit 1
 `)
 
-				err := ioutil.WriteFile(fakeRuncPath, contents, os.ModePerm)
+				err := ioutil.WriteFile(fakeRuncPath, contents, 0700)
 				Expect(err).NotTo(HaveOccurred())
 			})
 
