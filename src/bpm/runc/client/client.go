@@ -183,7 +183,7 @@ func (c *RuncClient) ListContainers() ([]ContainerState, error) {
 		"--format", "json",
 	)
 
-	data, err := runcCmd.CombinedOutput()
+	data, err := runcCmd.Output()
 	if err != nil {
 		return []ContainerState{}, err
 	}
