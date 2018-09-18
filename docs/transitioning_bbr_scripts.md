@@ -1,28 +1,30 @@
-# Transitioning BBR Scripts to BPM
+# Transitioning `bbr` Scripts to `bpm`
 
-BBR Scripts are are run as BPM Errands.
+`bbr` scripts can be run as `bpm` errands. This document outlines the processes
+for transitioning a `bbr` script to use `bpm`.
 
 ## Create `bpm.yml` Configuration File
 
-In order for `bpm` to successfully call your `bbr` scripts, you will need to create
-a `bpm` configuration file in the canonical location:
-`/var/vcap/jobs/<bbr-job>/config/bpm.yml`. This can be done by adding a template in
-your `bbr` job definition with the following structure for each of your `bbr` scripts:
+In order for `bpm` to successfully call `bbr` scripts, a `bpm` configuration
+file will need to be created in the canonical location:
+`/var/vcap/jobs/<bbr-job>/config/bpm.yml`. This can be done by adding a template
+in the `bbr` job definition with the following structure for each of the `bbr`
+scripts:
 
 ```yaml
 # jobs/<bbr-job>/templates/bpm.yml.erb
 processes:
-  - name: backup
-    executable: /var/vcap/jobs/<bbr-job>/bin/bbr/backup
+  - name: <script>
+    executable: /var/vcap/jobs/<bbr-job>/bin/bbr/<script>
     args:
     - run
   ...
 ```
 
-Also you will need to add the following to the list of templates in the job's
+Also, the following will need to be added to the list of templates in the job's
 `spec` file:
 
-```
+```yaml
 # jobs/<bbr-job>/spec
 templates:
   bpm.yml.erb: config/bpm.yml
@@ -30,11 +32,14 @@ templates:
 
 ### Using the `backup-and-restore-sdk-release`
 
-You will have to add the following `unsafe unrestricted_volumes` to your `bpm.yml.erb` for each job that needs to use the SDK
+In order to make use of the `database-backup-restorer`, the following
+`unsafe unrestricted_volumes` mount must be added to the `bpm.yml.erb` for each
+script that needs to use the SDK:
+
 ```yaml
 processes:
-  - name: backup
-    executable: /var/vcap/jobs/<bbr-job>/bin/bbr/backup
+  - name: <script>
+    executable: /var/vcap/jobs/<bbr-job>/bin/bbr/<script>
     args:
     - run
     unsafe:
@@ -44,13 +49,17 @@ processes:
   ...
 ```
 
-This will allow your scripts to access the SDK even when running in BPM containers.
+This will allow the scripts to access the SDK even when running in BPM
+containers.
 
 ## Update `bbr` scripts to use `bpm`
 
-Move contents of `bbr` script into a bash function which will be called if the script is executed with the argument `run` or invoked without bpm. Then change the script to call `bpm run <bbr-job>` if called and `bpm` is enabled.
+Move the contents of the `bbr` script into a bash function which will be called
+if the script is executed with the argument `run` or invoked without `bpm`. Then
+change the script to call `bpm run <bbr-job> -p <script>` if called and `bpm` is
+enabled.
 
-As an explicit example, here is a backup script which uses bpm
+As an explicit example, here is a backup script which uses `bpm`
 ```bash
 #!/usr/bin/env bash
 
