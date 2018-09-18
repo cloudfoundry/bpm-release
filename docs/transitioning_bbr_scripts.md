@@ -14,11 +14,11 @@ scripts:
 ```yaml
 # jobs/<bbr-job>/templates/bpm.yml.erb
 processes:
-  - name: <script>
-    executable: /var/vcap/jobs/<bbr-job>/bin/bbr/<script>
-    args:
-    - run
-  ...
+- name: <script>
+  executable: /var/vcap/jobs/<bbr-job>/bin/bbr/<script>
+  args:
+  - run
+...
 ```
 
 Also, the following will need to be added to the list of templates in the job's
@@ -38,15 +38,15 @@ script that needs to use the SDK:
 
 ```yaml
 processes:
-  - name: <script>
-    executable: /var/vcap/jobs/<bbr-job>/bin/bbr/<script>
-    args:
-    - run
-    unsafe:
-      unrestricted_volumes:
-        - path: /var/vcap/jobs/database-backup-restorer/bin
-          allow_executions: true
-  ...
+- name: <script>
+  executable: /var/vcap/jobs/<bbr-job>/bin/bbr/<script>
+  args:
+  - run
+  unsafe:
+    unrestricted_volumes:
+      - path: /var/vcap/jobs/database-backup-restorer/bin
+        allow_executions: true
+...
 ```
 
 This will allow the scripts to access the SDK even when running in BPM
