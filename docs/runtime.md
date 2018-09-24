@@ -119,7 +119,7 @@ exist.
 > un-collocated and allows more modern access control (key rotation, etc.) of
 > the information being transferred between your jobs.
 
-If your job configuration lists shared volumes (`volumes:` key) then these
+If your job configuration lists shared volumes (`additional_volumes:` key) then these
 paths will be created if they do not exist before being mounted into the job
 filesystem. These volumes will be mounted read-write. All collocated jobs which
 list a particular volume path will be given a volume they can all share.
