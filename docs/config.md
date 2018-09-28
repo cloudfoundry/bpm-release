@@ -76,7 +76,7 @@ directory of your job.
 
 | **Property**       | **Type** | **Required** | **Description**                                                                                                |
 |--------------------|----------|--------------|----------------------------------------------------------------------------------------------------------------|
-| `path`             | string   | Yes          | The path of the volume inside this process.                                                                    |
+| `path`             | string   | Yes          | The absolute path of the volume inside this process.                                                                    |
 | `writable`         | boolean  | No           | Whether or not this volume is writable by the process.                                                         |
 | `allow_executions` | boolean  | No           | Whether or not executable files can be executed from this volume.                                              |
 | `mount_only`       | boolean  | No           | Whether or not BPM should just mount this directory rather than creating and chowning a backing directory too. |
