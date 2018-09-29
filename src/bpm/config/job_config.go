@@ -101,8 +101,9 @@ func (c *ProcessConfig) Validate(boshRoot string, defaultVolumes []string) error
 		return errors.New("invalid config: executable")
 	}
 
-	validDataVolumePrefix := filepath.Join(boshRoot, "data")
-	validStoreVolumePrefix := filepath.Join(boshRoot, "store")
+	dataPrefix := filepath.Join(boshRoot, "data")
+	storePrefix := filepath.Join(boshRoot, "store")
+	socketPrefix := filepath.Join(boshRoot, "sys", "run")
 
 	for _, vol := range c.AdditionalVolumes {
 		volCleaned := filepath.Clean(vol.Path)
@@ -117,12 +118,13 @@ func (c *ProcessConfig) Validate(boshRoot string, defaultVolumes []string) error
 			)
 		}
 
-		if !pathIsIn(validDataVolumePrefix, volCleaned) && !pathIsIn(validStoreVolumePrefix, volCleaned) {
+		if !pathIsIn(volCleaned, dataPrefix, storePrefix, socketPrefix) {
 			return fmt.Errorf(
-				"invalid volume path: %s must be within (%s, %s)",
+				"invalid volume path: %s must be within (%s, %s, %s)",
 				vol.Path,
-				validDataVolumePrefix,
-				validStoreVolumePrefix,
+				dataPrefix,
+				storePrefix,
+				socketPrefix,
 			)
 		}
 	}
@@ -201,19 +203,24 @@ func contains(elements []string, s string) bool {
 	return false
 }
 
-func pathIsIn(prefix string, path string) bool {
+func pathIsIn(path string, prefixes ...string) bool {
 	volParts := strings.Split(path, "/")
-	validParts := strings.Split(prefix, "/")
 
-	if len(volParts) <= len(validParts) {
-		return false
-	}
+	for _, prefix := range prefixes {
+		validParts := strings.Split(prefix, "/")
 
-	for i, validPart := range validParts {
-		if volParts[i] != validPart {
-			return false
+		if len(volParts) <= len(validParts) {
+			continue
 		}
+
+		for i, validPart := range validParts {
+			if volParts[i] != validPart {
+				continue
+			}
+		}
+
+		return true
 	}
 
-	return true
+	return false
 }

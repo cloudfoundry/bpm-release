@@ -100,6 +100,13 @@ var _ = Describe("RuncAdapter", func() {
 			Expect(logDirInfo.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(200)))
 			Expect(logDirInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
 
+			// Log Directory
+			socketDirInfo, err := os.Stat(bpmCfg.SocketDir())
+			Expect(err).NotTo(HaveOccurred())
+			Expect(socketDirInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0700)))
+			Expect(socketDirInfo.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(200)))
+			Expect(socketDirInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
+
 			// Stdout Log File
 			Expect(stdout.Name()).To(Equal(bpmCfg.Stdout()))
 			stdoutInfo, err := stdout.Stat()
