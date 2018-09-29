@@ -63,6 +63,10 @@ func (c *BPMConfig) StoreDir() string {
 	return filepath.Join(c.boshRoot, "store", c.jobName)
 }
 
+func (c *BPMConfig) SocketDir() string {
+	return filepath.Join(c.boshRoot, "sys", "run", c.jobName)
+}
+
 func (c *BPMConfig) TempDir() string {
 	return filepath.Join(c.DataDir(), "tmp")
 }

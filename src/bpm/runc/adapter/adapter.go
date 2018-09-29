@@ -79,6 +79,7 @@ func (a *RuncAdapter) CreateJobPrerequisites(
 	dirsToCreate = append(
 		dirsToCreate,
 		bpmCfg.LogDir(),
+		bpmCfg.SocketDir(),
 		bpmCfg.TempDir(),
 	)
 

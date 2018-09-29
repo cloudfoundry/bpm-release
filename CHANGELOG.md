@@ -1,3 +1,7 @@
+# v0.13.0
+
+* volumes can be mounted inside `/var/vcap/sys/run`
+
 # v0.12.3
 
 * do not try and create cgroup directories if they already exist

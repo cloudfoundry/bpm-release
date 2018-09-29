@@ -34,20 +34,20 @@ directory of your job.
 
 #### `process` Schema
 
-| **Property**         | **Type**         | **Required?** | **Description**                                                                                                                   |
-| -------------------- | ---------------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `name`               | string           | Yes           | The name of this process.                                                                                                         |
-| `executable`         | string           | Yes           | The path to the executable file for this process.                                                                                 |
-| `args`               | string[]         | No            | The arguments which will be passed to the `executable` of this process.                                                           |
-| `env`                | string => string | No            | Any additional environment variables to be included in the environment of this process.                                           |
-| `workdir`            | string           | No            | The working directory for this process. If not specified this is the value `/var/vcap/jobs/JOB`.                                  |
-| `hooks`              | hooks            | No            | The hook configuration for this process (see below).                                                                              |
-| `capabilities`       | string[]         | No            | The list of [capabilities][capabilities] (without CAP_) which should be granted to this process.                                  |
-| `limits`             | limits           | No            | The limit configuration for this process (see below).                                                                             |
-| `ephemeral_disk`     | boolean          | No            | Whether or not an ephemeral disk should be mounted into the container at `/var/vcap/data/JOB`.                                    |
-| `persistent_disk`    | boolean          | No            | Whether or not an persistent disk should be mounted into the container at `/var/vcap/store/JOB`.                                  |
-| `additional_volumes` | volume[]         | No            | A list of additional volumes to mount inside this process (see below). They must be inside `/var/vcap/data` or `/var/vcap/store`. |
-| `unsafe`             | unsafe           | No            | The unsafe configuration for this process (see below).                                                                            |
+| **Property**         | **Type**         | **Required?** | **Description**                                                                                                                |
+| -------------------- | ---------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `name`               | string           | Yes           | The name of this process.                                                                                                      |
+| `executable`         | string           | Yes           | The path to the executable file for this process.                                                                              |
+| `args`               | string[]         | No            | The arguments which will be passed to the `executable` of this process.                                                        |
+| `env`                | string => string | No            | Any additional environment variables to be included in the environment of this process.                                        |
+| `workdir`            | string           | No            | The working directory for this process. If not specified this is the value `/var/vcap/jobs/JOB`.                               |
+| `hooks`              | hooks            | No            | The hook configuration for this process (see below).                                                                           |
+| `capabilities`       | string[]         | No            | The list of [capabilities][capabilities] (without CAP_) which should be granted to this process.                               |
+| `limits`             | limits           | No            | The limit configuration for this process (see below).                                                                          |
+| `ephemeral_disk`     | boolean          | No            | Whether or not an ephemeral disk should be mounted into the container at `/var/vcap/data/JOB`.                                 |
+| `persistent_disk`    | boolean          | No            | Whether or not an persistent disk should be mounted into the container at `/var/vcap/store/JOB`.                               |
+| `additional_volumes` | volume[]         | No            | A list of additional volumes to mount inside this process. The paths which can be used are restricted (see volume note below). |
+| `unsafe`             | unsafe           | No            | The unsafe configuration for this process (see below).                                                                         |
 
 [capabilities]: http://man7.org/linux/man-pages/man7/capabilities.7.html
 
@@ -81,6 +81,9 @@ directory of your job.
 | `allow_executions` | boolean  | No           | Whether or not executable files can be executed from this volume.                                              |
 | `mount_only`       | boolean  | No           | Whether or not BPM should just mount this directory rather than creating and chowning a backing directory too. |
 
+*Note: The volumes in additional volumes must have a path inside
+`/var/vcap/data`, `/var/vcap/store`, `/var/vcap/sys/run`. If you need to mount
+a volume outside these paths then you must use the `unrestricted_volumes` key.
 
 ### Example
 

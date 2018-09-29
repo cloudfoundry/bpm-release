@@ -109,6 +109,7 @@ var _ = Describe("Config", func() {
 						AdditionalVolumes: []config.Volume{
 							{Path: "/var/vcap/data/valid"},
 							{Path: "/var/vcap/store/valid"},
+							{Path: "/var/vcap/sys/run/valid"},
 						},
 					},
 				},
