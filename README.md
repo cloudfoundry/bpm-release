@@ -58,9 +58,9 @@ changes.
 
 ## Usage
 
-bpm is almost at 1.0 and should be usable for the majority of BOSH jobs. We
-have stabilized the configuration format and do not plan on making any more
-backwards incompatible changes before 1.0.
+bpm has now reached 1.0 and has a stable [public API](docs/public_interface.md) 
+which should be usable for the majority of BOSH jobs. We do not plan on making
+any more backwards incompatible changes to the public API before 2.0.
 
 You can start to read about the [ethos and glossary](docs/bpm.md), [runtime
 environment](docs/runtime.md) which bpm provides to your job, the
