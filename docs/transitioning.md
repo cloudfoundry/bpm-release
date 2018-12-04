@@ -134,6 +134,16 @@ YAML.dump(config)
 %>
 ```
 
+### Multiple Collaborating Processes
+
+If you have processes which are all part of the same job (e.g. should never be
+deployed without each other) then you can take each individual process from the
+`monit` file and add it as a different process in the `bpm.yml`.
+
+*Note: Due to the additional namespaces which processes are put in it may not be
+possible to see the same information you could before about other processes. A
+redesign may be required in order to fit into this model.*
+
 ### Errands
 
 The `bpm run` command can be used to run short-lived processes in the same
