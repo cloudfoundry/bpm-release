@@ -35,6 +35,7 @@ func PrintJobs(processes []*models.Process, stdout io.Writer) error {
 		if err != nil {
 			return err
 		}
+		name = strings.TrimPrefix(name, config.ContainerPrefix)
 
 		pid := "-"
 		if process.Pid > 0 {

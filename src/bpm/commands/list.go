@@ -18,6 +18,7 @@ package commands
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -99,5 +100,6 @@ func updateProcess(processes []*models.Process, process *models.Process) ([]*mod
 	if err != nil {
 		return processes, err
 	}
+	decodedName = strings.TrimPrefix(decodedName, config.ContainerPrefix)
 	return processes, fmt.Errorf("process (%s) not defined", decodedName)
 }

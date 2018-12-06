@@ -92,7 +92,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 		expectedJobName = "example"
 		expectedProcName = "server"
-		expectedContainerID = config.Encode(fmt.Sprintf("%s.%s", expectedJobName, expectedProcName))
+		expectedContainerID = config.ContainerPrefix + config.Encode(fmt.Sprintf("%s.%s", expectedJobName, expectedProcName))
 
 		procCfg = &config.ProcessConfig{
 			Executable: "/bin/sleep",
@@ -180,7 +180,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 				Expect(fakeRuncClient.RunContainerCallCount()).To(Equal(1))
 				_, _, cid, _, _, _ := fakeRuncClient.RunContainerArgsForCall(0)
-				Expect(cid).To(Equal(config.Encode(expectedJobName)))
+				Expect(cid).To(Equal(config.ContainerPrefix + config.Encode(expectedJobName)))
 			})
 		})
 
@@ -534,7 +534,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 				Expect(fakeRuncClient.DeleteContainerCallCount()).To(Equal(1))
 				containerID := fakeRuncClient.DeleteContainerArgsForCall(0)
-				Expect(containerID).To(Equal(config.Encode(expectedJobName)))
+				Expect(containerID).To(Equal(config.ContainerPrefix + config.Encode(expectedJobName)))
 			})
 		})
 
@@ -654,7 +654,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(fakeRuncClient.ContainerStateCallCount()).To(Equal(1))
-				Expect(fakeRuncClient.ContainerStateArgsForCall(0)).To(Equal(config.Encode(expectedJobName)))
+				Expect(fakeRuncClient.ContainerStateArgsForCall(0)).To(Equal(config.ContainerPrefix + config.Encode(expectedJobName)))
 			})
 		})
 
@@ -719,7 +719,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 				Expect(fakeRuncClient.ExecCallCount()).To(Equal(1))
 				cid, _, _, _, _ := fakeRuncClient.ExecArgsForCall(0)
-				Expect(cid).To(Equal(config.Encode(expectedJobName)))
+				Expect(cid).To(Equal(config.ContainerPrefix + config.Encode(expectedJobName)))
 			})
 		})
 

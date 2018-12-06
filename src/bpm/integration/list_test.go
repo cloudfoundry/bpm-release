@@ -55,10 +55,10 @@ var _ = Describe("list", func() {
 
 		// This forces the ordering from runc list to be consistent.
 		job = fmt.Sprintf("started-%s", uuid.NewV4().String())
-		containerID = config.Encode(job)
+		containerID = config.ContainerPrefix + config.Encode(job)
 
 		failedJob = fmt.Sprintf("failed-%s", uuid.NewV4().String())
-		failedContainerID = config.Encode(failedJob)
+		failedContainerID = config.ContainerPrefix + config.Encode(failedJob)
 
 		stoppedProcess = fmt.Sprintf("stopped-%s", uuid.NewV4().String())
 

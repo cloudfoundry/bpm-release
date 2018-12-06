@@ -34,22 +34,41 @@ var _ = Describe("Presenters", func() {
 			output    *gbytes.Buffer
 		)
 
-		BeforeEach(func() {
-			processes = []*models.Process{
-				{Name: config.Encode("job-process-2"), Pid: 23456, Status: "created"},
-				{Name: config.Encode("job-process-1"), Pid: 34567, Status: "running"},
-				{Name: config.Encode("job-process-3"), Pid: 0, Status: "failed"},
-			}
+		Context("when process name does not contain container prefix", func() {
+			BeforeEach(func() {
+				processes = []*models.Process{
+					{Name: config.Encode("job-process-2"), Pid: 23456, Status: "created"},
+					{Name: config.Encode("job-process-1"), Pid: 34567, Status: "running"},
+					{Name: config.Encode("job-process-3"), Pid: 34567, Status: "running"},
+				}
 
-			output = gbytes.NewBuffer()
+				output = gbytes.NewBuffer()
+			})
+
+			It("prints the jobs in a table", func() {
+				Expect(presenters.PrintJobs(processes, output)).To(Succeed())
+				Expect(output).Should(gbytes.Say("Name\\s+Pid\\s+Status"))
+				Expect(output).Should(gbytes.Say(fmt.Sprintf("%s\\s+%d\\s+%s", "job-process-2", 23456, "created")))
+				Expect(output).Should(gbytes.Say(fmt.Sprintf("%s\\s+%d\\s+%s", "job-process-1", 34567, "running")))
+				Expect(output).Should(gbytes.Say(fmt.Sprintf("%s\\s+%d\\s+%s", "job-process-3", 34567, "running")))
+			})
 		})
 
-		It("prints the jobs in a table", func() {
-			Expect(presenters.PrintJobs(processes, output)).To(Succeed())
-			Expect(output).Should(gbytes.Say("Name\\s+Pid\\s+Status"))
-			Expect(output).Should(gbytes.Say(fmt.Sprintf("%s\\s+%d\\s+%s", "job-process-2", 23456, "created")))
-			Expect(output).Should(gbytes.Say(fmt.Sprintf("%s\\s+%d\\s+%s", "job-process-1", 34567, "running")))
-			Expect(output).Should(gbytes.Say(fmt.Sprintf("%s\\s+%s\\s+%s", "job-process-3", "-", "failed")))
+		Context("when process name contains container prefix", func() {
+			BeforeEach(func() {
+				bpmConfig := config.NewBPMConfig("", "job-process", "job-process")
+				processes = []*models.Process{
+					{Name: bpmConfig.ContainerID(), Pid: 0, Status: "failed"},
+				}
+
+				output = gbytes.NewBuffer()
+			})
+
+			It("prints the jobs in a table not outputting container prefix 'bpm-'", func() {
+				Expect(presenters.PrintJobs(processes, output)).To(Succeed())
+				Expect(output).Should(gbytes.Say("Name\\s+Pid\\s+Status"))
+				Expect(output).Should(gbytes.Say(fmt.Sprintf("\\s+%s\\s+%s\\s+%s", "job-process", "-", "failed")))
+			})
 		})
 	})
 })

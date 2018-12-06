@@ -19,7 +19,11 @@ import (
 	"encoding/base32"
 	"fmt"
 	"path/filepath"
+	"regexp"
+	"strings"
 )
+
+const ContainerPrefix = "bpm-"
 
 func RuncPath(boshRoot string) string {
 	return filepath.Join(boshRoot, "packages", "bpm", "bin", "runc")
@@ -150,24 +154,44 @@ func (c *BPMConfig) ContainerID() string {
 		containerID = fmt.Sprintf("%s.%s", c.jobName, c.procName)
 	}
 
-	// runc spec only allows `^[\w+-\.]+$`
-	// https://github.com/opencontainers/runc/blob/master/libcontainer/factory_linux.go
-	return Encode(containerID)
+	return ContainerPrefix + Encode(containerID)
 }
 
+// Encode encodes a containerID returning a valid runc ID matching the pattern `^[\w+-\.]+$`
+// see https://github.com/opencontainers/runc/blob/079817cc26ec5292ac375bb9f47f373d33574949/libcontainer/factory_linux.go#L32
+// Every substring not complying with the runc format gets base32 encoded delimited by `+`
 func Encode(containerID string) string {
-	enc := base32.StdEncoding
-	enc = enc.WithPadding('-')
-	return enc.EncodeToString([]byte(containerID))
+	invalidRuncSubstring := regexp.MustCompile(`[^\w,-\.]+`)
+	return invalidRuncSubstring.ReplaceAllStringFunc(containerID, base32EncodeWithDelimiter)
 }
 
 func Decode(containerID string) (string, error) {
-	enc := base32.StdEncoding
-	enc = enc.WithPadding('-')
-	data, err := enc.DecodeString(containerID)
-	if err != nil {
-		return "", err
+	if containerID == "" {
+		return "", nil
 	}
 
-	return string(data), nil
+	base32Encoded := regexp.MustCompile(`\+[^+]+\+`)
+	decoded := base32Encoded.ReplaceAllStringFunc(containerID, base32DecodeWithDelimiter)
+	if decoded == "" {
+		return "", fmt.Errorf("could not decode container ID (%s)", containerID)
+	}
+	return decoded, nil
+}
+
+func base32EncodeWithDelimiter(invalidSubstring string) string {
+	enc := base32.StdEncoding
+	enc = enc.WithPadding('-')
+	encoded := enc.EncodeToString([]byte(invalidSubstring))
+	return fmt.Sprintf("+%s+", encoded)
+}
+
+func base32DecodeWithDelimiter(encoded string) string {
+	withoutDelimiter := strings.Trim(encoded, "+")
+	enc := base32.StdEncoding
+	enc = enc.WithPadding('-')
+	decoded, err := enc.DecodeString(withoutDelimiter)
+	if err != nil {
+		return ""
+	}
+	return string(decoded)
 }

@@ -16,55 +16,96 @@
 package config_test
 
 import (
+	"bpm/config"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-
-	"bpm/config"
 )
 
 var _ = Describe("Config", func() {
-	Describe("Encoding", func() {
-		It("roundtrip encodes a bpm containerid to a valid runc format and back", func() {
-			bpmContainerID := "ÉGÉìÉRÅ[ÉfÉBÉìÉOÇÕìÔÇµÇ≠Ç»oÇ¢.thoseWereOdd"
-			encoded := config.Encode(bpmContainerID)
+	const (
+		validID   = config.ContainerPrefix + "09aAzZ_,-."
+		decodedID = "blob/foo_+bar"
+		encodedID = "blob+F4------+foo_+FM------+bar"
+	)
 
-			Expect(encoded).To(Equal("YOEUPQ4JYOWMHCKSYOCVXQ4JM3BYSQWDRHB2ZQ4JJ7BYPQ4VYOWMHFGDQ7BLLQ4H4KE2BQ4HYK5W7Q4HYKRC45DIN5ZWKV3FOJSU6ZDE"))
+	Describe("ContainerID", func() {
+		var bpmCfg *config.BPMConfig
+
+		Context("when the job name and process name are the same", func() {
+			BeforeEach(func() {
+				bpmCfg = config.NewBPMConfig("", "foo", "foo")
+			})
+
+			It("encodes", func() {
+				encoded := bpmCfg.ContainerID()
+				Expect(encoded).To(Equal(config.ContainerPrefix + "foo"))
+			})
+		})
+
+		Context("when the job name and process name are not the same", func() {
+			BeforeEach(func() {
+				bpmCfg = config.NewBPMConfig("", "foo", "bar")
+			})
+
+			It("encodes", func() {
+				encoded := bpmCfg.ContainerID()
+				Expect(encoded).To(Equal(config.ContainerPrefix + "foo.bar"))
+			})
+		})
+	})
+
+	Describe("Encode", func() {
+		It("does not modify valid runc container ID chars", func() {
+			encoded := config.Encode(validID)
+			Expect(encoded).To(Equal(validID))
+		})
+
+		It("base32-encodes invalid runc container ID substrings delimited by `+`", func() {
+			encoded := config.Encode(decodedID)
+			Expect(encoded).To(Equal(encodedID))
+		})
+	})
+
+	Describe("Decode", func() {
+		It("does not modify valid runc container ID chars", func() {
+			decoded, err := config.Decode(validID)
+			Expect(err).To(BeNil())
+			Expect(decoded).To(Equal(validID))
+		})
+
+		It("decodes based32-encoded substrings delimited by `+`", func() {
+			decoded, err := config.Decode(encodedID)
+			Expect(err).To(BeNil())
+			Expect(decoded).To(Equal(decodedID))
+		})
+
+		Context("when container ID is empty", func() {
+			It("returns empty string and does not error", func() {
+				decoded, err := config.Decode("")
+				Expect(err).To(BeNil())
+				Expect(decoded).To(Equal(""))
+			})
+		})
+
+		Context("when container ID has incorrect base32 padding", func() {
+			It("errors", func() {
+				_, err := config.Decode("+MZXW6--+")
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(Equal("could not decode container ID (+MZXW6--+)"))
+			})
+		})
+	})
+
+	Context("roundtrip", func() {
+		It("encodes a BPM container ID to a valid runc format and back", func() {
+			id := "ÉìÅ[ÉÉìÇÕìÔÇµÇ≠Ç»Ç¢+=thoseWereOdd!!"
+			encoded := config.Encode(id)
+			Expect(encoded).To(Equal("+YOE4HLGDQVN4HCODRHB2ZQ4HYOK4HLGDSTBYPQVVYOD6FCNAYOD4FO6DQ7BKEKZ5+thoseWereOdd+EEQQ----+"))
 
 			decoded, err := config.Decode(encoded)
 			Expect(err).To(BeNil())
-			Expect(decoded).To(Equal(bpmContainerID))
-		})
-
-		It("errors with incorrect base32 padding", func() {
-			_, err := config.Decode("MZXW6--")
-			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("illegal base32"))
-		})
-
-		Context("ContainerID", func() {
-			var bpmCfg *config.BPMConfig
-
-			Context("when the job name and process name are the same", func() {
-				BeforeEach(func() {
-					bpmCfg = config.NewBPMConfig("", "foo", "foo")
-				})
-
-				It("encodes", func() {
-					encoded := bpmCfg.ContainerID()
-					Expect(encoded).To(Equal("MZXW6---"))
-				})
-			})
-
-			Context("when the job name and process name are not the same", func() {
-				BeforeEach(func() {
-					bpmCfg = config.NewBPMConfig("", "foo", "bar")
-				})
-
-				It("encodes", func() {
-					encoded := bpmCfg.ContainerID()
-					Expect(encoded).To(Equal("MZXW6LTCMFZA----"))
-				})
-			})
+			Expect(decoded).To(Equal(id))
 		})
 	})
 })

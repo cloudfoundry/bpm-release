@@ -50,7 +50,7 @@ var _ = Describe("stop", func() {
 		var err error
 
 		job = uuid.NewV4().String()
-		containerID = config.Encode(job)
+		containerID = config.ContainerPrefix + config.Encode(job)
 		boshRoot, err = ioutil.TempDir(bpmTmpDir, "stop-test")
 		Expect(err).NotTo(HaveOccurred())
 		Expect(os.Chmod(boshRoot, 0755)).To(Succeed())
