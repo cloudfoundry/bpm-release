@@ -1,7 +1,7 @@
 golang/golang-linux-amd64.tar.gz:
-  size: 126540191
-  object_id: 1970cf74-49c4-4c16-4526-481b3621015a
-  sha: 5e12567ea212fdb3a25cb5620366e05f0fc1f9f0
+  size: 126643341
+  object_id: c73aeb69-71b4-4369-6272-1da95628e771
+  sha: 52bd8eb353a39138a2ddf053857a0fd13f1f176c
 runc/runc-linux-amd64:
   size: 10087904
   object_id: dc830335-8db1-4ca5-7fcd-d991228b5241
