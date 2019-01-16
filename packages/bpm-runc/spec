@@ -1,5 +1,9 @@
 ---
 name: bpm-runc
 
+dependencies:
+- golang
+
 files:
-  - runc/runc-linux-amd64
+- runc/runc.tar.gz
+- libseccomp/libseccomp-2.3.3.tar.gz

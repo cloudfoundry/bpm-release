@@ -15,3 +15,4 @@ rm -rf ${BOSH_INSTALL_TARGET}/src ${BOSH_INSTALL_TARGET}/pkg
 
 # runc
 cp /var/vcap/packages/bpm-runc/bin/runc ${BOSH_INSTALL_TARGET}/bin
+cp -r /var/vcap/packages/bpm-runc/lib ${BOSH_INSTALL_TARGET}/lib
