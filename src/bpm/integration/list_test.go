@@ -29,6 +29,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 
 	"bpm/config"
+	"bpm/jobid"
 	"bpm/models"
 )
 
@@ -55,10 +56,10 @@ var _ = Describe("list", func() {
 
 		// This forces the ordering from runc list to be consistent.
 		job = fmt.Sprintf("started-%s", uuid.NewV4().String())
-		containerID = config.Encode(job)
+		containerID = jobid.Encode(job)
 
 		failedJob = fmt.Sprintf("failed-%s", uuid.NewV4().String())
-		failedContainerID = config.Encode(failedJob)
+		failedContainerID = jobid.Encode(failedJob)
 
 		stoppedProcess = fmt.Sprintf("stopped-%s", uuid.NewV4().String())
 

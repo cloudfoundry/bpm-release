@@ -22,7 +22,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 
-	"bpm/config"
+	"bpm/jobid"
 	"bpm/models"
 	"bpm/presenters"
 )
@@ -36,9 +36,9 @@ var _ = Describe("Presenters", func() {
 
 		BeforeEach(func() {
 			processes = []*models.Process{
-				{Name: config.Encode("job-process-2"), Pid: 23456, Status: "created"},
-				{Name: config.Encode("job-process-1"), Pid: 34567, Status: "running"},
-				{Name: config.Encode("job-process-3"), Pid: 0, Status: "failed"},
+				{Name: jobid.Encode("job-process-2"), Pid: 23456, Status: "created"},
+				{Name: jobid.Encode("job-process-1"), Pid: 34567, Status: "running"},
+				{Name: jobid.Encode("job-process-3"), Pid: 0, Status: "failed"},
 			}
 
 			output = gbytes.NewBuffer()

@@ -99,11 +99,12 @@
   version = "v6.0.1"
 
 [[projects]]
-  digest = "1:5aee3b3e914d668fe567ebb95d833e681d394929f0fa11323f6a3819eb781335"
+  digest = "1:6a1d3cc0142cdd2dde5080e8c25a89aeebac3a15424012bb610441d1959fda1b"
   name = "github.com/onsi/ginkgo"
   packages = [
     ".",
     "config",
+    "extensions/table",
     "ginkgo",
     "ginkgo/convert",
     "ginkgo/interrupthandler",
@@ -156,11 +157,12 @@
   version = "v1.4.3"
 
 [[projects]]
-  digest = "1:c9e0e109a897ef306f865e55e07ecb1c3024edafd103e1c2b1a06a852dc91cb3"
+  digest = "1:c92afa1262c0b4d375575b7cbbdb647544110ba7b574d60e1a897c74f990ea64"
   name = "github.com/opencontainers/runc"
   packages = [
     "libcontainer/cgroups",
     "libcontainer/configs",
+    "libcontainer/utils",
   ]
   pruneopts = "NUT"
   revision = "baf6536d6259209c3edfa2b22237af82942d3dfa"
@@ -313,11 +315,13 @@
     "github.com/kr/pty",
     "github.com/maxbrunsfeld/counterfeiter",
     "github.com/onsi/ginkgo",
+    "github.com/onsi/ginkgo/extensions/table",
     "github.com/onsi/ginkgo/ginkgo",
     "github.com/onsi/gomega",
     "github.com/onsi/gomega/gbytes",
     "github.com/onsi/gomega/gexec",
     "github.com/opencontainers/runc/libcontainer/cgroups",
+    "github.com/opencontainers/runc/libcontainer/utils",
     "github.com/opencontainers/runtime-spec/specs-go",
     "github.com/satori/go.uuid",
     "github.com/spf13/cobra",
