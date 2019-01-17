@@ -24,7 +24,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/opencontainers/runtime-spec/specs-go"
+	specs "github.com/opencontainers/runtime-spec/specs-go"
 
 	"bpm/runc/client"
 )
@@ -42,6 +42,7 @@ var _ = Describe("RuncClient", func() {
 		runcClient = client.NewRuncClient(
 			"/var/vcap/packages/runc/bin/runc",
 			"/var/vcap/data/bpm/runc",
+			false,
 		)
 	})
 
@@ -180,7 +181,7 @@ var _ = Describe("RuncClient", func() {
 
 			fakeRuncPath = filepath.Join(tempDir, "fakeRunc")
 
-			runcClient = client.NewRuncClient(fakeRuncPath, "/path/to/things")
+			runcClient = client.NewRuncClient(fakeRuncPath, "/path/to/things", false)
 		})
 
 		AfterEach(func() {
@@ -211,6 +212,46 @@ exit 0
 		})
 	})
 
+	Context("when running in systemd", func() {
+		var (
+			tempDir      string
+			fakeRuncPath string
+		)
+
+		BeforeEach(func() {
+			var err error
+			tempDir, err = ioutil.TempDir("", "")
+			Expect(err).NotTo(HaveOccurred())
+
+			fakeRuncPath = filepath.Join(tempDir, "fakeRunc")
+			contents := []byte(`#!/bin/sh
+
+echo "{}"
+
+if echo "$@" | grep -q -- "--systemd-cgroup"; then
+  exit 0
+else
+  exit 1
+fi
+`)
+
+			err = ioutil.WriteFile(fakeRuncPath, contents, 0700)
+			Expect(err).NotTo(HaveOccurred())
+
+			runcClient = client.NewRuncClient(fakeRuncPath, "/path/to/things", true)
+		})
+
+		AfterEach(func() {
+			err := os.RemoveAll(tempDir)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("passes the --systemd-cgroup flag to runc", func() {
+			_, err := runcClient.ContainerState("foo")
+			Expect(err).NotTo(HaveOccurred())
+		})
+	})
+
 	Describe("ContainerState", func() {
 		var (
 			tempDir      string
@@ -224,7 +265,7 @@ exit 0
 
 			fakeRuncPath = filepath.Join(tempDir, "fakeRunc")
 
-			runcClient = client.NewRuncClient(fakeRuncPath, "/path/to/things")
+			runcClient = client.NewRuncClient(fakeRuncPath, "/path/to/things", false)
 		})
 
 		AfterEach(func() {
@@ -288,7 +329,6 @@ exit 1
 
 				Expect(state).To(BeNil())
 			})
-
 		})
 	})
 })

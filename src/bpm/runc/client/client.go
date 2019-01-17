@@ -59,12 +59,15 @@ type ContainerState struct {
 type RuncClient struct {
 	runcPath string
 	runcRoot string
+
+	inSystemd bool
 }
 
-func NewRuncClient(runcPath, runcRoot string) *RuncClient {
+func NewRuncClient(runcPath, runcRoot string, inSystemd bool) *RuncClient {
 	return &RuncClient{
-		runcPath: runcPath,
-		runcRoot: runcRoot,
+		runcPath:  runcPath,
+		runcRoot:  runcRoot,
+		inSystemd: inSystemd,
 	}
 }
 
@@ -97,13 +100,16 @@ func (*RuncClient) CreateBundle(
 }
 
 func (c *RuncClient) RunContainer(pidFilePath, bundlePath, containerID string, detach bool, stdout, stderr io.Writer) (int, error) {
-	args := []string{"--root", c.runcRoot, "run", "--bundle", bundlePath, "--pid-file", pidFilePath}
+	args := []string{
+		"--bundle", bundlePath,
+		"--pid-file", pidFilePath,
+	}
 	if detach {
 		args = append(args, "--detach")
 	}
 	args = append(args, containerID)
 
-	runcCmd := exec.Command(c.runcPath, args...)
+	runcCmd := c.buildCmd("run", args...)
 	runcCmd.Stdout = stdout
 	runcCmd.Stderr = stderr
 
@@ -123,9 +129,7 @@ func (c *RuncClient) RunContainer(pidFilePath, bundlePath, containerID string, d
 // Exec assumes you are launching an interactive shell.
 // We should improve the interface to mirror `runc exec` more generally.
 func (c *RuncClient) Exec(containerID, command string, stdin io.Reader, stdout, stderr io.Writer) error {
-	runcCmd := exec.Command(
-		c.runcPath,
-		"--root", c.runcRoot,
+	runcCmd := c.buildCmd(
 		"exec",
 		"--tty",
 		"--env", fmt.Sprintf("TERM=%s", os.Getenv("TERM")),
@@ -146,9 +150,7 @@ func (c *RuncClient) Exec(containerID, command string, stdin io.Reader, stdout, 
 // - nil,error if there is any other error getting the container state
 //   (e.g. the container is running but in an unreachable state)
 func (c *RuncClient) ContainerState(containerID string) (*specs.State, error) {
-	runcCmd := exec.Command(
-		c.runcPath,
-		"--root", c.runcRoot,
+	runcCmd := c.buildCmd(
 		"state",
 		containerID,
 	)
@@ -176,9 +178,7 @@ func decodeContainerStateErr(b []byte, err error) error {
 }
 
 func (c *RuncClient) ListContainers() ([]ContainerState, error) {
-	runcCmd := exec.Command(
-		c.runcPath,
-		"--root", c.runcRoot,
+	runcCmd := c.buildCmd(
 		"list",
 		"--format", "json",
 	)
@@ -198,9 +198,7 @@ func (c *RuncClient) ListContainers() ([]ContainerState, error) {
 }
 
 func (c *RuncClient) SignalContainer(containerID string, signal Signal) error {
-	runcCmd := exec.Command(
-		c.runcPath,
-		"--root", c.runcRoot,
+	runcCmd := c.buildCmd(
 		"kill",
 		containerID,
 		signal.String(),
@@ -210,11 +208,9 @@ func (c *RuncClient) SignalContainer(containerID string, signal Signal) error {
 }
 
 func (c *RuncClient) DeleteContainer(containerID string) error {
-	runcCmd := exec.Command(
-		c.runcPath,
-		"--root", c.runcRoot,
+	runcCmd := c.buildCmd(
 		"delete",
-		"-f",
+		"--force",
 		containerID,
 	)
 
@@ -223,4 +219,14 @@ func (c *RuncClient) DeleteContainer(containerID string) error {
 
 func (*RuncClient) DestroyBundle(bundlePath string) error {
 	return os.RemoveAll(bundlePath)
+}
+
+func (c *RuncClient) buildCmd(command string, extra ...string) *exec.Cmd {
+	args := []string{"--root", c.runcRoot}
+	if c.inSystemd {
+		args = append(args, "--systemd-cgroup")
+	}
+	args = append(args, command)
+	args = append(args, extra...)
+	return exec.Command(c.runcPath, args...)
 }

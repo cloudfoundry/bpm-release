@@ -74,7 +74,11 @@ func rootPre(cmd *cobra.Command, _ []string) error {
 		return errors.New("bpm must be run as root. Please run 'sudo -i' to become the root user.")
 	}
 
-	return cgroups.Setup()
+	if !isRunningSystemd() {
+		return cgroups.Setup()
+	}
+
+	return nil
 }
 
 func root(cmd *cobra.Command, args []string) error {
@@ -172,6 +176,7 @@ func newRuncLifecycle() (*lifecycle.RuncLifecycle, error) {
 	runcClient := client.NewRuncClient(
 		config.RuncPath(bosh.Root()),
 		config.RuncRoot(bosh.Root()),
+		isRunningSystemd(),
 	)
 	features, err := sysfeat.Fetch()
 	if err != nil {
@@ -198,4 +203,12 @@ func processByNameFromJobConfig(jobCfg *config.JobConfig, procName string) (*con
 	}
 
 	return nil, fmt.Errorf("invalid process: %s", procName)
+}
+
+func isRunningSystemd() bool {
+	systemdSystemDir, err := os.Lstat("/run/systemd/system")
+	if err != nil {
+		return false
+	}
+	return systemdSystemDir.IsDir()
 }

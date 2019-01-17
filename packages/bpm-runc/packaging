@@ -45,7 +45,6 @@ RUNC_PACKAGE_PATH=github.com/opencontainers/runc
 
 # install runc
 (
-
   export GOROOT=$(readlink -nf /var/vcap/packages/golang)
   export PATH=$GOROOT/bin:$PATH
   export GOPATH=$BOSH_INSTALL_TARGET

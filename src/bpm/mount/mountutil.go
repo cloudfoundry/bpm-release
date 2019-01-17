@@ -62,7 +62,6 @@ func ParseFstab(contents []byte) ([]Mnt, error) {
 		}
 
 		options := strings.Split(fields[3], ",")
-
 		mnts = append(mnts, Mnt{
 			Device:     fields[0],
 			MountPoint: fields[1],
