@@ -22,7 +22,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"bpm/config"
+	"bpm/jobid"
 	"bpm/models"
 )
 
@@ -31,7 +31,7 @@ func PrintJobs(processes []*models.Process, stdout io.Writer) error {
 
 	printRow(tw, "Name", "Pid", "Status")
 	for _, process := range processes {
-		name, err := config.Decode(process.Name)
+		name, err := jobid.Decode(process.Name)
 		if err != nil {
 			return err
 		}

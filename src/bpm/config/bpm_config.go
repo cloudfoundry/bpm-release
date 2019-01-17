@@ -16,9 +16,10 @@
 package config
 
 import (
-	"encoding/base32"
 	"fmt"
 	"path/filepath"
+
+	"bpm/jobid"
 )
 
 func RuncPath(boshRoot string) string {
@@ -150,24 +151,5 @@ func (c *BPMConfig) ContainerID() string {
 		containerID = fmt.Sprintf("%s.%s", c.jobName, c.procName)
 	}
 
-	// runc spec only allows `^[\w+-\.]+$`
-	// https://github.com/opencontainers/runc/blob/master/libcontainer/factory_linux.go
-	return Encode(containerID)
-}
-
-func Encode(containerID string) string {
-	enc := base32.StdEncoding
-	enc = enc.WithPadding('-')
-	return enc.EncodeToString([]byte(containerID))
-}
-
-func Decode(containerID string) (string, error) {
-	enc := base32.StdEncoding
-	enc = enc.WithPadding('-')
-	data, err := enc.DecodeString(containerID)
-	if err != nil {
-		return "", err
-	}
-
-	return string(data), nil
+	return jobid.Encode(containerID)
 }

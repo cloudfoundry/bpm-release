@@ -22,6 +22,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"bpm/config"
+	"bpm/jobid"
 	"bpm/models"
 	"bpm/presenters"
 )
@@ -95,7 +96,7 @@ func updateProcess(processes []*models.Process, process *models.Process) ([]*mod
 		}
 	}
 
-	decodedName, err := config.Decode(process.Name)
+	decodedName, err := jobid.Decode(process.Name)
 	if err != nil {
 		return processes, err
 	}

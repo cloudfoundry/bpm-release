@@ -29,6 +29,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 
 	"bpm/config"
+	"bpm/jobid"
 )
 
 var _ = Describe("logs", func() {
@@ -49,7 +50,7 @@ var _ = Describe("logs", func() {
 		var err error
 
 		job = uuid.NewV4().String()
-		containerID = config.Encode(job)
+		containerID = jobid.Encode(job)
 		boshRoot, err = ioutil.TempDir(bpmTmpDir, "logs-test")
 		Expect(err).NotTo(HaveOccurred())
 		Expect(os.Chmod(boshRoot, 0755)).To(Succeed())
@@ -231,7 +232,7 @@ var _ = Describe("logs", func() {
 
 		BeforeEach(func() {
 			process = uuid.NewV4().String()
-			otherContainerID = config.Encode(process)
+			otherContainerID = jobid.Encode(process)
 
 			cfg.Processes = append(cfg.Processes, &config.ProcessConfig{
 				Name:       process,

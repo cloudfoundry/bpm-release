@@ -30,6 +30,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 
 	"bpm/config"
+	"bpm/jobid"
 )
 
 var _ = Describe("capabilities", func() {
@@ -49,7 +50,7 @@ var _ = Describe("capabilities", func() {
 		var err error
 
 		job = uuid.NewV4().String()
-		containerID = config.Encode(job)
+		containerID = jobid.Encode(job)
 		boshRoot, err = ioutil.TempDir(bpmTmpDir, "capabiliteis-test")
 		Expect(err).NotTo(HaveOccurred())
 		Expect(os.Chmod(boshRoot, 0755)).To(Succeed())

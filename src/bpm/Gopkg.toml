@@ -55,3 +55,7 @@ required = [
   go-tests = true
   non-go = true
   unused-packages = true
+
+[[constraint]]
+  name = "github.com/opencontainers/runc"
+  version = "0.1.1"
