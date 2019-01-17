@@ -78,10 +78,5 @@ func stop(cmd *cobra.Command, _ []string) error {
 		logger.Error("failed-to-stop", err)
 	}
 
-	if err := runcLifecycle.RemoveProcess(logger, bpmCfg); err != nil {
-		logger.Error("failed-to-cleanup", err)
-		return fmt.Errorf("failed to cleanup job-process: %s", err)
-	}
-
 	return nil
 }

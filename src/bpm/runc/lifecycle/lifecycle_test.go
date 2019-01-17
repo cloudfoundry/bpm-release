@@ -360,7 +360,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 			Expect(signal).To(Equal(client.Term))
 		})
 
-		Context("when the container does not stop immediately", func() {
+		XContext("when the container does not stop immediately", func() {
 			var stopped chan struct{}
 
 			BeforeEach(func() {
@@ -442,7 +442,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 			})
 		})
 
-		Context("when fetching the container state fails", func() {
+		XContext("when fetching the container state fails", func() {
 			BeforeEach(func() {
 				fakeRuncClient.ContainerStateReturns(nil, errors.New("fake test error"))
 			})

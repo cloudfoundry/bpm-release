@@ -16,6 +16,7 @@
 package lifecycle
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -31,6 +32,7 @@ import (
 	"bpm/config"
 	"bpm/models"
 	"bpm/runc/client"
+	"bpm/stopsched"
 	"bpm/usertools"
 )
 
@@ -238,45 +240,51 @@ func (j *RuncLifecycle) ListProcesses() ([]*models.Process, error) {
 }
 
 func (j *RuncLifecycle) StopProcess(logger lager.Logger, cfg *config.BPMConfig, exitTimeout time.Duration) error {
-	err := j.runcClient.SignalContainer(cfg.ContainerID(), client.Term)
+	s, err := stopsched.Parse("TERM/15/QUIT/2/KILL")
 	if err != nil {
 		return err
 	}
 
-	state, err := j.runcClient.ContainerState(cfg.ContainerID())
-	if err != nil {
-		logger.Error("failed-to-fetch-state", err)
-	} else {
-		if state.Status == ContainerStateStopped {
-			return nil
-		}
-	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	timeout := j.clock.NewTimer(exitTimeout)
-	stateTicker := j.clock.NewTicker(ContainerStatePollInterval)
-	defer stateTicker.Stop()
+	go func() {
+		stateTicker := j.clock.NewTicker(ContainerStatePollInterval)
+		defer stateTicker.Stop()
 
-	for {
-		select {
-		case <-stateTicker.C():
-			state, err = j.runcClient.ContainerState(cfg.ContainerID())
+		for range stateTicker.C() {
+			state, err := j.runcClient.ContainerState(cfg.ContainerID())
 			if err != nil {
 				logger.Error("failed-to-fetch-state", err)
 			} else {
 				if state.Status == ContainerStateStopped {
-					return nil
+					cancel()
 				}
 			}
-		case <-timeout.C():
-			err := j.runcClient.SignalContainer(cfg.ContainerID(), client.Quit)
-			if err != nil {
-				logger.Error("failed-to-sigquit", err)
-			}
-
-			j.clock.Sleep(ContainerSigQuitGracePeriod)
-			return timeoutError
 		}
-	}
+	}()
+
+	return stopsched.Run(ctx, s, stopsched.WithActions(stopsched.Actions{
+		"TERM": func() error {
+			return j.runcClient.SignalContainer(cfg.ContainerID(), client.Term)
+		},
+		"QUIT": func() error {
+			return j.runcClient.SignalContainer(cfg.ContainerID(), client.Quit)
+		},
+		"KILL": func() error {
+			if err := j.RemoveProcess(logger, cfg); err != nil {
+				logger.Error("failed-to-cleanup", err)
+				return fmt.Errorf("failed to cleanup job-process: %s", err)
+			}
+			return nil
+		},
+	}), stopsched.WithClock(j.clock), stopsched.WithEnsure(func() error {
+		if err := j.RemoveProcess(logger, cfg); err != nil {
+			logger.Error("failed-to-cleanup", err)
+			return fmt.Errorf("failed to cleanup job-process: %s", err)
+		}
+		return nil
+	}))
 }
 
 func (j *RuncLifecycle) RemoveProcess(logger lager.Logger, cfg *config.BPMConfig) error {
