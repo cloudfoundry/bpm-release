@@ -15,6 +15,6 @@ runc/runc-linux-amd64:
   object_id: dc830335-8db1-4ca5-7fcd-d991228b5241
   sha: 52ad938ef4044df50d5176e4f6f44079a86f0110
 runc/runc.tar.gz:
-  size: 1200865
-  object_id: 0be6d136-d4d2-4d49-5db6-fb8c3439625a
-  sha: 47c50f2a46d60b751ca6e7ca75f6b1ccaaf61630
+  size: 1201237
+  object_id: db09619e-fbb8-4856-7289-730c32262e7e
+  sha: 946c9fda3916efcb0a8b35a7fdb1bbecee5a9e05
