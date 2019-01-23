@@ -3,11 +3,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:94fab006eb1a18c84c61f34f76ad3b651f546ffee7a63adc4f8379710b07bf30"
+  digest = "1:1e34eb32b95242aa7c64217164296b40fe026c14c46a8581aca7918118d7b6b8"
   name = "code.cloudfoundry.org/bytefmt"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "b31f603f5e1e047fdb38584e1a922dcc5c4de5c8"
+  revision = "2aa6f33b730c79971cfc3c742f279195b0abc627"
 
 [[projects]]
   branch = "master"
@@ -33,12 +33,12 @@
   version = "v1.1.0"
 
 [[projects]]
-  digest = "1:b2339e83ce9b5c4f79405f949429a7f68a9a904fed903c672aac1e7ceb7f5f02"
+  digest = "1:e256b859ab89f005f2f639f5ed9807d0873d9135e27c6382f419b840ff9abe71"
   name = "github.com/Sirupsen/logrus"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "3e01752db0189b9157070a0e1668a620f9a85da2"
-  version = "v1.0.6"
+  revision = "e1e72e9de974bd926e5c56f83753fba2df402ce5"
+  version = "v1.3.0"
 
 [[projects]]
   digest = "1:4340101f42556a9cb2f7a360a0e95a019bfef6247d92e6c4c46f2433cf86a482"
@@ -71,31 +71,35 @@
   version = "v1.0"
 
 [[projects]]
-  digest = "1:bc691028377c246d0c85e723d0ea726f899b2b53d5bc72542b74fe9054d447f2"
+  digest = "1:4059c14e87a2de3a434430340521b5feece186c1469eff0834c29a63870de3ed"
+  name = "github.com/konsorten/go-windows-terminal-sequences"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "5c8c8bd35d3832f5d134ae1e1e375b69a4d25242"
+  version = "v1.0.1"
+
+[[projects]]
+  digest = "1:15416fd2b58d5b2dfa0bc99185cdff3a8f49e73e022291891cb8d5d820d9760d"
   name = "github.com/kr/pty"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "fa756f09eeb418bf1cc6268c66ceaad9bb98f598"
-  version = "v1.1.2"
+  revision = "db8e3cd836b82e82e0a9c8edc6896967dd31374f"
+  version = "v1.1.3"
 
 [[projects]]
-  digest = "1:9670d34e6bfeed9cb5c91c0729da54344cb8de92a2d185aaf33869ae16291665"
+  digest = "1:0d33e8f4230cafee906332f45cc456ce2b66ac18a1edc40a9c87e3e68682d08b"
   name = "github.com/maxbrunsfeld/counterfeiter"
   packages = [
     ".",
     "arguments",
-    "astutil",
     "generator",
-    "locator",
-    "model",
-    "terminal",
   ]
   pruneopts = "NUT"
-  revision = "c1f2005ff133f81907ce72f3d20e1169799317fe"
-  version = "v5"
+  revision = "2d74a219416bffff638e30a3775c76715f1968a7"
+  version = "v6.0.1"
 
 [[projects]]
-  digest = "1:dd5a236a6046c6dc18eae33c9ea5e0b1af4da768d158f3b29e13df6f840b40fd"
+  digest = "1:5aee3b3e914d668fe567ebb95d833e681d394929f0fa11323f6a3819eb781335"
   name = "github.com/onsi/ginkgo"
   packages = [
     ".",
@@ -125,11 +129,11 @@
     "types",
   ]
   pruneopts = "NUT"
-  revision = "3774a09d95489ccaa16032e0770d08ea77ba6184"
-  version = "v1.6.0"
+  revision = "2e1be8f7d90e9d3e3e58b0ce470f2f14d075406f"
+  version = "v1.7.0"
 
 [[projects]]
-  digest = "1:7e5085b94894e347689f17587ffbae5f9c758f3c5352ac89c06b4e110c0129f9"
+  digest = "1:c9385d498108298283c3f3685667d8c87bf86a94d129fd49f8fd4485f1903e14"
   name = "github.com/onsi/gomega"
   packages = [
     ".",
@@ -148,8 +152,8 @@
     "types",
   ]
   pruneopts = "NUT"
-  revision = "b6ea1ea48f981d0f615a154a45eabb9dd466556d"
-  version = "v1.4.1"
+  revision = "65fb64232476ad9046e57c26cd0bff3d3a8dc6cd"
+  version = "v1.4.3"
 
 [[projects]]
   digest = "1:c9e0e109a897ef306f865e55e07ecb1c3024edafd103e1c2b1a06a852dc91cb3"
@@ -187,24 +191,24 @@
   version = "v0.0.3"
 
 [[projects]]
-  digest = "1:e3707aeaccd2adc89eba6c062fec72116fe1fc1ba71097da85b4d8ae1668a675"
+  digest = "1:9d8420bbf131d1618bde6530af37c3799340d3762cc47210c1d9532a4c3a2779"
   name = "github.com/spf13/pflag"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "9a97c102cda95a86cec2345a6f09f55a939babf5"
-  version = "v1.0.2"
+  revision = "298182f68c66c05229eb03ac171abe6e309ee79a"
+  version = "v1.0.3"
 
 [[projects]]
   branch = "master"
-  digest = "1:3f3a05ae0b95893d90b9b3b5afdb79a9b3d96e4e36e099d841ae602e4aca0da8"
+  digest = "1:38f553aff0273ad6f367cb0a0f8b6eecbaef8dc6cb8b50e57b6a81c1d5b1e332"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
   pruneopts = "NUT"
-  revision = "de0752318171da717af4ce24d0a2e8626afaeb11"
+  revision = "057139ce5d2bdbe6fe73c53679e24e9cf007f637"
 
 [[projects]]
   branch = "master"
-  digest = "1:e25e5c661d9100b6ab6628d30acae40aaa9379f2b2aa8ce9fd37989648f590ee"
+  digest = "1:5193d913046443e59093d66a97a40c51f4a5ea4ceba60f3b3ecf89694de5d16f"
   name = "golang.org/x/net"
   packages = [
     "html",
@@ -212,18 +216,18 @@
     "html/charset",
   ]
   pruneopts = "NUT"
-  revision = "c39426892332e1bb5ec0a434a079bf82f5d30c54"
+  revision = "ed066c81e75eba56dd9bd2139ade88125b855585"
 
 [[projects]]
   branch = "master"
-  digest = "1:ec76a40fbfda0c329ee58f4e3b14b4279a939efce89eca020e934e2e5234eddd"
+  digest = "1:a669a86ec285537ab21ad4440697eb657a1387727537c3646e8bd4de66d291ec"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "NUT"
-  revision = "98c5dad5d1a0e8a73845ecc8897d0bd56586511d"
+  revision = "c6b37f3e92850b723493d63fd35aad34e19e048d"
 
 [[projects]]
   digest = "1:7c61a813b250ba8bb02bebb0382e6c3d00e04da2b577dc58985b86312fb89ffd"
@@ -253,15 +257,24 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:a05bd2d296bc727082abcb63ff52615b4dcc6219d8b61e99fd83d605dc779a18"
+  digest = "1:366b01ba5b7796687e15d90bd2a98e0f298ad32add9b880694bf1ca8ff7d598f"
   name = "golang.org/x/tools"
   packages = [
     "go/ast/astutil",
+    "go/gcexportdata",
+    "go/internal/cgo",
+    "go/internal/gcimporter",
+    "go/internal/packagesdriver",
+    "go/packages",
+    "go/types/typeutil",
     "imports",
     "internal/fastwalk",
+    "internal/gopathwalk",
+    "internal/module",
+    "internal/semver",
   ]
   pruneopts = "NUT"
-  revision = "a434f64ace81347eff0fb4a32bc80a235e0ad762"
+  revision = "0c44af741bb7ee876f4c02a8205654b087b73f51"
 
 [[projects]]
   digest = "1:1b91ae0dc69a41d4c2ed23ea5cffb721ea63f5037ca4b81e6d6771fbb8f45129"
@@ -282,11 +295,11 @@
 
 [[projects]]
   branch = "v2"
-  digest = "1:7c95b35057a0ff2e19f707173cc1a947fa43a6eb5c4d300d196ece0334046082"
+  digest = "1:18108594151654e9e696b27b181b953f9a90b16bf14d253dd1b397b025a1487f"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
+  revision = "51d6538a90f86fe93ac480b35f37b2be17fef232"
 
 [solve-meta]
   analyzer-name = "dep"
