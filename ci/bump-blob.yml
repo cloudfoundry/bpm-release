@@ -17,8 +17,8 @@ params:
   BLOB_DESTINATION: ~
   BLOB_NAME: ~
   BLOB_VERSION_FILE: ~
+  BLOB_DOWNLOAD_FILENAME: ~
   BOSH_PRIVATE_CONFIG: ~
-  BOSH_DOWNLOAD_FILENAME: ~
 
 run:
   path: bosh-release/ci/scripts/bump-blob

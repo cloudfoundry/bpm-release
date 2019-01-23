@@ -71,6 +71,15 @@ resources:
     pre_release: true
     access_token: ((bpm-machine-github-token))
 
+- name: runc-linux-src
+  type: github-release
+  check_every: 24h
+  source:
+    owner: opencontainers
+    repository: runc
+    pre_release: true
+    access_token: ((bpm-machine-github-token))
+
 - name: bpm-ci
   type: git
   source:
@@ -198,19 +207,21 @@ jobs:
   serial: true
   plan:
   - aggregate:
-    - get: runc-linux
+    - get: runc-linux-src
       trigger: true
+      params:
+        include_source_tarball: true
     - get: bpm-release
   - task: bump-blob
     input_mapping:
       bosh-release: bpm-release
-      blob-dir: runc-linux
+      blob-dir: runc-linux-src
     file: bpm-release/ci/bump-blob.yml
     params:
-      BLOB_NAME: runc-linux-amd64
+      BLOB_NAME: runc.tar.gz
       BLOB_VERSION_FILE: version
       BLOB_DESTINATION: runc
-      BLOB_DOWNLOAD_FILENAME: runc.amd64
+      BLOB_DOWNLOAD_FILENAME: source.tar.gz
       BOSH_PRIVATE_CONFIG: ((bpm-private-yml))
   - put: bpm-release
     params: {repository: bumped-bosh-release, rebase: true}
