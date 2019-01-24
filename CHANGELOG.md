@@ -1,3 +1,12 @@
+# v1.0.1
+
+* systemd support
+
+# v1.0.0
+
+There were no changes in this release beyond a Go package version bump. For all
+user-facing features it is a re-release of v0.13.0.
+
 # v0.13.0
 
 * volumes can be mounted inside `/var/vcap/sys/run`
