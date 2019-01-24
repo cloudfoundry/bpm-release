@@ -24,6 +24,19 @@ your process while running the drain script.
 [post-start]:https://bosh.io/docs/post-start.html 
 [drain]:https://bosh.io/docs/drain.html
 
+### Zombie Processes and Forwarding Signals
+
+bpm will run the process you specify in your configuration file as the `init`
+process in the container and it will be the process to receive the signals
+listed above. If your process starts other processes then it is responsible for
+making sure that they are not left as zombies by `wait`ing for them.
+
+A workaround for this if you don't want to manage this is to have the process
+in your configuration file be `/bin/bash -c` and have it invoke your real
+process. `bash` will make sure that you don't end up with zombies.
+
+We're going to remove this rough edge in the next major version of BPM.
+
 ## Environment Variables
 
 | *Name* | *Value*                          |
