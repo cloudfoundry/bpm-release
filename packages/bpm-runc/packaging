@@ -1,4 +1,4 @@
-set -e
+set -eu
 
 # We need to perform some linker tomfoolery in order to successfully compile
 # runc for running on a BOSH VM. runc systemd support requires dynamic linking.
@@ -26,43 +26,61 @@ set -e
 # broken in the case that Git is not installed on the system because of quoting
 # mishaps.
 
+PKG_CONFIG_VERSION=0.29.2
+PKG_CONFIG_PREFIX="$(mktemp -d)"
+
 LIBSECCOMP_PREFIX="${BOSH_INSTALL_TARGET}/lib/libseccomp"
 LIBSECCOMP_RUNTIME_PATH=/var/vcap/packages/bpm/lib/libseccomp/lib
 LIBSECCOMP_VERSION=2.3.3
 
 RUNC_PACKAGE_PATH=github.com/opencontainers/runc
 
+# compile pkg-config
+(
+  set -eu
+
+  tar xzf "pkg-config/pkg-config-${PKG_CONFIG_VERSION}.tar.gz"
+  cd "pkg-config-${PKG_CONFIG_VERSION}"
+  ./configure --prefix="${PKG_CONFIG_PREFIX}" --with-internal-glib
+  make
+  make install prefix="${PKG_CONFIG_PREFIX}"
+)
+
 # compile libseccomp
 (
-  set -e
-  tar zxf "libseccomp/libseccomp-${LIBSECCOMP_VERSION}.tar.gz"
+  set -eu
 
+  tar zxf "libseccomp/libseccomp-${LIBSECCOMP_VERSION}.tar.gz"
   cd "libseccomp-${LIBSECCOMP_VERSION}"
-  ./configure --prefix=${LIBSECCOMP_PREFIX}
+  ./configure --prefix="${LIBSECCOMP_PREFIX}"
   make
   make install
 )
 
 # install runc
 (
-  export GOROOT=$(readlink -nf /var/vcap/packages/golang)
-  export PATH=$GOROOT/bin:$PATH
-  export GOPATH=$BOSH_INSTALL_TARGET
+  set -eu
+  export PATH="${PKG_CONFIG_PREFIX}/bin:$PATH"
 
-  mkdir -p ${BOSH_INSTALL_TARGET}/src/$RUNC_PACKAGE_PATH
-  tar xzf runc/runc.tar.gz -C ${BOSH_INSTALL_TARGET}/src/${RUNC_PACKAGE_PATH} --strip-components 1
+  export GOROOT=$(readlink -nf /var/vcap/packages/golang)
+  export PATH=${GOROOT}/bin:${PATH}
+  export GOPATH="${BOSH_INSTALL_TARGET}"
+
+  mkdir -p "${BOSH_INSTALL_TARGET}/src/$RUNC_PACKAGE_PATH"
+  tar xzf runc/runc.tar.gz -C "${BOSH_INSTALL_TARGET}/src/${RUNC_PACKAGE_PATH}" --strip-components 1
   (
-    set -e
+    set -eu
     env \
 	  PKG_CONFIG_PATH="${LIBSECCOMP_PREFIX}/lib/pkgconfig" \
 	  go build \
 	    -buildmode=pie \
 	    -ldflags "-X main.gitCommit=unknown -X main.version=bpm -r ${LIBSECCOMP_RUNTIME_PATH}" \
 	    -tags "seccomp apparmor" \
-	    -o ${BOSH_INSTALL_TARGET}/bin/runc \
-	    ${RUNC_PACKAGE_PATH}
+	    -o "${BOSH_INSTALL_TARGET}/bin/runc" \
+	    "${RUNC_PACKAGE_PATH}"
   )
-
-  # clean up source artifacts
-  rm -rf ${BOSH_INSTALL_TARGET}/{src,pkg}
 )
+
+# clean up source artifacts
+rm -r "${BOSH_INSTALL_TARGET}/src"
+rm -r "${PKG_CONFIG_PREFIX}"
