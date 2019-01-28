@@ -1,3 +1,7 @@
+# v1.0.2
+
+* fix compilation on 97.x series stemcells
+
 # v1.0.1
 
 * systemd support
