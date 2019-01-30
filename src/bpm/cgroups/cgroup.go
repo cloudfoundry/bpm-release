@@ -17,24 +17,18 @@ package cgroups
 
 import (
 	"bufio"
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/opencontainers/runc/libcontainer/cgroups"
 	"golang.org/x/sys/unix"
 
 	"bpm/mount"
 )
 
-const (
-	cgroupRoot       = "/sys/fs/cgroup"
-	legacyCgroupRoot = "/cgroup/bpm"
-)
-
-// Needed for legacy cgroups migration. Not used in new code.
-var subsystems = []string{"blkio", "cpu", "cpuacct", "cpuset", "devices", "freezer", "hugetlb", "memory", "perf_event", "pids"}
+const cgroupRoot = "/sys/fs/cgroup"
 
 func Setup() error {
 	mnts, err := mount.Mounts()
@@ -45,7 +39,7 @@ func Setup() error {
 		return err
 	}
 
-	subsystems, err := EnabledSubsystems()
+	subsystems, err := cgroups.GetAllSubsystems()
 	if err != nil {
 		return err
 	}
@@ -58,13 +52,6 @@ func Setup() error {
 		if err := mountCgroupSubsystem(group); err != nil {
 			return err
 		}
-	}
-
-	// TODO(jm): This exists for the legacy code cgroup mount point
-	// This should be deleted when v1 is released.
-	err = chmodLegacyMountPointIfPresent()
-	if err != nil {
-		return err
 	}
 
 	return nil
@@ -107,50 +94,6 @@ func subsystemGrouping(f io.Reader, subsystem string) (string, error) {
 	// If the current process isn't in a cgroup of the subsystem's type
 	// then we don't need to match anything.
 	return subsystem, nil
-}
-
-// EnabledSubsystems returns the cgroup subsystems which are enabled in the
-// running kernel.
-func EnabledSubsystems() ([]string, error) {
-	f, err := os.Open("/proc/cgroups")
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-
-	return enabledSubsystems(f)
-}
-
-func enabledSubsystems(f io.Reader) ([]string, error) {
-	var subs []string
-
-	s := bufio.NewScanner(f)
-	for s.Scan() {
-		line := s.Text()
-
-		// Skip header
-		if strings.HasPrefix(line, "#") {
-			continue
-		}
-
-		var (
-			name    string
-			ignored int
-			enabled bool
-		)
-		if _, err := fmt.Sscanf(s.Text(), "%s %d %d %t", &name, &ignored, &ignored, &enabled); err != nil {
-			return nil, err
-		}
-		if enabled {
-			subs = append(subs, name)
-		}
-	}
-
-	if err := s.Err(); err != nil {
-		return nil, err
-	}
-
-	return subs, nil
 }
 
 func mountCgroupTmpfsIfNotPresent(mnts []mount.Mnt) error {
@@ -197,28 +140,4 @@ func containsElement(elements []string, element string) bool {
 	}
 
 	return false
-}
-
-func chmodLegacyMountPointIfPresent() error {
-	err := chmodIfExists(legacyCgroupRoot)
-	if err != nil {
-		return err
-	}
-
-	for _, subsystem := range subsystems {
-		err := chmodIfExists(filepath.Join(legacyCgroupRoot, subsystem))
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func chmodIfExists(path string) error {
-	err := os.Chmod(path, 0755)
-	if os.IsNotExist(err) {
-		return nil
-	}
-	return err
 }
