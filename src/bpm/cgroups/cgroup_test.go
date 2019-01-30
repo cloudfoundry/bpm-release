@@ -24,29 +24,6 @@ import (
 )
 
 var _ = Describe("Cgroups", func() {
-	Describe("finding enabled cgroup subsystems", func() {
-		It("shows enabled subsystems from /proc/cgroups", func() {
-			r := strings.NewReader(`#subsys_name	hierarchy	num_cgroups	enabled
-cpuset	11	2	1
-cpu	8	101	1
-cpuacct	8	101	0
-blkio	10	101	1
-memory	6	298	1
-devices	9	101	1
-freezer	12	2	1
-net_cls	3	2	0
-perf_event	4	2	1
-net_prio	3	2	1
-hugetlb	5	2	0
-pids	7	108	1
-rdma	2	1	1`)
-			systems, err := enabledSubsystems(r)
-			Expect(err).NotTo(HaveOccurred())
-
-			Expect(systems).To(ConsistOf("cpuset", "cpu", "blkio", "memory", "devices", "freezer", "perf_event", "net_prio", "pids", "rdma"))
-		})
-	})
-
 	Describe("checking subsystem grouping", func() {
 		var r io.Reader
 
