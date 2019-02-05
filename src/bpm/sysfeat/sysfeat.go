@@ -35,7 +35,7 @@ type Features struct {
 }
 
 func Fetch() (*Features, error) {
-	mountpoint, err := cgroups.FindCgroupMountpoint("memory")
+	mountpoint, err := cgroups.FindCgroupMountpoint("", "memory")
 	if err != nil {
 		return nil, err
 	}

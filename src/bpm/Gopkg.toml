@@ -58,4 +58,4 @@ required = [
 
 [[constraint]]
   name = "github.com/opencontainers/runc"
-  version = "0.1.1"
+  version = "v1.0.0-rc6"

@@ -1,32 +1,19 @@
 package utils
 
 import (
-	"crypto/rand"
-	"encoding/hex"
 	"encoding/json"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
-	"syscall"
+	"unsafe"
+
+	"golang.org/x/sys/unix"
 )
 
 const (
 	exitSignalOffset = 128
 )
-
-// GenerateRandomName returns a new name joined with a prefix.  This size
-// specified is used to truncate the randomly generated value
-func GenerateRandomName(prefix string, size int) (string, error) {
-	id := make([]byte, 32)
-	if _, err := io.ReadFull(rand.Reader, id); err != nil {
-		return "", err
-	}
-	if size > 64 {
-		size = 64
-	}
-	return prefix + hex.EncodeToString(id)[:size], nil
-}
 
 // ResolveRootfs ensures that the current working directory is
 // not a symlink and returns the absolute path to the rootfs
@@ -40,7 +27,7 @@ func ResolveRootfs(uncleanRootfs string) (string, error) {
 
 // ExitStatus returns the correct exit status for a process based on if it
 // was signaled or exited cleanly
-func ExitStatus(status syscall.WaitStatus) int {
+func ExitStatus(status unix.WaitStatus) int {
 	if status.Signaled() {
 		return exitSignalOffset + int(status.Signal())
 	}
@@ -99,4 +86,27 @@ func SearchLabels(labels []string, query string) string {
 		}
 	}
 	return ""
+}
+
+// Annotations returns the bundle path and user defined annotations from the
+// libcontainer state.  We need to remove the bundle because that is a label
+// added by libcontainer.
+func Annotations(labels []string) (bundle string, userAnnotations map[string]string) {
+	userAnnotations = make(map[string]string)
+	for _, l := range labels {
+		parts := strings.SplitN(l, "=", 2)
+		if len(parts) < 2 {
+			continue
+		}
+		if parts[0] == "bundle" {
+			bundle = parts[1]
+		} else {
+			userAnnotations[parts[0]] = parts[1]
+		}
+	}
+	return
+}
+
+func GetIntSize() int {
+	return int(unsafe.Sizeof(1))
 }
