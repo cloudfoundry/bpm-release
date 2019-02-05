@@ -1,5 +1,3 @@
-// +build linux freebsd
-
 package configs
 
 import (
@@ -9,12 +7,13 @@ import (
 )
 
 const (
-	NEWNET  NamespaceType = "NEWNET"
-	NEWPID  NamespaceType = "NEWPID"
-	NEWNS   NamespaceType = "NEWNS"
-	NEWUTS  NamespaceType = "NEWUTS"
-	NEWIPC  NamespaceType = "NEWIPC"
-	NEWUSER NamespaceType = "NEWUSER"
+	NEWNET    NamespaceType = "NEWNET"
+	NEWPID    NamespaceType = "NEWPID"
+	NEWNS     NamespaceType = "NEWNS"
+	NEWUTS    NamespaceType = "NEWUTS"
+	NEWIPC    NamespaceType = "NEWIPC"
+	NEWUSER   NamespaceType = "NEWUSER"
+	NEWCGROUP NamespaceType = "NEWCGROUP"
 )
 
 var (
@@ -22,8 +21,8 @@ var (
 	supportedNamespaces = make(map[NamespaceType]bool)
 )
 
-// nsToFile converts the namespace type to its filename
-func nsToFile(ns NamespaceType) string {
+// NsName converts the namespace type to its filename
+func NsName(ns NamespaceType) string {
 	switch ns {
 	case NEWNET:
 		return "net"
@@ -37,6 +36,8 @@ func nsToFile(ns NamespaceType) string {
 		return "user"
 	case NEWUTS:
 		return "uts"
+	case NEWCGROUP:
+		return "cgroup"
 	}
 	return ""
 }
@@ -50,7 +51,7 @@ func IsNamespaceSupported(ns NamespaceType) bool {
 	if ok {
 		return supported
 	}
-	nsFile := nsToFile(ns)
+	nsFile := NsName(ns)
 	// if the namespace type is unknown, just return false
 	if nsFile == "" {
 		return false
@@ -64,12 +65,13 @@ func IsNamespaceSupported(ns NamespaceType) bool {
 
 func NamespaceTypes() []NamespaceType {
 	return []NamespaceType{
+		NEWUSER, // Keep user NS always first, don't move it.
+		NEWIPC,
+		NEWUTS,
 		NEWNET,
 		NEWPID,
 		NEWNS,
-		NEWUTS,
-		NEWIPC,
-		NEWUSER,
+		NEWCGROUP,
 	}
 }
 
@@ -81,10 +83,7 @@ type Namespace struct {
 }
 
 func (n *Namespace) GetPath(pid int) string {
-	if n.Path != "" {
-		return n.Path
-	}
-	return fmt.Sprintf("/proc/%d/ns/%s", pid, nsToFile(n.Type))
+	return fmt.Sprintf("/proc/%d/ns/%s", pid, NsName(n.Type))
 }
 
 func (n *Namespaces) Remove(t NamespaceType) bool {
