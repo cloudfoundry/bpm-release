@@ -102,9 +102,9 @@ func (*RuncClient) CreateBundle(
 func (c *RuncClient) RunContainer(pidFilePath, bundlePath, containerID string, detach bool, stdout, stderr io.Writer) (int, error) {
 	args := []string{
 		"--bundle", bundlePath,
-		"--pid-file", pidFilePath,
 	}
 	if detach {
+		args = append(args, "--pid-file", pidFilePath)
 		args = append(args, "--detach")
 	}
 	args = append(args, containerID)
