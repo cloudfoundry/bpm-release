@@ -70,6 +70,7 @@ func TestRun(t *testing.T) {
 	if contents, sentinel := string(output), "stderr"; !strings.Contains(contents, sentinel) {
 		t.Errorf("stdout/stderr did not contain %q, contents: %q", sentinel, contents)
 	}
+
 	stdout, err := ioutil.ReadFile(s.Path("sys", "log", "errand", "errand.stdout.log"))
 	if err != nil {
 		t.Fatalf("failed to read stdout log: %v", err)
@@ -77,12 +78,18 @@ func TestRun(t *testing.T) {
 	if contents, sentinel := string(stdout), "stdout"; !strings.Contains(contents, sentinel) {
 		t.Errorf("stdout log file did not contain %q, contents: %q", sentinel, contents)
 	}
+
 	stderr, err := ioutil.ReadFile(s.Path("sys", "log", "errand", "errand.stderr.log"))
 	if err != nil {
 		t.Fatalf("failed to read stderr log: %v", err)
 	}
 	if contents, sentinel := string(stderr), "stderr"; !strings.Contains(contents, sentinel) {
 		t.Errorf("stderr log file did not contain %q, contents: %q", sentinel, contents)
+	}
+
+	pidfile := s.Path("sys", "run", "bpm", "errand", "errand.pid")
+	if _, err := os.Stat(pidfile); !os.IsNotExist(err) {
+		t.Errorf("expected %q not to exist but it did", pidfile)
 	}
 }
 
