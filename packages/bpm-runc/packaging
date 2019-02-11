@@ -67,7 +67,8 @@ RUNC_PACKAGE_PATH=github.com/opencontainers/runc
   export GOPATH="${BOSH_INSTALL_TARGET}"
 
   mkdir -p "${BOSH_INSTALL_TARGET}/src/$RUNC_PACKAGE_PATH"
-  tar xzf runc/runc.tar.gz -C "${BOSH_INSTALL_TARGET}/src/${RUNC_PACKAGE_PATH}" --strip-components 1
+  tar xzf runc/runc-6635b4f0c6af3810594d2770f662f34ddc15b40d.tar.gz -C "${BOSH_INSTALL_TARGET}/src/${RUNC_PACKAGE_PATH}" --strip-components 1
+  patch -d "${BOSH_INSTALL_TARGET}/src/${RUNC_PACKAGE_PATH}" -p1 < runc-tmpfs-change-path.patch
   (
     set -eu
     env \

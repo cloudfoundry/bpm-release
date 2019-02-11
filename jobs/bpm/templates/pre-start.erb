@@ -6,3 +6,10 @@ chown -R vcap:vcap /var/vcap/sys/log/bpm
 # ensure bpm/runc setup is executed upon logging in
 cp /var/vcap/jobs/bpm/bin/setup /etc/profile.d/bpm.sh
 chown :vcap /etc/profile.d/bpm.sh
+
+# We need to mount a tmpfs to workaround open issue with O_TMPFILE when the FS
+# is overlay. Runc has been patched to look in this special location.
+mkdir -p /var/vcap/data/bpm/tmpworkaround
+if ! grep "/var/vcap/data/bpm/tmpworkaround" /proc/self/mounts > /dev/null 2>&1 ; then
+  mount -t tmpfs tmpfs /var/vcap/data/bpm/tmpworkaround
+fi

@@ -6,5 +6,6 @@ dependencies:
 
 files:
 - pkg-config/pkg-config-0.29.2.tar.gz
-- runc/runc.tar.gz
+- runc/runc-6635b4f0c6af3810594d2770f662f34ddc15b40d.tar.gz
 - libseccomp/libseccomp-2.3.3.tar.gz
+- runc-tmpfs-change-path.patch

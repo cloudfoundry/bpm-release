@@ -1,0 +1,13 @@
+diff --git a/libcontainer/nsenter/cloned_binary.c b/libcontainer/nsenter/cloned_binary.c
+index c8a42c23..a890220b 100644
+--- a/libcontainer/nsenter/cloned_binary.c
++++ b/libcontainer/nsenter/cloned_binary.c
+@@ -206,7 +206,7 @@ static int clone_binary(void)
+ #ifdef HAVE_MEMFD_CREATE
+ 	memfd = memfd_create(RUNC_MEMFD_COMMENT, MFD_CLOEXEC | MFD_ALLOW_SEALING);
+ #else
+-	memfd = open("/tmp", O_TMPFILE | O_EXCL | O_RDWR | O_CLOEXEC, 0711);
++	memfd = open("/var/vcap/data/bpm/tmpworkaround", O_TMPFILE | O_EXCL | O_RDWR | O_CLOEXEC, 0711);
+ #endif
+ 	if (memfd < 0)
+ 		return -ENOTRECOVERABLE;
