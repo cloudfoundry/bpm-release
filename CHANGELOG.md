@@ -1,3 +1,10 @@
+# v1.0.3
+
+* bump runc to address CVE-2019-5736
+* container IDs have been made more human readable to help with metrics
+  reporting tools - you still should not depend on these!
+* do not write the pidfile for `bpm run` (`bpm start` is unchanged)
+
 # v1.0.2
 
 * fix compilation on 97.x series stemcells
