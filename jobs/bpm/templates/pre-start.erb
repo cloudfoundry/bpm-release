@@ -11,5 +11,5 @@ chown :vcap /etc/profile.d/bpm.sh
 # is overlay. Runc has been patched to look in this special location.
 mkdir -p /var/vcap/data/bpm/tmpworkaround
 if ! grep "/var/vcap/data/bpm/tmpworkaround" /proc/self/mounts > /dev/null 2>&1 ; then
-  mount -t tmpfs tmpfs /var/vcap/data/bpm/tmpworkaround
+  mount -t tmpfs -o nodev,nosuid tmpfs /var/vcap/data/bpm/tmpworkaround
 fi
