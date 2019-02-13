@@ -14,7 +14,3 @@ runc/runc-6635b4f0c6af3810594d2770f662f34ddc15b40d.tar.gz:
   size: 1653384
   object_id: 6b14371d-1ed8-40f9-4d59-71a8761a2c3d
   sha: cbe267ed2a6426d289b66dc0815fb326cfeccdbd
-runc/runc.tar.gz:
-  size: 1201237
-  object_id: db09619e-fbb8-4856-7289-730c32262e7e
-  sha: 946c9fda3916efcb0a8b35a7fdb1bbecee5a9e05
