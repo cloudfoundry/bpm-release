@@ -1,0 +1,38 @@
+# This manifest can be used to deploy the bpm BOSH release to a BBL director.
+# It has dependencies on the cloud-config provided by BBL (2/15/19).
+
+name: bpm
+
+releases:
+- name: bpm
+  version: latest
+
+stemcells:
+- alias: default
+  os: ubuntu-xenial
+  version: latest
+
+update:
+  canaries: 1
+  canary_watch_time: 5000-60000
+  max_in_flight: 1
+  serial: false
+  update_watch_time: 5000-60000
+
+jobs:
+- name: bpm
+  instances: 1
+  persistent_disk: 1024
+  vm_type: default
+  stemcell: default
+  azs:
+  - z1
+  networks:
+  - name: default
+  templates:
+  - name: bpm
+    release: bpm
+  - name: test-server
+    release: bpm
+  - name: test-errand
+    release: bpm
