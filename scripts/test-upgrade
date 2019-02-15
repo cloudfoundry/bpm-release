@@ -16,7 +16,7 @@ echo "Deploying latest final version of bpm"
 bosh upload-release bpm-bosh-io/*.tgz
 
 bosh deploy \
-  "$PWD/bpm-release/example-manifests/bosh-lite-ci.yml" \
+  "$PWD/bpm-release/manifests/bosh-lite-ci.yml" \
   -v "stemcell_name=${STEMCELL_NAME}"
 
 echo "Deploying latest dev version of bpm"
@@ -29,7 +29,7 @@ bosh upload-release \
   --dir "$PWD/bpm-release/"
 
 bosh deploy \
-  "$PWD/bpm-release/example-manifests/bosh-lite-ci.yml" \
+  "$PWD/bpm-release/manifests/bosh-lite-ci.yml" \
   -v "stemcell_name=${STEMCELL_NAME}"
 
 export GOPATH="$PWD/bpm-release"

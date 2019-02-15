@@ -26,7 +26,7 @@ bosh upload-release \
   --dir "${release_dir}"
 
 bosh deploy \
-  "${release_dir}/example-manifests/bosh-lite.yml"
+  "${release_dir}/manifests/bosh-lite.yml"
 
 export GOPATH="${release_dir}"
 export PATH=$GOPATH/bin:$PATH
