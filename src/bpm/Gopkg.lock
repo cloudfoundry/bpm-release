@@ -149,11 +149,12 @@
   version = "v1.4.3"
 
 [[projects]]
-  digest = "1:0f7c425b403d3d030d554351bc86793c003b45e525c2b259d6aab8b69d39f6ef"
+  digest = "1:0e61a3b16ffa0f29c0cfe0f1e85e7df7a0d34a95e6cd386a23614be2397f5071"
   name = "github.com/opencontainers/runc"
   packages = [
     "libcontainer/cgroups",
     "libcontainer/configs",
+    "libcontainer/mount",
     "libcontainer/utils",
   ]
   pruneopts = "NUT"
@@ -321,6 +322,7 @@
     "github.com/onsi/gomega/gbytes",
     "github.com/onsi/gomega/gexec",
     "github.com/opencontainers/runc/libcontainer/cgroups",
+    "github.com/opencontainers/runc/libcontainer/mount",
     "github.com/opencontainers/runc/libcontainer/utils",
     "github.com/opencontainers/runtime-spec/specs-go",
     "github.com/satori/go.uuid",

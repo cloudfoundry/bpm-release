@@ -29,6 +29,7 @@ files:
   - bpm/vendor/github.com/inconshreveable/mousetrap/*.go # gosub
   - bpm/vendor/github.com/opencontainers/runc/libcontainer/cgroups/*.go # gosub
   - bpm/vendor/github.com/opencontainers/runc/libcontainer/configs/*.go # gosub
+  - bpm/vendor/github.com/opencontainers/runc/libcontainer/mount/*.go # gosub
   - bpm/vendor/github.com/opencontainers/runtime-spec/specs-go/*.go # gosub
   - bpm/vendor/github.com/sirupsen/logrus/*.go # gosub
   - bpm/vendor/github.com/spf13/cobra/*.go # gosub
