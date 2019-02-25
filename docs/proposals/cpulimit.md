@@ -1,7 +1,7 @@
 # CPU Resource Limits
 
-Chris Tarazi
-Christopher Brown  
+Chris Tarazi  
+Christopher Brown
 
 *February 2019*
 
