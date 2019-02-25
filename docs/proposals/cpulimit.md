@@ -7,8 +7,7 @@ Christopher Brown
 
 ## Background
 
-Some services have strict latency goals which need to be met in order for the
-broader system to be acceptable to users. Some services don't.
+Some services have strict latency goals which need to be met. Some services don't.
 
 If these different classes of job are collocated on the same machine then an
 over-excited best-effort (BE) service may negatively impact the
