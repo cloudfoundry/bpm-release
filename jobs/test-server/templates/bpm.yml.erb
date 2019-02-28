@@ -24,3 +24,9 @@ processes:
     - --ignore-signals
   env:
     BPM: CONTAINED
+
+- name: stress
+  executable: /bin/bash
+  args:
+    - -c
+    - "for i in {1..50}; do setsid stress -c 1 & done; wait"

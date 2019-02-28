@@ -6,3 +6,6 @@ chown -R vcap:vcap /var/vcap/sys/log/bpm
 # ensure bpm/runc setup is executed upon logging in
 cp /var/vcap/jobs/bpm/bin/setup /etc/profile.d/bpm.sh
 chown :vcap /etc/profile.d/bpm.sh
+
+apt-get update
+apt-get -y install stress

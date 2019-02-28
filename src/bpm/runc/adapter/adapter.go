@@ -214,6 +214,12 @@ func (a *RuncAdapter) BuildSpec(
 		specbuilder.WithNamespace("uts"),
 	)
 
+	// if procCfg.Name == "stress" {
+	// 	spec.Linux.Resources.CPU = &specs.LinuxCPU{
+	// 		Shares: uint64addr(64),
+	// 	}
+	// }
+
 	if procCfg.Limits != nil {
 		if procCfg.Limits.Memory != nil {
 			memLimit, err := bytefmt.ToBytes(*procCfg.Limits.Memory)
@@ -238,6 +244,10 @@ func (a *RuncAdapter) BuildSpec(
 	}
 
 	return *spec, nil
+}
+
+func uint64addr(a uint64) *uint64 {
+	return &a
 }
 
 func systemIdentityMounts(mountResolvConf bool) []specs.Mount {

@@ -9,3 +9,9 @@ check process alt-test-server
   start program "/var/vcap/jobs/bpm/bin/bpm start test-server -p alt-test-server"
   stop program "/var/vcap/jobs/bpm/bin/bpm stop test-server -p alt-test-server"
   group vcap
+
+check process stress
+  with pidfile /var/vcap/sys/run/bpm/test-server/stress.pid
+  start program "/var/vcap/jobs/bpm/bin/bpm start test-server -p stress"
+  stop program "/var/vcap/jobs/bpm/bin/bpm stop test-server -p stress"
+  group vcap
