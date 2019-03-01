@@ -72,16 +72,18 @@ RUNC_PACKAGE_PATH=github.com/opencontainers/runc
   (
     set -eu
     env \
-	  PKG_CONFIG_PATH="${LIBSECCOMP_PREFIX}/lib/pkgconfig" \
-	  go build \
-	    -buildmode=pie \
-	    -ldflags "-X main.gitCommit=unknown -X main.version=bpm -r ${LIBSECCOMP_RUNTIME_PATH}" \
-	    -tags "seccomp apparmor" \
-	    -o "${BOSH_INSTALL_TARGET}/bin/runc" \
-	    "${RUNC_PACKAGE_PATH}"
+          GOCACHE="${BOSH_INSTALL_TARGET}/cache" \
+          PKG_CONFIG_PATH="${LIBSECCOMP_PREFIX}/lib/pkgconfig" \
+          go build \
+            -buildmode=pie \
+            -ldflags "-X main.gitCommit=unknown -X main.version=bpm -r ${LIBSECCOMP_RUNTIME_PATH}" \
+            -tags "seccomp apparmor" \
+            -o "${BOSH_INSTALL_TARGET}/bin/runc" \
+            "${RUNC_PACKAGE_PATH}"
   )
 )
 
 # clean up source artifacts
 rm -r "${BOSH_INSTALL_TARGET}/src"
+rm -r "${BOSH_INSTALL_TARGET}/cache"
 rm -r "${PKG_CONFIG_PREFIX}"
