@@ -33,7 +33,9 @@ making sure that they are not left as zombies by `wait`ing for them.
 
 A workaround for this if you don't want to manage this is to have the process
 in your configuration file be `/bin/bash -c` and have it invoke your real
-process. `bash` will make sure that you don't end up with zombies.
+process. `bash` will make sure that you don't end up with zombies. Unfortunately
+`bash` does not forward signals to child processes by default and so you'll need
+to make sure that you forward on any signals to your subprocess too.
 
 We're going to remove this rough edge in the next major version of BPM.
 
