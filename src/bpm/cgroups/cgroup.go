@@ -23,15 +23,14 @@ import (
 	"strings"
 
 	"github.com/opencontainers/runc/libcontainer/cgroups"
+	"github.com/opencontainers/runc/libcontainer/mount"
 	"golang.org/x/sys/unix"
-
-	"bpm/mount"
 )
 
 const cgroupRoot = "/sys/fs/cgroup"
 
 func Setup() error {
-	mnts, err := mount.Mounts()
+	mnts, err := mount.GetMounts()
 	if err != nil {
 		return err
 	}
@@ -96,9 +95,9 @@ func subsystemGrouping(f io.Reader, subsystem string) (string, error) {
 	return subsystem, nil
 }
 
-func mountCgroupTmpfsIfNotPresent(mnts []mount.Mnt) error {
+func mountCgroupTmpfsIfNotPresent(mnts []*mount.Info) error {
 	for _, mnt := range mnts {
-		if mnt.MountPoint == cgroupRoot {
+		if mnt.Mountpoint == cgroupRoot {
 			return nil
 		}
 	}
@@ -108,7 +107,7 @@ func mountCgroupTmpfsIfNotPresent(mnts []mount.Mnt) error {
 		return err
 	}
 
-	return mount.Mount("tmpfs", cgroupRoot, "tmpfs", unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_NODEV, "mode=755")
+	return unix.Mount("tmpfs", cgroupRoot, "tmpfs", unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_NODEV, "mode=755")
 }
 
 func mountCgroupSubsystem(subsystem string) error {
@@ -122,7 +121,7 @@ func mountCgroupSubsystem(subsystem string) error {
 		}
 	}
 
-	err := mount.Mount("cgroup", mountPoint, "cgroup", 0, subsystem)
+	err := unix.Mount("cgroup", mountPoint, "cgroup", 0, subsystem)
 	switch err {
 	// EBUSY is returned if the mountpoint already has something mounted on it
 	case unix.EBUSY, nil:

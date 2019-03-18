@@ -16,6 +16,8 @@
 package integration2_test
 
 import (
+	"bufio"
+	"bytes"
 	"flag"
 	"fmt"
 	"io"
@@ -28,8 +30,6 @@ import (
 	"testing"
 
 	"github.com/onsi/gomega/gexec"
-
-	"bpm/mount"
 )
 
 var runcExe = flag.String("runcExe", "/var/vcap/packages/bpm/bin/runc", "path to the runc executable")
@@ -134,7 +134,7 @@ func TestRunWithVolumeFlags(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to run bpm: %s", output)
 	}
-	mounts, err := mount.ParseFstab(output)
+	mounts, err := parseFstab(output)
 	if err != nil {
 		t.Fatalf("could not parse output as fstab (%q): %q", output, err)
 	}
@@ -167,7 +167,7 @@ func TestRunWithVolumeFlags(t *testing.T) {
 	}
 }
 
-func mountHasOption(m mount.Mnt, opt string) bool {
+func mountHasOption(m mnt, opt string) bool {
 	for _, o := range m.Options {
 		if o == opt {
 			return true
@@ -284,4 +284,32 @@ func (s *Sandbox) LoadFixture(job, path string) {
 
 func (s *Sandbox) Cleanup() {
 	_ = os.RemoveAll(s.root)
+}
+
+type mnt struct {
+	MountPoint string
+	Options    []string
+}
+
+// ParseFstab parses byte slices which contain the contents of files formatted
+// as described by fstab(5).
+func parseFstab(contents []byte) ([]mnt, error) {
+	var mnts []mnt
+
+	r := bytes.NewBuffer(contents)
+	scanner := bufio.NewScanner(r)
+	for scanner.Scan() {
+		fields := strings.Fields(scanner.Text())
+		if len(fields) < 6 {
+			return nil, fmt.Errorf("invalid mount: %s", scanner.Text())
+		}
+
+		options := strings.Split(fields[3], ",")
+		mnts = append(mnts, mnt{
+			MountPoint: fields[1],
+			Options:    options,
+		})
+	}
+
+	return mnts, nil
 }

@@ -1,3 +1,0 @@
-proc /proc proc rw,nosuid,nodev,noexec,relatime 0 0
-devpts
-tmpfs /dev tmpfs rw,nosuid,size=65536k,mode=755 0 0
