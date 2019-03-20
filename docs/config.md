@@ -99,8 +99,6 @@ processes:
   env:
     FOO: BAR
 
-  type: latency-critical
-
   limits:
     processes: 10
 
@@ -118,8 +116,6 @@ processes:
   args:
   - --queues
   - 4
-
-  type: best-effort
 
   additional_volumes:
   - path: /var/vcap/data/sockets
