@@ -185,6 +185,18 @@ func WithOpenFileLimit(limit uint64) SpecOption {
 	}
 }
 
+func WithCPUShares(shares uint64) SpecOption {
+	return func(spec *specs.Spec) {
+		spec.Linux.Resources.CPU = &specs.LinuxCPU{
+			Shares: uint64addr(shares),
+		}
+	}
+}
+
+func uint64addr(a uint64) *uint64 {
+	return &a
+}
+
 var RootUser = specs.User{
 	UID: 0,
 	GID: 0,

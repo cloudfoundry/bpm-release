@@ -40,6 +40,7 @@ directory of your job.
 | `executable`         | string           | Yes           | The path to the executable file for this process.                                                                              |
 | `args`               | string[]         | No            | The arguments which will be passed to the `executable` of this process.                                                        |
 | `env`                | string => string | No            | Any additional environment variables to be included in the environment of this process.                                        |
+| `type`               | string           | No            | The type of the job which influences its CPU time (see below).                                                                 |
 | `workdir`            | string           | No            | The working directory for this process. If not specified this is the value `/var/vcap/jobs/JOB`.                               |
 | `hooks`              | hooks            | No            | The hook configuration for this process (see below).                                                                           |
 | `capabilities`       | string[]         | No            | The list of [capabilities][capabilities] (without CAP_) which should be granted to this process.                               |
@@ -166,6 +167,25 @@ configuration also apply here.
 
 Your startup hook must finish with time to spare before the `monit start`
 timeout (30s by default). We're looking into ways to make this less vague.
+
+## Job Types
+
+**Beta: This feature is in beta and could change before release**
+
+Different job types have different performance requirements. Some jobs need to
+meet tight SLOs and others should not take away from these sensitive jobs if
+they misbehave.
+
+There are currently two different respected job types: `best-effort` and
+`latency-critical`. The best effort jobs recieive less CPU time than the
+latency critical jobs. However, if the latency critical jobs have no need to
+use the CPU at any particular moment then the best effort jobs can burst to use
+any additonal capacity. The default if no job type is specified is latency
+critical.
+
+We may adjust in the future to the exact parameters which we provide the
+scheduler but we're aiming to make the use of job types always dependable and
+reliable.
 
 ## Privileged Jobs
 

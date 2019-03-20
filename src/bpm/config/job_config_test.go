@@ -111,6 +111,7 @@ var _ = Describe("Config", func() {
 							{Path: "/var/vcap/store/valid"},
 							{Path: "/var/vcap/sys/run/valid"},
 						},
+						Type: "latency-critical",
 					},
 				},
 			}
@@ -167,6 +168,32 @@ var _ = Describe("Config", func() {
 			It("returns an error", func() {
 				jobCfg.Processes[0].Name = ""
 				Expect(jobCfg.Validate("", []string{})).To(HaveOccurred())
+			})
+		})
+
+		Context("when the type is not recognized", func() {
+			BeforeEach(func() {
+				jobCfg.Processes[0].Type = "not-a-type"
+			})
+
+			It("returns an error", func() {
+				Expect(jobCfg.Validate("", []string{})).To(HaveOccurred())
+			})
+
+			It("lists out the possible types", func() {
+				err := jobCfg.Validate("", []string{})
+				Expect(err).To(MatchError(ContainSubstring("best-effort")))
+				Expect(err).To(MatchError(ContainSubstring("latency-critical")))
+			})
+		})
+
+		Context("when the type is omitted", func() {
+			BeforeEach(func() {
+				jobCfg.Processes[0].Type = ""
+			})
+
+			It("does not return an error", func() {
+				Expect(jobCfg.Validate("", []string{})).NotTo(HaveOccurred())
 			})
 		})
 

@@ -6,6 +6,7 @@ processes:
     - 1337
   env:
     BPM: SWEET
+  type: latency-critical
   limits:
     memory: 1G
     open_files: 1024
@@ -24,3 +25,4 @@ processes:
     - --ignore-signals
   env:
     BPM: CONTAINED
+  type: best-effort

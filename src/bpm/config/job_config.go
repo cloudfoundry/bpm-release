@@ -40,6 +40,7 @@ type ProcessConfig struct {
 	Hooks             *Hooks            `yaml:"hooks,omitempty"`
 	Limits            *Limits           `yaml:"limits"`
 	PersistentDisk    bool              `yaml:"persistent_disk"`
+	Type              string            `yaml:"type"`
 	WorkDir           string            `yaml:"workdir"`
 	Unsafe            *Unsafe           `yaml:"unsafe"`
 }
@@ -127,6 +128,13 @@ func (c *ProcessConfig) Validate(boshRoot string, defaultVolumes []string) error
 				socketPrefix,
 			)
 		}
+	}
+
+	switch c.Type {
+	case "latency-critical", "":
+	case "best-effort":
+	default:
+		return fmt.Errorf("invalid config type: type must be (%s, %s)", "latency-critical", "best-effort")
 	}
 
 	return nil

@@ -556,6 +556,44 @@ var _ = Describe("RuncAdapter", func() {
 			})
 		})
 
+		Describe("job types", func() {
+			Context("when there is a best-effort job type", func() {
+				BeforeEach(func() {
+					procCfg.Type = "best-effort"
+				})
+
+				It("sets the CPU shares accordingly", func() {
+					spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
+					Expect(err).NotTo(HaveOccurred())
+					Expect(*spec.Linux.Resources.CPU.Shares).To(Equal(BestEffortCPUShares))
+				})
+			})
+
+			Context("when there is a latency-critical job type", func() {
+				BeforeEach(func() {
+					procCfg.Type = "latency-critical"
+				})
+
+				It("sets the CPU shares accordingly", func() {
+					spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
+					Expect(err).NotTo(HaveOccurred())
+					Expect(*spec.Linux.Resources.CPU.Shares).To(Equal(LatencyCriticalCPUShares))
+				})
+			})
+
+			Context("when there is no job type", func() {
+				BeforeEach(func() {
+					procCfg.Type = ""
+				})
+
+				It("sets the CPU shares accordingly", func() {
+					spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
+					Expect(err).NotTo(HaveOccurred())
+					Expect(*spec.Linux.Resources.CPU.Shares).To(Equal(LatencyCriticalCPUShares))
+				})
+			})
+		})
+
 		Context("when the user requests a persistent disk", func() {
 			BeforeEach(func() {
 				procCfg.PersistentDisk = true

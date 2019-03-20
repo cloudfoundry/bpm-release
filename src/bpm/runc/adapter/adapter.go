@@ -35,6 +35,9 @@ import (
 const (
 	resolvConfDir = "/run/resolvconf"
 	defaultLang   = "en_US.UTF-8"
+
+	LatencyCriticalCPUShares uint64 = 1024
+	BestEffortCPUShares      uint64 = 64
 )
 
 type RuncAdapter struct {
@@ -214,11 +217,14 @@ func (a *RuncAdapter) BuildSpec(
 		specbuilder.WithNamespace("uts"),
 	)
 
-	// if procCfg.Name == "stress" {
-	// 	spec.Linux.Resources.CPU = &specs.LinuxCPU{
-	// 		Shares: uint64addr(64),
-	// 	}
-	// }
+	switch procCfg.Type {
+	case "best-effort":
+		specbuilder.Apply(spec, specbuilder.WithCPUShares(BestEffortCPUShares))
+	case "latency-critical", "":
+		fallthrough
+	default:
+		specbuilder.Apply(spec, specbuilder.WithCPUShares(LatencyCriticalCPUShares))
+	}
 
 	if procCfg.Limits != nil {
 		if procCfg.Limits.Memory != nil {
@@ -244,10 +250,6 @@ func (a *RuncAdapter) BuildSpec(
 	}
 
 	return *spec, nil
-}
-
-func uint64addr(a uint64) *uint64 {
-	return &a
 }
 
 func systemIdentityMounts(mountResolvConf bool) []specs.Mount {
