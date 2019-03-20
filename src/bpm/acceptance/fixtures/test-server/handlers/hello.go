@@ -17,18 +17,10 @@ package handlers
 
 import (
 	"fmt"
-	"math"
 	"net/http"
+	"os"
 )
 
-const iterations = 1000000
-
 func Hello(w http.ResponseWriter, r *http.Request) {
-	n := math.MaxFloat64
-
-	for i := 0; i < iterations; i++ {
-		n = math.Sqrt(n)
-	}
-
-	fmt.Fprintf(w, "BPM is %f!\n", n)
+	fmt.Fprintf(w, "BPM is %s!\n", os.Getenv("BPM"))
 }

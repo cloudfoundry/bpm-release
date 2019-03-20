@@ -23,7 +23,7 @@ jobs:
 - name: bpm
   instances: 1
   persistent_disk: 1024
-  vm_type: n1-highcpu-4
+  vm_type: default
   stemcell: default
   azs:
   - z1
