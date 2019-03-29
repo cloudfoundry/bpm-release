@@ -1,3 +1,10 @@
+# v1.0.4
+
+* mount tmpfs workaround in bpm rather than pre-start
+* update golang to 1.12.1
+* prevent errors when deleting jobs with no pidfile
+* forcibly remove runc state if it is corrupted
+
 # v1.0.3
 
 * bump runc to address CVE-2019-5736
