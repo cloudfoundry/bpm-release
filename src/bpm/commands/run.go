@@ -104,7 +104,11 @@ func run(cmd *cobra.Command, _ []string) error {
 	process, err := runcLifecycle.StatProcess(bpmCfg)
 	if err != nil && !lifecycle.IsNotExist(err) {
 		logger.Error("failed-getting-job", err)
-		return err
+
+		if cerr := forceCleanupBrokenRuncState(logger, runcLifecycle); cerr != nil {
+			logger.Error("failed-cleaning-up-broken-job", cerr)
+			return cerr
+		}
 	}
 
 	var state string

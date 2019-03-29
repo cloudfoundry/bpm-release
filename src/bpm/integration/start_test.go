@@ -276,6 +276,34 @@ var _ = Describe("start", func() {
 		})
 	})
 
+	Context("when a broken runc configuration is left on the system", func() {
+		JustBeforeEach(func() {
+			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+			Expect(err).ShouldNot(HaveOccurred())
+			Eventually(session).Should(gexec.Exit(0))
+
+			session, err = gexec.Start(runcCommand(runcRoot, "kill", containerID), GinkgoWriter, GinkgoWriter)
+			Expect(err).ShouldNot(HaveOccurred())
+			Eventually(session).Should(gexec.Exit(0))
+			Eventually(func() string { return runcState(runcRoot, containerID).Status }).Should(Equal("stopped"))
+
+			err = ioutil.WriteFile(filepath.Join(runcRoot, containerID, "state.json"), nil, 0600)
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		It("`bpm start` cleans up the broken-ness and starts it", func() {
+			command = exec.Command(bpmPath, "start", job)
+			command.Env = append(command.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshRoot))
+
+			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+			Expect(err).ShouldNot(HaveOccurred())
+			Eventually(session).Should(gexec.Exit(0))
+
+			state := runcState(runcRoot, containerID)
+			Expect(state.Status).To(Equal("running"))
+		})
+	})
+
 	Context("when a stopped container exists with the same name", func() {
 		JustBeforeEach(func() {
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)

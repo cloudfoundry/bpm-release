@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"os/user"
+	"path/filepath"
 
 	"code.cloudfoundry.org/clock"
 	"code.cloudfoundry.org/lager"
@@ -238,4 +239,25 @@ func mountRuncTmpfs() error {
 	}
 
 	return unix.Mount("tmpfs", runcWorkaroundTmpMount, "tmpfs", unix.MS_NOSUID|unix.MS_NODEV, "mode=0700")
+}
+
+// Occasionally RunC can get in an inconsistent state after a restart where
+// it's internal state.json file is truncated. RunC is unable to get out of
+// this state without some intervention. This is that intervention.
+func forceCleanupBrokenRuncState(logger lager.Logger, runcLifecycle *lifecycle.RuncLifecycle) error {
+	// We compute this here rather than adding a new function to the
+	// configuration object to try and contain this hack to one place.
+	statePath := filepath.Join(config.RuncRoot(bosh.Root()), bpmCfg.ContainerID(), "state.json")
+
+	if err := os.RemoveAll(statePath); err != nil {
+		logger.Error("failed-to-remove-state-file", err)
+		return fmt.Errorf("failed to clean up stale state file: %s", err)
+	}
+
+	if err := runcLifecycle.RemoveProcess(logger, bpmCfg); err != nil {
+		logger.Error("failed-to-cleanup", err)
+		return fmt.Errorf("failed to clean up stale job-process: %s", err)
+	}
+
+	return nil
 }
