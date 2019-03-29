@@ -299,6 +299,25 @@ var _ = Describe("start", func() {
 			state := runcState(runcRoot, containerID)
 			Expect(state.Status).To(Equal("running"))
 		})
+
+		Context("and the pid file does not exist", func() {
+			JustBeforeEach(func() {
+				err := os.RemoveAll(filepath.Join(boshRoot, "sys", "run", "bpm", job, fmt.Sprintf("%s.pid", job)))
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			It("`bpm start` cleans up the associated container and artifacts and starts it", func() {
+				command = exec.Command(bpmPath, "start", job)
+				command.Env = append(command.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshRoot))
+
+				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+				Expect(err).ShouldNot(HaveOccurred())
+				Eventually(session).Should(gexec.Exit(0))
+
+				state := runcState(runcRoot, containerID)
+				Expect(state.Status).To(Equal("running"))
+			})
+		})
 	})
 
 	Context("when the process is not defined in the bpm config", func() {

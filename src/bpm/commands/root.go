@@ -194,7 +194,7 @@ func newRuncLifecycle() (*lifecycle.RuncLifecycle, error) {
 		userFinder,
 		lifecycle.NewCommandRunner(),
 		clock,
-		os.Remove,
+		os.RemoveAll,
 	), nil
 }
 
