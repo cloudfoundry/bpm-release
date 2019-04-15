@@ -14,7 +14,6 @@ processes:
   unsafe:
     unrestricted_volumes:
     - path: /dev/log
-      mount_only: true
 
 - name: alt-test-server
   executable: /var/vcap/packages/test-server/bin/test-server
