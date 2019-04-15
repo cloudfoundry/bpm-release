@@ -77,7 +77,7 @@ RUNC_PACKAGE_PATH=github.com/opencontainers/runc
           PKG_CONFIG_PATH="${LIBSECCOMP_PREFIX}/lib/pkgconfig" \
           go build \
             -buildmode=pie \
-            -ldflags "-X main.gitCommit=unknown -X main.version=bpm-${RUNC_VERSION} -r ${LIBSECCOMP_RUNTIME_PATH}" \
+            -ldflags "-X main.gitCommit=unknown -X main.version=${RUNC_VERSION}-bpm -r ${LIBSECCOMP_RUNTIME_PATH}" \
             -tags "seccomp apparmor" \
             -o "${BOSH_INSTALL_TARGET}/bin/runc" \
             "${RUNC_PACKAGE_PATH}"
