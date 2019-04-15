@@ -10,7 +10,7 @@ pkg-config/pkg-config-0.29.2.tar.gz:
   size: 2016830
   object_id: 68ebd5e6-b02b-49fb-4fd2-a594125b3808
   sha: 76e501663b29cb7580245720edfb6106164fad2b
-runc/runc-6635b4f0c6af3810594d2770f662f34ddc15b40d.tar.gz:
-  size: 1653384
-  object_id: 6b14371d-1ed8-40f9-4d59-71a8761a2c3d
-  sha: cbe267ed2a6426d289b66dc0815fb326cfeccdbd
+runc/runc-1.0.0-rc7.tar.gz:
+  size: 1663838
+  object_id: 71dc5699-d75a-4df3-403d-f517130b9289
+  sha: 1cf095053c884f8a548be5ca6c8d73547960cffd

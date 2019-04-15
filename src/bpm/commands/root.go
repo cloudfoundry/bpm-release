@@ -24,7 +24,6 @@ import (
 
 	"code.cloudfoundry.org/clock"
 	"code.cloudfoundry.org/lager"
-	"github.com/opencontainers/runc/libcontainer/mount"
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/unix"
 
@@ -46,8 +45,6 @@ var (
 	userFinder = usertools.NewUserFinder()
 	bosh       = config.NewBosh(os.Getenv("BPM_BOSH_ROOT"))
 )
-
-const runcWorkaroundTmpMount = "/var/vcap/data/bpm/tmpworkaround"
 
 func init() {
 	RootCmd.PersistentFlags().BoolVar(&showVersion, "version", false, "print BPM version")
@@ -215,30 +212,6 @@ func isRunningSystemd() bool {
 		return false
 	}
 	return systemdSystemDir.IsDir()
-}
-
-// If we're running on Trusty then RunC falls back to pulling an anonymous file
-// descriptor out of the "/tmp" mount point in order to clone the init binary.
-// Unfortunately in BOSH-lite the overlay filesystem combined with a loopback
-// device which is mounted on "/tmp" doesn't allow the O_TMPFILE option to be
-// used when calling open(2) (it works on ext4 in regular BOSH deployments).
-//
-// To get around this we patch the RunC binary in package compilation and mount
-// a tmpfs at the patched path so that binary cloning works.
-func mountRuncTmpfs() error {
-	mounted, err := mount.Mounted(runcWorkaroundTmpMount)
-	if err != nil {
-		return err
-	}
-	if mounted {
-		return nil
-	}
-
-	if err := os.MkdirAll(runcWorkaroundTmpMount, 0700); err != nil {
-		return err
-	}
-
-	return unix.Mount("tmpfs", runcWorkaroundTmpMount, "tmpfs", unix.MS_NOSUID|unix.MS_NODEV, "mode=0700")
 }
 
 // Occasionally RunC can get in an inconsistent state after a restart where

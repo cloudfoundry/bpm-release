@@ -60,10 +60,6 @@ func runPre(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if err := mountRuncTmpfs(); err != nil {
-		return err
-	}
-
 	return acquireLifecycleLock()
 }
 
