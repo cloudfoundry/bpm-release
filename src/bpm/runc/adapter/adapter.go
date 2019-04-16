@@ -37,13 +37,19 @@ const (
 	defaultLang   = "en_US.UTF-8"
 )
 
+// GlobFunc is a function which when given a file path pattern returns a list
+// of paths or an error if the search failed.
+type GlobFunc func(string) ([]string, error)
+
 type RuncAdapter struct {
 	features sysfeat.Features
+	glob     GlobFunc
 }
 
-func NewRuncAdapter(features sysfeat.Features) *RuncAdapter {
+func NewRuncAdapter(features sysfeat.Features, glob GlobFunc) *RuncAdapter {
 	return &RuncAdapter{
 		features: features,
+		glob:     glob,
 	}
 }
 
@@ -194,7 +200,11 @@ func (a *RuncAdapter) BuildSpec(
 	ms.addMounts(boshMounts(bpmCfg, procCfg.EphemeralDisk, procCfg.PersistentDisk))
 	ms.addMounts(userProvidedIdentityMounts(bpmCfg, procCfg.AdditionalVolumes))
 	if procCfg.Unsafe != nil && len(procCfg.Unsafe.UnrestrictedVolumes) > 0 {
-		ms.addMounts(userProvidedIdentityMounts(bpmCfg, procCfg.Unsafe.UnrestrictedVolumes))
+		expanded, err := a.globExpandVolumes(procCfg.Unsafe.UnrestrictedVolumes)
+		if err != nil {
+			return specs.Spec{}, err
+		}
+		ms.addMounts(userProvidedIdentityMounts(bpmCfg, expanded))
 	}
 
 	spec := specbuilder.Build(
@@ -277,6 +287,25 @@ func boshMounts(bpmCfg *config.BPMConfig, mountData, mountStore bool) []specs.Mo
 	}
 
 	return mounts
+}
+
+func (a *RuncAdapter) globExpandVolumes(volumes []config.Volume) ([]config.Volume, error) {
+	var expandedVolumes []config.Volume
+
+	for _, volume := range volumes {
+		matches, err := a.glob(volume.Path)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, match := range matches {
+			v := volume
+			v.Path = match
+			expandedVolumes = append(expandedVolumes, v)
+		}
+	}
+
+	return expandedVolumes, nil
 }
 
 func userProvidedIdentityMounts(bpmCfg *config.BPMConfig, volumes []config.Volume) []specs.Mount {

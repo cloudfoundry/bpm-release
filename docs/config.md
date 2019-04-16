@@ -76,7 +76,7 @@ directory of your job.
 
 | **Property**       | **Type** | **Required** | **Description**                                                                                                |
 |--------------------|----------|--------------|----------------------------------------------------------------------------------------------------------------|
-| `path`             | string   | Yes          | The absolute path of the volume inside this process.                                                                    |
+| `path`             | string   | Yes          | The absolute path of the volume inside this process.                                                           |
 | `writable`         | boolean  | No           | Whether or not this volume is writable by the process.                                                         |
 | `allow_executions` | boolean  | No           | Whether or not executable files can be executed from this volume.                                              |
 | `mount_only`       | boolean  | No           | Whether or not BPM should just mount this directory rather than creating and chowning a backing directory too. |
@@ -84,6 +84,31 @@ directory of your job.
 *Note: The volumes in additional volumes must have a path inside
 `/var/vcap/data`, `/var/vcap/store`, `/var/vcap/sys/run`. If you need to mount
 a volume outside these paths then you must use the `unrestricted_volumes` key.
+
+The `unrestricted_volumes` stanza can include globs in the `path` attribute.
+These globs will be evaluated by BPM on startup and each glob match will be
+created as a new volume with the options specified. Please take care when using
+this feature not to have your glob match too many different paths. Each mount
+carries some overhead and it's possible to write a glob which could feasibly
+recursively mount every single path in a directory as a different mount. We're
+likely to add some reduction in the future in order to get a minimal equivalent
+set of mounts but for now the mounting is very naive.
+
+This feature was added to allow jobs which pulled configuration from all jobs
+on the system to be able to do so without mounting the entire jobs directory
+(which contains most if not all credentials on the system).
+
+```yaml
+# bad (will match thousands of things, just mount the directory)
+unsafe:
+  unrestricted_volumes:
+  - path: /var/vcap/data/thing/**/*
+
+# good (specific, needed to get around the unknown job paths)
+unsafe:
+  unrestricted_volumes:
+  - path: /var/vcap/jobs/*/config/indicators.yml
+```
 
 ### Example
 

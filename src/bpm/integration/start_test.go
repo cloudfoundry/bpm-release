@@ -362,6 +362,38 @@ var _ = Describe("start", func() {
 		})
 	})
 
+	Context("when specifying volumes with a globbed path", func() {
+		BeforeEach(func() {
+			Expect(os.MkdirAll(filepath.Join(boshRoot, "jobs", "job-1", "config"), 0700)).To(Succeed())
+			Expect(os.MkdirAll(filepath.Join(boshRoot, "jobs", "job-2", "config"), 0700)).To(Succeed())
+
+			firstIndicator := filepath.Join(boshRoot, "jobs", "job-1", "config", "indicators.yml")
+			Expect(ioutil.WriteFile(firstIndicator, []byte("i am the first indicator file"), 0700)).To(Succeed())
+
+			secondIndicator := filepath.Join(boshRoot, "jobs", "job-2", "config", "indicators.yml")
+			Expect(ioutil.WriteFile(secondIndicator, []byte("i am the second indicator file"), 0700)).To(Succeed())
+
+			secret := filepath.Join(boshRoot, "jobs", "job-1", "config", "secrets.yml")
+			Expect(ioutil.WriteFile(secret, []byte("i am the secret file"), 0700)).To(Succeed())
+
+			cfg = newJobConfig(job, findBash(filepath.Join(boshRoot, "jobs")))
+			cfg.Processes[0].Unsafe = &config.Unsafe{
+				UnrestrictedVolumes: []config.Volume{
+					{Path: filepath.Join(boshRoot, "jobs", "*", "config", "indicators.yml")},
+				},
+			}
+		})
+
+		It("evaluates the glob and only mounts those directories and files into the container", func() {
+			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+			Expect(err).ShouldNot(HaveOccurred())
+			Eventually(session).Should(gexec.Exit(0))
+
+			Eventually(stdout).Should(BeAnExistingFile())
+			Consistently(fileContents(stdout)).ShouldNot(ContainSubstring("secrets.yml"))
+		})
+	})
+
 	Context("when the volume specified is a file", func() {
 		BeforeEach(func() {
 			randomFile := filepath.Join(boshRoot, "data", job, "random-file")

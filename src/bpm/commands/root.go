@@ -183,7 +183,7 @@ func newRuncLifecycle() (*lifecycle.RuncLifecycle, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch system features: %q", err)
 	}
-	runcAdapter := adapter.NewRuncAdapter(*features)
+	runcAdapter := adapter.NewRuncAdapter(*features, filepath.Glob)
 	clock := clock.NewClock()
 
 	return lifecycle.NewRuncLifecycle(

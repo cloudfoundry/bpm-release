@@ -116,3 +116,11 @@ sleep 100 &
 child=$!;
 wait $child`, path)
 }
+
+func findBash(path string) string {
+	return fmt.Sprintf(`trap "echo 'Received a Signal' && kill -9 $child" SIGTERM;
+find %s;
+sleep 100 &
+child=$!;
+wait $child`, path)
+}

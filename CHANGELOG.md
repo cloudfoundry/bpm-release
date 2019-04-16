@@ -1,3 +1,7 @@
+# v1.1.0
+
+* allow unrestricted volume paths to contain globs
+
 # v1.0.4
 
 * mount tmpfs workaround in bpm rather than pre-start

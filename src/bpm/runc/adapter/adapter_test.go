@@ -16,6 +16,7 @@
 package adapter
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -74,7 +75,12 @@ var _ = Describe("RuncAdapter", func() {
 	})
 
 	JustBeforeEach(func() {
-		runcAdapter = NewRuncAdapter(features)
+		// Most tests in this file do not use globs in their volume paths and
+		// we do not want to depend on filesystem state for these tests.
+		identityGlob := func(pattern string) ([]string, error) {
+			return []string{pattern}, nil
+		}
+		runcAdapter = NewRuncAdapter(features, identityGlob)
 	})
 
 	AfterEach(func() {
@@ -798,6 +804,63 @@ var _ = Describe("RuncAdapter", func() {
 					Source:      "/writable/executable/path",
 					Options:     []string{"nodev", "nosuid", "exec", "rbind", "rw"},
 				}))
+			})
+
+			Context("when the user requests a glob", func() {
+				BeforeEach(func() {
+					procCfg.Unsafe = &config.Unsafe{
+						UnrestrictedVolumes: []config.Volume{
+							{Path: "/*/file.txt", Writable: true, AllowExecutions: true},
+						},
+					}
+				})
+
+				JustBeforeEach(func() {
+					fakeGlob := func(pattern string) ([]string, error) {
+						switch pattern {
+						case "/*/file.txt":
+							return []string{
+								"/unrestricted/file.txt",
+								"/other/file.txt",
+							}, nil
+						default:
+							return []string{pattern}, nil
+						}
+					}
+					runcAdapter = NewRuncAdapter(features, fakeGlob)
+				})
+
+				It("adds volumes for whatever the volume matches", func() {
+					spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(spec.Mounts).To(ContainElement(specs.Mount{
+						Destination: "/unrestricted/file.txt",
+						Type:        "bind",
+						Source:      "/unrestricted/file.txt",
+						Options:     []string{"nodev", "nosuid", "exec", "rbind", "rw"},
+					}))
+					Expect(spec.Mounts).To(ContainElement(specs.Mount{
+						Destination: "/other/file.txt",
+						Type:        "bind",
+						Source:      "/other/file.txt",
+						Options:     []string{"nodev", "nosuid", "exec", "rbind", "rw"},
+					}))
+				})
+
+				Context("when the glob fails", func() {
+					JustBeforeEach(func() {
+						fail := func(path string) ([]string, error) {
+							return nil, errors.New("doomed from the start")
+						}
+						runcAdapter = NewRuncAdapter(features, fail)
+					})
+
+					It("returns an error", func() {
+						_, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
+						Expect(err).To(HaveOccurred())
+					})
+				})
 			})
 		})
 	})
