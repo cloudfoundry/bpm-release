@@ -130,7 +130,7 @@ var _ = Describe("resource limits", func() {
 	Context("open files", func() {
 		BeforeEach(func() {
 			cfg = newJobConfig(job, fileLeakBash(filepath.Join(boshRoot, "data", job)))
-			limit := uint64(10)
+			limit := int64(10)
 			cfg.Processes[0].Limits = &config.Limits{OpenFiles: &limit}
 			cfg.Processes[0].EphemeralDisk = true
 		})

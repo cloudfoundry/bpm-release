@@ -667,7 +667,7 @@ var _ = Describe("RuncAdapter", func() {
 			})
 
 			Context("OpenFiles", func() {
-				var expectedOpenFilesLimit uint64
+				var expectedOpenFilesLimit int64
 
 				BeforeEach(func() {
 					expectedOpenFilesLimit = 2444
@@ -685,6 +685,29 @@ var _ = Describe("RuncAdapter", func() {
 							Soft: uint64(expectedOpenFilesLimit),
 						},
 					}))
+				})
+
+				Context("user specifies a -1", func() {
+					BeforeEach(func() {
+						expectedOpenFilesLimit = -1
+						procCfg.Limits.OpenFiles = &expectedOpenFilesLimit
+					})
+
+					It("sets the maximum rlimit on the process", func() {
+						acutalOpenFilesLimit, err := retrieveMaxOpenFileLimit()
+						Expect(err).NotTo(HaveOccurred())
+
+						spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
+						Expect(err).NotTo(HaveOccurred())
+
+						Expect(spec.Process.Rlimits).To(ConsistOf([]specs.POSIXRlimit{
+							{
+								Type: "RLIMIT_NOFILE",
+								Hard: uint64(acutalOpenFilesLimit),
+								Soft: uint64(acutalOpenFilesLimit),
+							},
+						}))
+					})
 				})
 			})
 

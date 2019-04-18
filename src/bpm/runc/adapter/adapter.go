@@ -16,11 +16,14 @@
 package adapter
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 
 	"code.cloudfoundry.org/bytefmt"
@@ -35,6 +38,13 @@ import (
 const (
 	resolvConfDir = "/run/resolvconf"
 	defaultLang   = "en_US.UTF-8"
+
+	procSysFsNrOpenFile = "/proc/sys/fs/nr_open"
+
+	// LinuxDefaultMaxOpenFileLimit --  this value comes from fs/file.c in the
+	// Linux kernel source.  As of v5 of the kernel, it is set to the value
+	// below.
+	LinuxDefaultMaxOpenFileLimit = 1024 * 1024
 )
 
 // GlobFunc is a function which when given a file path pattern returns a list
@@ -179,6 +189,20 @@ func createFileFor(path string, uid, gid int) (*os.File, error) {
 	return f, nil
 }
 
+func retrieveMaxOpenFileLimit() (int64, error) {
+	b, err := ioutil.ReadFile(procSysFsNrOpenFile)
+	if err != nil {
+		return LinuxDefaultMaxOpenFileLimit, err
+	}
+
+	maxOpenFiles, err := strconv.Atoi(string(bytes.TrimSpace(b)))
+	if err != nil {
+		return LinuxDefaultMaxOpenFileLimit, err
+	}
+
+	return int64(maxOpenFiles), nil
+}
+
 func (a *RuncAdapter) BuildSpec(
 	logger lager.Logger,
 	bpmCfg *config.BPMConfig,
@@ -239,7 +263,15 @@ func (a *RuncAdapter) BuildSpec(
 		}
 
 		if procCfg.Limits.OpenFiles != nil {
-			specbuilder.Apply(spec, specbuilder.WithOpenFileLimit(*procCfg.Limits.OpenFiles))
+			openFiles := *procCfg.Limits.OpenFiles
+			if openFiles == -1 {
+				openFiles, err = retrieveMaxOpenFileLimit()
+				if err != nil {
+					logger.Error("failed-to-retrieve-maximum-open-file-limit", err)
+					logger.Info("defaulting-to-maximum-open-file-limit")
+				}
+			}
+			specbuilder.Apply(spec, specbuilder.WithOpenFileLimit(uint64(openFiles)))
 		}
 	}
 

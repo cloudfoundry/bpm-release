@@ -35,7 +35,7 @@ var _ = Describe("Config", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			expectedMemoryLimit := "100G"
-			expectedOpenFilesLimit := uint64(100)
+			expectedOpenFilesLimit := int64(100)
 
 			Expect(cfg.Processes).To(HaveLen(3))
 
@@ -173,6 +173,27 @@ var _ = Describe("Config", func() {
 		Context("when the config does not have an Executable", func() {
 			BeforeEach(func() {
 				jobCfg.Processes[0].Executable = ""
+			})
+
+			It("returns an error", func() {
+				Expect(jobCfg.Validate("", []string{})).To(HaveOccurred())
+			})
+		})
+
+		Context("when the config has an invalid limit", func() {
+			BeforeEach(func() {
+				limit := new(int64)
+				*limit = -2
+
+				jobCfg = &config.JobConfig{
+					Processes: []*config.ProcessConfig{
+						{
+							Name:       "example",
+							Executable: "executable",
+							Limits:     &config.Limits{OpenFiles: limit},
+						},
+					},
+				}
 			})
 
 			It("returns an error", func() {

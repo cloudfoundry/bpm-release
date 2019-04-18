@@ -46,7 +46,7 @@ type ProcessConfig struct {
 
 type Limits struct {
 	Memory    *string `yaml:"memory"`
-	OpenFiles *uint64 `yaml:"open_files"`
+	OpenFiles *int64  `yaml:"open_files"`
 	Processes *int64  `yaml:"processes"`
 }
 
@@ -127,6 +127,10 @@ func (c *ProcessConfig) Validate(boshRoot string, defaultVolumes []string) error
 				socketPrefix,
 			)
 		}
+	}
+
+	if c.Limits != nil && c.Limits.OpenFiles != nil && *c.Limits.OpenFiles < -1 {
+		return fmt.Errorf("invalid open files limit: must be >= -1")
 	}
 
 	return nil
