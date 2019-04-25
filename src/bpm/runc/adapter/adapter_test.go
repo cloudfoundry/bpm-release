@@ -64,6 +64,10 @@ var _ = Describe("RuncAdapter", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		bpmCfg = config.NewBPMConfig(systemRoot, jobName, procName)
+
+		// Pre-create a directory with wrong permissions
+		Expect(os.MkdirAll(filepath.Join(systemRoot, "some", "directory"), 0600)).To(Succeed())
+
 		procCfg = &config.ProcessConfig{
 			AdditionalVolumes: []config.Volume{
 				{Path: filepath.Join(systemRoot, "some", "directory")},
