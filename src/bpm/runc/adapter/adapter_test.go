@@ -371,55 +371,55 @@ var _ = Describe("RuncAdapter", func() {
 				Destination: "/bin",
 				Type:        "bind",
 				Source:      "/bin",
-				Options:     []string{"bind", "nodev", "nosuid", "ro"},
+				Options:     []string{"bind", "nodev", "exec", "nosuid", "ro"},
 			}))
 			Expect(spec.Mounts).To(HaveMount(specs.Mount{
 				Destination: "/etc",
 				Type:        "bind",
 				Source:      "/etc",
-				Options:     []string{"bind", "nodev", "nosuid", "ro"},
+				Options:     []string{"bind", "nodev", "exec", "nosuid", "ro"},
 			}))
 			Expect(spec.Mounts).To(HaveMount(specs.Mount{
 				Destination: "/usr",
 				Type:        "bind",
 				Source:      "/usr",
-				Options:     []string{"nosuid", "nodev", "bind", "ro"},
+				Options:     []string{"nosuid", "nodev", "exec", "bind", "ro"},
 			}))
 			Expect(spec.Mounts).To(HaveMount(specs.Mount{
 				Destination: "/lib",
 				Type:        "bind",
 				Source:      "/lib",
-				Options:     []string{"nosuid", "nodev", "bind", "ro"},
+				Options:     []string{"nosuid", "nodev", "exec", "bind", "ro"},
 			}))
 			Expect(spec.Mounts).To(HaveMount(specs.Mount{
 				Destination: "/lib64",
 				Type:        "bind",
 				Source:      "/lib64",
-				Options:     []string{"nosuid", "nodev", "bind", "ro"},
+				Options:     []string{"nosuid", "nodev", "exec", "bind", "ro"},
 			}))
 			Expect(spec.Mounts).To(HaveMount(specs.Mount{
 				Destination: "/sbin",
 				Type:        "bind",
 				Source:      "/sbin",
-				Options:     []string{"nosuid", "nodev", "bind", "ro"},
+				Options:     []string{"nosuid", "nodev", "exec", "bind", "ro"},
 			}))
 			Expect(spec.Mounts).To(HaveMount(specs.Mount{
 				Destination: filepath.Join(systemRoot, "data", "packages"),
 				Type:        "bind",
 				Source:      filepath.Join(systemRoot, "data", "packages"),
-				Options:     []string{"nodev", "nosuid", "bind", "ro"},
+				Options:     []string{"nodev", "nosuid", "exec", "bind", "ro"},
 			}))
 			Expect(spec.Mounts).To(HaveMount(specs.Mount{
 				Destination: filepath.Join(systemRoot, "jobs", "example"),
 				Type:        "bind",
 				Source:      filepath.Join(systemRoot, "jobs", "example"),
-				Options:     []string{"nodev", "nosuid", "bind", "ro"},
+				Options:     []string{"nodev", "nosuid", "exec", "bind", "ro"},
 			}))
 			Expect(spec.Mounts).To(HaveMount(specs.Mount{
 				Destination: filepath.Join(systemRoot, "packages"),
 				Type:        "bind",
 				Source:      filepath.Join(systemRoot, "packages"),
-				Options:     []string{"nodev", "nosuid", "bind", "ro"},
+				Options:     []string{"nodev", "nosuid", "exec", "bind", "ro"},
 			}))
 			Expect(spec.Mounts).To(HaveMount(specs.Mount{
 				Destination: filepath.Join(systemRoot, "sys", "log", jobName),
@@ -437,7 +437,7 @@ var _ = Describe("RuncAdapter", func() {
 				Destination: "/path/to/volume/jna-tmp",
 				Type:        "bind",
 				Source:      "/path/to/volume/jna-tmp",
-				Options:     []string{"nodev", "nosuid", "rbind", "rw"},
+				Options:     []string{"nodev", "nosuid", "exec", "rbind", "rw"},
 			}))
 			Expect(spec.Mounts).To(HaveMount(specs.Mount{
 				Destination: "/path/to/volume/2",
@@ -473,7 +473,7 @@ var _ = Describe("RuncAdapter", func() {
 				Destination: filepath.Join(systemRoot, "store", "example"),
 				Type:        "bind",
 				Source:      filepath.Join(systemRoot, "store", "example"),
-				Options:     []string{"nodev", "nosuid", "rbind", "rw"},
+				Options:     []string{"nodev", "nosuid", "exec", "rbind", "rw"},
 			}))
 
 			// The mounts provided in the default spec are always first and not
@@ -804,7 +804,7 @@ var _ = Describe("RuncAdapter", func() {
 					Destination: "/writable/executable/path",
 					Type:        "bind",
 					Source:      "/writable/executable/path",
-					Options:     []string{"nodev", "nosuid", "rbind", "rw"},
+					Options:     []string{"nodev", "nosuid", "exec", "rbind", "rw"},
 				}))
 			})
 
@@ -840,13 +840,13 @@ var _ = Describe("RuncAdapter", func() {
 						Destination: "/unrestricted/file.txt",
 						Type:        "bind",
 						Source:      "/unrestricted/file.txt",
-						Options:     []string{"nodev", "nosuid", "rbind", "rw"},
+						Options:     []string{"nodev", "nosuid", "exec", "rbind", "rw"},
 					}))
 					Expect(spec.Mounts).To(HaveMount(specs.Mount{
 						Destination: "/other/file.txt",
 						Type:        "bind",
 						Source:      "/other/file.txt",
-						Options:     []string{"nodev", "nosuid", "rbind", "rw"},
+						Options:     []string{"nodev", "nosuid", "exec", "rbind", "rw"},
 					}))
 				})
 

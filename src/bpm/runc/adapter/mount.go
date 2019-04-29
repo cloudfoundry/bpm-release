@@ -91,7 +91,9 @@ func (mo mountOptions) opts() []string {
 		opts = append(opts, "bind")
 	}
 
-	if !mo.exec {
+	if mo.exec {
+		opts = append(opts, "exec")
+	} else {
 		opts = append(opts, "noexec")
 	}
 
