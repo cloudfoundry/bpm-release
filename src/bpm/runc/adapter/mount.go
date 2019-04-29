@@ -103,7 +103,9 @@ func (mo mountOptions) opts() []string {
 		opts = append(opts, "nosuid")
 	}
 
-	if !mo.dev {
+	if mo.dev {
+		opts = append(opts, "dev")
+	} else {
 		opts = append(opts, "nodev")
 	}
 
