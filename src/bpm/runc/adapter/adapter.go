@@ -20,8 +20,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"sort"
-	"strings"
 
 	"code.cloudfoundry.org/bytefmt"
 	"code.cloudfoundry.org/lager"
@@ -252,16 +250,16 @@ func (a *RuncAdapter) BuildSpec(
 
 func systemIdentityMounts(mountResolvConf bool) []specs.Mount {
 	mounts := []specs.Mount{
-		identityBindMountWithOptions("/bin", "nosuid", "nodev", "bind", "ro"),
-		identityBindMountWithOptions("/etc", "nosuid", "nodev", "bind", "ro"),
-		identityBindMountWithOptions("/lib", "nosuid", "nodev", "bind", "ro"),
-		identityBindMountWithOptions("/lib64", "nosuid", "nodev", "bind", "ro"),
-		identityBindMountWithOptions("/sbin", "nosuid", "nodev", "bind", "ro"),
-		identityBindMountWithOptions("/usr", "nosuid", "nodev", "bind", "ro"),
+		IdentityMount("/bin", AllowExec()),
+		IdentityMount("/etc", AllowExec()),
+		IdentityMount("/lib", AllowExec()),
+		IdentityMount("/lib64", AllowExec()),
+		IdentityMount("/sbin", AllowExec()),
+		IdentityMount("/usr", AllowExec()),
 	}
 
 	if mountResolvConf {
-		mounts = append(mounts, identityBindMountWithOptions("/run/resolvconf", "nodev", "nosuid", "noexec", "bind", "ro"))
+		mounts = append(mounts, IdentityMount("/run/resolvconf"))
 	}
 
 	return mounts
@@ -269,21 +267,21 @@ func systemIdentityMounts(mountResolvConf bool) []specs.Mount {
 
 func boshMounts(bpmCfg *config.BPMConfig, mountData, mountStore bool) []specs.Mount {
 	mounts := []specs.Mount{
-		bindMountWithOptions("/tmp", bpmCfg.TempDir(), "nodev", "nosuid", "noexec", "rbind", "rw"),
-		bindMountWithOptions("/var/tmp", bpmCfg.TempDir(), "nodev", "nosuid", "noexec", "rbind", "rw"),
-		identityBindMountWithOptions(bpmCfg.DataPackageDir(), "nodev", "nosuid", "bind", "ro"),
-		identityBindMountWithOptions(bpmCfg.JobDir(), "nodev", "nosuid", "bind", "ro"),
-		identityBindMountWithOptions(bpmCfg.LogDir(), "nodev", "nosuid", "noexec", "rbind", "rw"),
-		identityBindMountWithOptions(bpmCfg.PackageDir(), "nodev", "nosuid", "bind", "ro"),
-		identityBindMountWithOptions(bpmCfg.TempDir(), "nodev", "nosuid", "noexec", "rbind", "rw"),
+		Mount(bpmCfg.TempDir(), "/tmp", WithRecursiveBind(), AllowWrites()),
+		Mount(bpmCfg.TempDir(), "/var/tmp", WithRecursiveBind(), AllowWrites()),
+		IdentityMount(bpmCfg.DataPackageDir(), AllowExec()),
+		IdentityMount(bpmCfg.JobDir(), AllowExec()),
+		IdentityMount(bpmCfg.LogDir(), WithRecursiveBind(), AllowWrites()),
+		IdentityMount(bpmCfg.PackageDir(), AllowExec()),
+		IdentityMount(bpmCfg.TempDir(), WithRecursiveBind(), AllowWrites()),
 	}
 
 	if mountData {
-		mounts = append(mounts, identityBindMountWithOptions(bpmCfg.DataDir(), "nodev", "nosuid", "noexec", "rbind", "rw"))
+		mounts = append(mounts, IdentityMount(bpmCfg.DataDir(), WithRecursiveBind(), AllowWrites()))
 	}
 
 	if mountStore {
-		mounts = append(mounts, identityBindMountWithOptions(bpmCfg.StoreDir(), "nodev", "nosuid", "noexec", "rbind", "rw"))
+		mounts = append(mounts, IdentityMount(bpmCfg.StoreDir(), WithRecursiveBind(), AllowWrites()))
 	}
 
 	return mounts
@@ -312,72 +310,20 @@ func userProvidedIdentityMounts(bpmCfg *config.BPMConfig, volumes []config.Volum
 	var mnts []specs.Mount
 
 	for _, vol := range volumes {
-		execOpt := "noexec"
+		opts := []MountOption{WithRecursiveBind()}
+
 		if vol.AllowExecutions {
-			execOpt = "exec"
+			opts = append(opts, AllowExec())
 		}
 
-		writeOpt := "ro"
 		if vol.Writable {
-			writeOpt = "rw"
+			opts = append(opts, AllowWrites())
 		}
 
-		mnts = append(mnts, identityBindMountWithOptions(vol.Path, "nodev", "nosuid", execOpt, "rbind", writeOpt))
+		mnts = append(mnts, IdentityMount(vol.Path, opts...))
 	}
 
 	return mnts
-}
-
-func identityBindMountWithOptions(path string, options ...string) specs.Mount {
-	return bindMountWithOptions(path, path, options...)
-}
-
-func bindMountWithOptions(dest, src string, options ...string) specs.Mount {
-	return specs.Mount{
-		Destination: dest,
-		Type:        "bind",
-		Source:      src,
-		Options:     options,
-	}
-}
-
-type dedupMounts struct {
-	set    map[string]specs.Mount
-	logger lager.Logger
-}
-
-func newMountDedup(logger lager.Logger) *dedupMounts {
-	return &dedupMounts{
-		set:    make(map[string]specs.Mount),
-		logger: logger,
-	}
-}
-
-func (d *dedupMounts) addMounts(ms []specs.Mount) {
-	for _, mount := range ms {
-		dst := mount.Destination
-		if _, ok := d.set[dst]; ok {
-			d.logger.Info("duplicate-mount", lager.Data{"mount": dst})
-			continue
-		}
-		d.set[dst] = mount
-	}
-}
-
-func (d *dedupMounts) mounts() []specs.Mount {
-	ms := make([]specs.Mount, 0, len(d.set))
-
-	for _, mount := range d.set {
-		ms = append(ms, mount)
-	}
-
-	sort.Slice(ms, func(i, j int) bool {
-		iElems := strings.Split(ms[i].Destination, "/")
-		jElems := strings.Split(ms[j].Destination, "/")
-		return len(iElems) < len(jElems)
-	})
-
-	return ms
 }
 
 func processEnvironment(env map[string]string, cfg *config.BPMConfig) []string {

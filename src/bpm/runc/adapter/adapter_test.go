@@ -25,10 +25,12 @@ import (
 	"strings"
 	"syscall"
 
-	"code.cloudfoundry.org/bytefmt"
-	"code.cloudfoundry.org/lager/lagertest"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"code.cloudfoundry.org/bytefmt"
+	"code.cloudfoundry.org/lager/lagertest"
+	"github.com/onsi/gomega/types"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 
 	"bpm/config"
@@ -329,7 +331,7 @@ var _ = Describe("RuncAdapter", func() {
 			}))
 
 			Expect(spec.Mounts).To(HaveLen(24))
-			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+			Expect(spec.Mounts).To(HaveMount(specs.Mount{
 				Destination: "/proc",
 				Type:        "proc",
 				Source:      "proc",
@@ -341,137 +343,137 @@ var _ = Describe("RuncAdapter", func() {
 				Source:      "tmpfs",
 				Options:     []string{"nosuid", "noexec", "mode=755", "size=65536k"},
 			}))
-			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+			Expect(spec.Mounts).To(HaveMount(specs.Mount{
 				Destination: "/dev/pts",
 				Type:        "devpts",
 				Source:      "devpts",
 				Options:     []string{"nosuid", "noexec", "newinstance", "ptmxmode=0666", "mode=0620", "gid=5"},
 			}))
-			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+			Expect(spec.Mounts).To(HaveMount(specs.Mount{
 				Destination: "/dev/shm",
 				Type:        "tmpfs",
 				Source:      "shm",
 				Options:     []string{"nosuid", "noexec", "nodev", "mode=1777", "size=65536k"},
 			}))
-			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+			Expect(spec.Mounts).To(HaveMount(specs.Mount{
 				Destination: "/dev/mqueue",
 				Type:        "mqueue",
 				Source:      "mqueue",
 				Options:     []string{"nosuid", "noexec", "nodev"},
 			}))
-			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+			Expect(spec.Mounts).To(HaveMount(specs.Mount{
 				Destination: "/sys",
 				Type:        "sysfs",
 				Source:      "sysfs",
 				Options:     []string{"nosuid", "noexec", "nodev", "ro"},
 			}))
-			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+			Expect(spec.Mounts).To(HaveMount(specs.Mount{
 				Destination: "/bin",
 				Type:        "bind",
 				Source:      "/bin",
-				Options:     []string{"nosuid", "nodev", "bind", "ro"},
+				Options:     []string{"bind", "nodev", "nosuid", "ro"},
 			}))
-			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+			Expect(spec.Mounts).To(HaveMount(specs.Mount{
 				Destination: "/etc",
 				Type:        "bind",
 				Source:      "/etc",
-				Options:     []string{"nosuid", "nodev", "bind", "ro"},
+				Options:     []string{"bind", "nodev", "nosuid", "ro"},
 			}))
-			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+			Expect(spec.Mounts).To(HaveMount(specs.Mount{
 				Destination: "/usr",
 				Type:        "bind",
 				Source:      "/usr",
 				Options:     []string{"nosuid", "nodev", "bind", "ro"},
 			}))
-			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+			Expect(spec.Mounts).To(HaveMount(specs.Mount{
 				Destination: "/lib",
 				Type:        "bind",
 				Source:      "/lib",
 				Options:     []string{"nosuid", "nodev", "bind", "ro"},
 			}))
-			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+			Expect(spec.Mounts).To(HaveMount(specs.Mount{
 				Destination: "/lib64",
 				Type:        "bind",
 				Source:      "/lib64",
 				Options:     []string{"nosuid", "nodev", "bind", "ro"},
 			}))
-			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+			Expect(spec.Mounts).To(HaveMount(specs.Mount{
 				Destination: "/sbin",
 				Type:        "bind",
 				Source:      "/sbin",
 				Options:     []string{"nosuid", "nodev", "bind", "ro"},
 			}))
-			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+			Expect(spec.Mounts).To(HaveMount(specs.Mount{
 				Destination: filepath.Join(systemRoot, "data", "packages"),
 				Type:        "bind",
 				Source:      filepath.Join(systemRoot, "data", "packages"),
 				Options:     []string{"nodev", "nosuid", "bind", "ro"},
 			}))
-			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+			Expect(spec.Mounts).To(HaveMount(specs.Mount{
 				Destination: filepath.Join(systemRoot, "jobs", "example"),
 				Type:        "bind",
 				Source:      filepath.Join(systemRoot, "jobs", "example"),
 				Options:     []string{"nodev", "nosuid", "bind", "ro"},
 			}))
-			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+			Expect(spec.Mounts).To(HaveMount(specs.Mount{
 				Destination: filepath.Join(systemRoot, "packages"),
 				Type:        "bind",
 				Source:      filepath.Join(systemRoot, "packages"),
 				Options:     []string{"nodev", "nosuid", "bind", "ro"},
 			}))
-			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+			Expect(spec.Mounts).To(HaveMount(specs.Mount{
 				Destination: filepath.Join(systemRoot, "sys", "log", jobName),
 				Type:        "bind",
 				Source:      filepath.Join(systemRoot, "sys", "log", jobName),
 				Options:     []string{"nodev", "nosuid", "noexec", "rbind", "rw"},
 			}))
-			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+			Expect(spec.Mounts).To(HaveMount(specs.Mount{
 				Destination: "/path/to/volume/1",
 				Type:        "bind",
 				Source:      "/path/to/volume/1",
 				Options:     []string{"nodev", "nosuid", "noexec", "rbind", "rw"},
 			}))
-			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+			Expect(spec.Mounts).To(HaveMount(specs.Mount{
 				Destination: "/path/to/volume/jna-tmp",
 				Type:        "bind",
 				Source:      "/path/to/volume/jna-tmp",
-				Options:     []string{"nodev", "nosuid", "exec", "rbind", "rw"},
+				Options:     []string{"nodev", "nosuid", "rbind", "rw"},
 			}))
-			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+			Expect(spec.Mounts).To(HaveMount(specs.Mount{
 				Destination: "/path/to/volume/2",
 				Type:        "bind",
 				Source:      "/path/to/volume/2",
 				Options:     []string{"nodev", "nosuid", "noexec", "rbind", "ro"},
 			}))
-			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+			Expect(spec.Mounts).To(HaveMount(specs.Mount{
 				Destination: filepath.Join(systemRoot, "data", "example", "tmp"),
 				Type:        "bind",
 				Source:      filepath.Join(systemRoot, "data", "example", "tmp"),
 				Options:     []string{"nodev", "nosuid", "noexec", "rbind", "rw"},
 			}))
-			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+			Expect(spec.Mounts).To(HaveMount(specs.Mount{
 				Destination: "/var/tmp",
 				Type:        "bind",
 				Source:      filepath.Join(systemRoot, "data", "example", "tmp"),
 				Options:     []string{"nodev", "nosuid", "noexec", "rbind", "rw"},
 			}))
-			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+			Expect(spec.Mounts).To(HaveMount(specs.Mount{
 				Destination: "/tmp",
 				Type:        "bind",
 				Source:      filepath.Join(systemRoot, "data", "example", "tmp"),
 				Options:     []string{"nodev", "nosuid", "noexec", "rbind", "rw"},
 			}))
-			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+			Expect(spec.Mounts).To(HaveMount(specs.Mount{
 				Destination: filepath.Join(systemRoot, "data", "example"),
 				Type:        "bind",
 				Source:      filepath.Join(systemRoot, "data", "example"),
 				Options:     []string{"nodev", "nosuid", "noexec", "rbind", "rw"},
 			}))
-			Expect(spec.Mounts).To(ContainElement(specs.Mount{
+			Expect(spec.Mounts).To(HaveMount(specs.Mount{
 				Destination: filepath.Join(systemRoot, "store", "example"),
 				Type:        "bind",
 				Source:      filepath.Join(systemRoot, "store", "example"),
-				Options:     []string{"nodev", "nosuid", "exec", "rbind", "rw"},
+				Options:     []string{"nodev", "nosuid", "rbind", "rw"},
 			}))
 
 			// The mounts provided in the default spec are always first and not
@@ -518,11 +520,11 @@ var _ = Describe("RuncAdapter", func() {
 			specWithResolvConf, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(specWithResolvConf.Mounts).To(ContainElement(specs.Mount{
+			Expect(specWithResolvConf.Mounts).To(HaveMount(specs.Mount{
 				Destination: resolvConfDir,
 				Type:        "bind",
 				Source:      resolvConfDir,
-				Options:     []string{"nodev", "nosuid", "noexec", "bind", "ro"},
+				Options:     []string{"nosuid", "nodev", "bind", "ro", "noexec"},
 			}))
 
 			Expect(os.RemoveAll(resolvConfDir)).To(Succeed())
@@ -571,7 +573,7 @@ var _ = Describe("RuncAdapter", func() {
 				spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
 				Expect(err).NotTo(HaveOccurred())
 
-				Expect(spec.Mounts).To(ContainElement(specs.Mount{
+				Expect(spec.Mounts).To(HaveMount(specs.Mount{
 					Destination: filepath.Join(systemRoot, "store", "example"),
 					Type:        "bind",
 					Source:      filepath.Join(systemRoot, "store", "example"),
@@ -589,7 +591,7 @@ var _ = Describe("RuncAdapter", func() {
 				spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
 				Expect(err).NotTo(HaveOccurred())
 
-				Expect(spec.Mounts).To(ContainElement(specs.Mount{
+				Expect(spec.Mounts).To(HaveMount(specs.Mount{
 					Destination: filepath.Join(systemRoot, "data", "example"),
 					Type:        "bind",
 					Source:      filepath.Join(systemRoot, "data", "example"),
@@ -792,17 +794,17 @@ var _ = Describe("RuncAdapter", func() {
 				spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
 				Expect(err).NotTo(HaveOccurred())
 
-				Expect(spec.Mounts).To(ContainElement(specs.Mount{
+				Expect(spec.Mounts).To(HaveMount(specs.Mount{
 					Destination: "/this/is/an/unrestricted/path",
 					Type:        "bind",
 					Source:      "/this/is/an/unrestricted/path",
 					Options:     []string{"nodev", "nosuid", "noexec", "rbind", "ro"},
 				}))
-				Expect(spec.Mounts).To(ContainElement(specs.Mount{
+				Expect(spec.Mounts).To(HaveMount(specs.Mount{
 					Destination: "/writable/executable/path",
 					Type:        "bind",
 					Source:      "/writable/executable/path",
-					Options:     []string{"nodev", "nosuid", "exec", "rbind", "rw"},
+					Options:     []string{"nodev", "nosuid", "rbind", "rw"},
 				}))
 			})
 
@@ -834,17 +836,17 @@ var _ = Describe("RuncAdapter", func() {
 					spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
 					Expect(err).NotTo(HaveOccurred())
 
-					Expect(spec.Mounts).To(ContainElement(specs.Mount{
+					Expect(spec.Mounts).To(HaveMount(specs.Mount{
 						Destination: "/unrestricted/file.txt",
 						Type:        "bind",
 						Source:      "/unrestricted/file.txt",
-						Options:     []string{"nodev", "nosuid", "exec", "rbind", "rw"},
+						Options:     []string{"nodev", "nosuid", "rbind", "rw"},
 					}))
-					Expect(spec.Mounts).To(ContainElement(specs.Mount{
+					Expect(spec.Mounts).To(HaveMount(specs.Mount{
 						Destination: "/other/file.txt",
 						Type:        "bind",
 						Source:      "/other/file.txt",
-						Options:     []string{"nodev", "nosuid", "exec", "rbind", "rw"},
+						Options:     []string{"nodev", "nosuid", "rbind", "rw"},
 					}))
 				})
 
@@ -865,3 +867,55 @@ var _ = Describe("RuncAdapter", func() {
 		})
 	})
 })
+
+// HaveMount is a convenience matcher which combines ContainElement and BeMount
+// into a single matcher.
+func HaveMount(expected specs.Mount) types.GomegaMatcher {
+	return ContainElement(BeMount(expected))
+}
+
+// BeMount is a Gomega matcher which checks if two mounts are the same. Mounts
+// are considered equivalent if their dstination, source, type are the same as
+// well as the set of options being the same (order independent).
+func BeMount(expected specs.Mount) types.GomegaMatcher {
+	return &beMountMatcher{
+		expected: expected,
+	}
+}
+
+type beMountMatcher struct {
+	expected specs.Mount
+}
+
+func (matcher *beMountMatcher) Match(actual interface{}) (bool, error) {
+	actualMount, ok := actual.(specs.Mount)
+	if !ok {
+		return false, fmt.Errorf("expected argument to be a Mount but it was a %T", actual)
+	}
+
+	if success, err := Equal(matcher.expected.Destination).Match(actualMount.Destination); !success {
+		return success, err
+	}
+
+	if success, err := Equal(matcher.expected.Source).Match(actualMount.Source); !success {
+		return success, err
+	}
+
+	if success, err := Equal(matcher.expected.Type).Match(actualMount.Type); !success {
+		return success, err
+	}
+
+	if success, err := ConsistOf(matcher.expected.Options).Match(actualMount.Options); !success {
+		return success, err
+	}
+
+	return true, nil
+}
+
+func (matcher *beMountMatcher) FailureMessage(actual interface{}) (message string) {
+	return fmt.Sprintf("Expected\n\t%#v\nto be the same mount as\n\t%#v", actual, matcher.expected)
+}
+
+func (matcher *beMountMatcher) NegatedFailureMessage(actual interface{}) (message string) {
+	return fmt.Sprintf("Expected\n\t%#v\nnot to be the same mount as\n\t%#v", actual, matcher.expected)
+}
