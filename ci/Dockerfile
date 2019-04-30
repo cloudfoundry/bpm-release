@@ -1,16 +1,13 @@
 FROM golang:latest
 MAINTAINER CF BPM <cf-bpm@pivotal.io>
 
-RUN apt-get update && apt-get -y install pkg-config strace dnsutils vim-nox netcat-openbsd
-
-# copy runc binary to /bin
-ADD runc-linux/runc.amd64 /bin/runc
-RUN chmod +x /bin/runc
-
-# add vcap user for test
-RUN \
-  groupadd vcap -g 3000 && \
-  useradd vcap -u 2000 -g 3000
+RUN apt-get update && apt-get -y install \
+    dnsutils \
+    netcat-openbsd \
+    pkg-config \
+    strace \
+    vim-nox \
+  && rm -rf /var/lib/apt/lists/*
 
 # add required bosh directories for test
 RUN \
@@ -20,10 +17,15 @@ RUN \
   mkdir -p /var/vcap/jobs/ && \
   mkdir -p /var/vcap/store/
 
-RUN \
-  ln -s /bin/runc /var/vcap/packages/bpm/bin/runc
+# copy runc binary to /bin
+ADD runc-linux/runc.amd64 /var/vcap/packages/bpm/bin/runc
+RUN chmod +x /var/vcap/packages/bpm/bin/runc
 
+# add vcap user for test
 RUN \
-  chown -R vcap:vcap /var/vcap
+  groupadd vcap -g 3000 && \
+  useradd vcap -u 2000 -g 3000
+
+RUN chown -R vcap:vcap /var/vcap
 
 WORKDIR /bpm
