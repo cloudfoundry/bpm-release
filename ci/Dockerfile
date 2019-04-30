@@ -22,6 +22,11 @@ ADD runc-linux/runc.amd64 /bin/runc
 RUN ln -s /bin/runc /var/vcap/packages/bpm/bin/runc
 RUN chmod +x /var/vcap/packages/bpm/bin/runc
 
+# copy tini binary to /bin
+ADD tini/tini-amd64 /bin/tini
+RUN ln -s /bin/tini /var/vcap/packages/bpm/bin/tini
+RUN chmod +x /var/vcap/packages/bpm/bin/tini
+
 # add vcap user for test
 RUN \
   groupadd vcap -g 3000 && \
