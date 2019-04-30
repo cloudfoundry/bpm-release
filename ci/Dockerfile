@@ -18,7 +18,8 @@ RUN \
   mkdir -p /var/vcap/store/
 
 # copy runc binary to /bin
-ADD runc-linux/runc.amd64 /var/vcap/packages/bpm/bin/runc
+ADD runc-linux/runc.amd64 /bin/runc
+RUN ln -s /bin/runc /var/vcap/packages/bpm/bin/runc
 RUN chmod +x /var/vcap/packages/bpm/bin/runc
 
 # add vcap user for test
