@@ -1,4 +1,4 @@
-// Copyright (C) 2018-Present CloudFoundry.org Foundation, Inc. All rights reserved.
+// Copyright (C) 2019-Present CloudFoundry.org Foundation, Inc. All rights reserved.
 //
 // This program and the accompanying materials are made available under
 // the terms of the under the Apache License, Version 2.0 (the "License”);
@@ -13,44 +13,16 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 
-package config
+package bosh_test
 
 import (
-	"io/ioutil"
-	"path/filepath"
+	"testing"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
-const DefaultBoshRoot = "/var/vcap"
-
-type Bosh struct {
-	root string
-}
-
-func NewBosh(root string) *Bosh {
-	if root == "" {
-		root = DefaultBoshRoot
-	}
-
-	return &Bosh{
-		root: root,
-	}
-}
-
-func (b *Bosh) Root() string {
-	return b.root
-}
-
-func (b *Bosh) JobNames() []string {
-	var jobs []string
-
-	fileInfos, err := ioutil.ReadDir(filepath.Join(b.root, "jobs"))
-	if err != nil {
-		return jobs
-	}
-
-	for _, info := range fileInfos {
-		jobs = append(jobs, info.Name())
-	}
-
-	return jobs
+func TestBosh(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "Bosh Suite")
 }

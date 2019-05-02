@@ -27,6 +27,7 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/unix"
 
+	"bpm/bosh"
 	"bpm/cgroups"
 	"bpm/config"
 	"bpm/runc/adapter"
@@ -43,7 +44,7 @@ var (
 	showVersion bool
 
 	userFinder = usertools.NewUserFinder()
-	bosh       = config.NewBosh(os.Getenv("BPM_BOSH_ROOT"))
+	boshEnv    = bosh.NewEnv(os.Getenv("BPM_BOSH_ROOT"))
 )
 
 func init() {
@@ -97,7 +98,7 @@ func validateInput(args []string) error {
 		procName = jobName
 	}
 
-	bpmCfg = config.NewBPMConfig(bosh.Root(), jobName, procName)
+	bpmCfg = config.NewBPMConfig(boshEnv.Root(), jobName, procName)
 
 	return nil
 }
@@ -175,8 +176,8 @@ func releaseLifecycleLock() error {
 
 func newRuncLifecycle() (*lifecycle.RuncLifecycle, error) {
 	runcClient := client.NewRuncClient(
-		config.RuncPath(bosh.Root()),
-		config.RuncRoot(bosh.Root()),
+		config.RuncPath(boshEnv.Root()),
+		config.RuncRoot(boshEnv.Root()),
 		isRunningSystemd(),
 	)
 	features, err := sysfeat.Fetch()
@@ -220,7 +221,7 @@ func isRunningSystemd() bool {
 func forceCleanupBrokenRuncState(logger lager.Logger, runcLifecycle *lifecycle.RuncLifecycle) error {
 	// We compute this here rather than adding a new function to the
 	// configuration object to try and contain this hack to one place.
-	statePath := filepath.Join(config.RuncRoot(bosh.Root()), bpmCfg.ContainerID(), "state.json")
+	statePath := filepath.Join(config.RuncRoot(boshEnv.Root()), bpmCfg.ContainerID(), "state.json")
 
 	if err := os.RemoveAll(statePath); err != nil {
 		logger.Error("failed-to-remove-state-file", err)

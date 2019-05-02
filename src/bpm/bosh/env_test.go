@@ -13,7 +13,7 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 
-package config_test
+package bosh_test
 
 import (
 	"io/ioutil"
@@ -23,7 +23,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"bpm/config"
+	"bpm/bosh"
 )
 
 var _ = Describe("Bosh", func() {
@@ -42,15 +42,15 @@ var _ = Describe("Bosh", func() {
 	Describe("NewBosh", func() {
 		Context("when `root` is empty", func() {
 			It("returns `/var/vcap`", func() {
-				bosh := config.NewBosh("")
-				Expect(bosh.Root()).To(Equal(config.DefaultBoshRoot))
+				env := bosh.NewEnv("")
+				Expect(env.Root()).To(Equal(bosh.DefaultRoot))
 			})
 		})
 
 		Context("when `root` is NOT empty", func() {
 			It("returns the specified value", func() {
-				bosh := config.NewBosh("some/path")
-				Expect(bosh.Root()).To(Equal("some/path"))
+				env := bosh.NewEnv("some/path")
+				Expect(env.Root()).To(Equal("some/path"))
 			})
 		})
 	})
@@ -62,7 +62,7 @@ var _ = Describe("Bosh", func() {
 		})
 
 		It("returns a list of BOSH job directories", func() {
-			paths := config.NewBosh(root).JobNames()
+			paths := bosh.NewEnv(root).JobNames()
 			Expect(paths).To(ConsistOf("job-a", "job-b"))
 		})
 	})

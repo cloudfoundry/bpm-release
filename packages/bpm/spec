@@ -7,6 +7,7 @@ dependencies:
 
 files:
   - version
+  - bpm/bosh/*.go # gosub
   - bpm/cgroups/*.go # gosub
   - bpm/cmd/bpm/*.go # gosub
   - bpm/commands/*.go # gosub
