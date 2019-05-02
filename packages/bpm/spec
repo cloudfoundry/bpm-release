@@ -33,7 +33,6 @@ files:
   - bpm/vendor/github.com/sirupsen/logrus/*.go # gosub
   - bpm/vendor/github.com/spf13/cobra/*.go # gosub
   - bpm/vendor/github.com/spf13/pflag/*.go # gosub
-  - bpm/vendor/golang.org/x/crypto/ssh/terminal/*.go # gosub
   - bpm/vendor/golang.org/x/sys/unix/*.go # gosub
   - bpm/vendor/golang.org/x/sys/unix/*.s # gosub
   - bpm/vendor/gopkg.in/yaml.v2/*.go # gosub
