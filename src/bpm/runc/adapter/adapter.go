@@ -29,6 +29,7 @@ import (
 
 	"bpm/config"
 	"bpm/runc/specbuilder"
+	"bpm/sharedvolume"
 	"bpm/sysfeat"
 )
 
@@ -42,22 +43,29 @@ const (
 type GlobFunc func(string) ([]string, error)
 
 type RuncAdapter struct {
-	features sysfeat.Features
-	glob     GlobFunc
+	features     sysfeat.Features
+	glob         GlobFunc
+	sharedVolume *sharedvolume.Factory
 }
 
-func NewRuncAdapter(features sysfeat.Features, glob GlobFunc) *RuncAdapter {
+func NewRuncAdapter(features sysfeat.Features, glob GlobFunc, sharedVolume *sharedvolume.Factory) *RuncAdapter {
 	return &RuncAdapter{
-		features: features,
-		glob:     glob,
+		features:     features,
+		glob:         glob,
+		sharedVolume: sharedVolume,
 	}
 }
 
 func (a *RuncAdapter) CreateJobPrerequisites(
+	logger lager.Logger,
 	bpmCfg *config.BPMConfig,
 	procCfg *config.ProcessConfig,
 	user specs.User,
 ) (*os.File, *os.File, error) {
+	logger = logger.Session("creating-job-prerequisites")
+	logger.Info("starting")
+	defer logger.Info("complete")
+
 	err := os.MkdirAll(bpmCfg.PidDir(), 0700)
 	if err != nil {
 		return nil, nil, err
@@ -115,6 +123,12 @@ func (a *RuncAdapter) CreateJobPrerequisites(
 	err = chownPaths(pathsToChown, user)
 	if err != nil {
 		return nil, nil, err
+	}
+
+	for _, vol := range procCfg.SharedVolumes {
+		if err := a.sharedVolume.Create(logger, vol); err != nil {
+			return nil, nil, fmt.Errorf("failed to create shared volume %q: %v", vol, err)
+		}
 	}
 
 	return createLogFiles(bpmCfg, user)
@@ -199,6 +213,7 @@ func (a *RuncAdapter) BuildSpec(
 	ms.addMounts(systemIdentityMounts(mountResolvConf))
 	ms.addMounts(boshMounts(bpmCfg, procCfg.EphemeralDisk, procCfg.PersistentDisk))
 	ms.addMounts(userProvidedIdentityMounts(bpmCfg, procCfg.AdditionalVolumes))
+	ms.addMounts(userProvidedSharedMounts(procCfg.SharedVolumes))
 	if procCfg.Unsafe != nil && len(procCfg.Unsafe.UnrestrictedVolumes) > 0 {
 		expanded, err := a.globExpandVolumes(procCfg.Unsafe.UnrestrictedVolumes)
 		if err != nil {
@@ -323,6 +338,16 @@ func userProvidedIdentityMounts(bpmCfg *config.BPMConfig, volumes []config.Volum
 		}
 
 		mnts = append(mnts, identityBindMountWithOptions(vol.Path, "nodev", "nosuid", execOpt, "rbind", writeOpt))
+	}
+
+	return mnts
+}
+
+func userProvidedSharedMounts(volumes []string) []specs.Mount {
+	var mnts []specs.Mount
+
+	for _, vol := range volumes {
+		mnts = append(mnts, identityBindMountWithOptions(vol, "nodev", "nosuid", "rbind"))
 	}
 
 	return mnts

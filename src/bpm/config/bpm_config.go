@@ -34,6 +34,10 @@ func RuncRoot(boshRoot string) string {
 	return filepath.Join(boshRoot, "data", "bpm", "runc")
 }
 
+func LocksDir(boshRoot string) string {
+	return filepath.Join(boshRoot, "data", "bpm", "locks")
+}
+
 type BPMConfig struct {
 	boshRoot string
 	jobName  string

@@ -67,7 +67,7 @@ type CommandRunner interface {
 //go:generate counterfeiter . RuncAdapter
 
 type RuncAdapter interface {
-	CreateJobPrerequisites(bpmCfg *config.BPMConfig, procCfg *config.ProcessConfig, user specs.User) (*os.File, *os.File, error)
+	CreateJobPrerequisites(logger lager.Logger, bpmCfg *config.BPMConfig, procCfg *config.ProcessConfig, user specs.User) (*os.File, *os.File, error)
 	BuildSpec(logger lager.Logger, bpmCfg *config.BPMConfig, procCfg *config.ProcessConfig, user specs.User) (specs.Spec, error)
 }
 
@@ -166,7 +166,7 @@ func (j *RuncLifecycle) setupProcess(logger lager.Logger, bpmCfg *config.BPMConf
 	}
 
 	logger.Info("creating-job-prerequisites")
-	stdout, stderr, err := j.runcAdapter.CreateJobPrerequisites(bpmCfg, procCfg, user)
+	stdout, stderr, err := j.runcAdapter.CreateJobPrerequisites(logger, bpmCfg, procCfg, user)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create system files: %s", err.Error())
 	}

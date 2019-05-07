@@ -35,6 +35,7 @@ type ProcessConfig struct {
 	Args              []string          `yaml:"args"`
 	Env               map[string]string `yaml:"env"`
 	AdditionalVolumes []Volume          `yaml:"additional_volumes"`
+	SharedVolumes     []string          `yaml:"shared_volumes"`
 	Capabilities      []string          `yaml:"capabilities"`
 	EphemeralDisk     bool              `yaml:"ephemeral_disk"`
 	Hooks             *Hooks            `yaml:"hooks,omitempty"`
@@ -101,34 +102,46 @@ func (c *ProcessConfig) Validate(boshRoot string, defaultVolumes []string) error
 		return errors.New("invalid config: executable")
 	}
 
+	for _, vol := range c.AdditionalVolumes {
+		if err := validateVolumePath(boshRoot, defaultVolumes, vol.Path); err != nil {
+			return err
+		}
+	}
+	for _, vol := range c.SharedVolumes {
+		if err := validateVolumePath(boshRoot, defaultVolumes, vol); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func validateVolumePath(boshRoot string, defaultVolumes []string, volPath string) error {
 	dataPrefix := filepath.Join(boshRoot, "data")
 	storePrefix := filepath.Join(boshRoot, "store")
 	socketPrefix := filepath.Join(boshRoot, "sys", "run")
 
-	for _, vol := range c.AdditionalVolumes {
-		volCleaned := filepath.Clean(vol.Path)
-		if volCleaned != vol.Path {
-			return fmt.Errorf("volume path must be canonical, expected %s but got %s", volCleaned, vol.Path)
-		}
-
-		if contains(defaultVolumes, volCleaned) {
-			return fmt.Errorf(
-				"invalid volume path: %s cannot conflict with default job data or store directories",
-				vol.Path,
-			)
-		}
-
-		if !pathIsIn(volCleaned, dataPrefix, storePrefix, socketPrefix) {
-			return fmt.Errorf(
-				"invalid volume path: %s must be within (%s, %s, %s)",
-				vol.Path,
-				dataPrefix,
-				storePrefix,
-				socketPrefix,
-			)
-		}
+	volCleaned := filepath.Clean(volPath)
+	if volCleaned != volPath {
+		return fmt.Errorf("volume path must be canonical, expected %s but got %s", volCleaned, volPath)
 	}
 
+	if contains(defaultVolumes, volCleaned) {
+		return fmt.Errorf(
+			"invalid volume path: %s cannot conflict with default job data or store directories",
+			volPath,
+		)
+	}
+
+	if !pathIsIn(volCleaned, dataPrefix, storePrefix, socketPrefix) {
+		return fmt.Errorf(
+			"invalid volume path: %s must be within (%s, %s, %s)",
+			volPath,
+			dataPrefix,
+			storePrefix,
+			socketPrefix,
+		)
+	}
 	return nil
 }
 

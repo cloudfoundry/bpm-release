@@ -29,9 +29,11 @@ import (
 
 	"bpm/cgroups"
 	"bpm/config"
+	"bpm/locksmith"
 	"bpm/runc/adapter"
 	"bpm/runc/client"
 	"bpm/runc/lifecycle"
+	"bpm/sharedvolume"
 	"bpm/sysfeat"
 	"bpm/usertools"
 )
@@ -183,7 +185,8 @@ func newRuncLifecycle() (*lifecycle.RuncLifecycle, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch system features: %q", err)
 	}
-	runcAdapter := adapter.NewRuncAdapter(*features, filepath.Glob)
+	sharedVolume := sharedvolume.NewFactory(locksmith.NewExclusiveFileSystem(config.LocksDir(bosh.Root())))
+	runcAdapter := adapter.NewRuncAdapter(*features, filepath.Glob, sharedVolume)
 	clock := clock.NewClock()
 
 	return lifecycle.NewRuncLifecycle(

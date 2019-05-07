@@ -13,12 +13,14 @@ files:
   - bpm/config/*.go # gosub
   - bpm/exitstatus/*.go # gosub
   - bpm/jobid/*.go # gosub
+  - bpm/locksmith/*.go # gosub
   - bpm/models/*.go # gosub
   - bpm/presenters/*.go # gosub
   - bpm/runc/adapter/*.go # gosub
   - bpm/runc/client/*.go # gosub
   - bpm/runc/lifecycle/*.go # gosub
   - bpm/runc/specbuilder/*.go # gosub
+  - bpm/sharedvolume/*.go # gosub
   - bpm/sysfeat/*.go # gosub
   - bpm/usertools/*.go # gosub
   - bpm/vendor/code.cloudfoundry.org/bytefmt/*.go # gosub
