@@ -86,6 +86,6 @@ var _ = Describe("our go source code", func() {
 		})
 
 		Expect(err).NotTo(HaveOccurred())
-		Expect(missingHeader).To(BeEmpty())
+		Expect(missingHeader).To(BeEmpty(), "These files are missing licence headers!")
 	})
 })
