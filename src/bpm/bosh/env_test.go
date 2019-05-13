@@ -26,7 +26,7 @@ import (
 	"bpm/bosh"
 )
 
-var _ = Describe("Bosh", func() {
+var _ = Describe("Bosh Environment", func() {
 	var root string
 
 	BeforeEach(func() {
@@ -39,18 +39,87 @@ var _ = Describe("Bosh", func() {
 		os.RemoveAll(root)
 	})
 
-	Describe("NewBosh", func() {
+	Describe("environment", func() {
 		Context("when `root` is empty", func() {
-			It("returns `/var/vcap`", func() {
+			It("the internal and external path is `/var/vcap`", func() {
 				env := bosh.NewEnv("")
-				Expect(env.Root()).To(Equal(bosh.DefaultRoot))
+				Expect(env.Root().External()).To(Equal(bosh.DefaultRoot))
+				Expect(env.Root().Internal()).To(Equal(bosh.DefaultRoot))
 			})
 		})
 
-		Context("when `root` is NOT empty", func() {
-			It("returns the specified value", func() {
-				env := bosh.NewEnv("some/path")
-				Expect(env.Root()).To(Equal("some/path"))
+		Context("when `root` is not empty", func() {
+			It("returns the specified value for the external path", func() {
+				env := bosh.NewEnv("/some/path")
+				Expect(env.Root().External()).To(Equal("/some/path"))
+			})
+
+			It("returns the default value for the internal path", func() {
+				env := bosh.NewEnv("/some/path")
+				Expect(env.Root().Internal()).To(Equal(bosh.DefaultRoot))
+			})
+		})
+
+		Describe("a job's data directory", func() {
+			It("is a path which can be scoped to a different root", func() {
+				env := bosh.NewEnv(root)
+				data := env.DataDir("job_name")
+				Expect(data.Internal()).To(Equal("/var/vcap/data/job_name"))
+				Expect(data.External()).To(Equal(root + "/data/job_name"))
+			})
+		})
+
+		Describe("a job's store directory", func() {
+			It("is a path which can be scoped to a different root", func() {
+				env := bosh.NewEnv(root)
+				store := env.StoreDir("job_name")
+				Expect(store.Internal()).To(Equal("/var/vcap/store/job_name"))
+				Expect(store.External()).To(Equal(root + "/store/job_name"))
+			})
+		})
+
+		Describe("a job's job directory", func() {
+			It("is a path which can be scoped to a different root", func() {
+				env := bosh.NewEnv(root)
+				job := env.JobDir("job_name")
+				Expect(job.Internal()).To(Equal("/var/vcap/jobs/job_name"))
+				Expect(job.External()).To(Equal(root + "/jobs/job_name"))
+			})
+		})
+
+		Describe("a job's run directory", func() {
+			It("is a path which can be scoped to a different root", func() {
+				env := bosh.NewEnv(root)
+				run := env.RunDir("job_name")
+				Expect(run.Internal()).To(Equal("/var/vcap/sys/run/job_name"))
+				Expect(run.External()).To(Equal(root + "/sys/run/job_name"))
+			})
+		})
+
+		Describe("a job's log directory", func() {
+			It("is a path which can be scoped to a different root", func() {
+				env := bosh.NewEnv(root)
+				log := env.LogDir("job_name")
+				Expect(log.Internal()).To(Equal("/var/vcap/sys/log/job_name"))
+				Expect(log.External()).To(Equal(root + "/sys/log/job_name"))
+			})
+		})
+
+		Describe("a global packages directory", func() {
+			It("is a path which can be scoped to a different root", func() {
+				env := bosh.NewEnv(root)
+				packages := env.PackageDir()
+				Expect(packages.Internal()).To(Equal("/var/vcap/packages"))
+				Expect(packages.External()).To(Equal(root + "/packages"))
+			})
+		})
+
+		Describe("a global data packages directory", func() {
+			It("is a path which can be scoped to a different root", func() {
+				env := bosh.NewEnv(root)
+				packages := env.DataPackageDir()
+				Expect(packages.Internal()).To(Equal("/var/vcap/data/packages"))
+				Expect(packages.External()).To(Equal(root + "/data/packages"))
 			})
 		})
 	})

@@ -125,7 +125,7 @@ func (j *RuncLifecycle) StartProcess(logger lager.Logger, bpmCfg *config.BPMConf
 
 	logger.Info("running-container")
 	_, err = j.runcClient.RunContainer(
-		bpmCfg.PidFile(),
+		bpmCfg.PidFile().External(),
 		bpmCfg.BundlePath(),
 		bpmCfg.ContainerID(),
 		true,
@@ -150,7 +150,7 @@ func (j *RuncLifecycle) RunProcess(logger lager.Logger, bpmCfg *config.BPMConfig
 
 	logger.Info("running-container")
 	return j.runcClient.RunContainer(
-		bpmCfg.PidFile(),
+		bpmCfg.PidFile().External(),
 		bpmCfg.BundlePath(),
 		bpmCfg.ContainerID(),
 		false,
@@ -291,7 +291,7 @@ func (j *RuncLifecycle) RemoveProcess(logger lager.Logger, cfg *config.BPMConfig
 	}
 
 	logger.Info("deleting-pidfile")
-	return j.deleteFile(cfg.PidFile())
+	return j.deleteFile(cfg.PidFile().External())
 }
 
 func newProcessFromContainerState(id, status string, pid int) *models.Process {

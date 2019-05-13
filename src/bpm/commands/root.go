@@ -98,13 +98,13 @@ func validateInput(args []string) error {
 		procName = jobName
 	}
 
-	bpmCfg = config.NewBPMConfig(boshEnv.Root(), jobName, procName)
+	bpmCfg = config.NewBPMConfig(boshEnv, jobName, procName)
 
 	return nil
 }
 
 func setupBpmLogs(sessionName string) error {
-	err := os.MkdirAll(bpmCfg.LogDir(), 0750)
+	err := os.MkdirAll(bpmCfg.LogDir().External(), 0750)
 	if err != nil {
 		return err
 	}
@@ -139,13 +139,13 @@ func acquireLifecycleLock() error {
 	l.Info("starting")
 	defer l.Info("complete")
 
-	err := os.MkdirAll(bpmCfg.PidDir(), 0700)
+	err := os.MkdirAll(bpmCfg.PidDir().External(), 0700)
 	if err != nil {
 		l.Error("failed-to-create-lock-dir", err)
 		return err
 	}
 
-	f, err := os.OpenFile(bpmCfg.LockFile(), os.O_CREATE|os.O_RDWR, 0600)
+	f, err := os.OpenFile(bpmCfg.LockFile().External(), os.O_CREATE|os.O_RDWR, 0600)
 	if err != nil {
 		l.Error("failed-to-create-lock-file", err)
 		return err
@@ -165,7 +165,7 @@ func releaseLifecycleLock() error {
 	l.Info("starting")
 	defer l.Info("complete")
 
-	err := os.RemoveAll(bpmCfg.LockFile())
+	err := os.RemoveAll(bpmCfg.LockFile().External())
 	if err != nil {
 		l.Error("failed-to-remove-lock-file", err)
 		return err
@@ -176,8 +176,8 @@ func releaseLifecycleLock() error {
 
 func newRuncLifecycle() (*lifecycle.RuncLifecycle, error) {
 	runcClient := client.NewRuncClient(
-		config.RuncPath(boshEnv.Root()),
-		config.RuncRoot(boshEnv.Root()),
+		config.RuncPath(boshEnv),
+		config.RuncRoot(boshEnv),
 		isRunningSystemd(),
 	)
 	features, err := sysfeat.Fetch()
@@ -221,7 +221,7 @@ func isRunningSystemd() bool {
 func forceCleanupBrokenRuncState(logger lager.Logger, runcLifecycle *lifecycle.RuncLifecycle) error {
 	// We compute this here rather than adding a new function to the
 	// configuration object to try and contain this hack to one place.
-	statePath := filepath.Join(config.RuncRoot(boshEnv.Root()), bpmCfg.ContainerID(), "state.json")
+	statePath := filepath.Join(config.RuncRoot(boshEnv), bpmCfg.ContainerID(), "state.json")
 
 	if err := os.RemoveAll(statePath); err != nil {
 		logger.Error("failed-to-remove-state-file", err)

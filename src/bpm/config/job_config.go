@@ -23,6 +23,8 @@ import (
 	"strings"
 
 	yaml "gopkg.in/yaml.v2"
+
+	"bpm/bosh"
 )
 
 type JobConfig struct {
@@ -82,9 +84,9 @@ func ParseJobConfig(configPath string) (*JobConfig, error) {
 	return &cfg, nil
 }
 
-func (c *JobConfig) Validate(boshRoot string, defaultVolumes []string) error {
+func (c *JobConfig) Validate(boshEnv *bosh.Env, defaultVolumes []string) error {
 	for _, v := range c.Processes {
-		if err := v.Validate(boshRoot, defaultVolumes); err != nil {
+		if err := v.Validate(boshEnv, defaultVolumes); err != nil {
 			return err
 		}
 	}
@@ -92,7 +94,7 @@ func (c *JobConfig) Validate(boshRoot string, defaultVolumes []string) error {
 	return nil
 }
 
-func (c *ProcessConfig) Validate(boshRoot string, defaultVolumes []string) error {
+func (c *ProcessConfig) Validate(boshEnv *bosh.Env, defaultVolumes []string) error {
 	if c.Name == "" {
 		return errors.New("invalid config: name")
 	}
@@ -101,9 +103,9 @@ func (c *ProcessConfig) Validate(boshRoot string, defaultVolumes []string) error
 		return errors.New("invalid config: executable")
 	}
 
-	dataPrefix := filepath.Join(boshRoot, "data")
-	storePrefix := filepath.Join(boshRoot, "store")
-	socketPrefix := filepath.Join(boshRoot, "sys", "run")
+	dataPrefix := boshEnv.Root().Join("data").External()
+	storePrefix := boshEnv.Root().Join("store").External()
+	socketPrefix := boshEnv.Root().Join("sys", "run").External()
 
 	for _, vol := range c.AdditionalVolumes {
 		volCleaned := filepath.Clean(vol.Path)
@@ -134,7 +136,7 @@ func (c *ProcessConfig) Validate(boshRoot string, defaultVolumes []string) error
 
 func (c *ProcessConfig) AddVolumes(
 	volumes []string,
-	boshRoot string,
+	boshEnv *bosh.Env,
 	defaultVolumes []string,
 ) error {
 	for _, volume := range volumes {
@@ -167,7 +169,7 @@ func (c *ProcessConfig) AddVolumes(
 		c.AdditionalVolumes = append(c.AdditionalVolumes, v)
 	}
 
-	return c.Validate(boshRoot, defaultVolumes)
+	return c.Validate(boshEnv, defaultVolumes)
 }
 
 // AddEnvVars allows additional environment variables to be added to a process
@@ -176,7 +178,7 @@ func (c *ProcessConfig) AddVolumes(
 // then the last valeu wins.
 func (c *ProcessConfig) AddEnvVars(
 	env []string,
-	boshRoot string,
+	boshEnv *bosh.Env,
 	defaultVolumes []string,
 ) error {
 	if c.Env == nil {
@@ -190,7 +192,7 @@ func (c *ProcessConfig) AddEnvVars(
 		key, value := parts[0], parts[1]
 		c.Env[key] = value
 	}
-	return c.Validate(boshRoot, defaultVolumes)
+	return c.Validate(boshEnv, defaultVolumes)
 }
 
 func contains(elements []string, s string) bool {

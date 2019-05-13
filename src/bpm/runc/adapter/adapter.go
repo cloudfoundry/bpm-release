@@ -56,7 +56,7 @@ func (a *RuncAdapter) CreateJobPrerequisites(
 	procCfg *config.ProcessConfig,
 	user specs.User,
 ) (*os.File, *os.File, error) {
-	err := os.MkdirAll(bpmCfg.PidDir(), 0700)
+	err := os.MkdirAll(bpmCfg.PidDir().External(), 0700)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -82,18 +82,18 @@ func (a *RuncAdapter) CreateJobPrerequisites(
 
 	dirsToCreate = append(
 		dirsToCreate,
-		bpmCfg.LogDir(),
-		bpmCfg.SocketDir(),
-		bpmCfg.TempDir(),
+		bpmCfg.LogDir().External(),
+		bpmCfg.SocketDir().External(),
+		bpmCfg.TempDir().External(),
 	)
 
 	if procCfg.EphemeralDisk {
-		dirsToCreate = append(dirsToCreate, bpmCfg.DataDir())
+		dirsToCreate = append(dirsToCreate, bpmCfg.DataDir().External())
 	}
 
 	if procCfg.PersistentDisk {
-		var storeExists bool
-		storeExists, err = checkDirExists(filepath.Dir(bpmCfg.StoreDir()))
+		storeDir := bpmCfg.StoreDir().External()
+		storeExists, err := checkDirExists(filepath.Dir(storeDir))
 		if err != nil {
 			return nil, nil, err
 		}
@@ -102,7 +102,7 @@ func (a *RuncAdapter) CreateJobPrerequisites(
 			return nil, nil, errors.New("requested persistent disk does not exist")
 		}
 
-		dirsToCreate = append(dirsToCreate, bpmCfg.StoreDir())
+		dirsToCreate = append(dirsToCreate, storeDir)
 	}
 
 	err = createDirs(dirsToCreate, user)
@@ -151,7 +151,7 @@ func chownPaths(paths []string, user specs.User) error {
 
 func createLogFiles(bpmCfg *config.BPMConfig, user specs.User) (*os.File, *os.File, error) {
 	files := make([]*os.File, 2)
-	paths := []string{bpmCfg.Stdout(), bpmCfg.Stderr()}
+	paths := []string{bpmCfg.Stdout().External(), bpmCfg.Stderr().External()}
 	for i, path := range paths {
 		f, err := createFileFor(path, int(user.UID), int(user.GID))
 		if err != nil {
@@ -183,7 +183,7 @@ func (a *RuncAdapter) BuildSpec(
 	procCfg *config.ProcessConfig,
 	user specs.User,
 ) (specs.Spec, error) {
-	cwd := bpmCfg.JobDir()
+	cwd := bpmCfg.JobDir().Internal()
 	if procCfg.WorkDir != "" {
 		cwd = procCfg.WorkDir
 	}
@@ -266,22 +266,30 @@ func systemIdentityMounts(mountResolvConf bool) []specs.Mount {
 }
 
 func boshMounts(bpmCfg *config.BPMConfig, mountData, mountStore bool) []specs.Mount {
+	jobDir := bpmCfg.JobDir()
+	logDir := bpmCfg.LogDir()
+	tmpDir := bpmCfg.TempDir()
+	packageDir := bpmCfg.PackageDir()
+	dataPackageDir := bpmCfg.DataPackageDir()
+
 	mounts := []specs.Mount{
-		Mount(bpmCfg.TempDir(), "/tmp", WithRecursiveBind(), AllowWrites()),
-		Mount(bpmCfg.TempDir(), "/var/tmp", WithRecursiveBind(), AllowWrites()),
-		IdentityMount(bpmCfg.DataPackageDir(), AllowExec()),
-		IdentityMount(bpmCfg.JobDir(), AllowExec()),
-		IdentityMount(bpmCfg.LogDir(), WithRecursiveBind(), AllowWrites()),
-		IdentityMount(bpmCfg.PackageDir(), AllowExec()),
-		IdentityMount(bpmCfg.TempDir(), WithRecursiveBind(), AllowWrites()),
+		Mount(tmpDir.External(), "/tmp", WithRecursiveBind(), AllowWrites()),
+		Mount(tmpDir.External(), "/var/tmp", WithRecursiveBind(), AllowWrites()),
+		Mount(tmpDir.External(), tmpDir.Internal(), WithRecursiveBind(), AllowWrites()),
+		Mount(dataPackageDir.External(), dataPackageDir.Internal(), AllowExec()),
+		Mount(packageDir.External(), packageDir.Internal(), AllowExec()),
+		Mount(jobDir.External(), jobDir.Internal(), AllowExec()),
+		Mount(logDir.External(), logDir.Internal(), WithRecursiveBind(), AllowWrites()),
 	}
 
 	if mountData {
-		mounts = append(mounts, IdentityMount(bpmCfg.DataDir(), WithRecursiveBind(), AllowWrites()))
+		dataDir := bpmCfg.DataDir()
+		mounts = append(mounts, Mount(dataDir.External(), dataDir.Internal(), WithRecursiveBind(), AllowWrites()))
 	}
 
 	if mountStore {
-		mounts = append(mounts, IdentityMount(bpmCfg.StoreDir(), WithRecursiveBind(), AllowWrites()))
+		storeDir := bpmCfg.StoreDir()
+		mounts = append(mounts, Mount(storeDir.External(), storeDir.Internal(), WithRecursiveBind(), AllowWrites()))
 	}
 
 	return mounts
@@ -334,7 +342,7 @@ func processEnvironment(env map[string]string, cfg *config.BPMConfig) []string {
 	}
 
 	if _, ok := env["TMPDIR"]; !ok {
-		environ = append(environ, fmt.Sprintf("TMPDIR=%s", cfg.TempDir()))
+		environ = append(environ, fmt.Sprintf("TMPDIR=%s", cfg.TempDir().Internal()))
 	}
 
 	if _, ok := env["LANG"]; !ok {
@@ -346,7 +354,7 @@ func processEnvironment(env map[string]string, cfg *config.BPMConfig) []string {
 	}
 
 	if _, ok := env["HOME"]; !ok {
-		environ = append(environ, fmt.Sprintf("HOME=%s", cfg.DataDir()))
+		environ = append(environ, fmt.Sprintf("HOME=%s", cfg.DataDir().Internal()))
 	}
 
 	return environ
@@ -374,8 +382,6 @@ func checkDirExists(dir string) (bool, error) {
 }
 
 func defaultPath(cfg *config.BPMConfig) string {
-	defaultPath := "%s:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin:."
-	defaultPath = fmt.Sprintf(defaultPath, filepath.Join(cfg.JobDir(), "bin"))
-
-	return defaultPath
+	defaultPathTmpl := "%s:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin:."
+	return fmt.Sprintf(defaultPathTmpl, cfg.JobDir().Join("bin").Internal())
 }

@@ -83,12 +83,12 @@ func run(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("process %q not present in job configuration (%s)", procName, bpmCfg.JobConfig())
 	}
 
-	if err = procCfg.AddVolumes(volumes, boshEnv.Root(), bpmCfg.DefaultVolumes()); err != nil {
+	if err = procCfg.AddVolumes(volumes, boshEnv, bpmCfg.DefaultVolumes()); err != nil {
 		logger.Error("invalid-volume-definition", err)
 		return err
 	}
 
-	if err = procCfg.AddEnvVars(env, boshEnv.Root(), bpmCfg.DefaultVolumes()); err != nil {
+	if err = procCfg.AddEnvVars(env, boshEnv, bpmCfg.DefaultVolumes()); err != nil {
 		logger.Error("invalid-environment-definition", err)
 		return err
 	}

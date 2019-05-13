@@ -19,6 +19,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"bpm/bosh"
 	"bpm/config"
 	"bpm/jobid"
 )
@@ -30,7 +31,8 @@ var _ = Describe("Config", func() {
 
 			Context("when the job name and process name are the same", func() {
 				BeforeEach(func() {
-					bpmCfg = config.NewBPMConfig("", "foo", "foo")
+					env := bosh.NewEnv("")
+					bpmCfg = config.NewBPMConfig(env, "foo", "foo")
 				})
 
 				It("encodes", func() {
@@ -43,7 +45,8 @@ var _ = Describe("Config", func() {
 
 			Context("when the job name and process name are not the same", func() {
 				BeforeEach(func() {
-					bpmCfg = config.NewBPMConfig("", "foo", "bar")
+					env := bosh.NewEnv("")
+					bpmCfg = config.NewBPMConfig(env, "foo", "bar")
 				})
 
 				It("encodes", func() {

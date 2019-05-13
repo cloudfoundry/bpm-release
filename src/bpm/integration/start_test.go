@@ -29,6 +29,7 @@ import (
 	"github.com/onsi/gomega/gexec"
 	uuid "github.com/satori/go.uuid"
 
+	"bpm/bosh"
 	"bpm/config"
 	"bpm/jobid"
 )
@@ -43,11 +44,13 @@ var _ = Describe("start", func() {
 		bpmLog      string
 		containerID string
 		job         string
-		logFile     string
 		pidFile     string
 		runcRoot    string
 		stderr      string
 		stdout      string
+
+		boshEnv *bosh.Env
+		logFile bosh.Path
 	)
 
 	BeforeEach(func() {
@@ -58,15 +61,17 @@ var _ = Describe("start", func() {
 		boshRoot, err = ioutil.TempDir(bpmTmpDir, "start-test")
 		Expect(err).NotTo(HaveOccurred())
 		Expect(os.Chmod(boshRoot, 0755)).To(Succeed())
+		boshEnv = bosh.NewEnv(boshRoot)
+
 		runcRoot = setupBoshDirectories(boshRoot, job)
 
 		stdout = filepath.Join(boshRoot, "sys", "log", job, fmt.Sprintf("%s.stdout.log", job))
 		stderr = filepath.Join(boshRoot, "sys", "log", job, fmt.Sprintf("%s.stderr.log", job))
 		bpmLog = filepath.Join(boshRoot, "sys", "log", job, "bpm.log")
-		logFile = filepath.Join(boshRoot, "sys", "log", job, "foo.log")
 		pidFile = filepath.Join(boshRoot, "sys", "run", "bpm", job, fmt.Sprintf("%s.pid", job))
+		logFile = boshEnv.LogDir(job).Join("foo.log")
 
-		cfg = newJobConfig(job, defaultBash(logFile))
+		cfg = newJobConfig(job, defaultBash(logFile.Internal()))
 	})
 
 	JustBeforeEach(func() {
@@ -124,8 +129,8 @@ var _ = Describe("start", func() {
 		Expect(err).NotTo(HaveOccurred())
 		Eventually(session).Should(gexec.Exit(0))
 
-		Eventually(logFile).Should(BeAnExistingFile())
-		Eventually(fileContents(logFile)).Should(ContainSubstring("Logging to FILE"))
+		Eventually(logFile.External()).Should(BeAnExistingFile())
+		Eventually(fileContents(logFile.External())).Should(ContainSubstring("Logging to FILE"))
 	})
 
 	It("logs bpm internal logs to a consistent location", func() {
@@ -208,11 +213,12 @@ var _ = Describe("start", func() {
 	})
 
 	Context("when presistent storage is request", func() {
-		var storeFile string
+		var dataFile bosh.Path
 
 		BeforeEach(func() {
-			storeFile = filepath.Join(boshRoot, "store", job, "data.txt")
-			cfg = newJobConfig(job, defaultBash(storeFile))
+			dataFile = boshEnv.StoreDir(job).Join("data.txt")
+
+			cfg = newJobConfig(job, defaultBash(dataFile.Internal()))
 			cfg.Processes[0].PersistentDisk = true
 		})
 
@@ -221,8 +227,8 @@ var _ = Describe("start", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Eventually(session).Should(gexec.Exit(0))
 
-			Eventually(storeFile).Should(BeAnExistingFile())
-			Eventually(fileContents(storeFile)).Should(ContainSubstring("Logging to FILE"))
+			Eventually(dataFile.External()).Should(BeAnExistingFile())
+			Eventually(fileContents(dataFile.External())).Should(ContainSubstring("Logging to FILE"))
 		})
 	})
 

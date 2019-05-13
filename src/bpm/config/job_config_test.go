@@ -19,10 +19,17 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"bpm/bosh"
 	"bpm/config"
 )
 
 var _ = Describe("Config", func() {
+	var boshEnv *bosh.Env
+
+	BeforeEach(func() {
+		boshEnv = bosh.NewEnv("")
+	})
+
 	Describe("ParseJobConfig", func() {
 		var configPath string
 
@@ -117,7 +124,7 @@ var _ = Describe("Config", func() {
 		})
 
 		It("does not error on a valid config", func() {
-			Expect(jobCfg.Validate("/var/vcap", []string{})).To(Succeed())
+			Expect(jobCfg.Validate(boshEnv, []string{})).To(Succeed())
 		})
 
 		Context("when the config has additional_volumes that are not nested in the bosh root", func() {
@@ -126,29 +133,29 @@ var _ = Describe("Config", func() {
 					{Path: "/var/vcap/data/valid"},
 					{Path: "/bin"},
 				}
-				Expect(jobCfg.Validate("/var/vcap", []string{})).To(HaveOccurred())
+				Expect(jobCfg.Validate(boshEnv, []string{})).To(HaveOccurred())
 
 				jobCfg.Processes[0].AdditionalVolumes = []config.Volume{
 					{Path: "/var/vcap/data/valid"},
 					{Path: "/var/vcap/invalid"},
 				}
-				Expect(jobCfg.Validate("/var/vcap", []string{})).To(HaveOccurred())
+				Expect(jobCfg.Validate(boshEnv, []string{})).To(HaveOccurred())
 
 				jobCfg.Processes[0].AdditionalVolumes = []config.Volume{
 					{Path: "/var/vcap/data/valid"},
 					{Path: "/var/vcap/data"},
 				}
-				Expect(jobCfg.Validate("/var/vcap", []string{})).To(HaveOccurred())
+				Expect(jobCfg.Validate(boshEnv, []string{})).To(HaveOccurred())
 
 				jobCfg.Processes[0].AdditionalVolumes = []config.Volume{
 					{Path: "/var/vcap/store"},
 				}
-				Expect(jobCfg.Validate("/var/vcap", []string{})).To(HaveOccurred())
+				Expect(jobCfg.Validate(boshEnv, []string{})).To(HaveOccurred())
 
 				jobCfg.Processes[0].AdditionalVolumes = []config.Volume{
 					{Path: "//var/vcap/data/valid"},
 				}
-				Expect(jobCfg.Validate("/var/vcap", []string{})).To(HaveOccurred())
+				Expect(jobCfg.Validate(boshEnv, []string{})).To(HaveOccurred())
 			})
 		})
 
@@ -157,7 +164,7 @@ var _ = Describe("Config", func() {
 				jobCfg.Processes[0].AdditionalVolumes = []config.Volume{
 					{Path: "/var/vcap/data/job-name"},
 				}
-				Expect(jobCfg.Validate("/var/vcap", []string{
+				Expect(jobCfg.Validate(boshEnv, []string{
 					"/var/vcap/data/job-name",
 				})).To(HaveOccurred())
 			})
@@ -166,7 +173,7 @@ var _ = Describe("Config", func() {
 		Context("when the process does not have a name", func() {
 			It("returns an error", func() {
 				jobCfg.Processes[0].Name = ""
-				Expect(jobCfg.Validate("", []string{})).To(HaveOccurred())
+				Expect(jobCfg.Validate(boshEnv, []string{})).To(HaveOccurred())
 			})
 		})
 
@@ -176,7 +183,7 @@ var _ = Describe("Config", func() {
 			})
 
 			It("returns an error", func() {
-				Expect(jobCfg.Validate("", []string{})).To(HaveOccurred())
+				Expect(jobCfg.Validate(boshEnv, []string{})).To(HaveOccurred())
 			})
 		})
 	})
@@ -200,7 +207,7 @@ var _ = Describe("Config", func() {
 					"/path/to/store/volume4:allow_executions",
 					"/path/to/data/volume5:writable,mount_only,allow_executions",
 				},
-				"/path/to",
+				boshEnv,
 				[]string{},
 			)
 			Expect(err).NotTo(HaveOccurred())
@@ -233,7 +240,7 @@ var _ = Describe("Config", func() {
 			It("returns an error", func() {
 				err := cfg.AddVolumes(
 					[]string{"/path/to/volume1:non_existant"},
-					"/path/to",
+					boshEnv,
 					[]string{},
 				)
 				Expect(err).To(HaveOccurred())
@@ -244,7 +251,7 @@ var _ = Describe("Config", func() {
 			It("returns an error", func() {
 				err := cfg.AddVolumes(
 					[]string{"/path/to/volume1:writable:invalid_field"},
-					"/path/to",
+					boshEnv,
 					[]string{},
 				)
 				Expect(err).To(HaveOccurred())
@@ -255,19 +262,19 @@ var _ = Describe("Config", func() {
 			It("returns an error", func() {
 				Expect(cfg.AddVolumes(
 					[]string{"/outside/volume1:writable"},
-					"/path/to",
+					boshEnv,
 					[]string{},
 				)).To(HaveOccurred())
 
 				Expect(cfg.AddVolumes(
 					[]string{"/path/to/volume1:writable"},
-					"/path/to",
+					boshEnv,
 					[]string{},
 				)).To(HaveOccurred())
 
 				Expect(cfg.AddVolumes(
 					[]string{"/path/to/data:writable"},
-					"/path/to",
+					boshEnv,
 					[]string{"/path/to/data"},
 				)).To(HaveOccurred())
 			})
@@ -292,7 +299,7 @@ var _ = Describe("Config", func() {
 					"KEY=later-wins",
 					"OTHER=handles=equals=signs",
 				},
-				"/bosh/root",
+				boshEnv,
 				[]string{},
 			)
 			Expect(err).NotTo(HaveOccurred())
@@ -306,7 +313,7 @@ var _ = Describe("Config", func() {
 			It("returns an error", func() {
 				err := cfg.AddEnvVars(
 					[]string{"INVALID"},
-					"/bosh/root",
+					boshEnv,
 					[]string{},
 				)
 				Expect(err).To(HaveOccurred())
@@ -317,7 +324,7 @@ var _ = Describe("Config", func() {
 			It("adds the environment variables to the Env map", func() {
 				cfg.Env = map[string]string{"SIMPLE": "values"}
 
-				err := cfg.AddEnvVars([]string{"ANOTHER=value"}, "/bosh/root", []string{})
+				err := cfg.AddEnvVars([]string{"ANOTHER=value"}, boshEnv, []string{})
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(cfg.Env).To(HaveKeyWithValue("SIMPLE", "values"))

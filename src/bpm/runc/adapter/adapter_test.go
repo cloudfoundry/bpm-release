@@ -33,6 +33,7 @@ import (
 	"github.com/onsi/gomega/types"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 
+	"bpm/bosh"
 	"bpm/config"
 	"bpm/runc/specbuilder"
 	"bpm/sysfeat"
@@ -64,8 +65,9 @@ var _ = Describe("RuncAdapter", func() {
 		var err error
 		systemRoot, err = ioutil.TempDir("", "runc-adapter-system-files")
 		Expect(err).NotTo(HaveOccurred())
+		boshEnv := bosh.NewEnv(systemRoot)
 
-		bpmCfg = config.NewBPMConfig(systemRoot, jobName, procName)
+		bpmCfg = config.NewBPMConfig(boshEnv, jobName, procName)
 		procCfg = &config.ProcessConfig{
 			AdditionalVolumes: []config.Volume{
 				{Path: filepath.Join(systemRoot, "some", "directory")},
@@ -95,28 +97,28 @@ var _ = Describe("RuncAdapter", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// PID Directory
-			pidDirInfo, err := os.Stat(bpmCfg.PidDir())
+			pidDirInfo, err := os.Stat(bpmCfg.PidDir().External())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(pidDirInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0700)))
 			Expect(pidDirInfo.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(0)))
 			Expect(pidDirInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(0)))
 
 			// Log Directory
-			logDirInfo, err := os.Stat(bpmCfg.LogDir())
+			logDirInfo, err := os.Stat(bpmCfg.LogDir().External())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(logDirInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0700)))
 			Expect(logDirInfo.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(200)))
 			Expect(logDirInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
 
 			// Log Directory
-			socketDirInfo, err := os.Stat(bpmCfg.SocketDir())
+			socketDirInfo, err := os.Stat(bpmCfg.SocketDir().External())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(socketDirInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0700)))
 			Expect(socketDirInfo.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(200)))
 			Expect(socketDirInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
 
 			// Stdout Log File
-			Expect(stdout.Name()).To(Equal(bpmCfg.Stdout()))
+			Expect(stdout.Name()).To(Equal(bpmCfg.Stdout().External()))
 			stdoutInfo, err := stdout.Stat()
 			Expect(err).NotTo(HaveOccurred())
 			Expect(stdoutInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0600)))
@@ -124,7 +126,7 @@ var _ = Describe("RuncAdapter", func() {
 			Expect(stdoutInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
 
 			// Stderr Log File
-			Expect(stderr.Name()).To(Equal(bpmCfg.Stderr()))
+			Expect(stderr.Name()).To(Equal(bpmCfg.Stderr().External()))
 			stderrInfo, err := stderr.Stat()
 			Expect(err).NotTo(HaveOccurred())
 			Expect(stderrInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0600)))
@@ -132,18 +134,18 @@ var _ = Describe("RuncAdapter", func() {
 			Expect(stderrInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(300)))
 
 			// Data Directory should not be writable
-			dataDirInfo, err := os.Stat(bpmCfg.DataDir())
+			dataDirInfo, err := os.Stat(bpmCfg.DataDir().External())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(dataDirInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0700)))
 			Expect(dataDirInfo.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(0)))
 			Expect(dataDirInfo.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(0)))
 
 			// Store Directory
-			Expect(bpmCfg.StoreDir()).NotTo(BeADirectory())
-			Expect(bpmCfg.StoreDir()).NotTo(BeAnExistingFile())
+			Expect(bpmCfg.StoreDir().External()).NotTo(BeADirectory())
+			Expect(bpmCfg.StoreDir().External()).NotTo(BeAnExistingFile())
 
 			// TMP Directory
-			tmpDirInfo, err := os.Stat(bpmCfg.TempDir())
+			tmpDirInfo, err := os.Stat(bpmCfg.TempDir().External())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(tmpDirInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0700)))
 			Expect(tmpDirInfo.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(200)))
@@ -220,7 +222,7 @@ var _ = Describe("RuncAdapter", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				// Store Directory
-				storeDirInfo, err := os.Stat(bpmCfg.StoreDir())
+				storeDirInfo, err := os.Stat(bpmCfg.StoreDir().External())
 				Expect(err).NotTo(HaveOccurred())
 				Expect(storeDirInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0700)))
 				Expect(storeDirInfo.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(200)))
@@ -249,7 +251,7 @@ var _ = Describe("RuncAdapter", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				// Data Directory
-				dataDirInfo, err := os.Stat(bpmCfg.DataDir())
+				dataDirInfo, err := os.Stat(bpmCfg.DataDir().External())
 				Expect(err).NotTo(HaveOccurred())
 				Expect(dataDirInfo.Mode() & os.ModePerm).To(Equal(os.FileMode(0700)))
 				Expect(dataDirInfo.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(200)))
@@ -279,9 +281,9 @@ var _ = Describe("RuncAdapter", func() {
 					{Path: "/path/to/volume/2"},
 					{Path: "/path/to/volume/2"},
 					// Duplicate data mount
-					{Path: bpmCfg.DataDir()},
+					{Path: bpmCfg.DataDir().Internal()},
 					// Testing store mount override
-					{Path: bpmCfg.StoreDir(), Writable: true, AllowExecutions: true},
+					{Path: bpmCfg.StoreDir().Internal(), Writable: true, AllowExecutions: true},
 				},
 				Capabilities: []string{"TAIN", "SAICIN"},
 			}
@@ -305,17 +307,17 @@ var _ = Describe("RuncAdapter", func() {
 
 			expectedProcessArgs := append([]string{procCfg.Executable}, procCfg.Args...)
 			expectedEnv := convertEnv(procCfg.Env)
-			expectedEnv = append(expectedEnv, fmt.Sprintf("TMPDIR=%s", bpmCfg.TempDir()))
+			expectedEnv = append(expectedEnv, fmt.Sprintf("TMPDIR=%s", "/var/vcap/data/example/tmp"))
 			expectedEnv = append(expectedEnv, fmt.Sprintf("LANG=%s", defaultLang))
 			expectedEnv = append(expectedEnv, fmt.Sprintf("PATH=%s", defaultPath(bpmCfg)))
-			expectedEnv = append(expectedEnv, fmt.Sprintf("HOME=%s", bpmCfg.DataDir()))
+			expectedEnv = append(expectedEnv, fmt.Sprintf("HOME=%s", "/var/vcap/data/example"))
 
 			Expect(spec.Process.Terminal).To(Equal(false))
 			Expect(spec.Process.ConsoleSize).To(BeNil())
 			Expect(spec.Process.User).To(Equal(user))
 			Expect(spec.Process.Args).To(Equal(expectedProcessArgs))
 			Expect(spec.Process.Env).To(ConsistOf(expectedEnv))
-			Expect(spec.Process.Cwd).To(Equal(bpmCfg.JobDir()))
+			Expect(spec.Process.Cwd).To(Equal(filepath.Join("/var/vcap/jobs", jobName)))
 			Expect(spec.Process.Rlimits).To(BeNil())
 			Expect(spec.Process.NoNewPrivileges).To(Equal(true))
 			Expect(spec.Process.Capabilities).To(Equal(&specs.LinuxCapabilities{
@@ -404,25 +406,25 @@ var _ = Describe("RuncAdapter", func() {
 				Options:     []string{"nosuid", "nodev", "exec", "bind", "ro"},
 			}))
 			Expect(spec.Mounts).To(HaveMount(specs.Mount{
-				Destination: filepath.Join(systemRoot, "data", "packages"),
+				Destination: "/var/vcap/data/packages",
 				Type:        "bind",
 				Source:      filepath.Join(systemRoot, "data", "packages"),
 				Options:     []string{"nodev", "nosuid", "exec", "bind", "ro"},
 			}))
 			Expect(spec.Mounts).To(HaveMount(specs.Mount{
-				Destination: filepath.Join(systemRoot, "jobs", "example"),
+				Destination: filepath.Join("/var/vcap/jobs", jobName),
 				Type:        "bind",
-				Source:      filepath.Join(systemRoot, "jobs", "example"),
+				Source:      filepath.Join(systemRoot, "jobs", jobName),
 				Options:     []string{"nodev", "nosuid", "exec", "bind", "ro"},
 			}))
 			Expect(spec.Mounts).To(HaveMount(specs.Mount{
-				Destination: filepath.Join(systemRoot, "packages"),
+				Destination: "/var/vcap/packages",
 				Type:        "bind",
 				Source:      filepath.Join(systemRoot, "packages"),
 				Options:     []string{"nodev", "nosuid", "exec", "bind", "ro"},
 			}))
 			Expect(spec.Mounts).To(HaveMount(specs.Mount{
-				Destination: filepath.Join(systemRoot, "sys", "log", jobName),
+				Destination: filepath.Join("/var/vcap/sys/log", jobName),
 				Type:        "bind",
 				Source:      filepath.Join(systemRoot, "sys", "log", jobName),
 				Options:     []string{"nodev", "nosuid", "noexec", "rbind", "rw"},
@@ -446,7 +448,7 @@ var _ = Describe("RuncAdapter", func() {
 				Options:     []string{"nodev", "nosuid", "noexec", "rbind", "ro"},
 			}))
 			Expect(spec.Mounts).To(HaveMount(specs.Mount{
-				Destination: filepath.Join(systemRoot, "data", "example", "tmp"),
+				Destination: filepath.Join("/var/vcap/data", jobName, "tmp"),
 				Type:        "bind",
 				Source:      filepath.Join(systemRoot, "data", "example", "tmp"),
 				Options:     []string{"nodev", "nosuid", "noexec", "rbind", "rw"},
@@ -464,15 +466,17 @@ var _ = Describe("RuncAdapter", func() {
 				Options:     []string{"nodev", "nosuid", "noexec", "rbind", "rw"},
 			}))
 			Expect(spec.Mounts).To(HaveMount(specs.Mount{
-				Destination: filepath.Join(systemRoot, "data", "example"),
+				Destination: filepath.Join("/var/vcap/data", jobName),
 				Type:        "bind",
 				Source:      filepath.Join(systemRoot, "data", "example"),
 				Options:     []string{"nodev", "nosuid", "noexec", "rbind", "rw"},
 			}))
+
+			// Specified with volume
 			Expect(spec.Mounts).To(HaveMount(specs.Mount{
-				Destination: filepath.Join(systemRoot, "store", "example"),
+				Destination: filepath.Join("/var/vcap/store", "example"),
 				Type:        "bind",
-				Source:      filepath.Join(systemRoot, "store", "example"),
+				Source:      filepath.Join("/var/vcap/store", "example"),
 				Options:     []string{"nodev", "nosuid", "exec", "rbind", "rw"},
 			}))
 
@@ -574,7 +578,7 @@ var _ = Describe("RuncAdapter", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(spec.Mounts).To(HaveMount(specs.Mount{
-					Destination: filepath.Join(systemRoot, "store", "example"),
+					Destination: filepath.Join("/var/vcap/store", jobName),
 					Type:        "bind",
 					Source:      filepath.Join(systemRoot, "store", "example"),
 					Options:     []string{"nodev", "nosuid", "noexec", "rbind", "rw"},
@@ -592,9 +596,9 @@ var _ = Describe("RuncAdapter", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(spec.Mounts).To(HaveMount(specs.Mount{
-					Destination: filepath.Join(systemRoot, "data", "example"),
+					Destination: filepath.Join("/var/vcap/data", jobName),
 					Type:        "bind",
-					Source:      filepath.Join(systemRoot, "data", "example"),
+					Source:      filepath.Join(systemRoot, "data", jobName),
 					Options:     []string{"nodev", "nosuid", "noexec", "rbind", "rw"},
 				}))
 			})

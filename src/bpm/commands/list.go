@@ -42,7 +42,7 @@ func listContainers(cmd *cobra.Command, _ []string) error {
 
 	processes := []*models.Process{}
 	for _, job := range boshEnv.JobNames() {
-		bpmCfg := config.NewBPMConfig(boshEnv.Root(), job, "")
+		bpmCfg := config.NewBPMConfig(boshEnv, job, "")
 		jobCfg, err := bpmCfg.ParseJobConfig()
 		if os.IsNotExist(err) {
 			continue
@@ -54,7 +54,7 @@ func listContainers(cmd *cobra.Command, _ []string) error {
 		}
 
 		for _, process := range jobCfg.Processes {
-			procCfg := config.NewBPMConfig(boshEnv.Root(), job, process.Name)
+			procCfg := config.NewBPMConfig(boshEnv, job, process.Name)
 			processes = append(processes, &models.Process{
 				Name:   procCfg.ContainerID(),
 				Status: models.ProcessStateStopped,

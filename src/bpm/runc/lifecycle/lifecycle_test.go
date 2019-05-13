@@ -34,6 +34,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 
+	"bpm/bosh"
 	"bpm/config"
 	"bpm/jobid"
 	"bpm/models"
@@ -61,6 +62,8 @@ var _ = Describe("RuncJobLifecycle", func() {
 		expectedProcName,
 		expectedContainerID,
 		expectedSystemRoot string
+
+		boshEnv *bosh.Env
 
 		expectedStdout, expectedStderr *os.File
 
@@ -107,6 +110,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 		fakeRuncAdapter.BuildSpecReturns(jobSpec, nil)
 
 		expectedSystemRoot = "system-root"
+		boshEnv = bosh.NewEnv(expectedSystemRoot)
 
 		runcLifecycle = lifecycle.NewRuncLifecycle(
 			fakeRuncClient,
@@ -116,7 +120,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 			fakeClock,
 			fakeFileRemover.Remove,
 		)
-		bpmCfg = config.NewBPMConfig(expectedSystemRoot, expectedJobName, expectedProcName)
+		bpmCfg = config.NewBPMConfig(boshEnv, expectedJobName, expectedProcName)
 	})
 
 	AfterEach(func() {
@@ -172,7 +176,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 		Context("when the process name is the same as the job name", func() {
 			BeforeEach(func() {
-				bpmCfg = config.NewBPMConfig(expectedSystemRoot, expectedJobName, expectedJobName)
+				bpmCfg = config.NewBPMConfig(boshEnv, expectedJobName, expectedJobName)
 			})
 
 			It("simplifies the container ID", func() {
@@ -259,7 +263,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 			Expect(fakeRuncClient.RunContainerCallCount()).To(Equal(1))
 			pidFilePath, bundlePath, cid, detach, stdout, stderr := fakeRuncClient.RunContainerArgsForCall(0)
-			Expect(pidFilePath).To(Equal(bpmCfg.PidFile()))
+			Expect(pidFilePath).To(Equal(bpmCfg.PidFile().External()))
 			Expect(bundlePath).To(Equal(filepath.Join(expectedSystemRoot, "data", "bpm", "bundles", expectedJobName, expectedProcName)))
 			Expect(cid).To(Equal(expectedContainerID))
 			Expect(detach).To(BeTrue())
@@ -312,7 +316,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 			Expect(fakeRuncClient.RunContainerCallCount()).To(Equal(1))
 			pidFilePath, bundlePath, cid, detach, _, _ := fakeRuncClient.RunContainerArgsForCall(0)
-			Expect(pidFilePath).To(Equal(bpmCfg.PidFile()))
+			Expect(pidFilePath).To(Equal(bpmCfg.PidFile().External()))
 			Expect(bundlePath).To(Equal(filepath.Join(expectedSystemRoot, "data", "bpm", "bundles", expectedJobName, expectedProcName)))
 			Expect(cid).To(Equal(expectedContainerID))
 			Expect(detach).To(BeFalse())
@@ -521,12 +525,12 @@ var _ = Describe("RuncJobLifecycle", func() {
 			err := runcLifecycle.RemoveProcess(logger, bpmCfg)
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(fakeFileRemover.deletedFiles).To(ConsistOf(bpmCfg.PidFile()))
+			Expect(fakeFileRemover.deletedFiles).To(ConsistOf(bpmCfg.PidFile().External()))
 		})
 
 		Context("when the process name is the same as the job name", func() {
 			BeforeEach(func() {
-				bpmCfg = config.NewBPMConfig(expectedSystemRoot, expectedJobName, expectedJobName)
+				bpmCfg = config.NewBPMConfig(boshEnv, expectedJobName, expectedJobName)
 			})
 
 			It("simplifies the container id", func() {
@@ -647,7 +651,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 		Context("when the process name is the same as the job name", func() {
 			BeforeEach(func() {
-				bpmCfg = config.NewBPMConfig(expectedSystemRoot, expectedJobName, expectedJobName)
+				bpmCfg = config.NewBPMConfig(boshEnv, expectedJobName, expectedJobName)
 			})
 
 			It("simplifies the container id", func() {
@@ -711,7 +715,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 		Context("when the process name is the same as the job name", func() {
 			BeforeEach(func() {
-				bpmCfg = config.NewBPMConfig(expectedSystemRoot, expectedJobName, expectedJobName)
+				bpmCfg = config.NewBPMConfig(boshEnv, expectedJobName, expectedJobName)
 			})
 
 			It("simplifies the container id", func() {

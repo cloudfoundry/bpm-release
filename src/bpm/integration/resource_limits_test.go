@@ -30,6 +30,7 @@ import (
 	"github.com/onsi/gomega/gexec"
 	uuid "github.com/satori/go.uuid"
 
+	"bpm/bosh"
 	"bpm/config"
 	"bpm/jobid"
 )
@@ -41,6 +42,7 @@ var _ = Describe("resource limits", func() {
 		cfg config.JobConfig
 
 		boshRoot    string
+		boshEnv     *bosh.Env
 		containerID string
 		job         string
 		runcRoot    string
@@ -54,6 +56,7 @@ var _ = Describe("resource limits", func() {
 		containerID = jobid.Encode(job)
 		boshRoot, err = ioutil.TempDir(bpmTmpDir, "resource-limits-test")
 		Expect(err).NotTo(HaveOccurred())
+		boshEnv = bosh.NewEnv(boshRoot)
 		Expect(os.Chmod(boshRoot, 0755)).To(Succeed())
 		runcRoot = setupBoshDirectories(boshRoot, job)
 
@@ -129,7 +132,7 @@ var _ = Describe("resource limits", func() {
 
 	Context("open files", func() {
 		BeforeEach(func() {
-			cfg = newJobConfig(job, fileLeakBash(filepath.Join(boshRoot, "data", job)))
+			cfg = newJobConfig(job, fileLeakBash(boshEnv.DataDir(job).Internal()))
 			limit := uint64(10)
 			cfg.Processes[0].Limits = &config.Limits{OpenFiles: &limit}
 			cfg.Processes[0].EphemeralDisk = true

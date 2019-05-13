@@ -63,11 +63,11 @@ func logsForJob(cmd *cobra.Command, _ []string) error {
 	var tailArgs []string
 
 	if shouldTailStdout() {
-		filesToTail = append(filesToTail, bpmCfg.Stdout())
+		filesToTail = append(filesToTail, bpmCfg.Stdout().External())
 	}
 
 	if shouldTailStderr() {
-		filesToTail = append(filesToTail, bpmCfg.Stderr())
+		filesToTail = append(filesToTail, bpmCfg.Stderr().External())
 	}
 
 	if logsDontExist(filesToTail) {
