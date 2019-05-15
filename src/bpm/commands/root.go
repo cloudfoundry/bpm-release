@@ -25,11 +25,11 @@ import (
 	"code.cloudfoundry.org/clock"
 	"code.cloudfoundry.org/lager"
 	"github.com/spf13/cobra"
-	"golang.org/x/sys/unix"
 
 	"bpm/bosh"
 	"bpm/cgroups"
 	"bpm/config"
+	"bpm/flock"
 	"bpm/runc/adapter"
 	"bpm/runc/client"
 	"bpm/runc/lifecycle"
@@ -45,6 +45,8 @@ var (
 
 	userFinder = usertools.NewUserFinder()
 	boshEnv    = bosh.NewEnv(os.Getenv("BPM_BOSH_ROOT"))
+
+	lifecycleLock *flock.Flock
 )
 
 func init() {
@@ -139,20 +141,22 @@ func acquireLifecycleLock() error {
 	l.Info("starting")
 	defer l.Info("complete")
 
-	err := os.MkdirAll(bpmCfg.PidDir().External(), 0700)
-	if err != nil {
+	lockFile := bpmCfg.LockFile().External()
+	lockDir := filepath.Dir(lockFile)
+
+	if err := os.MkdirAll(lockDir, 0700); err != nil {
 		l.Error("failed-to-create-lock-dir", err)
 		return err
 	}
 
-	f, err := os.OpenFile(bpmCfg.LockFile().External(), os.O_CREATE|os.O_RDWR, 0600)
+	var err error
+	lifecycleLock, err = flock.New(lockFile)
 	if err != nil {
-		l.Error("failed-to-create-lock-file", err)
+		l.Error("failed-to-create-lock", err)
 		return err
 	}
 
-	err = unix.Flock(int(f.Fd()), unix.LOCK_EX)
-	if err != nil {
+	if err := lifecycleLock.Lock(); err != nil {
 		l.Error("failed-to-acquire-lock", err)
 		return err
 	}
@@ -165,9 +169,8 @@ func releaseLifecycleLock() error {
 	l.Info("starting")
 	defer l.Info("complete")
 
-	err := os.RemoveAll(bpmCfg.LockFile().External())
-	if err != nil {
-		l.Error("failed-to-remove-lock-file", err)
+	if err := lifecycleLock.Unlock(); err != nil {
+		l.Error("failed-to-release-lock", err)
 		return err
 	}
 

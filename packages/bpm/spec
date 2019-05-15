@@ -13,6 +13,7 @@ files:
   - bpm/commands/*.go # gosub
   - bpm/config/*.go # gosub
   - bpm/exitstatus/*.go # gosub
+  - bpm/flock/*.go # gosub
   - bpm/jobid/*.go # gosub
   - bpm/models/*.go # gosub
   - bpm/presenters/*.go # gosub
