@@ -29,7 +29,7 @@ import (
 	"bpm/bosh"
 	"bpm/cgroups"
 	"bpm/config"
-	"bpm/flock"
+	"bpm/hostlock"
 	"bpm/runc/adapter"
 	"bpm/runc/client"
 	"bpm/runc/lifecycle"
@@ -46,7 +46,7 @@ var (
 	userFinder = usertools.NewUserFinder()
 	boshEnv    = bosh.NewEnv(os.Getenv("BPM_BOSH_ROOT"))
 
-	lifecycleLock *flock.Flock
+	lifecycleLock hostlock.LockedLock
 )
 
 func init() {
@@ -141,22 +141,16 @@ func acquireLifecycleLock() error {
 	l.Info("starting")
 	defer l.Info("complete")
 
-	lockFile := bpmCfg.LockFile().External()
-	lockDir := filepath.Dir(lockFile)
-
+	lockDir := filepath.Dir(config.LocksPath(boshEnv))
 	if err := os.MkdirAll(lockDir, 0700); err != nil {
 		l.Error("failed-to-create-lock-dir", err)
 		return err
 	}
 
+	locks := hostlock.NewHandle(lockDir)
 	var err error
-	lifecycleLock, err = flock.New(lockFile)
+	lifecycleLock, err = locks.LockJob(bpmCfg.JobName(), bpmCfg.ProcName())
 	if err != nil {
-		l.Error("failed-to-create-lock", err)
-		return err
-	}
-
-	if err := lifecycleLock.Lock(); err != nil {
 		l.Error("failed-to-acquire-lock", err)
 		return err
 	}

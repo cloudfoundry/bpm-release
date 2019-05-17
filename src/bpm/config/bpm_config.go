@@ -35,6 +35,10 @@ func RuncRoot(env *bosh.Env) string {
 	return env.Root().Join("data", "bpm", "runc").External()
 }
 
+func LocksPath(env *bosh.Env) string {
+	return env.Root().Join("data", "bpm", "locks").External()
+}
+
 type BPMConfig struct {
 	jobName  string
 	procName string
