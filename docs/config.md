@@ -74,12 +74,13 @@ directory of your job.
 
 #### `volume` Schema
 
-| **Property**       | **Type** | **Required** | **Description**                                                                                                |
-|--------------------|----------|--------------|----------------------------------------------------------------------------------------------------------------|
-| `path`             | string   | Yes          | The absolute path of the volume inside this process.                                                           |
-| `writable`         | boolean  | No           | Whether or not this volume is writable by the process.                                                         |
-| `allow_executions` | boolean  | No           | Whether or not executable files can be executed from this volume.                                              |
-| `mount_only`       | boolean  | No           | Whether or not BPM should just mount this directory rather than creating and chowning a backing directory too. |
+| **Property**       | **Type** | **Required** | **Description**                                                                                                          |
+|--------------------|----------|--------------|--------------------------------------------------------------------------------------------------------------------------|
+| `path`             | string   | Yes          | The absolute path of the volume inside this process.                                                                     |
+| `writable`         | boolean  | No           | Whether or not this volume is writable by the process.                                                                   |
+| `allow_executions` | boolean  | No           | Whether or not executable files can be executed from this volume.                                                        |
+| `mount_only`       | boolean  | No           | Whether or not BPM should just mount this directory rather than creating and chowning a backing directory too.           |
+| `shared`           | boolean  | No           | Whether or not BPM should share the mount (internal mountpoints are visible in all namespaces). Not usable in unsafe yet.|
 
 *Note: The volumes in additional volumes must have a path inside
 `/var/vcap/data`, `/var/vcap/store`, `/var/vcap/sys/run`. If you need to mount
