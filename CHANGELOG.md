@@ -1,6 +1,8 @@
 # v1.1.0
 
 * allow unrestricted volume paths to contain globs
+* volumes can be shared to reveal their internal mounts into other mount
+  namespaces
 
 # v1.0.4
 
