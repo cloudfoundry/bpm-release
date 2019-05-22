@@ -20,10 +20,11 @@
 package hostlock
 
 import (
-	"bpm/flock"
-	"bpm/jobid"
 	"fmt"
 	"path/filepath"
+
+	"bpm/flock"
+	"bpm/jobid"
 )
 
 // LockedLock represents a lock which has been acquired.
@@ -51,8 +52,8 @@ func NewHandle(path string) *Handle {
 // LockedLock object it returns can be used to release the lock. Subsequent
 // calls will block until it is released.
 func (h *Handle) LockJob(job, process string) (LockedLock, error) {
-	name := jobid.Encode(fmt.Sprintf("%s.%s.lock", job, process))
-	path := filepath.Join(h.path, name)
+	name := jobid.Encode(fmt.Sprintf("%s.%s", job, process))
+	path := filepath.Join(h.path, fmt.Sprintf("job-%s.lock", name))
 	fl, err := flock.New(path)
 	if err != nil {
 		return nil, err
