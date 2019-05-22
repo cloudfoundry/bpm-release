@@ -20,6 +20,7 @@
 package hostlock
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"path/filepath"
 
@@ -55,6 +56,27 @@ func (h *Handle) LockJob(job, process string) (LockedLock, error) {
 	name := jobid.Encode(fmt.Sprintf("%s.%s", job, process))
 	path := filepath.Join(h.path, fmt.Sprintf("job-%s.lock", name))
 	fl, err := flock.New(path)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := fl.Lock(); err != nil {
+		return nil, err
+	}
+
+	return fl, nil
+}
+
+// LockVolume places an exclusive advisory lock on a particular BPM volume. The
+// LockedLock object it returns can be used to release the lock. Subsequent
+// calls will block until it is released.
+func (h *Handle) LockVolume(path string) (LockedLock, error) {
+	hash := sha256.New()
+	hash.Write([]byte(path))
+
+	name := jobid.Encode(fmt.Sprintf("vol-%x.lock", hash.Sum(nil)))
+	fullPath := filepath.Join(h.path, name)
+	fl, err := flock.New(fullPath)
 	if err != nil {
 		return nil, err
 	}

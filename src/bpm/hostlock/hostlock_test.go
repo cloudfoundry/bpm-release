@@ -39,17 +39,20 @@ var _ = Describe("Hostlock", func() {
 		Expect(err).NotTo(HaveOccurred())
 	})
 
-	Describe("locking jobs", func() {
+	// Just a shorthand to make the function signature below more manageable.
+	type ExerciseLock func(locks *hostlock.Handle) (hostlock.LockedLock, error)
+
+	ItLocksCorrectly := func(lockA ExerciseLock, lockB ExerciseLock) {
 		It("does not allow two of the same lock to be held at once", func() {
 			locks := hostlock.NewHandle(tmpdir)
 
-			held, err := locks.LockJob("job", "process")
+			held, err := lockA(locks)
 			Expect(err).NotTo(HaveOccurred())
 
 			c := make(chan struct{})
 
 			go func() {
-				otherHeld, err := locks.LockJob("job", "process")
+				otherHeld, err := lockA(locks)
 				Expect(err).NotTo(HaveOccurred())
 
 				close(c)
@@ -69,13 +72,13 @@ var _ = Describe("Hostlock", func() {
 		It("allows two different locks to be held at once", func() {
 			locks := hostlock.NewHandle(tmpdir)
 
-			held, err := locks.LockJob("job", "process")
+			held, err := lockA(locks)
 			Expect(err).NotTo(HaveOccurred())
 
 			c := make(chan struct{})
 
 			go func() {
-				otherHeld, err := locks.LockJob("other", "process")
+				otherHeld, err := lockB(locks)
 				Expect(err).NotTo(HaveOccurred())
 
 				close(c)
@@ -88,6 +91,22 @@ var _ = Describe("Hostlock", func() {
 
 			err = held.Unlock()
 			Expect(err).NotTo(HaveOccurred())
+		})
+	}
+
+	Describe("locking jobs", func() {
+		ItLocksCorrectly(func(locks *hostlock.Handle) (hostlock.LockedLock, error) {
+			return locks.LockJob("job", "process")
+		}, func(locks *hostlock.Handle) (hostlock.LockedLock, error) {
+			return locks.LockJob("other", "process")
+		})
+	})
+
+	Describe("locking volumes", func() {
+		ItLocksCorrectly(func(locks *hostlock.Handle) (hostlock.LockedLock, error) {
+			return locks.LockVolume("/var/vcap/data/volume1")
+		}, func(locks *hostlock.Handle) (hostlock.LockedLock, error) {
+			return locks.LockVolume("/var/vcap/data/volume2")
 		})
 	})
 })
