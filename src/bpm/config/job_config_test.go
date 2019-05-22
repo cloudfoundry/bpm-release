@@ -57,6 +57,7 @@ var _ = Describe("Config", func() {
 				config.Volume{Path: "/var/vcap/data/program/foobar", Writable: true},
 				config.Volume{Path: "/var/vcap/data/alternate-program"},
 				config.Volume{Path: "/var/vcap/data/jna-tmp", Writable: true, AllowExecutions: true},
+				config.Volume{Path: "/var/vcap/data/shared", Shared: true},
 			))
 			Expect(cfg.Processes[0].Hooks.PreStart).To(Equal("/var/vcap/jobs/program/bin/pre"))
 			Expect(cfg.Processes[0].Capabilities).To(ConsistOf("NET_BIND_SERVICE", "SYS_TIME"))
@@ -206,13 +207,14 @@ var _ = Describe("Config", func() {
 					"/path/to/data/volume3:mount_only",
 					"/path/to/store/volume4:allow_executions",
 					"/path/to/data/volume5:writable,mount_only,allow_executions",
+					"/path/to/data/volume6:shared",
 				},
 				boshEnv,
 				[]string{},
 			)
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(cfg.AdditionalVolumes).To(HaveLen(5))
+			Expect(cfg.AdditionalVolumes).To(HaveLen(6))
 			Expect(cfg.AdditionalVolumes).To(ContainElement(config.Volume{
 				Path: "/path/to/data/volume1",
 			}))
@@ -233,6 +235,10 @@ var _ = Describe("Config", func() {
 				Writable:        true,
 				MountOnly:       true,
 				AllowExecutions: true,
+			}))
+			Expect(cfg.AdditionalVolumes).To(ContainElement(config.Volume{
+				Path:   "/path/to/data/volume6",
+				Shared: true,
 			}))
 		})
 

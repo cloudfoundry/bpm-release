@@ -19,6 +19,8 @@ processes:
   - path: /var/vcap/data/jna-tmp
     writable: true
     allow_executions: true
+  - path: /var/vcap/data/shared
+    shared: true
   hooks:
     pre_start: /var/vcap/jobs/program/bin/pre
   capabilities:
@@ -37,8 +39,10 @@ processes:
     - path: /foobar
       writable: true
       allow_executions: true
+
 - name: second-process
   executable: /I/AM/A/SECOND-EXECUTABLE
+
 - name: third-process
   executable: /I/AM/A/THIRD-EXECUTABLE
   hooks: {}

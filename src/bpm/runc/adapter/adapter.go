@@ -26,6 +26,7 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 
 	"bpm/config"
+	"bpm/hostlock"
 	"bpm/runc/specbuilder"
 	"bpm/sysfeat"
 )
@@ -39,15 +40,25 @@ const (
 // of paths or an error if the search failed.
 type GlobFunc func(string) ([]string, error)
 
-type RuncAdapter struct {
-	features sysfeat.Features
-	glob     GlobFunc
+type MountShare func(string) error
+
+type VolumeLocker interface {
+	LockVolume(string) (hostlock.LockedLock, error)
 }
 
-func NewRuncAdapter(features sysfeat.Features, glob GlobFunc) *RuncAdapter {
+type RuncAdapter struct {
+	features   sysfeat.Features
+	glob       GlobFunc
+	shareMount MountShare
+	locker     VolumeLocker
+}
+
+func NewRuncAdapter(features sysfeat.Features, glob GlobFunc, mountSharer MountShare, locker VolumeLocker) *RuncAdapter {
 	return &RuncAdapter{
-		features: features,
-		glob:     glob,
+		features:   features,
+		glob:       glob,
+		shareMount: mountSharer,
+		locker:     locker,
 	}
 }
 
@@ -65,6 +76,12 @@ func (a *RuncAdapter) CreateJobPrerequisites(
 	for _, vol := range procCfg.AdditionalVolumes {
 		if vol.MountOnly {
 			continue
+		}
+
+		if vol.Shared {
+			if err := a.makeShared(vol); err != nil {
+				return nil, nil, err
+			}
 		}
 
 		_, err = os.Stat(vol.Path)
@@ -116,6 +133,23 @@ func (a *RuncAdapter) CreateJobPrerequisites(
 	}
 
 	return createLogFiles(bpmCfg, user)
+}
+
+func (a *RuncAdapter) makeShared(volume config.Volume) error {
+	held, err := a.locker.LockVolume(volume.Path)
+	if err != nil {
+		return err
+	}
+
+	if err := a.shareMount(volume.Path); err != nil {
+		return err
+	}
+
+	if err := held.Unlock(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func createDirs(dirs []string, user specs.User) error {

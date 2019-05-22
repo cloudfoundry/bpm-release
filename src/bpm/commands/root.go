@@ -33,6 +33,7 @@ import (
 	"bpm/runc/adapter"
 	"bpm/runc/client"
 	"bpm/runc/lifecycle"
+	"bpm/sharedvolume"
 	"bpm/sysfeat"
 	"bpm/usertools"
 )
@@ -46,6 +47,7 @@ var (
 	userFinder = usertools.NewUserFinder()
 	boshEnv    = bosh.NewEnv(os.Getenv("BPM_BOSH_ROOT"))
 
+	locks         *hostlock.Handle
 	lifecycleLock hostlock.LockedLock
 )
 
@@ -77,6 +79,13 @@ func rootPre(cmd *cobra.Command, _ []string) error {
 		cmd.SilenceUsage = true
 		return errors.New("bpm must be run as root. Please run 'sudo -i' to become the root user.")
 	}
+
+	lockDir := filepath.Dir(config.LocksPath(boshEnv))
+	if err := os.MkdirAll(lockDir, 0700); err != nil {
+		return err
+	}
+
+	locks = hostlock.NewHandle(lockDir)
 
 	if !isRunningSystemd() {
 		return cgroups.Setup()
@@ -141,13 +150,6 @@ func acquireLifecycleLock() error {
 	l.Info("starting")
 	defer l.Info("complete")
 
-	lockDir := filepath.Dir(config.LocksPath(boshEnv))
-	if err := os.MkdirAll(lockDir, 0700); err != nil {
-		l.Error("failed-to-create-lock-dir", err)
-		return err
-	}
-
-	locks := hostlock.NewHandle(lockDir)
 	var err error
 	lifecycleLock, err = locks.LockJob(bpmCfg.JobName(), bpmCfg.ProcName())
 	if err != nil {
@@ -181,7 +183,8 @@ func newRuncLifecycle() (*lifecycle.RuncLifecycle, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch system features: %q", err)
 	}
-	runcAdapter := adapter.NewRuncAdapter(*features, filepath.Glob)
+
+	runcAdapter := adapter.NewRuncAdapter(*features, filepath.Glob, sharedvolume.MakeShared, locks)
 	clock := clock.NewClock()
 
 	return lifecycle.NewRuncLifecycle(

@@ -22,6 +22,7 @@ files:
   - bpm/runc/client/*.go # gosub
   - bpm/runc/lifecycle/*.go # gosub
   - bpm/runc/specbuilder/*.go # gosub
+  - bpm/sharedvolume/*.go # gosub
   - bpm/sysfeat/*.go # gosub
   - bpm/usertools/*.go # gosub
   - bpm/vendor/code.cloudfoundry.org/bytefmt/*.go # gosub

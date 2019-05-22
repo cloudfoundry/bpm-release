@@ -35,6 +35,7 @@ import (
 
 	"bpm/bosh"
 	"bpm/config"
+	"bpm/hostlock"
 	"bpm/runc/specbuilder"
 	"bpm/sysfeat"
 )
@@ -52,6 +53,9 @@ var _ = Describe("RuncAdapter", func() {
 		bpmCfg  *config.BPMConfig
 		procCfg *config.ProcessConfig
 		logger  *lagertest.TestLogger
+
+		mountSharer  *fakeMountSharer
+		volumeLocker *fakeVolumeLocker
 	)
 
 	BeforeEach(func() {
@@ -76,6 +80,9 @@ var _ = Describe("RuncAdapter", func() {
 		}
 
 		Expect(os.MkdirAll(filepath.Join(systemRoot, "store"), 0700)).To(Succeed())
+
+		mountSharer = &fakeMountSharer{}
+		volumeLocker = &fakeVolumeLocker{}
 	})
 
 	JustBeforeEach(func() {
@@ -84,7 +91,7 @@ var _ = Describe("RuncAdapter", func() {
 		identityGlob := func(pattern string) ([]string, error) {
 			return []string{pattern}, nil
 		}
-		runcAdapter = NewRuncAdapter(features, identityGlob)
+		runcAdapter = NewRuncAdapter(features, identityGlob, mountSharer.MakeShared, volumeLocker)
 	})
 
 	AfterEach(func() {
@@ -209,6 +216,54 @@ var _ = Describe("RuncAdapter", func() {
 						Expect(vol.Path).NotTo(BeADirectory())
 					}
 				}
+			})
+		})
+
+		Context("when a volume should be shared", func() {
+			var sharedPath string
+
+			BeforeEach(func() {
+				sharedPath = filepath.Join(systemRoot, "share", "me")
+				procCfg.AdditionalVolumes = append(procCfg.AdditionalVolumes, config.Volume{
+					Path:   sharedPath,
+					Shared: true,
+				})
+			})
+
+			It("makes the directory shared after", func() {
+				_, _, err := runcAdapter.CreateJobPrerequisites(bpmCfg, procCfg, user)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(mountSharer.sharedMounts).To(ConsistOf(sharedPath))
+			})
+
+			It("locks the volume while it's creating it and making it shared", func() {
+				_, _, err := runcAdapter.CreateJobPrerequisites(bpmCfg, procCfg, user)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(volumeLocker.lockedPaths).To(ConsistOf(sharedPath))
+			})
+
+			Context("when the mount sharing fails", func() {
+				BeforeEach(func() {
+					mountSharer.err = errors.New("disaster")
+				})
+
+				It("returns an error", func() {
+					_, _, err := runcAdapter.CreateJobPrerequisites(bpmCfg, procCfg, user)
+					Expect(err).To(HaveOccurred())
+				})
+			})
+
+			Context("when the locking fails", func() {
+				BeforeEach(func() {
+					volumeLocker.err = errors.New("disaster")
+				})
+
+				It("returns an error", func() {
+					_, _, err := runcAdapter.CreateJobPrerequisites(bpmCfg, procCfg, user)
+					Expect(err).To(HaveOccurred())
+				})
 			})
 		})
 
@@ -833,7 +888,7 @@ var _ = Describe("RuncAdapter", func() {
 							return []string{pattern}, nil
 						}
 					}
-					runcAdapter = NewRuncAdapter(features, fakeGlob)
+					runcAdapter = NewRuncAdapter(features, fakeGlob, mountSharer.MakeShared, volumeLocker)
 				})
 
 				It("adds volumes for whatever the volume matches", func() {
@@ -859,7 +914,7 @@ var _ = Describe("RuncAdapter", func() {
 						fail := func(path string) ([]string, error) {
 							return nil, errors.New("doomed from the start")
 						}
-						runcAdapter = NewRuncAdapter(features, fail)
+						runcAdapter = NewRuncAdapter(features, fail, mountSharer.MakeShared, volumeLocker)
 					})
 
 					It("returns an error", func() {
@@ -922,4 +977,36 @@ func (matcher *beMountMatcher) FailureMessage(actual interface{}) (message strin
 
 func (matcher *beMountMatcher) NegatedFailureMessage(actual interface{}) (message string) {
 	return fmt.Sprintf("Expected\n\t%#v\nnot to be the same mount as\n\t%#v", actual, matcher.expected)
+}
+
+type fakeLock struct{}
+
+func (l *fakeLock) Unlock() error {
+	return nil
+}
+
+type fakeVolumeLocker struct {
+	lockedPaths []string
+	err         error
+}
+
+func (l *fakeVolumeLocker) LockVolume(path string) (hostlock.LockedLock, error) {
+	if l.err != nil {
+		return nil, l.err
+	}
+	l.lockedPaths = append(l.lockedPaths, path)
+	return &fakeLock{}, nil
+}
+
+type fakeMountSharer struct {
+	sharedMounts []string
+	err          error
+}
+
+func (ms *fakeMountSharer) MakeShared(path string) error {
+	if ms.err != nil {
+		return ms.err
+	}
+	ms.sharedMounts = append(ms.sharedMounts, path)
+	return nil
 }
