@@ -96,7 +96,7 @@ resources:
     password: ((docker-password))
 
 - name: golang-image
-  type: registry-image
+  type: docker-image
   source:
     repository: golang
 
