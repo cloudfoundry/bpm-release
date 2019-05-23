@@ -123,7 +123,7 @@ jobs:
 - name: test-acceptance-trusty
   public: true
   plan:
-  - aggregate:
+  - in_parallel:
     - get: bpm-release
       trigger: true
     - get: boshlite-trusty-stemcell
@@ -139,7 +139,7 @@ jobs:
 - name: test-acceptance-xenial
   public: true
   plan:
-  - aggregate:
+  - in_parallel:
     - get: bpm-release
       trigger: true
     - get: boshlite-xenial-stemcell
@@ -155,7 +155,7 @@ jobs:
 - name: test-upgrade
   public: true
   plan:
-  - aggregate:
+  - in_parallel:
     - get: bpm-release
       trigger: true
     - get: boshlite-xenial-stemcell
@@ -185,7 +185,7 @@ jobs:
 - name: bump-golang
   serial: true
   plan:
-  - aggregate:
+  - in_parallel:
     - get: golang-linux
       trigger: true
     - get: bpm-release
@@ -205,7 +205,7 @@ jobs:
 - name: bump-runc
   serial: true
   plan:
-  - aggregate:
+  - in_parallel:
     - get: runc-linux
       trigger: true
       params:
@@ -262,7 +262,7 @@ jobs:
 - name: create-final-release
   serial_groups: [version]
   plan:
-  - aggregate:
+  - in_parallel:
     - get: bpm-release
       passed:
       - test-acceptance-trusty
@@ -307,7 +307,7 @@ jobs:
 - name: build-bpm-ci
   serial: true
   plan:
-  - aggregate:
+  - in_parallel:
     - get: daily
       trigger: true
     - get: bpm-ci
