@@ -140,12 +140,9 @@ func (a *RuncAdapter) makeShared(volume config.Volume) error {
 	if err != nil {
 		return err
 	}
+	defer held.Unlock()
 
 	if err := a.shareMount(volume.Path); err != nil {
-		return err
-	}
-
-	if err := held.Unlock(); err != nil {
 		return err
 	}
 
