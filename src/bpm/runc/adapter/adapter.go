@@ -84,14 +84,15 @@ func (a *RuncAdapter) CreateJobPrerequisites(
 			}
 		}
 
-		_, err = os.Stat(vol.Path)
+		fi, err := os.Stat(vol.Path)
 		if os.IsNotExist(err) {
 			dirsToCreate = append(dirsToCreate, vol.Path)
-			continue
-		}
-
-		if err != nil {
+		} else if err != nil {
 			return nil, nil, err
+		} else if fi.IsDir() && fi.Mode() != 0700 {
+			if err := os.Chmod(vol.Path, 0700); err != nil {
+				return nil, nil, err
+			}
 		}
 
 		pathsToChown = append(pathsToChown, vol.Path)
@@ -162,6 +163,11 @@ func createDirs(dirs []string, user specs.User) error {
 
 func createDirFor(path string, uid, gid int) error {
 	err := os.MkdirAll(path, 0700)
+	if err != nil {
+		return err
+	}
+
+	err = os.Chmod(path, 0700)
 	if err != nil {
 		return err
 	}

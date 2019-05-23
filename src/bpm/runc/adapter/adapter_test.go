@@ -72,6 +72,10 @@ var _ = Describe("RuncAdapter", func() {
 		boshEnv := bosh.NewEnv(systemRoot)
 
 		bpmCfg = config.NewBPMConfig(boshEnv, jobName, procName)
+
+		// Pre-create a directory with wrong permissions
+		Expect(os.MkdirAll(filepath.Join(systemRoot, "some", "directory"), 0600)).To(Succeed())
+
 		procCfg = &config.ProcessConfig{
 			AdditionalVolumes: []config.Volume{
 				{Path: filepath.Join(systemRoot, "some", "directory")},
