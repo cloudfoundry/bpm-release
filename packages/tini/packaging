@@ -1,0 +1,13 @@
+set -e
+
+TINI_VERSION=0.18.0
+
+tar xvzf "tini/tini-${TINI_VERSION}.tar.gz"
+pushd "tini-${TINI_VERSION}"
+  export CFLAGS="-DPR_SET_CHILD_SUBREAPER=36 -DPR_GET_CHILD_SUBREAPER=37"
+  cmake .
+  make
+
+  mkdir -p "${BOSH_INSTALL_TARGET}/bin"
+  mv tini "${BOSH_INSTALL_TARGET}/bin"
+popd

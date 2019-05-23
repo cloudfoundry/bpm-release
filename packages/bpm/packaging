@@ -17,3 +17,6 @@ rm -rf ${BOSH_INSTALL_TARGET}/src ${BOSH_INSTALL_TARGET}/pkg ${BOSH_INSTALL_TARG
 # runc
 cp /var/vcap/packages/bpm-runc/bin/runc ${BOSH_INSTALL_TARGET}/bin
 cp -r /var/vcap/packages/bpm-runc/lib ${BOSH_INSTALL_TARGET}/lib
+
+# tini
+cp /var/vcap/packages/tini/bin/tini ${BOSH_INSTALL_TARGET}/bin

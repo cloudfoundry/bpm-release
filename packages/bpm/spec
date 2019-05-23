@@ -4,6 +4,7 @@ name: bpm
 dependencies:
   - golang
   - bpm-runc
+  - tini
 
 files:
   - version
