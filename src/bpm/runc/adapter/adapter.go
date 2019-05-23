@@ -167,11 +167,6 @@ func createDirFor(path string, uid, gid int) error {
 		return err
 	}
 
-	err = os.Chmod(path, 0700)
-	if err != nil {
-		return err
-	}
-
 	return os.Chown(path, uid, gid)
 }
 
