@@ -88,7 +88,7 @@ resources:
     private_key: ((bpm-github-deploy-key))
 
 - name: bpm-ci-image
-  type: docker-image
+  type: registry-image
   source:
     repository: cfbpm/bpm-ci
     username: ((docker-username))
@@ -96,7 +96,7 @@ resources:
     password: ((docker-password))
 
 - name: golang-image
-  type: docker-image
+  type: registry-image
   source:
     repository: golang
 
