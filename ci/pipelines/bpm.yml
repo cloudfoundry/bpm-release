@@ -88,7 +88,7 @@ resources:
     private_key: ((bpm-github-deploy-key))
 
 - name: bpm-ci-image
-  type: registry-image
+  type: docker-image
   source:
     repository: cfbpm/bpm-ci
     username: ((docker-username))
