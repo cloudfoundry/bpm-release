@@ -3,6 +3,8 @@
 * allow unrestricted volume paths to contain globs
 * volumes can be shared to reveal their internal mounts into other mount
   namespaces
+* automatically reap zombie processes from inside the container without
+  resorting to bash hacks
 
 # v1.0.4
 
