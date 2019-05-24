@@ -20,15 +20,15 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/onsi/gomega/gexec"
+
+	"bpm/integration2/bpmsandbox"
 )
 
 var runcExe = flag.String("runcExe", "/var/vcap/packages/bpm/bin/runc", "path to the runc executable")
@@ -48,6 +48,10 @@ func TestMain(m *testing.M) {
 		*bpmExe = path
 	}
 
+	bpmsandbox.RuncPath = *runcExe
+	bpmsandbox.BPMPath = *bpmExe
+	bpmsandbox.TiniPath = *tiniExe
+
 	status := m.Run()
 	gexec.CleanupBuildArtifacts()
 	os.Exit(status)
@@ -55,7 +59,7 @@ func TestMain(m *testing.M) {
 
 func TestRun(t *testing.T) {
 	t.Parallel()
-	s := NewSandbox(t)
+	s := bpmsandbox.New(t)
 	defer s.Cleanup()
 
 	s.LoadFixture("errand", "testdata/errand.yml")
@@ -97,7 +101,7 @@ func TestRun(t *testing.T) {
 
 func TestRunWithEnvFlags(t *testing.T) {
 	t.Parallel()
-	s := NewSandbox(t)
+	s := bpmsandbox.New(t)
 	defer s.Cleanup()
 
 	s.LoadFixture("errand", "testdata/env-flag.yml")
@@ -119,11 +123,11 @@ func TestRunWithEnvFlags(t *testing.T) {
 
 func TestRunWithVolumeFlags(t *testing.T) {
 	t.Parallel()
-	s := NewSandbox(t)
+	s := bpmsandbox.New(t)
 	defer s.Cleanup()
 
 	s.LoadFixture("errand", "testdata/volume-flag.yml")
-	extraVolumeDir := filepath.Join(s.root, "data", "extra-volume")
+	extraVolumeDir := s.Path("data", "extra-volume")
 	extraVolumeFile := filepath.Join(extraVolumeDir, "data.txt")
 
 	cmd := s.BPMCmd(
@@ -169,19 +173,9 @@ func TestRunWithVolumeFlags(t *testing.T) {
 	}
 }
 
-func mountHasOption(m mnt, opt string) bool {
-	for _, o := range m.Options {
-		if o == opt {
-			return true
-		}
-	}
-
-	return false
-}
-
 func TestRunFailure(t *testing.T) {
 	t.Parallel()
-	s := NewSandbox(t)
+	s := bpmsandbox.New(t)
 	defer s.Cleanup()
 
 	s.LoadFixture("oops", "testdata/failure.yml")
@@ -193,7 +187,7 @@ func TestRunFailure(t *testing.T) {
 
 func TestRunUnusualExitStatus(t *testing.T) {
 	t.Parallel()
-	s := NewSandbox(t)
+	s := bpmsandbox.New(t)
 	defer s.Cleanup()
 
 	// exit status 6
@@ -208,116 +202,6 @@ func TestRunUnusualExitStatus(t *testing.T) {
 	if status != 6 {
 		t.Errorf("expected bpm to exit with status %d; got: %d", 6, status)
 	}
-}
-
-type Sandbox struct {
-	t *testing.T
-
-	bpmExe string
-
-	root string
-}
-
-func NewSandbox(t *testing.T) *Sandbox {
-	t.Helper()
-
-	root, err := ioutil.TempDir("", "bpm_sandbox")
-	if err != nil {
-		t.Fatalf("could not create sandbox root directory: %v", err)
-	}
-
-	t.Logf("created sandbox in %s", root)
-
-	paths := []string{
-		filepath.Join(root, "packages", "bpm", "bin"),
-		filepath.Join(root, "data", "packages"),
-		filepath.Join(root, "sys", "log"),
-	}
-
-	for _, path := range paths {
-		if err := os.MkdirAll(path, 0777); err != nil {
-			t.Fatalf("could not create sandbox directory structure: %v", err)
-		}
-	}
-
-	runcSandboxPath := filepath.Join(root, "packages", "bpm", "bin", "runc")
-	if err := os.Symlink(*runcExe, runcSandboxPath); err != nil {
-		t.Fatalf("could not link runc executable into sandbox: %v", err)
-	}
-
-	tiniSandboxPath := filepath.Join(root, "packages", "bpm", "bin", "tini")
-	if err := copyFile(tiniSandboxPath, *tiniExe); err != nil {
-		t.Fatalf("could not copy tini executable into sandbox: %v", err)
-	}
-	if err := os.Chown(tiniSandboxPath, 2000, 3000); err != nil {
-		t.Fatalf("could not chown tini executable: %v", err)
-	}
-	if err := os.Chmod(tiniSandboxPath, 0700); err != nil {
-		t.Fatalf("could not chown tini executable: %v", err)
-	}
-
-	return &Sandbox{
-		t:      t,
-		bpmExe: *bpmExe,
-		root:   root,
-	}
-}
-
-func copyFile(dst, src string) error {
-	s, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer s.Close()
-	d, err := os.Create(dst)
-	if err != nil {
-		return err
-	}
-	if _, err := io.Copy(d, s); err != nil {
-		d.Close()
-		return err
-	}
-	return d.Close()
-}
-
-func (s *Sandbox) Path(fragments ...string) string {
-	return filepath.Join(append([]string{s.root}, fragments...)...)
-}
-
-func (s *Sandbox) BPMCmd(args ...string) *exec.Cmd {
-	cmd := exec.Command(s.bpmExe, args...)
-	cmd.Env = append(os.Environ(), fmt.Sprintf("BPM_BOSH_ROOT=%s", s.root))
-	return cmd
-}
-
-func (s *Sandbox) LoadFixture(job, path string) {
-	configPath := filepath.Join(s.root, "jobs", job, "config", "bpm.yml")
-
-	if err := os.MkdirAll(filepath.Dir(configPath), 0777); err != nil {
-		s.t.Fatalf("failed to create fixture destination directory: %v", err)
-	}
-
-	src, err := os.Open(path)
-	if err != nil {
-		s.t.Fatalf("failed to open fixture source: %v", err)
-	}
-	defer src.Close()
-
-	dst, err := os.Create(configPath)
-	if err != nil {
-		s.t.Fatalf("failed to open fixture destination: %v", err)
-	}
-	defer dst.Close()
-
-	if _, err := io.Copy(dst, src); err != nil {
-		s.t.Fatalf("failed to copy fixture to destination: %v", err)
-	}
-}
-
-func (s *Sandbox) Cleanup() {
-	s.t.Helper()
-	s.t.Logf("deleting sandbox %s", s.root)
-	_ = os.RemoveAll(s.root)
 }
 
 type mnt struct {
@@ -346,4 +230,14 @@ func parseFstab(contents []byte) ([]mnt, error) {
 	}
 
 	return mnts, nil
+}
+
+func mountHasOption(m mnt, opt string) bool {
+	for _, o := range m.Options {
+		if o == opt {
+			return true
+		}
+	}
+
+	return false
 }
