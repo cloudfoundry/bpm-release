@@ -80,7 +80,7 @@ func rootPre(cmd *cobra.Command, _ []string) error {
 		return errors.New("bpm must be run as root. Please run 'sudo -i' to become the root user.")
 	}
 
-	lockDir := filepath.Dir(config.LocksPath(boshEnv))
+	lockDir := config.LocksPath(boshEnv)
 	if err := os.MkdirAll(lockDir, 0700); err != nil {
 		return err
 	}
