@@ -335,7 +335,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 		})
 
 		ItSetsUpAndRunsAProcess(func(logger lager.Logger, bpmCfg *config.BPMConfig, procCfg *config.ProcessConfig) error {
-			// status is tested seperately
+			// status is tested separately
 			_, err := runcLifecycle.RunProcess(logger, bpmCfg, procCfg)
 			return err
 		})

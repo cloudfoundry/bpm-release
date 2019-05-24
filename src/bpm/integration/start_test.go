@@ -212,7 +212,7 @@ var _ = Describe("start", func() {
 		})
 	})
 
-	Context("when presistent storage is request", func() {
+	Context("when persistent storage is request", func() {
 		var dataFile bosh.Path
 
 		BeforeEach(func() {

@@ -282,7 +282,7 @@ var _ = Describe("logs", func() {
 
 	Context("when the job does not exist", func() {
 		BeforeEach(func() {
-			command = exec.Command(bpmPath, "logs", "non-existant")
+			command = exec.Command(bpmPath, "logs", "non-existent")
 		})
 
 		It("returns an error", func() {

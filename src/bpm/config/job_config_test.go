@@ -245,7 +245,7 @@ var _ = Describe("Config", func() {
 		Context("when the volume definition contains an invalid option", func() {
 			It("returns an error", func() {
 				err := cfg.AddVolumes(
-					[]string{"/path/to/volume1:non_existant"},
+					[]string{"/path/to/volume1:non_existent"},
 					boshEnv,
 					[]string{},
 				)

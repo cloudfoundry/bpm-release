@@ -14,13 +14,13 @@
 // under the License.
 
 // Package exitstatus allows an exit status to be pushed through an error
-// shaped hole. It should not be used to propogate an exit status through a
+// shaped hole. It should not be used to propagate an exit status through a
 // deep callstack as a single error wrapping will cause this to break.
 package exitstatus
 
 import "fmt"
 
-// Error represents an error and an associated exit status to propogate.
+// Error represents an error and an associated exit status to propagate.
 type Error struct {
 	Status int
 	Err    error

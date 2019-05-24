@@ -29,7 +29,7 @@ import (
 
 func TestLicenses(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Licence Suite")
+	RunSpecs(t, "License Suite")
 }
 
 var checks = []string{
@@ -86,6 +86,6 @@ var _ = Describe("our go source code", func() {
 		})
 
 		Expect(err).NotTo(HaveOccurred())
-		Expect(missingHeader).To(BeEmpty(), "These files are missing licence headers!")
+		Expect(missingHeader).To(BeEmpty(), "These files are missing license headers!")
 	})
 })

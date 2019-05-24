@@ -161,11 +161,11 @@ var _ = Describe("stop", func() {
 
 	Context("when the job-process doesn't not exist", func() {
 		BeforeEach(func() {
-			bpmLog = filepath.Join(boshRoot, "sys", "log", "non-existant", "bpm.log")
+			bpmLog = filepath.Join(boshRoot, "sys", "log", "non-existent", "bpm.log")
 		})
 
 		It("ignores that and is successful", func() {
-			command := exec.Command(bpmPath, "stop", "non-existant")
+			command := exec.Command(bpmPath, "stop", "non-existent")
 			command.Env = append(command.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshRoot))
 
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
