@@ -26,20 +26,13 @@ your process while running the drain script.
 
 ### Zombie Processes and Forwarding Signals
 
-bpm will run the process you specify in your configuration file as the `init`
-process in the container and it will be the process to receive the signals
-listed above. If your process starts other processes then it is responsible for
-making sure that they are not left as zombies by `wait`ing for them.
+bpm will run an `init` process which will start the process your configuration
+file.  This `init` process will reap any zombie processes and forward signals
+to your process.
 
-A workaround for this if you don't want to manage this is to have the process
-in your configuration file be `/bin/bash -c` and have it invoke your real
-process. `bash` will make sure that you don't end up with zombies. Unfortunately
-`bash` does not forward signals to child processes by default and so you'll need
-to make sure that you [forward on any signals][forward] to your subprocess too.
-
-We're going to remove this rough edge in the next major version of BPM.
-
-[forward]: https://unix.stackexchange.com/questions/146756/forward-sigterm-to-child-in-bash
+Older versions of bpm did not do this and so we suggested that people use `bash
+-c` to start their process which would reap zombie processes. Unfortunately
+this would not forward signals. You can now remove this workaround.
 
 ## Environment Variables
 
