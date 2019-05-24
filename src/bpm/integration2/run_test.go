@@ -26,7 +26,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"syscall"
 	"testing"
 
 	"github.com/onsi/gomega/gexec"
@@ -205,7 +204,7 @@ func TestRunUnusualExitStatus(t *testing.T) {
 		t.Fatal("expected command to fail but it did not")
 	}
 
-	status := cmd.ProcessState.Sys().(syscall.WaitStatus).ExitStatus()
+	status := cmd.ProcessState.ExitCode()
 	if status != 6 {
 		t.Errorf("expected bpm to exit with status %d; got: %d", 6, status)
 	}
