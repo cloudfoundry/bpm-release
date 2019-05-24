@@ -21,6 +21,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -81,7 +82,7 @@ var _ = Describe("trace", func() {
 		Eventually(session.Err).Should(gbytes.Say("wait4"))
 
 		session.Interrupt()
-		Eventually(session).Should(gexec.Exit(0))
+		Eventually(session, 10*time.Second).Should(gexec.Exit(0))
 	})
 
 	Context("when the container is failed", func() {

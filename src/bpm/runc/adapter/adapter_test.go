@@ -364,7 +364,14 @@ var _ = Describe("RuncAdapter", func() {
 
 			Expect(spec.Version).To(Equal(specs.Version))
 
-			expectedProcessArgs := append([]string{procCfg.Executable}, procCfg.Args...)
+			expectedProcessArgs := append([]string{
+				"/var/vcap/packages/bpm/bin/tini",
+				"-w",
+				"-s",
+				"--",
+				procCfg.Executable,
+			}, procCfg.Args...)
+
 			expectedEnv := convertEnv(procCfg.Env)
 			expectedEnv = append(expectedEnv, fmt.Sprintf("TMPDIR=%s", "/var/vcap/data/example/tmp"))
 			expectedEnv = append(expectedEnv, fmt.Sprintf("LANG=%s", defaultLang))

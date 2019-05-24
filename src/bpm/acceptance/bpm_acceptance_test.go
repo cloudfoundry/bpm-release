@@ -179,9 +179,9 @@ var _ = Describe("BpmAcceptance", func() {
 		Expect(err).NotTo(HaveOccurred())
 		processes := strings.Split(strings.Trim(string(body), "\n"), "\n")
 
-		// We expect the test agent to be the only process with the root PID
+		// We expect the test agent (with init process) to be the only process with the root PID
 		Expect(len(processes)).To(BeNumerically(">=", 1))
-		Expect(processes).To(ContainElement(MatchRegexp("1 /var/vcap/packages/test-server/bin/test-server.*")))
+		Expect(processes).To(ContainElement(MatchRegexp("1.*/var/vcap/packages/test-server/bin/test-server.*")))
 	})
 
 	It("has the default path env variable", func() {

@@ -33,6 +33,7 @@ import (
 )
 
 var runcExe = flag.String("runcExe", "/var/vcap/packages/bpm/bin/runc", "path to the runc executable")
+var tiniExe = flag.String("tiniExe", "/var/vcap/packages/bpm/bin/tini", "path to the tini executable")
 var bpmExe = flag.String("bpmExe", "", "path to bpm executable")
 
 func TestMain(m *testing.M) {
@@ -48,7 +49,9 @@ func TestMain(m *testing.M) {
 		*bpmExe = path
 	}
 
-	os.Exit(m.Run())
+	status := m.Run()
+	gexec.CleanupBuildArtifacts()
+	os.Exit(status)
 }
 
 func TestRun(t *testing.T) {
@@ -211,17 +214,20 @@ func TestRunUnusualExitStatus(t *testing.T) {
 type Sandbox struct {
 	t *testing.T
 
-	bpmExe  string
-	runcExe string
+	bpmExe string
 
 	root string
 }
 
 func NewSandbox(t *testing.T) *Sandbox {
+	t.Helper()
+
 	root, err := ioutil.TempDir("", "bpm_sandbox")
 	if err != nil {
 		t.Fatalf("could not create sandbox root directory: %v", err)
 	}
+
+	t.Logf("created sandbox in %s", root)
 
 	paths := []string{
 		filepath.Join(root, "packages", "bpm", "bin"),
@@ -240,12 +246,39 @@ func NewSandbox(t *testing.T) *Sandbox {
 		t.Fatalf("could not link runc executable into sandbox: %v", err)
 	}
 
-	return &Sandbox{
-		t:       t,
-		bpmExe:  *bpmExe,
-		runcExe: *runcExe,
-		root:    root,
+	tiniSandboxPath := filepath.Join(root, "packages", "bpm", "bin", "tini")
+	if err := copyFile(tiniSandboxPath, *tiniExe); err != nil {
+		t.Fatalf("could not copy tini executable into sandbox: %v", err)
 	}
+	if err := os.Chown(tiniSandboxPath, 2000, 3000); err != nil {
+		t.Fatalf("could not chown tini executable: %v", err)
+	}
+	if err := os.Chmod(tiniSandboxPath, 0700); err != nil {
+		t.Fatalf("could not chown tini executable: %v", err)
+	}
+
+	return &Sandbox{
+		t:      t,
+		bpmExe: *bpmExe,
+		root:   root,
+	}
+}
+
+func copyFile(dst, src string) error {
+	s, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer s.Close()
+	d, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	if _, err := io.Copy(d, s); err != nil {
+		d.Close()
+		return err
+	}
+	return d.Close()
 }
 
 func (s *Sandbox) Path(fragments ...string) string {
@@ -283,6 +316,8 @@ func (s *Sandbox) LoadFixture(job, path string) {
 }
 
 func (s *Sandbox) Cleanup() {
+	s.t.Helper()
+	s.t.Logf("deleting sandbox %s", s.root)
 	_ = os.RemoveAll(s.root)
 }
 

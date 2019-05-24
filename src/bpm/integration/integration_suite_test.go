@@ -18,6 +18,7 @@ package integration_test
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -79,14 +80,48 @@ func runcState(root string, containerID string) specs.State {
 	cmd := runcCommand(root, "state", containerID)
 	cmd.Stderr = GinkgoWriter
 
-	data, err := cmd.Output()
-	Expect(err).NotTo(HaveOccurred())
+	var data []byte
+	var err error
 
 	stateResponse := specs.State{}
+
+	data, err = cmd.Output()
+	if err != nil {
+		// XXX: do something smart here based on the error
+		//
+		// Sometimes the state returns some junk error message but we don't
+		// want to return an error because it'll cause the Eventually's to
+		// fail. We probably need to return more information in the error here
+		// so that we can tell if this error is temporary or not.
+		return stateResponse
+	}
+
 	err = json.Unmarshal(data, &stateResponse)
 	Expect(err).NotTo(HaveOccurred())
 
 	return stateResponse
+}
+
+func prepareRunc(packagePath string) {
+	runcPath, err := exec.LookPath("runc")
+	Expect(err).NotTo(HaveOccurred())
+
+	err = os.Link(runcPath, filepath.Join(packagePath, "runc"))
+	Expect(err).NotTo(HaveOccurred())
+}
+
+func prepareTini(packagePath string) {
+	tiniPath, err := exec.LookPath("tini")
+	Expect(err).NotTo(HaveOccurred())
+
+	// We need to copy this instead of linking it because it is used inside the
+	// container and the destination of the link will not be mounted into the
+	// mount namespace.
+	err = copyFile(filepath.Join(packagePath, "tini"), tiniPath)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = os.Chmod(filepath.Join(packagePath, "tini"), 0777)
+	Expect(err).NotTo(HaveOccurred())
 }
 
 func setupBoshDirectories(root, job string) string {
@@ -99,19 +134,33 @@ func setupBoshDirectories(root, job string) string {
 	dataPackagePath := filepath.Join(root, "data", "packages")
 	Expect(os.MkdirAll(dataPackagePath, 0755)).To(Succeed())
 
-	bpmPackagePath := filepath.Join(root, "packages", "bpm", "bin")
-	Expect(os.MkdirAll(bpmPackagePath, 0755)).To(Succeed())
-
-	runcPath, err := exec.LookPath("runc")
-	Expect(err).NotTo(HaveOccurred())
-
-	err = os.Link(runcPath, filepath.Join(bpmPackagePath, "runc"))
-	Expect(err).NotTo(HaveOccurred())
-
 	runcRoot := filepath.Join(root, "data", "bpm", "runc")
 	Expect(os.MkdirAll(runcRoot, 0755)).To(Succeed())
 
+	bpmPackagePath := filepath.Join(root, "packages", "bpm", "bin")
+	Expect(os.MkdirAll(bpmPackagePath, 0755)).To(Succeed())
+
+	prepareRunc(bpmPackagePath)
+	prepareTini(bpmPackagePath)
+
 	return runcRoot
+}
+
+func copyFile(dst, src string) error {
+	s, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer s.Close()
+	d, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	if _, err := io.Copy(d, s); err != nil {
+		d.Close()
+		return err
+	}
+	return d.Close()
 }
 
 func newJobConfig(job, bash string) config.JobConfig {

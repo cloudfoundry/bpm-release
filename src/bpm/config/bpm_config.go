@@ -118,6 +118,10 @@ func (c *BPMConfig) JobConfig() string {
 	return c.JobDir().Join(filepath.Join("config", "bpm.yml")).External()
 }
 
+func (c *BPMConfig) TiniPath() bosh.Path {
+	return c.PackageDir().Join("bpm", "bin", "tini")
+}
+
 func (c *BPMConfig) DefaultVolumes() []string {
 	return []string{c.DataDir().External(), c.StoreDir().External()}
 }

@@ -66,6 +66,10 @@ var _ = Describe("start / stop parallelization", func() {
 		Expect(os.RemoveAll(boshRoot)).To(Succeed())
 	})
 
+	waitForRunning := func() {
+		Eventually(func() string { return runcState(runcRoot, containerID).Status }).Should(Equal("running"))
+	}
+
 	It("serializes calls to start and stop", func() {
 		stopCmd := exec.Command(bpmPath, "stop", job)
 		stopCmd.Env = append(stopCmd.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshRoot))
@@ -79,11 +83,16 @@ var _ = Describe("start / stop parallelization", func() {
 		Expect(err).ShouldNot(HaveOccurred())
 		Consistently(startSesh).ShouldNot(gexec.Exit())
 
-		Expect(runcCommand(runcRoot, "kill", containerID, "USR1").Run()).To(Succeed())
+		waitForRunning()
+
+		command := runcCommand(runcRoot, "kill", containerID, "USR1")
+		command.Stdout = GinkgoWriter
+		command.Stderr = GinkgoWriter
+		Expect(command.Run()).To(Succeed())
 
 		Eventually(stopSesh).Should(gexec.Exit(0))
 		Eventually(startSesh).Should(gexec.Exit(0))
 
-		Eventually(func() string { return runcState(runcRoot, containerID).Status }).Should(Equal("running"))
+		waitForRunning()
 	})
 })

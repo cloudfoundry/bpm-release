@@ -237,12 +237,14 @@ func (a *RuncAdapter) BuildSpec(
 		ms.addMounts(userProvidedIdentityMounts(bpmCfg, expanded))
 	}
 
+	wrappedExe, wrappedArgs := wrapWithInit(bpmCfg, procCfg)
+
 	spec := specbuilder.Build(
 		specbuilder.WithRootFilesystem(bpmCfg.RootFSPath()),
 		specbuilder.WithUser(user),
 		specbuilder.WithProcess(
-			procCfg.Executable,
-			procCfg.Args,
+			wrappedExe,
+			wrappedArgs,
 			processEnvironment(procCfg.Env, bpmCfg),
 			cwd,
 		),
@@ -278,6 +280,12 @@ func (a *RuncAdapter) BuildSpec(
 	}
 
 	return *spec, nil
+}
+
+func wrapWithInit(bpmCfg *config.BPMConfig, procCfg *config.ProcessConfig) (string, []string) {
+	exe := bpmCfg.TiniPath().Internal()
+	args := append([]string{"-w", "-s", "--", procCfg.Executable}, procCfg.Args...)
+	return exe, args
 }
 
 func systemIdentityMounts(mountResolvConf bool) []specs.Mount {

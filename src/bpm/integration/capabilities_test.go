@@ -79,7 +79,7 @@ var _ = Describe("capabilities", func() {
 		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 		Eventually(session).Should(gexec.Exit(0))
-		Eventually(fileContents(stdout)).Should(MatchRegexp("^\\s?CapEff:\\s?0000000000000000\\s?$"))
+		Eventually(fileContents(stdout)).Should(MatchRegexp(`CapEff:\s*0000000000000000`))
 	})
 
 	Context("when the NET_BIND_SERVICE capability is provided", func() {
