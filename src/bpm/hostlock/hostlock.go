@@ -74,7 +74,7 @@ func (h *Handle) LockVolume(path string) (LockedLock, error) {
 	hash := sha256.New()
 	hash.Write([]byte(path))
 
-	name := jobid.Encode(fmt.Sprintf("vol-%x.lock", hash.Sum(nil)))
+	name := fmt.Sprintf("vol-%x.lock", hash.Sum(nil))
 	fullPath := filepath.Join(h.path, name)
 	fl, err := flock.New(fullPath)
 	if err != nil {
