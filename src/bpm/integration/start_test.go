@@ -22,6 +22,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -91,7 +92,9 @@ var _ = Describe("start", func() {
 	It("writes the processes pid to the pidfile", func() {
 		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
-		Eventually(session).Should(gexec.Exit(0))
+		<-session.Exited
+
+		Expect(session).To(gexec.Exit(0))
 
 		state := runcState(runcRoot, containerID)
 		Expect(state.Status).To(Equal("running"))
@@ -106,7 +109,9 @@ var _ = Describe("start", func() {
 	It("sets the LANG environment variable", func() {
 		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
-		Eventually(session).Should(gexec.Exit(0))
+		<-session.Exited
+
+		Expect(session).To(gexec.Exit(0))
 
 		Eventually(stdout).Should(BeAnExistingFile())
 		Eventually(fileContents(stdout)).Should(ContainSubstring("en_US.UTF-8\n"))
@@ -118,7 +123,9 @@ var _ = Describe("start", func() {
 
 		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
-		Eventually(session).Should(gexec.Exit(0))
+		<-session.Exited
+
+		Expect(session).To(gexec.Exit(0))
 
 		Eventually(fileContents(stdout)).Should(ContainSubstring("Logging to STDOUT"))
 		Eventually(fileContents(stderr)).Should(ContainSubstring("Logging to STDERR"))
@@ -127,7 +134,9 @@ var _ = Describe("start", func() {
 	It("exposes the internal log directory for writing", func() {
 		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
-		Eventually(session).Should(gexec.Exit(0))
+		<-session.Exited
+
+		Expect(session).To(gexec.Exit(0))
 
 		Eventually(logFile.External()).Should(BeAnExistingFile())
 		Eventually(fileContents(logFile.External())).Should(ContainSubstring("Logging to FILE"))
@@ -138,7 +147,9 @@ var _ = Describe("start", func() {
 
 		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
-		Eventually(session).Should(gexec.Exit(0))
+		<-session.Exited
+
+		Expect(session).To(gexec.Exit(0))
 
 		Eventually(fileContents(bpmLog)).Should(ContainSubstring("bpm.start.starting"))
 		Eventually(fileContents(bpmLog)).Should(ContainSubstring("bpm.start.complete"))
@@ -173,7 +184,9 @@ var _ = Describe("start", func() {
 		It("runs the process specified in the config", func() {
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(0))
+			<-session.Exited
+
+			Expect(session).To(gexec.Exit(0))
 
 			state := runcState(runcRoot, containerID)
 			Expect(state.Status).To(Equal("running"))
@@ -207,7 +220,8 @@ var _ = Describe("start", func() {
 		It("executs the pre-start prior to starting the process", func() {
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(0))
+			<-session.Exited
+			Expect(session).To(gexec.Exit(0))
 			Eventually(fileContents(stdout)).Should(ContainSubstring("Executing Pre Start\nen_US.UTF-8\n"))
 		})
 	})
@@ -225,7 +239,8 @@ var _ = Describe("start", func() {
 		It("exposes the storage directory as a writeable mount point", func() {
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(0))
+			<-session.Exited
+			Expect(session).To(gexec.Exit(0))
 
 			Eventually(dataFile.External()).Should(BeAnExistingFile())
 			Eventually(fileContents(dataFile.External())).Should(ContainSubstring("Logging to FILE"))
@@ -241,7 +256,9 @@ var _ = Describe("start", func() {
 		It("exits with a non-zero exit code and prints an error", func() {
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(1))
+			<-session.Exited
+
+			Expect(session).To(gexec.Exit(1))
 			Expect(session.Err).Should(gbytes.Say("bpm.yml"))
 		})
 	})
@@ -250,7 +267,9 @@ var _ = Describe("start", func() {
 		It("exits with a non-zero exit code and prints the usage", func() {
 			session, err := gexec.Start(exec.Command(bpmPath, "start"), GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(1))
+			<-session.Exited
+
+			Expect(session).To(gexec.Exit(1))
 			Expect(session.Err).Should(gbytes.Say("must specify a job"))
 		})
 	})
@@ -261,7 +280,8 @@ var _ = Describe("start", func() {
 		JustBeforeEach(func() {
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(0))
+			<-session.Exited
+			Expect(session).To(gexec.Exit(0))
 
 			state := runcState(runcRoot, containerID)
 			Expect(state.Status).To(Equal("running"))
@@ -274,7 +294,9 @@ var _ = Describe("start", func() {
 
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(0))
+			<-session.Exited
+
+			Expect(session).To(gexec.Exit(0))
 			Expect(fileContents(bpmLog)()).To(ContainSubstring("process-already-running"))
 
 			state := runcState(runcRoot, containerID)
@@ -286,12 +308,16 @@ var _ = Describe("start", func() {
 		JustBeforeEach(func() {
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(0))
+			<-session.Exited
+
+			Expect(session).To(gexec.Exit(0))
 
 			session, err = gexec.Start(runcCommand(runcRoot, "kill", containerID), GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(0))
-			Eventually(func() string { return runcState(runcRoot, containerID).Status }).Should(Equal("stopped"))
+			<-session.Exited
+
+			Expect(session).To(gexec.Exit(0))
+			Eventually(func() string { return runcState(runcRoot, containerID).Status }, 20*time.Second).Should(Equal("stopped"))
 
 			err = ioutil.WriteFile(filepath.Join(runcRoot, containerID, "state.json"), nil, 0600)
 			Expect(err).ToNot(HaveOccurred())
@@ -303,7 +329,10 @@ var _ = Describe("start", func() {
 
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(0))
+			Expect(err).ShouldNot(HaveOccurred())
+			<-session.Exited
+
+			Expect(session).To(gexec.Exit(0))
 
 			state := runcState(runcRoot, containerID)
 			Expect(state.Status).To(Equal("running"))
@@ -314,11 +343,14 @@ var _ = Describe("start", func() {
 		JustBeforeEach(func() {
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(0))
+			<-session.Exited
+			Expect(session).To(gexec.Exit(0))
 
 			session, err = gexec.Start(runcCommand(runcRoot, "kill", containerID), GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(0))
+			<-session.Exited
+
+			Expect(session).To(gexec.Exit(0))
 			Eventually(func() string { return runcState(runcRoot, containerID).Status }).Should(Equal("stopped"))
 		})
 
@@ -328,7 +360,8 @@ var _ = Describe("start", func() {
 
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(0))
+			<-session.Exited
+			Expect(session).To(gexec.Exit(0))
 
 			state := runcState(runcRoot, containerID)
 			Expect(state.Status).To(Equal("running"))
@@ -346,7 +379,9 @@ var _ = Describe("start", func() {
 
 				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 				Expect(err).ShouldNot(HaveOccurred())
-				Eventually(session).Should(gexec.Exit(0))
+				<-session.Exited
+
+				Expect(session).To(gexec.Exit(0))
 
 				state := runcState(runcRoot, containerID)
 				Expect(state.Status).To(Equal("running"))
@@ -363,7 +398,9 @@ var _ = Describe("start", func() {
 		It("exits with a non zero exit code and returns an error", func() {
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(1))
+			<-session.Exited
+
+			Expect(session).To(gexec.Exit(1))
 			Expect(session.Err).Should(gbytes.Say(`process "I DO NOT EXIST" not present in job configuration`))
 		})
 	})
@@ -393,7 +430,8 @@ var _ = Describe("start", func() {
 		It("evaluates the glob and only mounts those directories and files into the container", func() {
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(0))
+			<-session.Exited
+			Expect(session).To(gexec.Exit(0))
 
 			Eventually(stdout).Should(BeAnExistingFile())
 			Consistently(fileContents(stdout)).ShouldNot(ContainSubstring("secrets.yml"))
@@ -423,7 +461,8 @@ var _ = Describe("start", func() {
 		It("properly bind mounts the file into the container", func() {
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(0))
+			<-session.Exited
+			Expect(session).To(gexec.Exit(0))
 
 			Eventually(stdout).Should(BeAnExistingFile())
 			Eventually(fileContents(stdout)).Should(ContainSubstring("i am a random file"))

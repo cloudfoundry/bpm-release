@@ -101,8 +101,9 @@ var _ = Describe("start", func() {
 
 		_, err = ptyF.Write([]byte("exit\n"))
 		Expect(err).ShouldNot(HaveOccurred())
+		<-session.Exited
 
-		Eventually(session).Should(gexec.Exit(0))
+		Expect(session).To(gexec.Exit(0))
 	})
 
 	It("does not print the usage on invalid commands", func() {
@@ -126,7 +127,9 @@ var _ = Describe("start", func() {
 		It("returns an error", func() {
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(1))
+			<-session.Exited
+
+			Expect(session).To(gexec.Exit(1))
 			Expect(session.Err).Should(gbytes.Say("process is not running or could not be found"))
 		})
 	})
@@ -135,7 +138,9 @@ var _ = Describe("start", func() {
 		It("exits with a non-zero exit code and prints the usage", func() {
 			session, err := gexec.Start(exec.Command(bpmPath, "shell"), GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(1))
+			<-session.Exited
+
+			Expect(session).To(gexec.Exit(1))
 			Expect(session.Err).Should(gbytes.Say("must specify a job"))
 		})
 	})

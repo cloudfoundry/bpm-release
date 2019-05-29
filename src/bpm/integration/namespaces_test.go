@@ -98,7 +98,9 @@ var _ = Describe("start", func() {
 		It("it can only see message queues in its own namespace", func() {
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(0))
+
+			<-session.Exited
+			Expect(session).To(gexec.Exit(0))
 
 			Eventually(fileContents(stderr)).Should(
 				ContainSubstring(fmt.Sprintf("ipcs: id %d not found", messageQueueId)),

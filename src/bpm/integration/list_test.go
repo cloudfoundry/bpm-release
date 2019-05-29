@@ -116,8 +116,9 @@ var _ = Describe("list", func() {
 		Expect(err).ShouldNot(HaveOccurred())
 
 		state := runcState(runcRoot, containerID)
+		<-session.Exited
 
-		Eventually(session).Should(gexec.Exit(0))
+		Expect(session).To(gexec.Exit(0))
 		Expect(session.Out).To(gbytes.Say("Name\\s+Pid\\s+Status"))
 		Expect(session.Out).To(gbytes.Say(fmt.Sprintf("%s\\s+%s\\s+%s", failedJob, "-", models.ProcessStateFailed)))
 		Expect(session.Out).To(gbytes.Say(fmt.Sprintf("%s\\s+%d\\s+%s", job, state.Pid, state.Status)))

@@ -42,7 +42,9 @@ var _ = Describe("version", func() {
 		It("returns the dev build version when compiled normally", func() {
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(0))
+			<-session.Exited
+
+			Expect(session).To(gexec.Exit(0))
 			Expect(session.Out).To(gbytes.Say("[DEV BUILD]"))
 		})
 
@@ -56,7 +58,9 @@ var _ = Describe("version", func() {
 			It("returns the dev build version when compiled normally", func() {
 				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 				Expect(err).ShouldNot(HaveOccurred())
-				Eventually(session).Should(gexec.Exit(0))
+				<-session.Exited
+
+				Expect(session).To(gexec.Exit(0))
 				Expect(session.Out).To(gbytes.Say("1.2.3"))
 			})
 		})
@@ -69,7 +73,9 @@ var _ = Describe("version", func() {
 			It("returns the usage", func() {
 				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 				Expect(err).ShouldNot(HaveOccurred())
-				Eventually(session).Should(gexec.Exit(1))
+				<-session.Exited
+
+				Expect(session).To(gexec.Exit(1))
 				Expect(session.Err).To(gbytes.Say("Usage:"))
 			})
 		})
@@ -83,7 +89,9 @@ var _ = Describe("version", func() {
 		It("returns the dev build version when compiled normally", func() {
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(0))
+			<-session.Exited
+
+			Expect(session).To(gexec.Exit(0))
 			Expect(session.Out).To(gbytes.Say("[DEV BUILD]"))
 		})
 
@@ -97,7 +105,9 @@ var _ = Describe("version", func() {
 			It("returns the dev build version when compiled normally", func() {
 				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 				Expect(err).ShouldNot(HaveOccurred())
-				Eventually(session).Should(gexec.Exit(0))
+				<-session.Exited
+
+				Expect(session).To(gexec.Exit(0))
 				Expect(session.Out).To(gbytes.Say("1.2.3"))
 			})
 		})
@@ -110,7 +120,9 @@ var _ = Describe("version", func() {
 			It("returns the dev build version when compiled normally", func() {
 				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 				Expect(err).ShouldNot(HaveOccurred())
-				Eventually(session).Should(gexec.Exit(0))
+				<-session.Exited
+
+				Expect(session).To(gexec.Exit(0))
 				Expect(session.Out).To(gbytes.Say("[DEV BUILD]"))
 			})
 		})

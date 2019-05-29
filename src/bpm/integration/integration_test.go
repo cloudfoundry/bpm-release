@@ -69,7 +69,9 @@ var _ = Describe("bpm", func() {
 
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(1))
+			<-session.Exited
+
+			Expect(session).To(gexec.Exit(1))
 
 			Expect(session.Err).ShouldNot(gbytes.Say("Usage:"))
 			Expect(session.Err).Should(gbytes.Say("bpm must be run as root. Please run 'sudo -i' to become the root user."))
@@ -81,7 +83,9 @@ var _ = Describe("bpm", func() {
 			command := exec.Command(bpmPath)
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(1))
+			<-session.Exited
+
+			Expect(session).To(gexec.Exit(1))
 			Expect(session.Err).Should(gbytes.Say("Usage:"))
 		})
 	})

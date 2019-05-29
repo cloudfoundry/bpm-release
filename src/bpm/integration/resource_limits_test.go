@@ -113,7 +113,8 @@ var _ = Describe("resource limits", func() {
 
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(0))
+			<-session.Exited
+			Expect(session).To(gexec.Exit(0))
 			Eventually(func() string { return runcState(runcRoot, containerID).Status }).Should(Equal("running"))
 
 			eventsCmd := runcCommand(runcRoot, "events", containerID)
@@ -141,7 +142,8 @@ var _ = Describe("resource limits", func() {
 		It("cannot open more files than permitted", func() {
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(0))
+			<-session.Exited
+			Expect(session).To(gexec.Exit(0))
 
 			Eventually(func() string { return runcState(runcRoot, containerID).Status }).Should(Equal("running"))
 			Expect(runcCommand(runcRoot, "kill", containerID).Run()).To(Succeed())
@@ -159,7 +161,9 @@ var _ = Describe("resource limits", func() {
 		It("cannot create more processes than permitted", func() {
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(0))
+			<-session.Exited
+
+			Expect(session).To(gexec.Exit(0))
 
 			Eventually(func() string { return runcState(runcRoot, containerID).Status }).Should(Equal("running"))
 			Expect(runcCommand(runcRoot, "kill", containerID).Run()).To(Succeed())

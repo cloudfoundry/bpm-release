@@ -77,9 +77,10 @@ var _ = Describe("pid", func() {
 
 		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 		Expect(err).ShouldNot(HaveOccurred())
+		<-session.Exited
+		Expect(session).To(gexec.Exit(0))
 
 		state := runcState(runcRoot, containerID)
-		Eventually(session).Should(gexec.Exit(0))
 		Expect(session.Out).Should(gbytes.Say(fmt.Sprintf("%d", state.Pid)))
 	})
 
@@ -95,7 +96,8 @@ var _ = Describe("pid", func() {
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
 
-			Eventually(session).Should(gexec.Exit(1))
+			<-session.Exited
+			Expect(session).To(gexec.Exit(1))
 			Expect(session.Err).Should(gbytes.Say("Error: process is not running or could not be found"))
 		})
 	})
@@ -105,7 +107,8 @@ var _ = Describe("pid", func() {
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
 
-			Eventually(session).Should(gexec.Exit(1))
+			<-session.Exited
+			Expect(session).To(gexec.Exit(1))
 			Expect(session.Err).Should(gbytes.Say("Error: process is not running or could not be found"))
 		})
 	})
@@ -114,7 +117,9 @@ var _ = Describe("pid", func() {
 		It("exits with a non-zero exit code and prints the usage", func() {
 			session, err := gexec.Start(exec.Command(bpmPath, "pid"), GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(1))
+
+			<-session.Exited
+			Expect(session).To(gexec.Exit(1))
 			Expect(session.Err).Should(gbytes.Say("must specify a job"))
 		})
 	})

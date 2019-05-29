@@ -83,7 +83,7 @@ var _ = Describe("logs", func() {
 		Expect(os.RemoveAll(boshRoot)).To(Succeed())
 	})
 
-	validateNLogLinesArePresent := func(output, source string, n int) {
+	validateNLogLinesArePresent := func(output []byte, source string, n int) {
 		for i := 0; i < n; i++ {
 			Expect(string(output)).To(ContainSubstring(fmt.Sprintf("Logging Line #%d to %s", 100-i, source)))
 		}
@@ -94,9 +94,11 @@ var _ = Describe("logs", func() {
 	It("prints the last 25 lines from stdout", func() {
 		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 		Expect(err).ShouldNot(HaveOccurred())
-		Eventually(session).Should(gexec.Exit(0))
+		<-session.Exited
+
+		Expect(session).To(gexec.Exit(0))
 		output := session.Out.Contents()
-		validateNLogLinesArePresent(string(output), "STDOUT", 25)
+		validateNLogLinesArePresent(output, "STDOUT", 25)
 	})
 
 	Context("when the -f flag is specified", func() {
@@ -122,9 +124,11 @@ var _ = Describe("logs", func() {
 		It("prints the last n lines from stdout", func() {
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(0))
+			<-session.Exited
+
+			Expect(session).To(gexec.Exit(0))
 			output := session.Out.Contents()
-			validateNLogLinesArePresent(string(output), "STDOUT", 30)
+			validateNLogLinesArePresent(output, "STDOUT", 30)
 		})
 	})
 
@@ -136,9 +140,11 @@ var _ = Describe("logs", func() {
 		It("prints the last 25 lines from stderr", func() {
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(0))
+			<-session.Exited
+
+			Expect(session).To(gexec.Exit(0))
 			output := session.Out.Contents()
-			validateNLogLinesArePresent(string(output), "STDERR", 25)
+			validateNLogLinesArePresent(output, "STDERR", 25)
 		})
 
 		Context("when the -n flag is specified", func() {
@@ -149,9 +155,11 @@ var _ = Describe("logs", func() {
 			It("prints the last n lines from stderr", func() {
 				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 				Expect(err).ShouldNot(HaveOccurred())
-				Eventually(session).Should(gexec.Exit(0))
+				<-session.Exited
+
+				Expect(session).To(gexec.Exit(0))
 				output := session.Out.Contents()
-				validateNLogLinesArePresent(string(output), "STDERR", 30)
+				validateNLogLinesArePresent(output, "STDERR", 30)
 			})
 		})
 	})
@@ -164,13 +172,15 @@ var _ = Describe("logs", func() {
 		It("prints the last 25 lines from stdout and stderr with file headers", func() {
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(0))
+			<-session.Exited
+
+			Expect(session).To(gexec.Exit(0))
 			output := session.Out.Contents()
 
 			Expect(string(output)).To(ContainSubstring(stdout))
 			Expect(string(output)).To(ContainSubstring(stderr))
-			validateNLogLinesArePresent(string(output), "STDOUT", 25)
-			validateNLogLinesArePresent(string(output), "STDERR", 25)
+			validateNLogLinesArePresent(output, "STDOUT", 25)
+			validateNLogLinesArePresent(output, "STDERR", 25)
 		})
 
 		Context("when the -n flag is specified", func() {
@@ -181,10 +191,12 @@ var _ = Describe("logs", func() {
 			It("prints the last n lines from stdout and stderr", func() {
 				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 				Expect(err).ShouldNot(HaveOccurred())
-				Eventually(session).Should(gexec.Exit(0))
+				<-session.Exited
+
+				Expect(session).To(gexec.Exit(0))
 				output := session.Out.Contents()
-				validateNLogLinesArePresent(string(output), "STDOUT", 30)
-				validateNLogLinesArePresent(string(output), "STDERR", 30)
+				validateNLogLinesArePresent(output, "STDOUT", 30)
+				validateNLogLinesArePresent(output, "STDERR", 30)
 			})
 		})
 
@@ -196,13 +208,15 @@ var _ = Describe("logs", func() {
 			It("does not print the file name headers", func() {
 				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 				Expect(err).ShouldNot(HaveOccurred())
-				Eventually(session).Should(gexec.Exit(0))
+				<-session.Exited
+
+				Expect(session).To(gexec.Exit(0))
 				output := session.Out.Contents()
 
 				Expect(string(output)).NotTo(ContainSubstring(stdout))
 				Expect(string(output)).NotTo(ContainSubstring(stderr))
-				validateNLogLinesArePresent(string(output), "STDOUT", 25)
-				validateNLogLinesArePresent(string(output), "STDERR", 25)
+				validateNLogLinesArePresent(output, "STDOUT", 25)
+				validateNLogLinesArePresent(output, "STDERR", 25)
 			})
 		})
 
@@ -214,10 +228,12 @@ var _ = Describe("logs", func() {
 			It("still prints only 25 lines from both stdout and stderr", func() {
 				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 				Expect(err).ShouldNot(HaveOccurred())
-				Eventually(session).Should(gexec.Exit(0))
+				<-session.Exited
+
+				Expect(session).To(gexec.Exit(0))
 				output := session.Out.Contents()
-				validateNLogLinesArePresent(string(output), "STDOUT", 25)
-				validateNLogLinesArePresent(string(output), "STDERR", 25)
+				validateNLogLinesArePresent(output, "STDOUT", 25)
+				validateNLogLinesArePresent(output, "STDERR", 25)
 			})
 		})
 	})
@@ -254,7 +270,9 @@ var _ = Describe("logs", func() {
 			startCommand.Env = append(startCommand.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshRoot))
 			session, err := gexec.Start(startCommand, GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(0))
+			<-session.Exited
+
+			Expect(session).To(gexec.Exit(0))
 
 			Eventually(fileContents(otherStdout)).Should(ContainSubstring("Logging Line #100 to ALT STDOUT"))
 			Eventually(fileContents(otherStderr)).Should(ContainSubstring("Logging Line #100 to ALT STDERR"))
@@ -274,9 +292,11 @@ var _ = Describe("logs", func() {
 		It("shows logs from the corresponding process", func() {
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(0))
+			<-session.Exited
+
+			Expect(session).To(gexec.Exit(0))
 			output := session.Out.Contents()
-			validateNLogLinesArePresent(string(output), "ALT STDOUT", 25)
+			validateNLogLinesArePresent(output, "ALT STDOUT", 25)
 		})
 	})
 
@@ -288,7 +308,9 @@ var _ = Describe("logs", func() {
 		It("returns an error", func() {
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(1))
+			<-session.Exited
+
+			Expect(session).To(gexec.Exit(1))
 			Expect(session.Err).Should(gbytes.Say("Error: logs not found"))
 		})
 	})

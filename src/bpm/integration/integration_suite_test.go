@@ -202,5 +202,7 @@ func startJob(root, bpmPath, j string) {
 	startCommand.Env = append(startCommand.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", root))
 	session, err := gexec.Start(startCommand, GinkgoWriter, GinkgoWriter)
 	Expect(err).ShouldNot(HaveOccurred())
-	Eventually(session).Should(gexec.Exit(0))
+
+	<-session.Exited
+	Expect(session).To(gexec.Exit(0))
 }

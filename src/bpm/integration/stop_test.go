@@ -70,8 +70,9 @@ var _ = Describe("stop", func() {
 		startCommand := exec.Command(bpmPath, "start", job)
 		startCommand.Env = append(startCommand.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshRoot))
 		session, err := gexec.Start(startCommand, GinkgoWriter, GinkgoWriter)
-		Expect(err).ShouldNot(HaveOccurred())
-		Eventually(session).Should(gexec.Exit(0))
+		Expect(err).ToNot(HaveOccurred())
+		<-session.Exited
+		Expect(session).To(gexec.Exit(0))
 
 		command = exec.Command(bpmPath, "stop", job)
 		command.Env = append(command.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshRoot))
@@ -88,7 +89,8 @@ var _ = Describe("stop", func() {
 	It("signals the container with a SIGTERM", func() {
 		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 		Expect(err).ToNot(HaveOccurred())
-		Eventually(session).Should(gexec.Exit(0))
+		<-session.Exited
+		Expect(session).To(gexec.Exit(0))
 
 		Eventually(fileContents(stdout)).Should(ContainSubstring("Received a Signal"))
 	})
@@ -96,7 +98,9 @@ var _ = Describe("stop", func() {
 	It("removes the pid file", func() {
 		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 		Expect(err).ToNot(HaveOccurred())
-		Eventually(session).Should(gexec.Exit(0))
+		<-session.Exited
+
+		Expect(session).To(gexec.Exit(0))
 
 		Expect(filepath.Join(boshRoot, "sys", "run", "bpm", job, fmt.Sprintf("%s.pid", job))).ToNot(BeAnExistingFile())
 	})
@@ -104,7 +108,8 @@ var _ = Describe("stop", func() {
 	It("removes the container and its corresponding process", func() {
 		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 		Expect(err).ToNot(HaveOccurred())
-		Eventually(session).Should(gexec.Exit(0))
+		<-session.Exited
+		Expect(session).To(gexec.Exit(0))
 
 		Expect(runcCommand(runcRoot, "state", containerID).Run()).To(HaveOccurred())
 	})
@@ -112,7 +117,9 @@ var _ = Describe("stop", func() {
 	It("removes the bundle directory", func() {
 		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
-		Eventually(session).Should(gexec.Exit(0))
+		<-session.Exited
+
+		Expect(session).To(gexec.Exit(0))
 
 		bundlePath := filepath.Join(boshRoot, "data", "bpm", "bundles", job, job)
 		_, err = os.Open(bundlePath)
@@ -123,7 +130,8 @@ var _ = Describe("stop", func() {
 	It("logs bpm internal logs to a consistent location", func() {
 		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
-		Eventually(session).Should(gexec.Exit(0))
+		<-session.Exited
+		Expect(session).To(gexec.Exit(0))
 
 		Eventually(fileContents(bpmLog)).Should(ContainSubstring("bpm.stop.starting"))
 		Eventually(fileContents(bpmLog)).Should(ContainSubstring("bpm.stop.complete"))
@@ -135,7 +143,9 @@ var _ = Describe("stop", func() {
 
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(1))
+			<-session.Exited
+
+			Expect(session).To(gexec.Exit(1))
 
 			Expect(session.Err).Should(gbytes.Say("must specify a job"))
 		})
@@ -145,7 +155,9 @@ var _ = Describe("stop", func() {
 		JustBeforeEach(func() {
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(0))
+			<-session.Exited
+
+			Expect(session).To(gexec.Exit(0))
 		})
 
 		It("returns successfully", func() {
@@ -154,7 +166,9 @@ var _ = Describe("stop", func() {
 
 			secondSession, err := gexec.Start(secondCommand, GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
-			Eventually(secondSession).Should(gexec.Exit(0))
+			<-secondSession.Exited
+			Expect(secondSession).To(gexec.Exit(0))
+
 			Expect(fileContents(bpmLog)()).To(ContainSubstring("job-already-stopped"))
 		})
 	})
@@ -170,7 +184,9 @@ var _ = Describe("stop", func() {
 
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(0))
+			<-session.Exited
+
+			Expect(session).To(gexec.Exit(0))
 			Expect(fileContents(bpmLog)()).To(ContainSubstring("job-already-stopped"))
 		})
 	})

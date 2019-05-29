@@ -78,7 +78,9 @@ var _ = Describe("capabilities", func() {
 	It("has no effective capabilities by default", func() {
 		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
-		Eventually(session).Should(gexec.Exit(0))
+		<-session.Exited
+
+		Expect(session).To(gexec.Exit(0))
 		Eventually(fileContents(stdout)).Should(MatchRegexp(`CapEff:\s*0000000000000000`))
 	})
 
@@ -91,7 +93,8 @@ var _ = Describe("capabilities", func() {
 		It("allows processes to bind to privileged ports", func() {
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(0))
+			<-session.Exited
+			Expect(session).To(gexec.Exit(0))
 
 			var conn net.Conn
 			Eventually(func() error {

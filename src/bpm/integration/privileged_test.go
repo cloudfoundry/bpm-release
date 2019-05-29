@@ -80,7 +80,9 @@ var _ = Describe("privileged containers", func() {
 	It("starts the process as the root user without seccomp and default privileges", func() {
 		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
-		Eventually(session).Should(gexec.Exit(0))
+		<-session.Exited
+
+		Expect(session).To(gexec.Exit(0))
 
 		Eventually(stdout).Should(BeAnExistingFile())
 		Eventually(fileContents(stdout)).Should(ContainSubstring("Running as root"))

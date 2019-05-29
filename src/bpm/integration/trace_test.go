@@ -21,7 +21,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -82,7 +81,8 @@ var _ = Describe("trace", func() {
 		Eventually(session.Err).Should(gbytes.Say("wait4"))
 
 		session.Interrupt()
-		Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+		<-session.Exited
+		Expect(session).To(Or(gexec.Exit(0), gexec.Exit(130)))
 	})
 
 	Context("when the container is failed", func() {
@@ -96,7 +96,9 @@ var _ = Describe("trace", func() {
 		It("returns an error", func() {
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(1))
+			<-session.Exited
+
+			Expect(session).To(gexec.Exit(1))
 			Expect(session.Err).Should(gbytes.Say("Error: process is not running or could not be found"))
 		})
 	})
@@ -105,7 +107,9 @@ var _ = Describe("trace", func() {
 		It("returns an error", func() {
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(1))
+			<-session.Exited
+
+			Expect(session).To(gexec.Exit(1))
 			Expect(session.Err).Should(gbytes.Say("Error: process is not running or could not be found"))
 		})
 	})
@@ -114,7 +118,9 @@ var _ = Describe("trace", func() {
 		It("exits with a non-zero exit code and prints the usage", func() {
 			session, err := gexec.Start(exec.Command(bpmPath, "trace"), GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(1))
+			<-session.Exited
+
+			Expect(session).To(gexec.Exit(1))
 			Expect(session.Err).Should(gbytes.Say("must specify a job"))
 		})
 	})
