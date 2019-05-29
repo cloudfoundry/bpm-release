@@ -108,7 +108,7 @@ resources:
 - name: bpm-bosh-io
   type: bosh-io-release
   source:
-    repository: cloudfoundry-incubator/bpm-release
+    repository: cloudfoundry/bpm-release
 
 jobs:
 - name: test-unit
