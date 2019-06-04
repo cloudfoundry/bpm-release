@@ -1,48 +1,34 @@
-compilation:
-  cloud_properties: {}
-  network: bpm
-  reuse_compilation_vms: true
-  workers: 3
-jobs:
-- instances: 1
-  name: bpm
-  resource_pool: bpm
+name: bpm
+
+releases:
+- name: bpm
+  version: latest
+
+instance_groups:
+- name: bpm
+  instances: 1
+  azs: [z1, z2, z3]
+  vm_type: default
+  stemcell: default
   persistent_disk: 1024
   networks:
-  - name: bpm
-  templates:
+  - name: default
+  jobs:
   - name: bpm
     release: bpm
   - name: test-server
     release: bpm
   - name: test-errand
     release: bpm
-name: bpm
-networks:
-- name: bpm
-  subnets:
-  - cloud_properties: {}
-    gateway: 10.244.17.1
-    range: 10.244.17.0/24
-    reserved:
-    - 10.244.17.1
-    static: []
-  type: manual
-releases:
-- name: bpm
+
+stemcells:
+- alias: default
+  os: ubuntu-xenial
   version: latest
-resource_pools:
-- cloud_properties: {}
-  env: {}
-  name: bpm
-  network: bpm
-  stemcell:
-    name: bosh-warden-boshlite-ubuntu-trusty-go_agent
-    version: latest
+
 update:
   canaries: 1
   canary_watch_time: 5000-120000
   max_in_flight: 1
   serial: false
   update_watch_time: 5000-120000
-
