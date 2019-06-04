@@ -95,15 +95,12 @@ var _ = Describe("start", func() {
 		Expect(ttyF.Close()).NotTo(HaveOccurred())
 
 		// Validate TERM variable is set
-		_, err = ptyF.Write([]byte("/bin/echo $TERM\n"))
-		Expect(err).ShouldNot(HaveOccurred())
-		Eventually(session.Out).Should(gbytes.Say("xterm-256color"))
-
-		_, err = ptyF.Write([]byte("exit\n"))
+		_, err = ptyF.Write([]byte("/bin/echo $TERM\nexit\n"))
 		Expect(err).ShouldNot(HaveOccurred())
 		<-session.Exited
-
 		Expect(session).To(gexec.Exit(0))
+
+		Eventually(session.Out).Should(gbytes.Say("xterm-256color"))
 	})
 
 	It("does not print the usage on invalid commands", func() {
