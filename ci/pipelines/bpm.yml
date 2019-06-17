@@ -15,7 +15,6 @@ groups:
 - name: dependencies
   jobs:
   - bump-golang
-  - bump-runc
 - name: images
   jobs:
   - build-bpm-ci
@@ -198,29 +197,6 @@ jobs:
       BLOB_NAME: golang-linux-amd64.tar.gz
       BLOB_VERSION_FILE: version
       BLOB_DESTINATION: golang
-      BOSH_PRIVATE_CONFIG: ((bpm-private-yml))
-  - put: bpm-release
-    params: {repository: bumped-bosh-release, rebase: true}
-
-- name: bump-runc
-  serial: true
-  plan:
-  - in_parallel:
-    - get: runc-linux
-      trigger: true
-      params:
-        include_source_tarball: true
-    - get: bpm-release
-  - task: bump-blob
-    input_mapping:
-      bosh-release: bpm-release
-      blob-dir: runc-linux-src
-    file: bpm-release/ci/bump-blob.yml
-    params:
-      BLOB_NAME: runc.tar.gz
-      BLOB_VERSION_FILE: version
-      BLOB_DESTINATION: runc
-      BLOB_DOWNLOAD_FILENAME: source.tar.gz
       BOSH_PRIVATE_CONFIG: ((bpm-private-yml))
   - put: bpm-release
     params: {repository: bumped-bosh-release, rebase: true}
