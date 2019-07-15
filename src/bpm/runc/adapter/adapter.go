@@ -74,14 +74,14 @@ func (a *RuncAdapter) CreateJobPrerequisites(
 
 	var dirsToCreate, pathsToChown []string
 	for _, vol := range procCfg.AdditionalVolumes {
-		if vol.MountOnly {
-			continue
-		}
-
 		if vol.Shared {
 			if err := a.makeShared(vol); err != nil {
 				return nil, nil, err
 			}
+		}
+
+		if vol.MountOnly {
+			continue
 		}
 
 		fi, err := os.Stat(vol.Path)

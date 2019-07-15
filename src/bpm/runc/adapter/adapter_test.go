@@ -269,6 +269,19 @@ var _ = Describe("RuncAdapter", func() {
 					Expect(err).To(HaveOccurred())
 				})
 			})
+
+			Context("when the volume is also declared as mount only", func() {
+				BeforeEach(func() {
+					procCfg.AdditionalVolumes[len(procCfg.AdditionalVolumes)-1].MountOnly = true
+				})
+
+				It("still shares the mount point", func() {
+					_, _, err := runcAdapter.CreateJobPrerequisites(bpmCfg, procCfg, user)
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(mountSharer.sharedMounts).To(ConsistOf(sharedPath))
+				})
+			})
 		})
 
 		Context("when the user requests a persistent disk", func() {
