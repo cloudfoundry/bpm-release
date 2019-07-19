@@ -288,17 +288,22 @@ jobs:
       trigger: true
     - get: bpm-ci
       trigger: true
+      attempts: 3
     - get: golang-image
       trigger: true
+      attempts: 3
       params: {save: true}
     - get: runc-linux
       trigger: true
+      attempts: 3
     - get: tini
       trigger: true
+      attempts: 3
       params:
         globs:
         - tini-amd64
   - put: bpm-ci-image
+    attempts: 3
     params:
       load_base: golang-image
       build: .
