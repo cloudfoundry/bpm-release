@@ -1,3 +1,10 @@
+# v1.1.1
+
+* update libseccomp to v2.4.1 to fix CVE-2019-9893
+* `bpm trace` exits 0 if the user interrupts it
+* allow shared volumes to be `mount_only`
+* update go to 1.12.7
+
 # v1.1.0
 
 * allow unrestricted volume paths to contain globs
