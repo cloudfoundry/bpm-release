@@ -82,7 +82,7 @@ var _ = Describe("trace", func() {
 
 		session.Interrupt()
 		<-session.Exited
-		Expect(session).To(Or(gexec.Exit(0), gexec.Exit(130)))
+		Expect(session).To(gexec.Exit(0))
 	})
 
 	Context("when the container is failed", func() {

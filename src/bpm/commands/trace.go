@@ -96,6 +96,12 @@ func trace(cmd *cobra.Command, _ []string) error {
 		case sig := <-signals:
 			straceCmd.Process.Signal(sig)
 		case err := <-errCh:
+			if eerr, ok := err.(*exec.ExitError); ok {
+				// was the process killed by a signal?
+				if eerr.ExitCode() == -1 {
+					return nil
+				}
+			}
 			return err
 		}
 	}
