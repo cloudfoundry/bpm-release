@@ -78,7 +78,8 @@ var _ = Describe("trace", func() {
 
 		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 		Expect(err).ShouldNot(HaveOccurred())
-		Eventually(session.Err).Should(gbytes.Say("wait4"))
+		<-session.Err.Detect("wait4")
+		session.Err.CancelDetects()
 
 		session.Interrupt()
 		<-session.Exited

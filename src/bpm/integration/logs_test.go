@@ -109,10 +109,12 @@ var _ = Describe("logs", func() {
 		It("streams the logs until it receives a SIGINT signal", func() {
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
-			Eventually(session.Out).Should(gbytes.Say("Logging Line #100 to STDOUT\n"))
+			session.Out.Detect("Logging Line #100 to STDOUT\n")
+			session.Out.CancelDetects()
+
 			Consistently(session).ShouldNot(gexec.Exit())
 			session.Interrupt()
-			Eventually(session).Should(gexec.Exit())
+			<-session.Exited
 		})
 	})
 
