@@ -1,3 +1,7 @@
+# v1.1.2
+
+* update to go v1.12.8
+
 # v1.1.1
 
 * update libseccomp to v2.4.1 to fix CVE-2019-9893
