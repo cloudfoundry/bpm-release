@@ -1,3 +1,7 @@
+# v1.1.3
+
+* re-release of v1.1.2 due to an error in the release process
+
 # v1.1.2
 
 * update to go v1.12.8
