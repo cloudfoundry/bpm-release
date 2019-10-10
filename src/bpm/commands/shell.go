@@ -51,10 +51,10 @@ func shell(cmd *cobra.Command, _ []string) error {
 	}
 
 	process, err := runcLifecycle.StatProcess(bpmCfg)
-	if lifecycle.IsNotExist(err) || process.Status == models.ProcessStateFailed {
+	if err != nil && !lifecycle.IsNotExist(err) {
+		return fmt.Errorf("failed to get job: %s", err)
+	} else if lifecycle.IsNotExist(err) || process.Status == models.ProcessStateFailed {
 		return errors.New("process is not running or could not be found")
-	} else if err != nil {
-		return fmt.Errorf("failed to get process: %s", err)
 	}
 
 	return runcLifecycle.OpenShell(bpmCfg, os.Stdin, cmd.OutOrStdout(), cmd.OutOrStderr())

@@ -170,7 +170,7 @@ func (c *RuncClient) ContainerState(containerID string) (*specs.State, error) {
 }
 
 func decodeContainerStateErr(b []byte, err error) error {
-	r := regexp.MustCompile(`^\s*container "[^"]*" does not exist\s*$`)
+	r := regexp.MustCompile(`\s*container "[^"]*" does not exist\s*`)
 	if r.MatchString(string(b)) {
 		return nil
 	}
