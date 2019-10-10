@@ -272,6 +272,7 @@ releases:
 - name: bpm
   version: latest
 
+addons:
 - name: bpm
   jobs:
   - name: bpm
