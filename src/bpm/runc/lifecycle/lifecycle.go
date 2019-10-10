@@ -52,7 +52,7 @@ func IsNotExist(err error) bool {
 	return err == isNotExistError
 }
 
-//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
+//go:generate go run -mod=vendor github.com/maxbrunsfeld/counterfeiter/v6 -generate
 
 //counterfeiter:generate . UserFinder
 
