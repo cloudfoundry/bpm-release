@@ -19,7 +19,7 @@ bosh create-release \
 # Currently bosh will upload event if it has it, so check first
 STEMCELL=$(bosh stemcells | grep warden | awk '{print $1}')
 if [ -z "$STEMCELL" ]; then
-  bosh upload-stemcell https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-trusty-go_agent?v=3541.9 --sha1 44138ff5e30cc1d7724d88eaa70fab955b8011bd
+  bosh upload-stemcell https://s3.amazonaws.com/bosh-core-stemcells/456.30/bosh-stemcell-456.30-warden-boshlite-ubuntu-xenial-go_agent.tgz --sha1 61791b4d37ee3aacb9db36bb819c1fbcc4785a9e
 fi
 
 bosh upload-release \
@@ -28,17 +28,13 @@ bosh upload-release \
 bosh deploy \
   "${release_dir}/manifests/bosh-lite.yml"
 
-export GOPATH="${release_dir}"
-export PATH=$GOPATH/bin:$PATH
-
-
 # This is the IP of the first VM in the bosh in the concourse container.
 # It will not change unless we deploy more instances/jobs etc or the upstream
 # docker image changes its cloudconfig.
 AGENT_HOST="$(bosh vms | grep running | grep bpm | awk '{print $4}')"
 agent_port=1337
 
-pushd "${GOPATH}/src/bpm/acceptance" > /dev/null
+pushd "${release_dir}/src/bpm/acceptance" > /dev/null
   ginkgo -r -p -race -randomizeAllSpecs -- --agent-uri="http://${AGENT_HOST}:${agent_port}"
 popd > /dev/null
 

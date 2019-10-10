@@ -8,17 +8,10 @@ absolute_path() {
 
 scripts_path=$(absolute_path "$(dirname "$0")" )
 
-export GOPATH=$scripts_path/..
-export PATH=$GOPATH/bin:$PATH
+export RELEASE_PATH=$scripts_path/..
 
-pushd "${GOPATH}" > /dev/null
-  pushd "src/bpm" > /dev/null
-    go install ./vendor/github.com/onsi/ginkgo/ginkgo
-    go install ./vendor/github.com/maxbrunsfeld/counterfeiter
-  popd > /dev/null
-
-  pushd "src/bpm" > /dev/null
-    go generate ./...
-    ginkgo -r -p -race -randomizeAllSpecs -skipPackage "acceptance" "$@"
-  popd > /dev/null
+pushd "${RELEASE_PATH}/src/bpm" > /dev/null
+  go install -mod=vendor github.com/onsi/ginkgo/ginkgo
+  go generate ./...
+  ginkgo -mod=vendor -r -p -race -randomizeAllSpecs -skipPackage "acceptance" "$@"
 popd

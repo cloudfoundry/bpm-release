@@ -2,8 +2,7 @@
 
 The BPM team uses GitHub and accepts contributions via [pull request](https://help.github.com/articles/using-pull-requests).
 
-The `bpm-release` repository is a [BOSH](https://github.com/cloudfoundry/bosh) release for BPM. The root of this repository doubles as a Golang [`GOPATH`](https://golang.org/doc/code.html#GOPATH).
-For more information about configuring your Golang environment and automatically setting your `GOPATH` to the release directory.
+The `bpm-release` repository is a [BOSH](https://github.com/cloudfoundry/bosh) release for BPM.
 
 Changes are via pull request (PR) to the master branch of its repository. 
 

@@ -19,6 +19,5 @@ $DOCKER pull cfbpm/bpm-ci:latest
 $DOCKER run \
   --privileged \
   -v  "${scripts_path}/..:/bpm" \
-  -e "GOPATH=/bpm" \
   -it cfbpm/bpm-ci:latest \
-  /bin/bash -c 'export PATH=$PATH:$GOPATH/bin; /bin/bash'
+  /bin/bash

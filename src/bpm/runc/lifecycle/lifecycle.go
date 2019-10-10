@@ -52,26 +52,28 @@ func IsNotExist(err error) bool {
 	return err == isNotExistError
 }
 
-//go:generate counterfeiter . UserFinder
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
+
+//counterfeiter:generate . UserFinder
 
 type UserFinder interface {
 	Lookup(username string) (specs.User, error)
 }
 
-//go:generate counterfeiter . CommandRunner
+//counterfeiter:generate . CommandRunner
 
 type CommandRunner interface {
 	Run(*exec.Cmd) error
 }
 
-//go:generate counterfeiter . RuncAdapter
+//counterfeiter:generate . RuncAdapter
 
 type RuncAdapter interface {
 	CreateJobPrerequisites(bpmCfg *config.BPMConfig, procCfg *config.ProcessConfig, user specs.User) (*os.File, *os.File, error)
 	BuildSpec(logger lager.Logger, bpmCfg *config.BPMConfig, procCfg *config.ProcessConfig, user specs.User) (specs.Spec, error)
 }
 
-//go:generate counterfeiter . RuncClient
+//counterfeiter:generate . RuncClient
 
 type RuncClient interface {
 	CreateBundle(bundlePath string, jobSpec specs.Spec, user specs.User) error

@@ -21,14 +21,17 @@ bosh deploy \
   "$PWD/bpm-release/manifests/bosh-lite-ci.yml" \
   -v "stemcell_name=${STEMCELL_NAME}"
 
-export GOPATH="$PWD/bpm-release"
-export PATH=$GOPATH/bin:$PATH
+export RELEASE_PATH="$PWD/bpm-release"
+export GOBIN="$RELEASE_PATH/bin"
+export PATH="$PATH:$GOBIN"
 
-go install bpm/vendor/github.com/onsi/ginkgo/ginkgo
+pushd "${RELEASE_PATH}/src/bpm" > /dev/null
+  go install -mod=vendor github.com/onsi/ginkgo/ginkgo
+popd
 
 AGENT_HOST="$(bosh -d bpm instances | grep running | awk '{ print $4 }')"
 agent_port=1337
 
-pushd "${GOPATH}/src/bpm/acceptance" > /dev/null
+pushd "${RELEASE_PATH}/src/bpm/acceptance" > /dev/null
   ginkgo -r -p -race -randomizeAllSpecs -- --agent-uri="http://${AGENT_HOST}:${agent_port}"
 popd > /dev/null
