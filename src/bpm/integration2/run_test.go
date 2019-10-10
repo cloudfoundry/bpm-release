@@ -136,7 +136,7 @@ func TestRunWithVolumeFlags(t *testing.T) {
 		"-v", fmt.Sprintf("%s:writable,allow_executions", extraVolumeDir),
 		"-e", fmt.Sprintf("FILE_TO_WRITE_TO=%s", extraVolumeFile),
 	)
-	output, err := cmd.CombinedOutput()
+	output, err := cmd.Output()
 	if err != nil {
 		t.Fatalf("failed to run bpm: %s", output)
 	}
@@ -145,7 +145,7 @@ func TestRunWithVolumeFlags(t *testing.T) {
 		t.Fatalf("could not parse output as fstab (%q): %q", output, err)
 	}
 	if len(mounts) != 1 {
-		t.Fatalf("more than one mount was grepped, got: %d", len(mounts))
+		t.Fatalf("more than one mount was grepped, got: %d (%#v)", len(mounts), mounts)
 	}
 	mnt := mounts[0]
 
