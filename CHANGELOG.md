@@ -1,3 +1,8 @@
+# v1.1.4
+
+* update to go v1.13.1
+* update runc to v1.0.0-rc9
+
 # v1.1.3
 
 * re-release of v1.1.2 due to an error in the release process
