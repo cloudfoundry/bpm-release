@@ -33,5 +33,5 @@ AGENT_HOST="$(bosh -d bpm instances | grep running | awk '{ print $4 }')"
 agent_port=1337
 
 pushd "${RELEASE_PATH}/src/bpm/acceptance" > /dev/null
-  ginkgo -r -p -race -randomizeAllSpecs -- --agent-uri="http://${AGENT_HOST}:${agent_port}"
+  ginkgo -mod=vendor -r -p -race -randomizeAllSpecs -- --agent-uri="http://${AGENT_HOST}:${agent_port}"
 popd > /dev/null
