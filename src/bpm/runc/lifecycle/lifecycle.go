@@ -76,7 +76,7 @@ type RuncAdapter interface {
 //counterfeiter:generate . RuncClient
 
 type RuncClient interface {
-	CreateBundle(bundlePath string, jobSpec specs.Spec, user specs.User) error
+	CreateBundle(bundlePath string, jobSpec specs.Spec, user specs.User, image string) error
 	RunContainer(pidFilePath, bundlePath, containerID string, detach bool, stdout, stderr io.Writer) (int, error)
 	Exec(containerID, command string, stdin io.Reader, stdout, stderr io.Writer) error
 	ContainerState(containerID string) (*specs.State, error)
@@ -180,7 +180,7 @@ func (j *RuncLifecycle) setupProcess(logger lager.Logger, bpmCfg *config.BPMConf
 	}
 
 	logger.Info("creating-bundle")
-	err = j.runcClient.CreateBundle(bpmCfg.BundlePath(), spec, user)
+	err = j.runcClient.CreateBundle(bpmCfg.BundlePath(), spec, user, procCfg.Image)
 	if err != nil {
 		return nil, nil, fmt.Errorf("bundle build failure: %s", err.Error())
 	}

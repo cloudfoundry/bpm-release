@@ -34,6 +34,7 @@ type JobConfig struct {
 type ProcessConfig struct {
 	Name              string            `yaml:"name"`
 	Executable        string            `yaml:"executable"`
+	Image             string            `yaml:"image"`
 	Args              []string          `yaml:"args"`
 	Env               map[string]string `yaml:"env"`
 	AdditionalVolumes []Volume          `yaml:"additional_volumes"`
@@ -57,6 +58,7 @@ type Hooks struct {
 }
 
 type Volume struct {
+	HostPath        string `yaml:"host_path"`
 	Path            string `yaml:"path"`
 	Writable        bool   `yaml:"writable"`
 	AllowExecutions bool   `yaml:"allow_executions"`
@@ -85,9 +87,9 @@ func ParseJobConfig(configPath string) (*JobConfig, error) {
 	return &cfg, nil
 }
 
-func (c *JobConfig) Validate(boshEnv *bosh.Env, defaultVolumes []string) error {
+func (c *JobConfig) Validate(boshEnv *bosh.Env, defaultVolumes []string, jobName string) error {
 	for _, v := range c.Processes {
-		if err := v.Validate(boshEnv, defaultVolumes); err != nil {
+		if err := v.Validate(boshEnv, defaultVolumes, jobName); err != nil {
 			return err
 		}
 	}
@@ -95,7 +97,7 @@ func (c *JobConfig) Validate(boshEnv *bosh.Env, defaultVolumes []string) error {
 	return nil
 }
 
-func (c *ProcessConfig) Validate(boshEnv *bosh.Env, defaultVolumes []string) error {
+func (c *ProcessConfig) Validate(boshEnv *bosh.Env, defaultVolumes []string, jobName string) error {
 	if c.Name == "" {
 		return errors.New("invalid config: name")
 	}
@@ -107,24 +109,29 @@ func (c *ProcessConfig) Validate(boshEnv *bosh.Env, defaultVolumes []string) err
 	dataPrefix := boshEnv.Root().Join("data").External()
 	storePrefix := boshEnv.Root().Join("store").External()
 	socketPrefix := boshEnv.Root().Join("sys", "run").External()
+	jobPrefix := boshEnv.JobDir(jobName).External()
 
 	for _, vol := range c.AdditionalVolumes {
-		volCleaned := filepath.Clean(vol.Path)
-		if volCleaned != vol.Path {
-			return fmt.Errorf("volume path must be canonical, expected %s but got %s", volCleaned, vol.Path)
+		if vol.HostPath == "" {
+			vol.HostPath = vol.Path
+		}
+
+		volCleaned := filepath.Clean(vol.HostPath)
+		if volCleaned != vol.HostPath {
+			return fmt.Errorf("volume path must be canonical, expected %s but got %s", volCleaned, vol.HostPath)
 		}
 
 		if contains(defaultVolumes, volCleaned) {
 			return fmt.Errorf(
 				"invalid volume path: %s cannot conflict with default job data or store directories",
-				vol.Path,
+				vol.HostPath,
 			)
 		}
 
-		if !pathIsIn(volCleaned, dataPrefix, storePrefix, socketPrefix) {
+		if !pathIsIn(volCleaned, dataPrefix, storePrefix, socketPrefix, jobPrefix) {
 			return fmt.Errorf(
 				"invalid volume path: %s must be within (%s, %s, %s)",
-				vol.Path,
+				vol.HostPath,
 				dataPrefix,
 				storePrefix,
 				socketPrefix,
@@ -172,7 +179,7 @@ func (c *ProcessConfig) AddVolumes(
 		c.AdditionalVolumes = append(c.AdditionalVolumes, v)
 	}
 
-	return c.Validate(boshEnv, defaultVolumes)
+	return c.Validate(boshEnv, defaultVolumes, "")
 }
 
 // AddEnvVars allows additional environment variables to be added to a process
@@ -195,7 +202,7 @@ func (c *ProcessConfig) AddEnvVars(
 		key, value := parts[0], parts[1]
 		c.Env[key] = value
 	}
-	return c.Validate(boshEnv, defaultVolumes)
+	return c.Validate(boshEnv, defaultVolumes, "")
 }
 
 func contains(elements []string, s string) bool {

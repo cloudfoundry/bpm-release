@@ -132,7 +132,7 @@ func (c *BPMConfig) ParseJobConfig() (*JobConfig, error) {
 		return nil, err
 	}
 
-	err = cfg.Validate(c.boshEnv, c.DefaultVolumes())
+	err = cfg.Validate(c.boshEnv, c.DefaultVolumes(), c.JobName())
 	if err != nil {
 		return nil, err
 	}

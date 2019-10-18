@@ -226,7 +226,10 @@ func (a *RuncAdapter) BuildSpec(
 	}
 
 	ms := newMountDedup(logger)
-	ms.addMounts(systemIdentityMounts(mountResolvConf))
+	if procCfg.Image == "" {
+		ms.addMounts(systemIdentityMounts(mountResolvConf))
+	}
+
 	ms.addMounts(boshMounts(bpmCfg, procCfg.EphemeralDisk, procCfg.PersistentDisk))
 	ms.addMounts(userProvidedIdentityMounts(bpmCfg, procCfg.AdditionalVolumes))
 	if procCfg.Unsafe != nil && len(procCfg.Unsafe.UnrestrictedVolumes) > 0 {
@@ -368,7 +371,7 @@ func userProvidedIdentityMounts(bpmCfg *config.BPMConfig, volumes []config.Volum
 			opts = append(opts, AllowWrites())
 		}
 
-		mnts = append(mnts, IdentityMount(vol.Path, opts...))
+		mnts = append(mnts, Mount(vol.HostPath, vol.Path, opts...))
 	}
 
 	return mnts

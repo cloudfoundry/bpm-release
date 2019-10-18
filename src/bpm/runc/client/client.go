@@ -75,16 +75,24 @@ func (*RuncClient) CreateBundle(
 	bundlePath string,
 	jobSpec specs.Spec,
 	user specs.User,
+	image string,
 ) error {
 	err := os.MkdirAll(bundlePath, 0700)
 	if err != nil {
 		return err
 	}
 
-	rootfsPath := filepath.Join(bundlePath, "rootfs")
-	err = os.MkdirAll(rootfsPath, 0755)
+	err = os.MkdirAll(jobSpec.Root.Path, 0755)
 	if err != nil {
 		return err
+	}
+
+	if image != "" {
+		untarCmd := exec.Command("tar", "xvf", image, "-C", jobSpec.Root.Path)
+		output, err := untarCmd.CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("untar failed: %s, %s", err.Error(), string(output))
+		}
 	}
 
 	f, err := os.OpenFile(filepath.Join(bundlePath, "config.json"), os.O_RDWR|os.O_CREATE, 0600)
