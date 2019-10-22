@@ -18,7 +18,9 @@ process is as follows:
    finished or delivered stories in the
    [bpm tracker project](https://www.pivotaltracker.com/n/projects/2070399).
 
-2. Trigger the appropriate concourse build to bump the semantic version
+2. Make sure the CHANGELOG is up-to-date!
+
+3. Trigger the appropriate concourse build to bump the semantic version
 
    We manage the bpm version through the
    [semantic version resource](https://github.com/concourse/semver-resource).
@@ -26,7 +28,7 @@ process is as follows:
    build to bump either the patch, minor, or major versions. All of these builds
    can be found [here](https://wings.pivotal.io/teams/bpm/pipelines/bpm?groups=version).
 
-3. Trigger the [create-final-release](https://wings.pivotal.io/teams/bpm/pipelines/bpm/jobs/create-final-release/builds/15) build
+4. Trigger the [create-final-release](https://wings.pivotal.io/teams/bpm/pipelines/bpm/jobs/create-final-release/builds/15) build
 
    This build will perform the necessary steps to create a final BOSH release and
    tag the corresponding commit associated with the final release. Specifically it
@@ -35,7 +37,7 @@ process is as follows:
    associated with the final release, and re-add the `+dev` to the
    [local version file](../../src/version) with the newly released version of bpm.
 
-4. Create a Github release off the appropriate tag
+5. Create a Github release off the appropriate tag
 
    Run `scripts/release.sh`! This will release the latest tag in the
    repository. When an editor appears you should make the first line of the
