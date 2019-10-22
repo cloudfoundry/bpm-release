@@ -1,3 +1,7 @@
+# v1.1.5
+
+* update to go v1.13.3
+
 # v1.1.4
 
 * update to go v1.13.1
