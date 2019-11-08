@@ -1,3 +1,7 @@
+# v1.1.6
+
+* update libseccomp to v2.4.2
+
 # v1.1.5
 
 * update to go v1.13.3

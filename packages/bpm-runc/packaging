@@ -33,7 +33,7 @@ PKG_CONFIG_PREFIX="$(mktemp -d)"
 
 LIBSECCOMP_PREFIX="${BOSH_INSTALL_TARGET}/lib/libseccomp"
 LIBSECCOMP_RUNTIME_PATH=/var/vcap/packages/bpm/lib/libseccomp/lib
-LIBSECCOMP_VERSION=2.4.1
+LIBSECCOMP_VERSION=2.4.2
 
 RUNC_PACKAGE_PATH=github.com/opencontainers/runc
 
