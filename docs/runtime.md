@@ -19,7 +19,8 @@ terminated.
 If you require longer than this then you should use a [drain script][drain] for
 your server. The drain script should put your server in such a state that it
 can shutdown within 15 seconds. It is acceptable and supported to terminate
-your process while running the drain script.
+your process while running the drain script. However, if you do terminate the
+process then you should also delete the PID file.
 
 [post-start]:https://bosh.io/docs/post-start.html 
 [drain]:https://bosh.io/docs/drain.html
