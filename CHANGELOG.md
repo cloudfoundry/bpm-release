@@ -1,6 +1,7 @@
 # v1.1.6
 
 * update libseccomp to v2.4.2
+* validate job config when using `bpm run`
 
 # v1.1.5
 
