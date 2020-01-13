@@ -82,9 +82,10 @@ directory of your job.
 | `mount_only`       | boolean  | No           | Whether or not BPM should just mount this directory rather than creating and chowning a backing directory too.           |
 | `shared`           | boolean  | No           | Whether or not BPM should share the mount (internal mountpoints are visible in all namespaces). Not usable in unsafe yet.|
 
-*Note: The volumes in additional volumes must have a path inside
-`/var/vcap/data`, `/var/vcap/store`, `/var/vcap/sys/run`. If you need to mount
-a volume outside these paths then you must use the `unrestricted_volumes` key.
+!!! note 
+    The volumes in additional volumes must have a path inside
+    `/var/vcap/data`, `/var/vcap/store`, `/var/vcap/sys/run`. If you need to mount
+    a volume outside these paths then you must use the `unrestricted_volumes` key.
 
 The `unrestricted_volumes` stanza can include globs in the `path` attribute.
 These globs will be evaluated by BPM on startup and each glob match will be
@@ -179,8 +180,9 @@ bpm run -v /var/vcap/data/database:writable,allow_executions -v ... [...]
 bpm run -e KEY=value -e ... [...]
 ```
 
-**Note:** The environment variable flag should not be used for secret values as
-these strings will appear in the process table.
+!!! note
+    The environment variable flag should not be used for secret values as
+    these strings will appear in the process table.
 
 The both flags can be specified multiple times. The volume flag can use the
 `writable`, `mount_only`, or `allow_executions` options.
