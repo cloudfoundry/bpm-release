@@ -35,7 +35,7 @@ i.e. Envoy, linkerd, Istio.
 
 ### Processes
 
-Jobs can made up of multiple processes though most jobs will only have a single
+Jobs can be made up of multiple processes, though most jobs will only have a single
 process. Processes are isolated from one another and can have independent
 performance restrictions imposed upon them but processes do share portions of
 the filesystem. Processes are *always* collocated on the same machine as each
