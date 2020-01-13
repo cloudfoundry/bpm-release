@@ -1,8 +1,8 @@
 # bpm
 
 bpm, as the README outlines, is a stepping stone to isolate collocated BOSH
-jobs from one another. Ideally this project should not exist and instead we
-would use an existing container scheduler but we have a huge number of existing
+jobs from one another. Ideally, this project should not exist and instead we
+should use an existing container scheduler. However, we have a huge number of existing
 BOSH releases which would benefit from this isolation. bpm provides a
 straightforward but opinionated runtime for existing BOSH jobs.
 
