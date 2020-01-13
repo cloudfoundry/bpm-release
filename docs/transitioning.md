@@ -16,8 +16,9 @@ check process <job>
   group vcap
 ```
 
-*Note*: You should use `bpm` from the canonical location of
-`/var/vcap/jobs/bpm/bin/bpm`.
+!!! note
+    You should use `bpm` from the canonical location of
+    `/var/vcap/jobs/bpm/bin/bpm`.
 
 ## Create `bpm.yml` Configuration File
 
@@ -81,9 +82,10 @@ env:
   KEY: VALUE
 ```
 
-*Note*: that it is not currently possible for one value to interpolate values
-from another. If this is required, perform the interpolation earlier in the erb
-rendering, or later in a shell script that is called by BPM.
+!!! note
+    It is not currently possible for one value to interpolate values
+    from another. If this is required, perform the interpolation earlier in the erb
+    rendering, or later in a shell script that is called by BPM.
 
 #### Runtime Configuration
 
