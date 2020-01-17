@@ -318,11 +318,11 @@ to send your logs from the machine to an external log aggregator and store:
 
 This decision was made to encourage consistency and to keep features in one
 place: BPM puts logs in the BOSH log directory and the syslog release takes
-those logs and puts them somewhere else. This means this if we need to fix a
+those logs and puts them somewhere else. This means that if we need to fix a
 bug in the syslog forwarding then we don't need to bump every release.
 
 If you have some jobs using bpm, but they are co-located with other jobs using
-`_ctl` scripts, avoid double logs by adding providing a `custom_rule` argument
+`_ctl` scripts, avoid double logs by adding a `custom_rule` argument
 to filter out messages originating from logger. `_ctl` scripts write to logger
 with the program name `vcap.[JOB_NAME]`, so we can filter out logs where the
 program name starts with `vcap`.
