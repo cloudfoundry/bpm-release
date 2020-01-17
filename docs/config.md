@@ -200,13 +200,13 @@ true}` attribute in their configuration. Jobs should almost never use this
 configuration option as it was only added for jobs which truly need to run as a
 superuser such as Garden.
 
-Running a privilieged job removes some of the safeguards which surround a bpm
-process. The full list of effects is:
+Running a privileged job removes some of the safeguards which surround a bpm
+process. The full list of the effects is as follows:
 
-* run the job as user `root` and group `root`
-* grant a larger list of privileges (taken from docker's privileged list)
-* allow new privileges to be gained
-* remove seccomp limitations
-* remove masked and readonly paths (still applies to volumes and
+* runs as user `root` and group `root`
+* grants a larger list of privileges (taken from docker's privileged list)
+* allows new privileges to be gained
+* removes seccomp limitations
+* removes masked and readonly paths (still applies to volumes and
   `/var/vcap/{data,store}`)
 * all mounts have their nosuid option removed
