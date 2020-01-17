@@ -14,12 +14,12 @@ nouns and semantics used by bpm.
 
 ### Jobs
 
-Jobs in bpm are identical semantically to those in BOSH. A job is an
+Jobs in bpm are semantically identical to those in BOSH. A job is an
 independently schedule-able server or collection of servers which provide some
-kind of service. Jobs can be collocated with other jobs but should not require
+kind of service. Jobs can be collocated with other jobs, but should not require
 this. They should be able to speak over the network to wherever the other job
 is located. However, a minority jobs are designed to be deployed as a sidecar
-to other jobs so this definition isn't perfect.
+to other jobs, so this definition isn't perfect.
 
 bpm isolates collocated jobs from one another. Namespaces are applied to the
 host filesystem and process tables such that jobs are not aware of each other.
