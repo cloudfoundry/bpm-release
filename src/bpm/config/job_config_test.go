@@ -138,18 +138,13 @@ var _ = Describe("Config", func() {
 
 				jobCfg.Processes[0].AdditionalVolumes = []config.Volume{
 					{Path: "/var/vcap/data/valid"},
-					{Path: "/var/vcap/invalid"},
+					{Path: "/var/invalid"},
 				}
 				Expect(jobCfg.Validate(boshEnv, []string{})).To(HaveOccurred())
 
 				jobCfg.Processes[0].AdditionalVolumes = []config.Volume{
-					{Path: "/var/vcap/data/valid"},
-					{Path: "/var/vcap/data"},
-				}
-				Expect(jobCfg.Validate(boshEnv, []string{})).To(HaveOccurred())
-
-				jobCfg.Processes[0].AdditionalVolumes = []config.Volume{
-					{Path: "/var/vcap/store"},
+					{Path: "/var/vcap/valid"},
+					{Path: "/var/vcap"},
 				}
 				Expect(jobCfg.Validate(boshEnv, []string{})).To(HaveOccurred())
 
@@ -202,12 +197,12 @@ var _ = Describe("Config", func() {
 		It("adds the volumes to the list of AdditionalVolumes", func() {
 			err := cfg.AddVolumes(
 				[]string{
-					"/path/to/data/volume1",
-					"/path/to/store/volume2:writable",
-					"/path/to/data/volume3:mount_only",
-					"/path/to/store/volume4:allow_executions",
-					"/path/to/data/volume5:writable,mount_only,allow_executions",
-					"/path/to/data/volume6:shared",
+					"/var/vcap/data/volume1",
+					"/var/vcap/store/volume2:writable",
+					"/var/vcap/data/volume3:mount_only",
+					"/var/vcap/store/volume4:allow_executions",
+					"/var/vcap/data/volume5:writable,mount_only,allow_executions",
+					"/var/vcap/data/volume6:shared",
 				},
 				boshEnv,
 				[]string{},
@@ -216,28 +211,28 @@ var _ = Describe("Config", func() {
 
 			Expect(cfg.AdditionalVolumes).To(HaveLen(6))
 			Expect(cfg.AdditionalVolumes).To(ContainElement(config.Volume{
-				Path: "/path/to/data/volume1",
+				Path: "/var/vcap/data/volume1",
 			}))
 			Expect(cfg.AdditionalVolumes).To(ContainElement(config.Volume{
-				Path:     "/path/to/store/volume2",
+				Path:     "/var/vcap/store/volume2",
 				Writable: true,
 			}))
 			Expect(cfg.AdditionalVolumes).To(ContainElement(config.Volume{
-				Path:      "/path/to/data/volume3",
+				Path:      "/var/vcap/data/volume3",
 				MountOnly: true,
 			}))
 			Expect(cfg.AdditionalVolumes).To(ContainElement(config.Volume{
-				Path:            "/path/to/store/volume4",
+				Path:            "/var/vcap/store/volume4",
 				AllowExecutions: true,
 			}))
 			Expect(cfg.AdditionalVolumes).To(ContainElement(config.Volume{
-				Path:            "/path/to/data/volume5",
+				Path:            "/var/vcap/data/volume5",
 				Writable:        true,
 				MountOnly:       true,
 				AllowExecutions: true,
 			}))
 			Expect(cfg.AdditionalVolumes).To(ContainElement(config.Volume{
-				Path:   "/path/to/data/volume6",
+				Path:   "/var/vcap/data/volume6",
 				Shared: true,
 			}))
 		})
