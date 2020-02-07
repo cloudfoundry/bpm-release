@@ -104,10 +104,6 @@ func (c *ProcessConfig) Validate(boshEnv *bosh.Env, defaultVolumes []string) err
 		return errors.New("invalid config: executable")
 	}
 
-	dataPrefix := boshEnv.Root().Join("data").External()
-	storePrefix := boshEnv.Root().Join("store").External()
-	socketPrefix := boshEnv.Root().Join("sys", "run").External()
-
 	for _, vol := range c.AdditionalVolumes {
 		volCleaned := filepath.Clean(vol.Path)
 		if volCleaned != vol.Path {
@@ -121,13 +117,11 @@ func (c *ProcessConfig) Validate(boshEnv *bosh.Env, defaultVolumes []string) err
 			)
 		}
 
-		if !pathIsIn(volCleaned, dataPrefix, storePrefix, socketPrefix) {
+		if !pathIsIn(volCleaned, boshEnv.Root().External()) {
 			return fmt.Errorf(
-				"invalid volume path: %s must be within (%s, %s, %s)",
+				"invalid volume path: %s must be within %s",
 				vol.Path,
-				dataPrefix,
-				storePrefix,
-				socketPrefix,
+				boshEnv.Root().External(),
 			)
 		}
 	}
@@ -218,10 +212,16 @@ func pathIsIn(path string, prefixes ...string) bool {
 			continue
 		}
 
+		match := true
 		for i, validPart := range validParts {
 			if volParts[i] != validPart {
-				continue
+				match = false
+				break
 			}
+		}
+
+		if !match {
+			continue
 		}
 
 		return true

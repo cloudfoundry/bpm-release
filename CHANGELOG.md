@@ -1,6 +1,8 @@
 # v1.1.7
 
 * update runc to v1.0.0-rc10
+* fix volume validation for `additional_volumes`
+* relax volume validation to only check if path is in `/var/vcap`
 
 # v1.1.6
 
