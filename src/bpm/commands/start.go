@@ -104,6 +104,11 @@ func start(cmd *cobra.Command, _ []string) error {
 	default:
 		if err := runcLifecycle.StartProcess(logger, bpmCfg, procCfg); err != nil {
 			logger.Error("failed-to-start", err)
+
+			if cerr := forceCleanupBrokenRuncState(logger, runcLifecycle); cerr != nil {
+				logger.Error("failed-cleaning-up-broken-job", cerr)
+			}
+
 			return fmt.Errorf("failed to start job-process: %s", err)
 		}
 	}

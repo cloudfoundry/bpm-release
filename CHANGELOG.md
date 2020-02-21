@@ -1,3 +1,7 @@
+# v1.1.8
+
+* cleanup broken runc state after restart
+
 # v1.1.7
 
 * update runc to v1.0.0-rc10
