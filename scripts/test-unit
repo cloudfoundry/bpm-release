@@ -12,6 +12,5 @@ export RELEASE_PATH=$scripts_path/..
 
 pushd "${RELEASE_PATH}/src/bpm" > /dev/null
   go install -mod=vendor github.com/onsi/ginkgo/ginkgo
-  go generate -mod=vendor ./...
   ginkgo -mod=vendor -r -p -race -randomizeAllSpecs -skipPackage "acceptance" "$@"
 popd

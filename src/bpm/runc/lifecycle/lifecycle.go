@@ -52,28 +52,20 @@ func IsNotExist(err error) bool {
 	return err == isNotExistError
 }
 
-//go:generate go run -mod=vendor github.com/maxbrunsfeld/counterfeiter/v6 -generate
-
-//counterfeiter:generate . UserFinder
+//go:generate go run -mod=vendor github.com/golang/mock/mockgen -copyright_file ./mock_lifecycle/header.txt -destination ./mock_lifecycle/mocks.go bpm/runc/lifecycle UserFinder,CommandRunner,RuncAdapter,RuncClient
 
 type UserFinder interface {
 	Lookup(username string) (specs.User, error)
 }
 
-//counterfeiter:generate . CommandRunner
-
 type CommandRunner interface {
 	Run(*exec.Cmd) error
 }
-
-//counterfeiter:generate . RuncAdapter
 
 type RuncAdapter interface {
 	CreateJobPrerequisites(bpmCfg *config.BPMConfig, procCfg *config.ProcessConfig, user specs.User) (*os.File, *os.File, error)
 	BuildSpec(logger lager.Logger, bpmCfg *config.BPMConfig, procCfg *config.ProcessConfig, user specs.User) (specs.Spec, error)
 }
-
-//counterfeiter:generate . RuncClient
 
 type RuncClient interface {
 	CreateBundle(bundlePath string, jobSpec specs.Spec, user specs.User) error

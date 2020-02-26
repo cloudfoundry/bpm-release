@@ -7,8 +7,8 @@ require (
 	code.cloudfoundry.org/clock v0.0.0-20180518195852-02e53af36e6c
 	code.cloudfoundry.org/lager v2.0.0+incompatible
 	github.com/docker/go-units v0.4.0 // indirect
+	github.com/golang/mock v1.4.1-0.20200222213444-b48cb6623c04
 	github.com/kr/pty v1.1.8
-	github.com/maxbrunsfeld/counterfeiter/v6 v6.2.2
 	github.com/onsi/ginkgo v1.10.2
 	github.com/onsi/gomega v1.7.0
 	github.com/opencontainers/runc v1.0.0-rc9

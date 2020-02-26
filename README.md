@@ -96,12 +96,6 @@ container:
     $ cd ~/workspace/bpm-release
     ```
 
-* Install `counterfeiter` for generating fakes:
-
-    ```sh
-    $ cd && go get github.com/maxbrunsfeld/counterfeiter
-    ```
-
 * Enable `direnv` and run tests:
 
     ```sh
