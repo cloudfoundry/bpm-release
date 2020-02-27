@@ -51,6 +51,7 @@ func New(t *testing.T) *Sandbox {
 		filepath.Join(root, "packages", "bpm", "bin"),
 		filepath.Join(root, "data", "packages"),
 		filepath.Join(root, "sys", "log"),
+		filepath.Join(root, "sys", "run"),
 	}
 
 	for _, path := range paths {

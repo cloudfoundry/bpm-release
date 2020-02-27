@@ -128,14 +128,14 @@ func setupBoshDirectories(root, job string) string {
 	jobsDataDir := filepath.Join(root, "data", job)
 	Expect(os.MkdirAll(jobsDataDir, 0755)).To(Succeed())
 
+	runDir := filepath.Join(root, "sys", "run", "bpm-runc")
+	Expect(os.MkdirAll(runDir, 0755)).To(Succeed())
+
 	storeDir := filepath.Join(root, "store")
 	Expect(os.MkdirAll(storeDir, 0755)).To(Succeed())
 
 	dataPackagePath := filepath.Join(root, "data", "packages")
 	Expect(os.MkdirAll(dataPackagePath, 0755)).To(Succeed())
-
-	runcRoot := filepath.Join(root, "data", "bpm", "runc")
-	Expect(os.MkdirAll(runcRoot, 0755)).To(Succeed())
 
 	bpmPackagePath := filepath.Join(root, "packages", "bpm", "bin")
 	Expect(os.MkdirAll(bpmPackagePath, 0755)).To(Succeed())
@@ -143,7 +143,7 @@ func setupBoshDirectories(root, job string) string {
 	prepareRunc(bpmPackagePath)
 	prepareTini(bpmPackagePath)
 
-	return runcRoot
+	return runDir
 }
 
 func copyFile(dst, src string) error {

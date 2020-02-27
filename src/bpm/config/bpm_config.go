@@ -32,7 +32,7 @@ func BundlesRoot(env *bosh.Env) string {
 }
 
 func RuncRoot(env *bosh.Env) string {
-	return env.Root().Join("data", "bpm", "runc").External()
+	return env.Root().Join("sys", "run", "bpm-runc").External()
 }
 
 func LocksPath(env *bosh.Env) string {
