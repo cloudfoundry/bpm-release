@@ -41,21 +41,6 @@ Documentation can be found in the [docs](docs) directory. As we're developing
 bpm this documentation may lead the implementation changes briefly, but it will
 eventually become the official source of bpm documentation.
 
-## Plans
-
-We working to make bpm a feature-flagged addition to the releases which are
-part of [CF Deployment][cf-deployment]. To date bpm has been incorporated into
-[Diego release][diego-release] as of v1.26.0, and [CAPI release][capi-release]
-as of v1.42.0.
-
-This entire project can also be viewed as a step towards the isolation of BOSH
-jobs such that they can be run on many different work schedulers without code
-changes.
-
-[cf-deployment]: https://github.com/cloudfoundry/cf-deployment
-[diego-release]: https://github.com/cloudfoundry/diego-release/tree/v1.26.0
-[capi-release]: https://github.com/cloudfoundry/capi-release/tree/1.42.0
-
 ## Usage
 
 bpm has now reached 1.0 and has a stable [public API](docs/public_interface.md) 
