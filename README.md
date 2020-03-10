@@ -77,14 +77,13 @@ container:
 
     ```sh
     $ cd ~/workspace
-    $ git clone https://github.com/pivotal-cf/bpm-release.git --recursive
+    $ git clone https://github.com/pivotal-cf/bpm-release.git
     $ cd ~/workspace/bpm-release
     ```
 
-* Enable `direnv` and run tests:
+* Run tests:
 
     ```sh
     $ cd ~/workspace/bpm-release
-    $ direnv allow .envrc
     $ ./scripts/test-with-docker
     ```
