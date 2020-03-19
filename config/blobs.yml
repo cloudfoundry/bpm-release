@@ -1,7 +1,7 @@
 golang/golang-linux-amd64.tar.gz:
-  size: 123550266
-  object_id: d0095cd2-14ad-440b-421c-f306d6bbe047
-  sha: b449f1b0daf8435cd25387901b296eeacd115d38
+  size: 123631885
+  object_id: 287ded15-cc4d-4a66-7eed-41ce0a22cd82
+  sha: 3d7e8b5d37cf2bc882ae6dad910f2b565c7683b7
 libseccomp/libseccomp-2.4.2.tar.gz:
   size: 601014
   object_id: 5a4a65b5-0065-412e-67bf-66114cf4d423
