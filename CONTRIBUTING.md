@@ -72,3 +72,25 @@ $ ./scripts/test-with-docker
 $ cd bpm-release
 $ ./scripts/bosh-lite-acceptance-test
 ```
+
+## Updating Dependencies
+
+BPM has a few dependencies:
+
+* Go
+* runc
+  * pkg-config
+  * libseccomp
+* tini
+
+We want to keep these up to date to avoid security vulnerabilities sneaking
+into the tool. However, we eschew blanket automatic dependency updates as they
+can often cause more problems than they solve via supply chain attacks.
+
+We update the Go dependency automatically in CI as we have decided to trust
+that supply chain and it is the dependency which updates the most frequently.
+
+The other dependencies are updated manually using their distributables (be that
+source code or, in the case of libseccomp, the amended source code from their
+GitHub release). We have an RSS bot in Slack watching these releases so that we
+can respond to them quickly.
