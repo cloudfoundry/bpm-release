@@ -1,3 +1,8 @@
+# v1.1.8
+
+* move runc state onto tmpfs
+* update to go v1.14.1
+
 # v1.1.7
 
 * update runc to v1.0.0-rc10
