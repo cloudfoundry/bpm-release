@@ -2,7 +2,7 @@
 
 set -eux
 
-start-bosh
+. start-bosh
 
 source /tmp/local-bosh/director/env
 
