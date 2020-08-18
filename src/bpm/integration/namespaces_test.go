@@ -130,11 +130,8 @@ var _ = Describe("start", func() {
 			<-session.Exited
 			Expect(session).To(gexec.Exit(0))
 
-			Eventually(fileLines(stdout)).Should(
-				SatisfyAll(
-					HaveLen(1),
-					Not(ContainElement(hostPidNs)),
-				))
+			Eventually(fileLines(stdout)).Should(HaveLen(1))
+			Expect(fileLines(stdout)()).ToNot(ContainElement(hostPidNs))
 		})
 
 		Context("when HostPidNamespace has been enabled", func() {
@@ -152,10 +149,7 @@ var _ = Describe("start", func() {
 				Expect(session).To(gexec.Exit(0))
 
 				Eventually(fileLines(stdout)).Should(
-					SatisfyAll(
-						HaveLen(1),
-						ContainElement(hostPidNs),
-					),
+					ContainElement(hostPidNs),
 				)
 			})
 		})

@@ -274,7 +274,7 @@ func (a *RuncAdapter) BuildSpec(
 		}
 	}
 
-	if procCfg.Unsafe != nil && !procCfg.Unsafe.HostPidNamespace {
+	if procCfg.Unsafe == nil || !procCfg.Unsafe.HostPidNamespace {
 		specbuilder.Apply(spec, specbuilder.WithNamespace("pid"))
 	}
 
