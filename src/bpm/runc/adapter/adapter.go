@@ -252,7 +252,6 @@ func (a *RuncAdapter) BuildSpec(
 		specbuilder.WithMounts(ms.mounts()),
 		specbuilder.WithNamespace("ipc"),
 		specbuilder.WithNamespace("mount"),
-		specbuilder.WithNamespace("pid"),
 		specbuilder.WithNamespace("uts"),
 	)
 
@@ -273,6 +272,10 @@ func (a *RuncAdapter) BuildSpec(
 		if procCfg.Limits.OpenFiles != nil {
 			specbuilder.Apply(spec, specbuilder.WithOpenFileLimit(*procCfg.Limits.OpenFiles))
 		}
+	}
+
+	if procCfg.Unsafe != nil && !procCfg.Unsafe.HostPidNamespace {
+		specbuilder.Apply(spec, specbuilder.WithNamespace("pid"))
 	}
 
 	if procCfg.Unsafe != nil && procCfg.Unsafe.Privileged {

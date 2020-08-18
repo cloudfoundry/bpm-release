@@ -67,6 +67,7 @@ type Volume struct {
 type Unsafe struct {
 	Privileged          bool     `yaml:"privileged"`
 	UnrestrictedVolumes []Volume `yaml:"unrestricted_volumes"`
+	HostPidNamespace    bool     `yaml:"host_pid_namespace"`
 }
 
 func ParseJobConfig(configPath string) (*JobConfig, error) {

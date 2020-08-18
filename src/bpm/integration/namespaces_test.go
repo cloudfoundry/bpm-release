@@ -44,6 +44,7 @@ var _ = Describe("start", func() {
 		job         string
 		runcRoot    string
 		stderr      string
+		stdout      string
 	)
 
 	BeforeEach(func() {
@@ -57,6 +58,7 @@ var _ = Describe("start", func() {
 		runcRoot = setupBoshDirectories(boshRoot, job)
 
 		stderr = filepath.Join(boshRoot, "sys", "log", job, fmt.Sprintf("%s.stderr.log", job))
+		stdout = filepath.Join(boshRoot, "sys", "log", job, fmt.Sprintf("%s.stdout.log", job))
 	})
 
 	JustBeforeEach(func() {
@@ -105,6 +107,57 @@ var _ = Describe("start", func() {
 			Eventually(fileContents(stderr)).Should(
 				ContainSubstring(fmt.Sprintf("ipcs: id %d not found", messageQueueId)),
 			)
+		})
+	})
+
+	Context("pid", func() {
+		var hostPidNs string
+
+		BeforeEach(func() {
+			psCmd := exec.Command("ps", "-o", "pidns=", "-p1")
+			output, err := psCmd.CombinedOutput()
+			Expect(err).NotTo(HaveOccurred())
+
+			hostPidNs = strings.Trim(string(output), " \n")
+
+			cfg = newJobConfig(job, "ps -o pidns= | sort | uniq")
+		})
+
+		It("it can not see processes from host pid namespace", func() {
+			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+
+			<-session.Exited
+			Expect(session).To(gexec.Exit(0))
+
+			Eventually(fileLines(stdout)).Should(
+				SatisfyAll(
+					HaveLen(1),
+					Not(ContainElement(hostPidNs)),
+				))
+		})
+
+		Context("when HostPidNamespace has been enabled", func() {
+			BeforeEach(func() {
+				cfg.Processes[0].Unsafe = &config.Unsafe{
+					HostPidNamespace: true,
+				}
+			})
+
+			It("it can see processes from the host pid namespace", func() {
+				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+
+				<-session.Exited
+				Expect(session).To(gexec.Exit(0))
+
+				Eventually(fileLines(stdout)).Should(
+					SatisfyAll(
+						HaveLen(1),
+						ContainElement(hostPidNs),
+					),
+				)
+			})
 		})
 	})
 })

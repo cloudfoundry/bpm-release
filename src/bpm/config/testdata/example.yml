@@ -31,6 +31,7 @@ processes:
   ephemeral_disk: true
   unsafe:
     privileged: true
+    host_pid_namespace: true
     unrestricted_volumes:
     - path: /
       writable: true
