@@ -289,10 +289,6 @@ func (j *RuncLifecycle) RemoveProcess(logger lager.Logger, cfg *config.BPMConfig
 }
 
 func newProcessFromContainerState(id string, status specs.ContainerState, pid int) *models.Process {
-	if status == ContainerStateStopped {
-		status = "failed"
-	}
-
 	return &models.Process{
 		Name:   id,
 		Pid:    pid,
