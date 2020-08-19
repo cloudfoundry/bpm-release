@@ -26,6 +26,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
+	specs "github.com/opencontainers/runtime-spec/specs-go"
 	uuid "github.com/satori/go.uuid"
 
 	"bpm/config"
@@ -89,9 +90,9 @@ var _ = Describe("trace", func() {
 	Context("when the container is failed", func() {
 		BeforeEach(func() {
 			startJob(boshRoot, bpmPath, job)
-			Eventually(func() string { return runcState(runcRoot, containerID).Status }).Should(Equal("running"))
+			Eventually(func() specs.ContainerState { return runcState(runcRoot, containerID).Status }).Should(Equal(specs.StateRunning))
 			Expect(runcCommand(runcRoot, "kill", containerID, "KILL").Run()).To(Succeed())
-			Eventually(func() string { return runcState(runcRoot, containerID).Status }).Should(Equal("stopped"))
+			Eventually(func() specs.ContainerState { return runcState(runcRoot, containerID).Status }).Should(Equal(specs.StateStopped))
 		})
 
 		It("returns an error", func() {

@@ -28,6 +28,8 @@ import (
 	"github.com/onsi/gomega/gexec"
 	uuid "github.com/satori/go.uuid"
 
+	specs "github.com/opencontainers/runtime-spec/specs-go"
+
 	"bpm/config"
 	"bpm/jobid"
 	"bpm/models"
@@ -109,8 +111,8 @@ var _ = Describe("list", func() {
 		startJob(boshRoot, bpmPath, job)
 		startJob(boshRoot, bpmPath, failedJob)
 
-		Eventually(func() string { return runcState(runcRoot, containerID).Status }).Should(Equal("running"))
-		Eventually(func() string { return runcState(runcRoot, failedContainerID).Status }).Should(Equal("stopped"))
+		Eventually(func() specs.ContainerState { return runcState(runcRoot, containerID).Status }).Should(Equal(specs.StateRunning))
+		Eventually(func() specs.ContainerState { return runcState(runcRoot, failedContainerID).Status }).Should(Equal(specs.StateStopped))
 
 		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 		Expect(err).ShouldNot(HaveOccurred())

@@ -22,15 +22,15 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/moby/sys/mountinfo"
 	"github.com/opencontainers/runc/libcontainer/cgroups"
-	"github.com/opencontainers/runc/libcontainer/mount"
 	"golang.org/x/sys/unix"
 )
 
 const cgroupRoot = "/sys/fs/cgroup"
 
 func Setup() error {
-	mnts, err := mount.GetMounts()
+	mnts, err := mountinfo.GetMounts(mountinfo.ParentsFilter(cgroupRoot))
 	if err != nil {
 		return err
 	}
@@ -95,7 +95,7 @@ func subsystemGrouping(f io.Reader, subsystem string) (string, error) {
 	return subsystem, nil
 }
 
-func mountCgroupTmpfsIfNotPresent(mnts []*mount.Info) error {
+func mountCgroupTmpfsIfNotPresent(mnts []*mountinfo.Info) error {
 	for _, mnt := range mnts {
 		if mnt.Mountpoint == cgroupRoot {
 			return nil

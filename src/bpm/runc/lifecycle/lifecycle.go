@@ -223,7 +223,7 @@ func (j *RuncLifecycle) ListProcesses() ([]*models.Process, error) {
 	for _, c := range containers {
 		processes = append(processes, newProcessFromContainerState(
 			c.ID,
-			c.Status,
+			containerStateFromString(c.Status),
 			c.InitProcessPid,
 		))
 	}
@@ -288,15 +288,11 @@ func (j *RuncLifecycle) RemoveProcess(logger lager.Logger, cfg *config.BPMConfig
 	return j.deleteFile(cfg.PidFile().External())
 }
 
-func newProcessFromContainerState(id, status string, pid int) *models.Process {
-	if status == ContainerStateStopped {
-		status = "failed"
-	}
-
+func newProcessFromContainerState(id string, status specs.ContainerState, pid int) *models.Process {
 	return &models.Process{
 		Name:   id,
 		Pid:    pid,
-		Status: status,
+		Status: containerStateToString(status),
 	}
 }
 
@@ -304,3 +300,33 @@ type commandRunner struct{}
 
 func NewCommandRunner() CommandRunner          { return &commandRunner{} }
 func (*commandRunner) Run(cmd *exec.Cmd) error { return cmd.Run() }
+
+func containerStateToString(cs specs.ContainerState) string {
+	switch cs {
+	case specs.StateCreating:
+		return models.ProcessStateCreating
+	case specs.StateCreated:
+		return models.ProcessStateCreated
+	case specs.StateRunning:
+		return models.ProcessStateRunning
+	case specs.StateStopped:
+		return models.ProcessStateFailed
+	default:
+		return models.ProcessStateFailed
+	}
+}
+
+func containerStateFromString(status string) specs.ContainerState {
+	switch status {
+	case models.ProcessStateCreating:
+		return specs.StateCreating
+	case models.ProcessStateCreated:
+		return specs.StateCreated
+	case models.ProcessStateRunning:
+		return specs.StateRunning
+	case models.ProcessStateFailed:
+		return specs.StateStopped
+	default:
+		return models.ProcessStateFailed
+	}
+}

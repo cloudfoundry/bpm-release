@@ -151,6 +151,8 @@ func (c *RuncClient) Exec(containerID, command string, stdin io.Reader, stdout, 
 //   (e.g. the container is running but in an unreachable state)
 func (c *RuncClient) ContainerState(containerID string) (*specs.State, error) {
 	runcCmd := c.buildCmd(
+		"--log-format",
+		"json",
 		"state",
 		containerID,
 	)
@@ -170,8 +172,15 @@ func (c *RuncClient) ContainerState(containerID string) (*specs.State, error) {
 }
 
 func decodeContainerStateErr(b []byte, err error) error {
+	var jsonErr struct {
+		Msg string
+	}
+	e := json.Unmarshal(b, &jsonErr)
+	if e != nil {
+		return err
+	}
 	r := regexp.MustCompile(`\s*container "[^"]*" does not exist\s*`)
-	if r.MatchString(string(b)) {
+	if r.MatchString(jsonErr.Msg) {
 		return nil
 	}
 	return err
