@@ -16,7 +16,7 @@
 package sharedvolume
 
 import (
-	"github.com/opencontainers/runc/libcontainer/mount"
+	"github.com/moby/sys/mountinfo"
 	"golang.org/x/sys/unix"
 )
 
@@ -26,7 +26,7 @@ import (
 // the case of an error in making the mountpoint shared this identity mount
 // will be rolled back.
 func MakeShared(path string) error {
-	isMount, err := mount.Mounted(path)
+	isMount, err := mountinfo.Mounted(path)
 	if err != nil {
 		return err
 	}
