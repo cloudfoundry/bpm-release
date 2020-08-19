@@ -16,9 +16,11 @@
 package models
 
 const (
-	ProcessStateFailed  = "failed"
-	ProcessStateRunning = "running"
-	ProcessStateStopped = "stopped"
+	ProcessStateFailed   = "failed"
+	ProcessStateRunning  = "running"
+	ProcessStateStopped  = "stopped"
+	ProcessStateCreating = "creating"
+	ProcessStateCreated  = "created"
 )
 
 type Process struct {

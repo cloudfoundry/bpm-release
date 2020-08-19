@@ -28,6 +28,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
+	specs "github.com/opencontainers/runtime-spec/specs-go"
 	uuid "github.com/satori/go.uuid"
 
 	"bpm/bosh"
@@ -97,7 +98,7 @@ var _ = Describe("start", func() {
 		Expect(session).To(gexec.Exit(0))
 
 		state := runcState(runcRoot, containerID)
-		Expect(state.Status).To(Equal("running"))
+		Expect(state.Status).To(Equal(specs.StateRunning))
 		pidText, err := ioutil.ReadFile(pidFile)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -189,7 +190,7 @@ var _ = Describe("start", func() {
 			Expect(session).To(gexec.Exit(0))
 
 			state := runcState(runcRoot, containerID)
-			Expect(state.Status).To(Equal("running"))
+			Expect(state.Status).To(Equal(specs.StateRunning))
 			pidText, err := ioutil.ReadFile(pidFile)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -284,7 +285,7 @@ var _ = Describe("start", func() {
 			Expect(session).To(gexec.Exit(0))
 
 			state := runcState(runcRoot, containerID)
-			Expect(state.Status).To(Equal("running"))
+			Expect(state.Status).To(Equal(specs.StateRunning))
 			existingPid = state.Pid
 		})
 
@@ -317,7 +318,7 @@ var _ = Describe("start", func() {
 			<-session.Exited
 
 			Expect(session).To(gexec.Exit(0))
-			Eventually(func() string { return runcState(runcRoot, containerID).Status }, 20*time.Second).Should(Equal("stopped"))
+			Eventually(func() specs.ContainerState { return runcState(runcRoot, containerID).Status }, 20*time.Second).Should(Equal(specs.StateStopped))
 
 			err = ioutil.WriteFile(filepath.Join(runcRoot, containerID, "state.json"), nil, 0600)
 			Expect(err).ToNot(HaveOccurred())
@@ -335,7 +336,7 @@ var _ = Describe("start", func() {
 			Expect(session).To(gexec.Exit(0))
 
 			state := runcState(runcRoot, containerID)
-			Expect(state.Status).To(Equal("running"))
+			Expect(state.Status).To(Equal(specs.StateRunning))
 		})
 	})
 
@@ -351,7 +352,7 @@ var _ = Describe("start", func() {
 			<-session.Exited
 
 			Expect(session).To(gexec.Exit(0))
-			Eventually(func() string { return runcState(runcRoot, containerID).Status }).Should(Equal("stopped"))
+			Eventually(func() specs.ContainerState { return runcState(runcRoot, containerID).Status }).Should(Equal(specs.StateStopped))
 		})
 
 		It("`bpm start` cleans up the associated container and artifacts and starts it", func() {
@@ -364,7 +365,7 @@ var _ = Describe("start", func() {
 			Expect(session).To(gexec.Exit(0))
 
 			state := runcState(runcRoot, containerID)
-			Expect(state.Status).To(Equal("running"))
+			Expect(state.Status).To(Equal(specs.StateRunning))
 		})
 
 		Context("and the pid file does not exist", func() {
@@ -384,7 +385,7 @@ var _ = Describe("start", func() {
 				Expect(session).To(gexec.Exit(0))
 
 				state := runcState(runcRoot, containerID)
-				Expect(state.Status).To(Equal("running"))
+				Expect(state.Status).To(Equal(specs.StateRunning))
 			})
 		})
 	})

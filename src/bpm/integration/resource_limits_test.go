@@ -28,6 +28,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
+	specs "github.com/opencontainers/runtime-spec/specs-go"
 	uuid "github.com/satori/go.uuid"
 
 	"bpm/bosh"
@@ -115,7 +116,7 @@ var _ = Describe("resource limits", func() {
 			Expect(err).NotTo(HaveOccurred())
 			<-session.Exited
 			Expect(session).To(gexec.Exit(0))
-			Eventually(func() string { return runcState(runcRoot, containerID).Status }).Should(Equal("running"))
+			Eventually(func() specs.ContainerState { return runcState(runcRoot, containerID).Status }).Should(Equal(specs.StateRunning))
 
 			eventsCmd := runcCommand(runcRoot, "events", containerID)
 			stdout, err := eventsCmd.StdoutPipe()
@@ -145,7 +146,7 @@ var _ = Describe("resource limits", func() {
 			<-session.Exited
 			Expect(session).To(gexec.Exit(0))
 
-			Eventually(func() string { return runcState(runcRoot, containerID).Status }).Should(Equal("running"))
+			Eventually(func() specs.ContainerState { return runcState(runcRoot, containerID).Status }).Should(Equal(specs.StateRunning))
 			Expect(runcCommand(runcRoot, "kill", containerID).Run()).To(Succeed())
 			Eventually(fileContents(stderr)).Should(ContainSubstring("Too many open files"))
 		})
@@ -165,7 +166,7 @@ var _ = Describe("resource limits", func() {
 
 			Expect(session).To(gexec.Exit(0))
 
-			Eventually(func() string { return runcState(runcRoot, containerID).Status }).Should(Equal("running"))
+			Eventually(func() specs.ContainerState { return runcState(runcRoot, containerID).Status }).Should(Equal(specs.StateRunning))
 			Expect(runcCommand(runcRoot, "kill", containerID).Run()).To(Succeed())
 			Eventually(fileContents(stderr)).Should(ContainSubstring("fork: retry: Resource temporarily unavailable"))
 		})
