@@ -65,6 +65,7 @@ var _ = Describe("Config", func() {
 			Expect(cfg.Processes[0].PersistentDisk).To(BeTrue())
 			Expect(cfg.Processes[0].EphemeralDisk).To(BeTrue())
 			Expect(cfg.Processes[0].Unsafe.Privileged).To(BeTrue())
+			Expect(cfg.Processes[0].Unsafe.HostPidNamespace).To(BeTrue())
 			Expect(cfg.Processes[0].Unsafe.UnrestrictedVolumes).To(ConsistOf(
 				config.Volume{Path: "/", Writable: true},
 				config.Volume{Path: "/etc"},

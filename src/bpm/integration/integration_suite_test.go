@@ -23,6 +23,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -68,6 +69,13 @@ func fileContents(path string) func() string {
 		contents, err := ioutil.ReadFile(path)
 		Expect(err).NotTo(HaveOccurred())
 		return string(contents)
+	}
+}
+
+func fileLines(path string) func() []string {
+	return func() []string {
+		contents := fileContents(path)()
+		return strings.Split(strings.Trim(contents, "\n"), "\n")
 	}
 }
 
