@@ -276,7 +276,7 @@ fi
 		Context("when the error message indicates the container is not running", func() {
 			BeforeEach(func() {
 				contents := []byte(`#!/bin/sh
-echo -n 'container "foo" does not exist'
+echo -n '{"msg": "container \"foo\" does not exist"}'
 exit 1
 `)
 
@@ -295,7 +295,7 @@ exit 1
 				BeforeEach(func() {
 					// Note the echo also purposefully prints a newline as well as spaces
 					contents := []byte(`#!/bin/sh
-echo '         container "foo" does not exist     '
+echo '         {"msg":"container \"foo\" does not exist"}     '
 exit 1
 `)
 
