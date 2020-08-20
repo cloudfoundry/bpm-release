@@ -71,6 +71,7 @@ directory of your job.
 |--------------          |---------- |--------------|-------------------------------------------------------------------------------------------|
 | `privileged`           | boolean   | No           | Whether or not this process should execute with increased privileges (see details below). |
 | `unrestricted_volumes` | volume[]  | No           | An unrestricted list of additional volumes to mount inside this process (see below).      |
+| `host_pid_namespace`   | boolean   | No           | Use the host's PID namespace inside the container.                                        |
 
 #### `volume` Schema
 
