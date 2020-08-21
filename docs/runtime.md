@@ -6,7 +6,10 @@ us know so that we can be explicit about the interface and guarantees provided.
 
 ## Lifecycle
 
-Your process is started and has an unlimited amount of time to start up. You
+Your process is started and has an unlimited amount of time to start up. If
+present, a [pre-start script][pre-start] can run before starting to prepare
+machine and/or persistent data before your process starting its operation. The
+[pre-start script][pre-start] must complete in Monits 30 second timeout. You
 should use a [post-start script][post-start] and a health check if you want
 your job to only say it has completed deploying after it has started up. You do
 not need to manage any PID files yourself.
@@ -22,6 +25,7 @@ can shutdown within 15 seconds. It is acceptable and supported to terminate
 your process while running the drain script. However, if you do terminate the
 process then you should also delete the PID file.
 
+[pre-start]:https://bosh.io/docs/pre-start.html
 [post-start]:https://bosh.io/docs/post-start.html 
 [drain]:https://bosh.io/docs/drain.html
 
@@ -161,3 +165,18 @@ conditions. It is completely safe (from a correctness perspective, you may
 still break your service) to run `monit restart` on a job which uses bpm.
 
 [monit-mail]: https://lists.nongnu.org/archive/html/monit-general/2012-09/msg00103.html
+
+### Execution Failed
+
+In some cases Monit reports the process as execution failed when it is healthy.
+This is a [known][execution-failed] race condition that can occur in certain unavoidable circumstances.
+This usually occurs if the process start up takes longer then monits timeout.
+
+bpm provides monit with a successful startup sooner and bpm then monitors the
+processes actual startup in its lifecycle avoiding this race condition.
+
+The [pre-start script][pre-start] runs before the startup and if this script exceeds
+the timeout it can hit this race conditon.  The pre-start script must complete
+quickly.
+
+[execution-failed]:https://community.pivotal.io/s/article/Deployment-fails-because-monit-reports-job-as-failed?language=en_US
