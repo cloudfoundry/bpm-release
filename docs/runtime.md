@@ -7,10 +7,9 @@ us know so that we can be explicit about the interface and guarantees provided.
 ## Lifecycle
 
 Your process is started and has an unlimited amount of time to start up. If
-present, a [pre-start script][pre-start] can run before starting to prepare
-machine and/or persistent data before your process starting its operation. The
-[pre-start script][pre-start] must complete in Monits 30 second timeout. You
-should use a [post-start script][post-start] and a health check if you want
+present, a bpm [pre-start script][pre-start] can run before your process' pre-start and start. Bpm's
+[pre-start script][pre-start] must complete in within 30 seconds to avoid a monit timeout. A job's [pre-start][pre-start]
+script is not bound by this timeout. You should use a [post-start script][post-start] and a health check if you want
 your job to only say it has completed deploying after it has started up. You do
 not need to manage any PID files yourself.
 
@@ -168,15 +167,9 @@ still break your service) to run `monit restart` on a job which uses bpm.
 
 ### Execution Failed
 
-In some cases Monit reports the process as execution failed when it is healthy.
-This is a [known][execution-failed] race condition that can occur in certain unavoidable circumstances.
-This usually occurs if the process start up takes longer then monits timeout.
-
-bpm provides monit with a successful startup sooner and bpm then monitors the
-processes actual startup in its lifecycle avoiding this race condition.
-
-The [pre-start script][pre-start] runs before the startup and if this script exceeds
-the timeout it can hit this race conditon.  The pre-start script must complete
-quickly.
+In some cases Monit reports the process as execution failed when the process is actually healthy.
+There is a [known][execution-failed] race condition that can occur in certain unavoidable circumstances.
+This same failure will also appear if bpm's [pre-start script][pre-start] exceeds monit's timeout when executing.
+It is recommended to move time consuming logic from bpm's pre-start to the job's pre-start script. 
 
 [execution-failed]:https://community.pivotal.io/s/article/Deployment-fails-because-monit-reports-job-as-failed?language=en_US
