@@ -6,8 +6,10 @@ us know so that we can be explicit about the interface and guarantees provided.
 
 ## Lifecycle
 
-Your process is started and has an unlimited amount of time to start up. You
-should use a [post-start script][post-start] and a health check if you want
+Your process is started and has an unlimited amount of time to start up. If
+present, a bpm [pre-start script][pre-start] can run before your process' pre-start and start. Bpm's
+[pre-start script][pre-start] must complete in within 30 seconds to avoid a monit timeout. A job's [pre-start][pre-start]
+script is not bound by this timeout. You should use a [post-start script][post-start] and a health check if you want
 your job to only say it has completed deploying after it has started up. You do
 not need to manage any PID files yourself.
 
@@ -22,6 +24,7 @@ can shutdown within 15 seconds. It is acceptable and supported to terminate
 your process while running the drain script. However, if you do terminate the
 process then you should also delete the PID file.
 
+[pre-start]:https://bosh.io/docs/pre-start.html
 [post-start]:https://bosh.io/docs/post-start.html 
 [drain]:https://bosh.io/docs/drain.html
 
@@ -161,3 +164,12 @@ conditions. It is completely safe (from a correctness perspective, you may
 still break your service) to run `monit restart` on a job which uses bpm.
 
 [monit-mail]: https://lists.nongnu.org/archive/html/monit-general/2012-09/msg00103.html
+
+### Execution Failed
+
+In some cases Monit reports the process as execution failed when the process is actually healthy.
+There is a [known][execution-failed] race condition that can occur in certain unavoidable circumstances.
+This same failure will also appear if bpm's [pre-start script][pre-start] exceeds monit's timeout when executing.
+It is recommended to move time consuming logic from bpm's pre-start to the job's pre-start script. 
+
+[execution-failed]:https://community.pivotal.io/s/article/Deployment-fails-because-monit-reports-job-as-failed?language=en_US

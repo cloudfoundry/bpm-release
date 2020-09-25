@@ -53,9 +53,9 @@ directory of your job.
 
 #### `hooks` Schema
 
-| **Property** | **Type** | **Required** | **Description**                                                                       |
-|--------------|----------|--------------|---------------------------------------------------------------------------------------|
-| `pre_start`  | string   | No           | The path to an executable to run before starting the main executable of this process. |
+| **Property** | **Type** | **Required** | **Description**                                                                                                       |
+|--------------|----------|--------------|-----------------------------------------------------------------------------------------------------------------------|
+| `pre_start`  | string   | No           | The path to an executable to run before starting the main executable of this process.  Should not exceed 30 seconds   |
 
 #### `limits` Schema
 
