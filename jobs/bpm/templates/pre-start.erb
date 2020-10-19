@@ -1,8 +1,14 @@
 #!/bin/bash
 
-mkdir -p /var/vcap/sys/log/bpm
-chown -R vcap:vcap /var/vcap/sys/log/bpm
+function pre_start() {
+  echo "Starting bpm pre-start"
+  mkdir -p /var/vcap/sys/log/bpm
+  chown -R vcap:vcap /var/vcap/sys/log/bpm
 
-# ensure bpm/runc setup is executed upon logging in
-cp /var/vcap/jobs/bpm/bin/setup /etc/profile.d/bpm.sh
-chown :vcap /etc/profile.d/bpm.sh
+  # ensure bpm/runc setup is executed upon logging in
+  cp /var/vcap/jobs/bpm/bin/setup /etc/profile.d/bpm.sh
+  chown :vcap /etc/profile.d/bpm.sh
+  echo "Finished bpm pre-start"
+}
+
+pre_start | perl -pe 'use POSIX strftime; my $t = time; my $fsec = sprintf ".%09d", ($t-int($t))*1000000000; print strftime "[%Y-%m-%dT%H:%M:%S".$fsec."Z] ", localtime $t'
