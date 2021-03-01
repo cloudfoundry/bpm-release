@@ -72,6 +72,7 @@ RUNC_PACKAGE_PATH=github.com/opencontainers/runc
   tar xzf "runc/runc-${RUNC_VERSION}.tar.gz" -C "${BOSH_INSTALL_TARGET}/src/${RUNC_PACKAGE_PATH}" --strip-components 1
   (
     set -eu
+    pushd "${BOSH_INSTALL_TARGET}/src/${RUNC_PACKAGE_PATH}"
     env \
           GOCACHE="${BOSH_INSTALL_TARGET}/cache" \
           PKG_CONFIG_PATH="${LIBSECCOMP_PREFIX}/lib/pkgconfig" \
@@ -81,6 +82,7 @@ RUNC_PACKAGE_PATH=github.com/opencontainers/runc
             -tags "seccomp apparmor" \
             -o "${BOSH_INSTALL_TARGET}/bin/runc" \
             "${RUNC_PACKAGE_PATH}"
+    popd
   )
 )
 
