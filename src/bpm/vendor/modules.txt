@@ -7,15 +7,13 @@ code.cloudfoundry.org/clock/fakeclock
 code.cloudfoundry.org/lager
 code.cloudfoundry.org/lager/lagerctx
 code.cloudfoundry.org/lager/lagertest
-# github.com/coreos/go-systemd/v22 v22.1.0
+# github.com/coreos/go-systemd/v22 v22.3.2
 github.com/coreos/go-systemd/v22/dbus
 # github.com/creack/pty v1.1.7
 github.com/creack/pty
 # github.com/cyphar/filepath-securejoin v0.2.2
 github.com/cyphar/filepath-securejoin
-# github.com/docker/go-units v0.4.0
-github.com/docker/go-units
-# github.com/godbus/dbus/v5 v5.0.3
+# github.com/godbus/dbus/v5 v5.0.4
 github.com/godbus/dbus/v5
 # github.com/golang/mock v1.4.1-0.20200222213444-b48cb6623c04
 github.com/golang/mock/gomock
@@ -29,11 +27,9 @@ github.com/hpcloud/tail/watch
 github.com/hpcloud/tail/winfile
 # github.com/inconshreveable/mousetrap v1.0.0
 github.com/inconshreveable/mousetrap
-# github.com/konsorten/go-windows-terminal-sequences v1.0.3
-github.com/konsorten/go-windows-terminal-sequences
 # github.com/kr/pty v1.1.8
 github.com/kr/pty
-# github.com/moby/sys/mountinfo v0.1.3
+# github.com/moby/sys/mountinfo v0.4.1
 github.com/moby/sys/mountinfo
 # github.com/onsi/ginkgo v1.10.2
 github.com/onsi/ginkgo
@@ -77,30 +73,35 @@ github.com/onsi/gomega/matchers/support/goraph/edge
 github.com/onsi/gomega/matchers/support/goraph/node
 github.com/onsi/gomega/matchers/support/goraph/util
 github.com/onsi/gomega/types
-# github.com/opencontainers/runc v1.0.0-rc92
+# github.com/opencontainers/runc v1.0.0-rc94
 github.com/opencontainers/runc/libcontainer/cgroups
+github.com/opencontainers/runc/libcontainer/cgroups/fscommon
 github.com/opencontainers/runc/libcontainer/configs
+github.com/opencontainers/runc/libcontainer/devices
+github.com/opencontainers/runc/libcontainer/user
+github.com/opencontainers/runc/libcontainer/userns
 github.com/opencontainers/runc/libcontainer/utils
-# github.com/opencontainers/runtime-spec v1.0.3-0.20200728170252-4d89ac9fbff6
+# github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
 github.com/opencontainers/runtime-spec/specs-go
 # github.com/pkg/errors v0.9.1
 github.com/pkg/errors
 # github.com/satori/go.uuid v1.2.0
 github.com/satori/go.uuid
-# github.com/sirupsen/logrus v1.6.0
+# github.com/sirupsen/logrus v1.8.1
 github.com/sirupsen/logrus
 # github.com/spf13/cobra v0.0.5
 github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.3
 github.com/spf13/pflag
-# golang.org/x/net v0.0.0-20190311183353-d8887717615a
+# golang.org/x/net v0.0.0-20210510120150-4163338589ed
 golang.org/x/net/html
 golang.org/x/net/html/atom
 golang.org/x/net/html/charset
-# golang.org/x/sys v0.0.0-20200819091447-39769834ee22
+# golang.org/x/sys v0.0.0-20210511113859-b0526f3d8744
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
-# golang.org/x/text v0.3.0
+golang.org/x/sys/windows
+# golang.org/x/text v0.3.6
 golang.org/x/text/encoding
 golang.org/x/text/encoding/charmap
 golang.org/x/text/encoding/htmlindex
@@ -111,12 +112,14 @@ golang.org/x/text/encoding/korean
 golang.org/x/text/encoding/simplifiedchinese
 golang.org/x/text/encoding/traditionalchinese
 golang.org/x/text/encoding/unicode
+golang.org/x/text/internal/language
+golang.org/x/text/internal/language/compact
 golang.org/x/text/internal/tag
 golang.org/x/text/internal/utf8internal
 golang.org/x/text/language
 golang.org/x/text/runes
 golang.org/x/text/transform
-# golang.org/x/tools v0.0.0-20190425150028-36563e24a262
+# golang.org/x/tools v0.0.0-20190524140312-2c0ae7006135
 golang.org/x/tools/go/gcexportdata
 golang.org/x/tools/go/internal/gcimporter
 golang.org/x/tools/go/internal/packagesdriver
