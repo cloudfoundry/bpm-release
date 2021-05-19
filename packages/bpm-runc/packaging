@@ -26,14 +26,14 @@ set -eu
 # broken in the case that Git is not installed on the system because of quoting
 # mishaps.
 
-RUNC_VERSION=1.0.0-rc92
+RUNC_VERSION=1.0.0-rc95
 
 PKG_CONFIG_VERSION=0.29.2
 PKG_CONFIG_PREFIX="$(mktemp -d)"
 
 LIBSECCOMP_PREFIX="${BOSH_INSTALL_TARGET}/lib/libseccomp"
 LIBSECCOMP_RUNTIME_PATH=/var/vcap/packages/bpm/lib/libseccomp/lib
-LIBSECCOMP_VERSION=2.4.3
+LIBSECCOMP_VERSION=2.5.1
 
 RUNC_PACKAGE_PATH=github.com/opencontainers/runc
 
@@ -69,7 +69,7 @@ RUNC_PACKAGE_PATH=github.com/opencontainers/runc
   export GOPATH="${BOSH_INSTALL_TARGET}"
 
   mkdir -p "${BOSH_INSTALL_TARGET}/src/$RUNC_PACKAGE_PATH"
-  tar xzf "runc/runc-${RUNC_VERSION}.tar.gz" -C "${BOSH_INSTALL_TARGET}/src/${RUNC_PACKAGE_PATH}" --strip-components 1
+  tar xzf "runc/runc-${RUNC_VERSION}.tar.xz" -C "${BOSH_INSTALL_TARGET}/src/${RUNC_PACKAGE_PATH}" --strip-components 1
   (
     set -eu
     pushd "${BOSH_INSTALL_TARGET}/src/${RUNC_PACKAGE_PATH}"
