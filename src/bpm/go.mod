@@ -13,7 +13,7 @@ require (
 	github.com/moby/sys/mountinfo v0.4.1
 	github.com/onsi/ginkgo v1.10.2
 	github.com/onsi/gomega v1.7.0
-	github.com/opencontainers/runc v1.0.0-rc94
+	github.com/opencontainers/runc v1.0.0-rc95
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
 	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.8.1 // indirect
