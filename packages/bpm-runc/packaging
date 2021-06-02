@@ -91,12 +91,14 @@ RUNC_PACKAGE_PATH=github.com/opencontainers/runc
     env \
           GOCACHE="${BOSH_INSTALL_TARGET}/cache" \
           PKG_CONFIG_PATH="${LIBSECCOMP_PREFIX}/lib/pkgconfig" \
+	  GOPROXY=off \
           go build \
             -buildmode=pie \
             -ldflags "-X main.gitCommit=unknown -X main.version=${RUNC_VERSION}-bpm -r ${LIBSECCOMP_RUNTIME_PATH}" \
             -tags "seccomp apparmor" \
+	    -mod=vendor \
             -o "${BOSH_INSTALL_TARGET}/bin/runc" \
-            "${RUNC_PACKAGE_PATH}"
+            .
     popd
   )
 )
