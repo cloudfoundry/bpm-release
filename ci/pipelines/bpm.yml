@@ -1,24 +1,3 @@
-groups:
-- name: tests
-  jobs:
-  - create-final-release
-  - test-acceptance-trusty
-  - test-acceptance-xenial
-  - test-unit
-  - test-upgrade
-  - tracker
-- name: version
-  jobs:
-  - bump-major
-  - bump-minor
-  - bump-patch
-- name: dependencies
-  jobs:
-  - bump-golang
-- name: images
-  jobs:
-  - build-bpm-ci
-
 resources:
 - name: bpm-release
   type: git
@@ -36,22 +15,15 @@ resources:
     initial_version: 0.0.0
     json_key: ((bpm-version-gcs-json-key))
 
-- name: boshlite-trusty-stemcell
+- name: boshlite-bionic-stemcell
   type: bosh-io-stemcell
   source:
-    name: bosh-warden-boshlite-ubuntu-trusty-go_agent
+    name: bosh-warden-boshlite-ubuntu-bionic-go_agent
 
 - name: boshlite-xenial-stemcell
   type: bosh-io-stemcell
   source:
     name: bosh-warden-boshlite-ubuntu-xenial-go_agent
-
-- name: tracker
-  type: tracker
-  source:
-    token: ((tracker-api-token))
-    project_id: "2070399"
-    tracker_url: "https://www.pivotaltracker.com"
 
 - name: golang-linux
   type: s3
@@ -120,20 +92,20 @@ jobs:
     file: bpm-release/ci/test-unit.yml
     privileged: true
 
-- name: test-acceptance-trusty
+- name: test-acceptance-bionic
   public: true
   plan:
   - in_parallel:
     - get: bpm-release
       trigger: true
-    - get: boshlite-trusty-stemcell
+    - get: boshlite-bionic-stemcell
       trigger: true
   - task: test-acceptance
     file: bpm-release/ci/test-acceptance.yml
     params:
-      STEMCELL_NAME: ubuntu-trusty
+      STEMCELL_NAME: ubuntu-bionic
     input_mapping:
-      bosh-stemcell: boshlite-trusty-stemcell
+      bosh-stemcell: boshlite-bionic-stemcell
     privileged: true
 
 - name: test-acceptance-xenial
@@ -168,19 +140,6 @@ jobs:
     input_mapping:
       bosh-stemcell: boshlite-xenial-stemcell
     privileged: true
-
-- name: tracker
-  plan:
-  - get: bpm-release
-    passed:
-    - test-acceptance-trusty
-    - test-acceptance-xenial
-    - test-unit
-    - test-upgrade
-    trigger: true
-  - put: tracker
-    params:
-      repos: [bpm-release]
 
 - name: bump-golang
   serial: true
@@ -242,7 +201,7 @@ jobs:
   - in_parallel:
     - get: bpm-release
       passed:
-      - test-acceptance-trusty
+      - test-acceptance-bionic
       - test-acceptance-xenial
       - test-unit
       - test-upgrade
