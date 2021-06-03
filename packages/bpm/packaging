@@ -1,22 +1,15 @@
 set -e
 
-mkdir -p ${BOSH_INSTALL_TARGET}/src
-cp -a . ${BOSH_INSTALL_TARGET}/src
+source /var/vcap/packages/golang-1-linux/bosh/compile.env
 
 export GOPATH=${BOSH_INSTALL_TARGET}
-export GOCACHE=${BOSH_INSTALL_TARGET}/cache
-export GOROOT=$(readlink -nf /var/vcap/packages/golang)
-export PATH=$GOROOT/bin:$PATH
 export GOPROXY=off
 
-version="$(cat ${BOSH_INSTALL_TARGET}/src/version)"
+version="$(cat version)"
 
-pushd "${BOSH_INSTALL_TARGET}/src/bpm"
-  go install -mod=vendor -ldflags "-X bpm/commands.Version=${version}" bpm/cmd/bpm
+pushd "bpm/cmd/bpm"
+  go build -mod=vendor -ldflags "-X bpm/commands.Version=${version}" -o ${BOSH_INSTALL_TARGET}/bin/ .
 popd
-
-# clean up source artifacts
-rm -rf ${BOSH_INSTALL_TARGET}/src ${BOSH_INSTALL_TARGET}/pkg ${BOSH_INSTALL_TARGET}/cache
 
 # runc
 cp /var/vcap/packages/bpm-runc/bin/runc ${BOSH_INSTALL_TARGET}/bin

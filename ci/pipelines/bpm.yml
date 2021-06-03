@@ -6,6 +6,21 @@ resources:
     private_key: ((bpm-github-deploy-key))
     uri: git@github.com:cloudfoundry-incubator/bpm-release.git
 
+- name: bosh-ecosystem-docker-image
+  type: docker-image
+  source:
+    repository: bosh/bosh-ecosystem-concourse
+    username: ((docker.username))
+    password: ((docker.password))
+
+- name: golang-release
+  type: git
+  source:
+    uri: https://github.com/bosh-packages/golang-release
+    branch: master
+    paths:
+      - releases/golang
+
 - name: version
   type: semver
   source:
@@ -24,14 +39,6 @@ resources:
   type: bosh-io-stemcell
   source:
     name: bosh-warden-boshlite-ubuntu-xenial-go_agent
-
-- name: golang-linux
-  type: s3
-  check_every: 1h
-  source:
-    endpoint: storage.googleapis.com
-    bucket: golang
-    regexp: 'go(1\.\d+(\.\d+)?)\.linux-amd64\.tar.gz'
 
 - name: runc-linux
   type: github-release
@@ -84,7 +91,6 @@ resources:
 
 jobs:
 - name: test-unit
-  public: true
   plan:
   - get: bpm-release
     trigger: true
@@ -93,7 +99,6 @@ jobs:
     privileged: true
 
 - name: test-acceptance-bionic
-  public: true
   plan:
   - in_parallel:
     - get: bpm-release
@@ -109,7 +114,6 @@ jobs:
     privileged: true
 
 - name: test-acceptance-xenial
-  public: true
   plan:
   - in_parallel:
     - get: bpm-release
@@ -125,7 +129,6 @@ jobs:
     privileged: true
 
 - name: test-upgrade
-  public: true
   plan:
   - in_parallel:
     - get: bpm-release
@@ -141,25 +144,30 @@ jobs:
       bosh-stemcell: boshlite-xenial-stemcell
     privileged: true
 
-- name: bump-golang
+- name: bump-golang-package
   serial: true
   plan:
-  - in_parallel:
-    - get: golang-linux
-      trigger: true
-    - get: bpm-release
-  - task: bump-blob
-    input_mapping:
-      bosh-release: bpm-release
-      blob-dir: golang-linux
-    file: bpm-release/ci/bump-blob.yml
-    params:
-      BLOB_NAME: golang-linux-amd64.tar.gz
-      BLOB_VERSION_FILE: version
-      BLOB_DESTINATION: golang
-      BOSH_PRIVATE_CONFIG: ((bpm-private-yml))
-  - put: bpm-release
-    params: {repository: bumped-bosh-release, rebase: true}
+    - in_parallel:
+        - get: bosh-ecosystem-docker-image
+        - get: bpm-release
+        - get: golang-release
+          trigger: true
+        - get: bosh-stemcell
+          resource: boshlite-bionic-stemcell
+    - task: bump-golang-package
+      file: bosh-dns-release/ci/tasks/bump-golang-package.yml
+      image: bosh-ecosystem-docker-image
+      params:
+        BOSH_PRIVATE_CONFIG: ((bpm-private-yml))
+    - task: test-acceptance
+      file: bpm-release/ci/test-acceptance.yml
+      params:
+        STEMCELL_NAME: ubuntu-bionic
+      privileged: true
+    - put: bpm-release
+      params:
+        repository: bpm-release
+        rebase: true
 
 - name: bump-patch
   serial_groups:

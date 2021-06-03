@@ -2,7 +2,7 @@
 name: bpm-runc
 
 dependencies:
-- golang
+- golang-1-linux
 
 files:
 - runc/runc-1.0.0-rc95.tar.xz

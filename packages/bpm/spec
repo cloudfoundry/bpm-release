@@ -2,7 +2,7 @@
 name: bpm
 
 dependencies:
-  - golang
+  - golang-1-linux
   - bpm-runc
   - tini
 

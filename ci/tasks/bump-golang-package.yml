@@ -1,0 +1,14 @@
+platform: linux
+
+inputs:
+- name: bpm-release
+- name: golang-release
+
+outputs:
+- name: bpm-release
+
+run:
+  path: bpm-release/ci/tasks/bump-golang-package.sh
+
+params:
+  BOSH_PRIVATE_CONFIG:

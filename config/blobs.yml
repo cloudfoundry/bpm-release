@@ -1,7 +1,3 @@
-golang/golang-linux-amd64.tar.gz:
-  size: 129044044
-  object_id: 66acc587-e59e-4aaa-5ea9-8040089ed642
-  sha: f49d02bbdeff421474975e81b413a3838f2cee43
 gperf/gperf-3.1.tar.gz:
   size: 1215925
   object_id: b42dbbee-77cb-4fae-7be6-c6ba46e46ff0
