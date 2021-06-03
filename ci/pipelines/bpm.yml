@@ -155,7 +155,7 @@ jobs:
         - get: bosh-stemcell
           resource: boshlite-bionic-stemcell
     - task: bump-golang-package
-      file: bosh-dns-release/ci/tasks/bump-golang-package.yml
+      file: bpm-release/ci/tasks/bump-golang-package.yml
       image: bosh-ecosystem-docker-image
       params:
         BOSH_PRIVATE_CONFIG: ((bpm-private-yml))
