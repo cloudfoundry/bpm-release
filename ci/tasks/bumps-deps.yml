@@ -1,0 +1,13 @@
+platform: linux
+
+inputs:
+- name: bpm-release
+
+outputs:
+- name: bumped-bpm-release
+
+run:
+  path: bpm-release/ci/tasks/bump-deps.sh
+
+params:
+  BOSH_PRIVATE_CONFIG:

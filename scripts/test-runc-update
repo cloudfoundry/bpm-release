@@ -1,0 +1,25 @@
+set -e
+
+. start-bosh
+
+source /tmp/local-bosh/director/env
+
+export BOSH_DEPLOYMENT=bpm
+export BOSH_NON_INTERACTIVE=true
+
+if ! $(grep -q "$runc_version_go_mod" $PWD/config/blobs.yml); then
+curl -o ./runc_filename.tar.xz -L https://github.com/opencontainers/runc/releases/download/v${runc_version_go_mod}/runc.tar.xz
+runc_version_old_versionrsion=$(grep 'runc' $PWD/config/blobs.yml |  sed 's/.$//')
+bosh remove-blob $runc_version_old_versionrsion
+
+bosh add-blob ./runc_filename.tar.xz runc/runc-${runc_version_go_mod}.tar.xz
+
+echo "${BOSH_PRIVATE_CONFIG}" > config/private.yml
+
+bosh upload-blobs
+
+rm runc_filename.tar.xz
+
+go get -u ./...
+
+fi 
