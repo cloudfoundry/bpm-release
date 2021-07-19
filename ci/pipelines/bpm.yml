@@ -13,6 +13,13 @@ resources:
     username: ((docker.username))
     password: ((docker.password))
 
+- name: weekly
+  type: time
+  source:
+    start: 3:00 -0700
+    stop: 4:30 -0700
+    days: [Saturday]
+
 - name: golang-release
   type: git
   source:
@@ -247,6 +254,22 @@ jobs:
       repository: release-repo
       submodules: none
       rebase: true
+
+- name: bump-deps
+  public: true
+  plan:
+    - get: weekly
+      trigger: true
+    - get: bosh-ecosystem-docker-image
+    - get: bpm-release
+    - task: bump-deps
+      image: bosh-ecosystem-docker-image
+      params:
+        BOSH_PRIVATE_CONFIG: ((bpm-private-yml))
+      file: bpm-release/ci/tasks/bumps-deps.yml
+    - put: bpm-release
+      params:
+        repository: bpm-release
 
 - name: build-bpm-ci
   serial: true
