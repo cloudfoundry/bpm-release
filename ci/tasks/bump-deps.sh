@@ -10,13 +10,13 @@ pushd src/bpm
   go get -u ./...
   go mod tidy
   go mod vendor
-popd 
+popd
 
 runc_version_go_mod=$(grep 'runc' src/bpm/go.mod | sed 's/.* v//')
 if ! $(grep -q "$runc_version_go_mod" config/blobs.yml); then
   curl -o $task_dir/runc_filename.tar.xz -L https://github.com/opencontainers/runc/releases/download/v${runc_version_go_mod}/runc.tar.xz
-  runc_version_old_versionrsion=$(grep 'runc' config/blobs.yml |  sed 's/.$//')
-  bosh remove-blob $runc_version_old_versionrsion
+  runc_old_version=$(grep 'runc' config/blobs.yml |  sed 's/.$//')
+  bosh remove-blob $runc_old_version
 
   bosh add-blob $task_dir/runc_filename.tar.xz runc/runc-${runc_version_go_mod}.tar.xz
   echo "${BOSH_PRIVATE_CONFIG}" > config/private.yml
@@ -24,7 +24,7 @@ if ! $(grep -q "$runc_version_go_mod" config/blobs.yml); then
   bosh upload-blobs
 
   rm $task_dir/runc_filename.tar.xz
-fi 
+fi
 
 if [ "$(git status --porcelain)" != "" ]; then
   git status

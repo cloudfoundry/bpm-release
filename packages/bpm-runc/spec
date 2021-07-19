@@ -5,7 +5,7 @@ dependencies:
 - golang-1-linux
 
 files:
-- runc/runc-1.0.0-rc95.tar.xz
+- runc/runc-*.tar.xz
 - pkg-config/pkg-config-0.29.2.tar.gz
 - libseccomp/libseccomp-2.5.1.tar.gz
 - gperf/gperf-3.1.tar.gz
