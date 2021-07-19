@@ -266,7 +266,7 @@ jobs:
       image: bosh-ecosystem-docker-image
       params:
         BOSH_PRIVATE_CONFIG: ((bpm-private-yml))
-      file: bpm-release/ci/tasks/bumps-deps.yml
+      file: bpm-release/ci/tasks/bump-deps.yml
     - put: bpm-release
       params:
         repository: bpm-release
