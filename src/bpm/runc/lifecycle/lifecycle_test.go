@@ -462,7 +462,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 				Times(1)
 
 			setupMockDefaults()
-			err := runcLifecycle.StopProcess(logger, bpmCfg, exitTimeout)
+			err := runcLifecycle.StopProcess(logger, bpmCfg, procCfg, exitTimeout)
 			Expect(err).ToNot(HaveOccurred())
 		})
 
@@ -499,7 +499,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 				)
 
 				setupMockDefaults()
-				err := runcLifecycle.StopProcess(logger, bpmCfg, exitTimeout)
+				err := runcLifecycle.StopProcess(logger, bpmCfg, procCfg, exitTimeout)
 				Expect(err).ToNot(HaveOccurred())
 			})
 
@@ -536,7 +536,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 					)
 
 					setupMockDefaults()
-					err := runcLifecycle.StopProcess(logger, bpmCfg, exitTimeout)
+					err := runcLifecycle.StopProcess(logger, bpmCfg, procCfg, exitTimeout)
 					Expect(err).To(MatchError("failed to stop job within timeout"))
 				})
 			})
@@ -575,7 +575,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 				)
 
 				setupMockDefaults()
-				err := runcLifecycle.StopProcess(logger, bpmCfg, exitTimeout)
+				err := runcLifecycle.StopProcess(logger, bpmCfg, procCfg, exitTimeout)
 				Expect(err).To(MatchError("failed to stop job within timeout"))
 			})
 		})
@@ -593,7 +593,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 			It("returns an error", func() {
 				setupMockDefaults()
-				err := runcLifecycle.StopProcess(logger, bpmCfg, exitTimeout)
+				err := runcLifecycle.StopProcess(logger, bpmCfg, procCfg, exitTimeout)
 				Expect(err).To(Equal(expectedErr))
 			})
 		})
