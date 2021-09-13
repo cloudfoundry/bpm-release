@@ -33,7 +33,7 @@ repositories:
 
 3. All contributions must be sent using GitHub pull requests as they create a
    nice audit trail and structured approach.
-   
+
    The originating github user has to either have a github id on-file with the
    list of approved users that have signed the CLA or they can be a public
    "member" of a GitHub organization for a group that has signed the corporate
@@ -41,15 +41,15 @@ repositories:
    having to tell us when someone joins/leaves an organization. By removing a user
    from an organization's GitHub account, their new contributions are no longer
    approved because they are no longer covered under a CLA.
-   
+
    If a contribution is deemed to be covered by an existing CLA, then it is
    analyzed for engineering quality and product fit before merging it.
-   
+
    If a contribution is not covered by the CLA, then the automated CLA system
    notifies the submitter politely that we cannot identify their CLA and ask them
    to sign either an individual or corporate CLA. This happens automatically as a
    comment on pull requests.
-   
+
    When the project receives a new CLA, it is recorded in the project records, the
    CLA is added to the database for the automated system uses, then we manually
    make the Pull Request as having a CLA on-file.
@@ -94,3 +94,22 @@ The other dependencies are updated manually using their distributables (be that
 source code or, in the case of libseccomp, the amended source code from their
 GitHub release). We have an RSS bot in Slack watching these releases so that we
 can respond to them quickly.
+
+## Re-generating mocks
+
+1. Install the `mockgen` utility
+```bash
+go install github.com/golang/mock/mockgen@v1.6.0
+```
+
+2. For example, if you need to re-generate the runC lifecycle mocks, the
+result is a concatenation of some commented license header with the result of
+some `mockgen` invocation. This can be done as follows:
+```bash
+cd src
+cat \
+   <(sed -e 's|^|// |' -e 's/ $//' bpm/runc/lifecycle/mock_lifecycle/header.txt) \
+   <(echo) \
+   <(mockgen -source=bpm/runc/lifecycle/lifecycle.go) \
+   > bpm/runc/lifecycle/mock_lifecycle/mocks.go
+```

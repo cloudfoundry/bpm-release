@@ -92,7 +92,7 @@ var _ = Describe("stop", func() {
 		<-session.Exited
 		Expect(session).To(gexec.Exit(0))
 
-		Eventually(fileContents(stdout)).Should(ContainSubstring("Received a Signal"))
+		Eventually(fileContents(stdout)).Should(ContainSubstring("Received a TERM signal"))
 	})
 
 	It("removes the pid file", func() {
@@ -190,6 +190,21 @@ var _ = Describe("stop", func() {
 			Expect(session).To(gexec.Exit(1))
 			Expect(fileContents(bpmLog)()).To(ContainSubstring("failed-to-parse-config"))
 			Expect(fileContents(bpmLog)()).To(ContainSubstring("no such file or directory"))
+		})
+	})
+
+	Context("when the shutdown signal is SIGINT", func() {
+		BeforeEach(func() {
+			cfg.Processes[0].ShutdownSignal = "INT"
+		})
+
+		It("signals the container with a SIGINT", func() {
+			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+			Expect(err).ToNot(HaveOccurred())
+			<-session.Exited
+			Expect(session).To(gexec.Exit(0))
+
+			Eventually(fileContents(stdout)).Should(ContainSubstring("Received an INT signal"))
 		})
 	})
 })
