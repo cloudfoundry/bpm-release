@@ -20,7 +20,8 @@ import (
 )
 
 func defaultBash(path string) string {
-	return fmt.Sprintf(`trap "echo 'Received a Signal' && kill -9 $child" SIGTERM;
+	return fmt.Sprintf(`trap "echo 'Received a TERM signal' && kill -9 $child" SIGTERM;
+trap "echo 'Received an INT signal' && kill -9 $child" SIGINT;
 echo $LANG;
 echo "Logging to STDOUT";
 echo "Logging to STDERR" 1>&2;

@@ -231,8 +231,8 @@ func (j *RuncLifecycle) ListProcesses() ([]*models.Process, error) {
 	return processes, nil
 }
 
-func (j *RuncLifecycle) StopProcess(logger lager.Logger, cfg *config.BPMConfig, exitTimeout time.Duration) error {
-	err := j.runcClient.SignalContainer(cfg.ContainerID(), client.Term)
+func (j *RuncLifecycle) StopProcess(logger lager.Logger, cfg *config.BPMConfig, procCfg *config.ProcessConfig, exitTimeout time.Duration) error {
+	err := j.runcClient.SignalContainer(cfg.ContainerID(), procCfg.ParseShutdownSignal())
 	if err != nil {
 		return err
 	}

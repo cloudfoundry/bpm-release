@@ -3,6 +3,7 @@
 .blobs/
 blobs/
 .dev_builds/
+/.vscode/
 dev_releases/
 config/dev.yml
 config/private.yml

@@ -462,8 +462,32 @@ var _ = Describe("RuncJobLifecycle", func() {
 				Times(1)
 
 			setupMockDefaults()
-			err := runcLifecycle.StopProcess(logger, bpmCfg, exitTimeout)
+			err := runcLifecycle.StopProcess(logger, bpmCfg, procCfg, exitTimeout)
 			Expect(err).ToNot(HaveOccurred())
+		})
+
+		Context("when the shutdown signal is SIGINT", func() {
+			BeforeEach(func() {
+				procCfg.ShutdownSignal = "INT"
+			})
+
+			It("stops the container with an interrupt signal", func() {
+				fakeRuncClient.
+					EXPECT().
+					ContainerState(expectedContainerID).
+					Return(&specs.State{
+						Status: "stopped",
+					}, nil)
+
+				fakeRuncClient.
+					EXPECT().
+					SignalContainer(expectedContainerID, client.Int).
+					Times(1)
+
+				setupMockDefaults()
+				err := runcLifecycle.StopProcess(logger, bpmCfg, procCfg, exitTimeout)
+				Expect(err).ToNot(HaveOccurred())
+			})
 		})
 
 		Context("when the container does not stop immediately", func() {
@@ -499,7 +523,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 				)
 
 				setupMockDefaults()
-				err := runcLifecycle.StopProcess(logger, bpmCfg, exitTimeout)
+				err := runcLifecycle.StopProcess(logger, bpmCfg, procCfg, exitTimeout)
 				Expect(err).ToNot(HaveOccurred())
 			})
 
@@ -536,7 +560,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 					)
 
 					setupMockDefaults()
-					err := runcLifecycle.StopProcess(logger, bpmCfg, exitTimeout)
+					err := runcLifecycle.StopProcess(logger, bpmCfg, procCfg, exitTimeout)
 					Expect(err).To(MatchError("failed to stop job within timeout"))
 				})
 			})
@@ -575,7 +599,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 				)
 
 				setupMockDefaults()
-				err := runcLifecycle.StopProcess(logger, bpmCfg, exitTimeout)
+				err := runcLifecycle.StopProcess(logger, bpmCfg, procCfg, exitTimeout)
 				Expect(err).To(MatchError("failed to stop job within timeout"))
 			})
 		})
@@ -593,7 +617,7 @@ var _ = Describe("RuncJobLifecycle", func() {
 
 			It("returns an error", func() {
 				setupMockDefaults()
-				err := runcLifecycle.StopProcess(logger, bpmCfg, exitTimeout)
+				err := runcLifecycle.StopProcess(logger, bpmCfg, procCfg, exitTimeout)
 				Expect(err).To(Equal(expectedErr))
 			})
 		})

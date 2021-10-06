@@ -61,6 +61,18 @@ func stop(cmd *cobra.Command, _ []string) error {
 	logger.Info("starting")
 	defer logger.Info("complete")
 
+	jobCfg, err := bpmCfg.ParseJobConfig()
+	if err != nil {
+		logger.Error("failed-to-parse-config", err)
+		return fmt.Errorf("failed to parse job configuration: %s", err)
+	}
+
+	procCfg, err := processByNameFromJobConfig(jobCfg, procName)
+	if err != nil {
+		logger.Error("process-not-defined", err)
+		return fmt.Errorf("process %q not present in job configuration (%s)", procName, bpmCfg.JobConfig())
+	}
+
 	runcLifecycle, err := newRuncLifecycle()
 	if err != nil {
 		return err
@@ -74,7 +86,7 @@ func stop(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("failed to get job-process status: %s", err)
 	}
 
-	if err := runcLifecycle.StopProcess(logger, bpmCfg, DefaultStopTimeout); err != nil {
+	if err := runcLifecycle.StopProcess(logger, bpmCfg, procCfg, DefaultStopTimeout); err != nil {
 		logger.Error("failed-to-stop", err)
 	}
 
