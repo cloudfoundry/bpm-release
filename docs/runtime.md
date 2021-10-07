@@ -13,10 +13,13 @@ script is not bound by this timeout. You should use a [post-start script][post-s
 your job to only say it has completed deploying after it has started up. You do
 not need to manage any PID files yourself.
 
-On shutdown your job will receive a `SIGTERM`. You then have 20 seconds to
-shutdown your application before it will be sent `SIGQUIT` to dump the stack
+On shutdown your job will receive a `SIGTERM`.
+Starting in version `1.1.14`, you may choose to have your job receive a `SIGINT` instead (see [shutdown_signal][process-schema]).
+You then have 20 seconds to shutdown your application before it will be sent `SIGQUIT` to dump the stack
 (this is default behavior in the Go and Java runtimes) before being forcibly
 terminated.
+
+[process-schema]:config.md#process-schema
 
 If you require longer than this then you should use a [drain script][drain] for
 your server. The drain script should put your server in such a state that it
