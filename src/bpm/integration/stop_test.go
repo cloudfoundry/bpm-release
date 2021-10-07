@@ -86,7 +86,7 @@ var _ = Describe("stop", func() {
 		Expect(os.RemoveAll(boshRoot)).To(Succeed())
 	})
 
-	It("signals the container with a SIGTERM", func() {
+	It("signals the container with a SIGTERM by default", func() {
 		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 		Expect(err).ToNot(HaveOccurred())
 		<-session.Exited
@@ -174,7 +174,7 @@ var _ = Describe("stop", func() {
 		})
 	})
 
-	Context("when the job-process doesn't not exist", func() {
+	Context("when the job-process does not exist", func() {
 		BeforeEach(func() {
 			bpmLog = filepath.Join(boshRoot, "sys", "log", "non-existent", "bpm.log")
 		})
@@ -189,6 +189,43 @@ var _ = Describe("stop", func() {
 
 			Expect(session).To(gexec.Exit(0))
 			Expect(fileContents(bpmLog)()).To(ContainSubstring("job-already-stopped"))
+		})
+	})
+
+	Context("when the job exists but the config cannot be parsed", func() {
+		JustBeforeEach(func() {
+			writeInvalidConfig(boshRoot, job)
+		})
+
+		It("exits 1 and logs", func() {
+			command := exec.Command(bpmPath, "stop", job)
+			command.Env = append(command.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshRoot))
+
+			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+			Expect(err).ShouldNot(HaveOccurred())
+			<-session.Exited
+
+			Expect(session).To(gexec.Exit(1))
+			Expect(fileContents(bpmLog)()).To(ContainSubstring("failed-to-parse-config"))
+		})
+	})
+
+	Context("when the job exists and the parsed config does not have a process that matches the job", func() {
+		JustBeforeEach(func() {
+			cfg = newJobConfig("definitely-not-job", defaultBash(logFile))
+			writeConfig(boshRoot, job, cfg)
+		})
+
+		It("exits 1 and logs", func() {
+			command := exec.Command(bpmPath, "stop", job)
+			command.Env = append(command.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshRoot))
+
+			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+			Expect(err).ShouldNot(HaveOccurred())
+			<-session.Exited
+
+			Expect(session).To(gexec.Exit(1))
+			Expect(fileContents(bpmLog)()).To(ContainSubstring("process-not-defined"))
 		})
 	})
 
