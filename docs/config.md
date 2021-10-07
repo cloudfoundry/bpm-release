@@ -48,6 +48,7 @@ directory of your job.
 | `persistent_disk`    | boolean          | No            | Whether or not an persistent disk should be mounted into the container at `/var/vcap/store/JOB`.                               |
 | `additional_volumes` | volume[]         | No            | A list of additional volumes to mount inside this process. The paths which can be used are restricted (see volume note below). |
 | `unsafe`             | unsafe           | No            | The unsafe configuration for this process (see below).                                                                         |
+| `shutdown_signal`    | string           | No            | The first signal to send to the process when trying to shut it down. Can be either `TERM` or `INT`. Defaults to `TERM`.        |
 
 [capabilities]: http://man7.org/linux/man-pages/man7/capabilities.7.html
 

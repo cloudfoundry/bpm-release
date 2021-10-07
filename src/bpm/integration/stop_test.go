@@ -92,7 +92,7 @@ var _ = Describe("stop", func() {
 		<-session.Exited
 		Expect(session).To(gexec.Exit(0))
 
-		Eventually(fileContents(stdout)).Should(ContainSubstring("Received a Signal"))
+		Eventually(fileContents(stdout)).Should(ContainSubstring("Received a TERM signal"))
 	})
 
 	It("removes the pid file", func() {
@@ -111,7 +111,8 @@ var _ = Describe("stop", func() {
 		<-session.Exited
 		Expect(session).To(gexec.Exit(0))
 
-		Expect(runcCommand(runcRoot, "state", containerID).Run()).To(HaveOccurred())
+		nonexistentContainerErr := runcCommand(runcRoot, "state", containerID).Run()
+		Expect(nonexistentContainerErr).To(HaveOccurred())
 	})
 
 	It("removes the bundle directory", func() {
@@ -173,12 +174,12 @@ var _ = Describe("stop", func() {
 		})
 	})
 
-	Context("when the job-process doesn't not exist", func() {
+	Context("when the job-process doesn't not exist and has no config", func() {
 		BeforeEach(func() {
 			bpmLog = filepath.Join(boshRoot, "sys", "log", "non-existent", "bpm.log")
 		})
 
-		It("ignores that and is successful", func() {
+		It("complaints that the config cannot be found", func() {
 			command := exec.Command(bpmPath, "stop", "non-existent")
 			command.Env = append(command.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshRoot))
 
@@ -186,8 +187,24 @@ var _ = Describe("stop", func() {
 			Expect(err).ShouldNot(HaveOccurred())
 			<-session.Exited
 
+			Expect(session).To(gexec.Exit(1))
+			Expect(fileContents(bpmLog)()).To(ContainSubstring("failed-to-parse-config"))
+			Expect(fileContents(bpmLog)()).To(ContainSubstring("no such file or directory"))
+		})
+	})
+
+	Context("when the shutdown signal is SIGINT", func() {
+		BeforeEach(func() {
+			cfg.Processes[0].ShutdownSignal = "INT"
+		})
+
+		It("signals the container with a SIGINT", func() {
+			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+			Expect(err).ToNot(HaveOccurred())
+			<-session.Exited
 			Expect(session).To(gexec.Exit(0))
-			Expect(fileContents(bpmLog)()).To(ContainSubstring("job-already-stopped"))
+
+			Eventually(fileContents(stdout)).Should(ContainSubstring("Received an INT signal"))
 		})
 	})
 })

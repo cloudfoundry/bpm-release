@@ -33,6 +33,7 @@ type Signal int
 const (
 	Term Signal = iota
 	Quit
+	Int
 )
 
 func (s Signal) String() string {
@@ -41,6 +42,8 @@ func (s Signal) String() string {
 		return "TERM"
 	case Quit:
 		return "QUIT"
+	case Int:
+		return "INT"
 	default:
 		return "unknown"
 	}

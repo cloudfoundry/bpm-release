@@ -25,6 +25,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 
 	"bpm/bosh"
+	"bpm/runc/client"
 )
 
 type JobConfig struct {
@@ -44,6 +45,7 @@ type ProcessConfig struct {
 	PersistentDisk    bool              `yaml:"persistent_disk"`
 	WorkDir           string            `yaml:"workdir"`
 	Unsafe            *Unsafe           `yaml:"unsafe"`
+	ShutdownSignal    string            `yaml:"shutdown_signal"`
 }
 
 type Limits struct {
@@ -127,7 +129,22 @@ func (c *ProcessConfig) Validate(boshEnv *bosh.Env, defaultVolumes []string) err
 		}
 	}
 
+	if c.ShutdownSignal != "" && c.ShutdownSignal != "TERM" && c.ShutdownSignal != "INT" {
+		return fmt.Errorf(
+			"shutdown signal should either be 'TERM' or 'INT' (or left unspecified), but got '%s'",
+			c.ShutdownSignal)
+	}
+
 	return nil
+}
+
+func (c *ProcessConfig) ParseShutdownSignal() client.Signal {
+	switch c.ShutdownSignal {
+	case "INT":
+		return client.Int
+	default:
+		return client.Term
+	}
 }
 
 func (c *ProcessConfig) AddVolumes(
