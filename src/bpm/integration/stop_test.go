@@ -174,12 +174,12 @@ var _ = Describe("stop", func() {
 		})
 	})
 
-	Context("when the job-process doesn't not exist and has no config", func() {
+	Context("when the job-process doesn't not exist", func() {
 		BeforeEach(func() {
 			bpmLog = filepath.Join(boshRoot, "sys", "log", "non-existent", "bpm.log")
 		})
 
-		It("complaints that the config cannot be found", func() {
+		It("ignores that and is successful", func() {
 			command := exec.Command(bpmPath, "stop", "non-existent")
 			command.Env = append(command.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshRoot))
 
@@ -187,9 +187,8 @@ var _ = Describe("stop", func() {
 			Expect(err).ShouldNot(HaveOccurred())
 			<-session.Exited
 
-			Expect(session).To(gexec.Exit(1))
-			Expect(fileContents(bpmLog)()).To(ContainSubstring("failed-to-parse-config"))
-			Expect(fileContents(bpmLog)()).To(ContainSubstring("no such file or directory"))
+			Expect(session).To(gexec.Exit(0))
+			Expect(fileContents(bpmLog)()).To(ContainSubstring("job-already-stopped"))
 		})
 	})
 
