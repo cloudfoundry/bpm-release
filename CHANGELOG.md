@@ -1,3 +1,7 @@
+# ⚠️ Note ⚠️
+This changelog has not been kept up to date past `v1.1.8`.
+For the most current changelog, please see the [release notes](https://github.com/cloudfoundry/bpm-release/releases) on github.
+
 # v1.1.8
 
 * move runc state onto tmpfs
