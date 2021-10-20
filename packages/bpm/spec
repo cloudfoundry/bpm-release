@@ -10,5 +10,6 @@ files:
   - version
   - bpm/go.mod
   - bpm/go.sum
+  - bpm/vendor/modules.txt
   - bpm/**/*.go
   - bpm/**/*.s
