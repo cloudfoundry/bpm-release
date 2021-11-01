@@ -7,7 +7,7 @@ outputs:
 - name: bpm-release
 
 run:
-  path: bpm-release/ci/tasks/bump-deps.sh
+  path: bpm-release/ci/tasks/bump-runc-package.sh
 
 params:
   BOSH_PRIVATE_CONFIG:

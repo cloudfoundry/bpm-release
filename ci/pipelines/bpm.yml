@@ -271,6 +271,8 @@ jobs:
         input_repo: bpm-release
       output_mapping:
         output_repo: bumped-bpm-release
+      params:
+        SOURCE_PATH: src/bpm
     - task: bump-runc-package
       image: bosh-ecosystem-docker-image
       input_mapping:
