@@ -24,9 +24,6 @@ resources:
   type: git
   source:
     uri: https://github.com/bosh-packages/golang-release
-    branch: master
-    paths:
-      - releases/golang
 
 - name: version
   type: semver
@@ -155,25 +152,30 @@ jobs:
   serial: true
   plan:
     - in_parallel:
-        - get: bosh-ecosystem-docker-image
         - get: bpm-release
         - get: golang-release
           trigger: true
         - get: bosh-stemcell
           resource: boshlite-bionic-stemcell
-    - task: bump-golang-package
-      file: bpm-release/ci/tasks/bump-golang-package.yml
-      image: bosh-ecosystem-docker-image
+    - task: bump-golang-packages
+      file: golang-release/ci/tasks/shared/bump-golang-package.yml
+      input_mapping:
+        input_repo: bpm-release
+      output_mapping:
+        output_repo: bumped-bpm-release
       params:
-        BOSH_PRIVATE_CONFIG: ((bpm-private-yml))
+        PACKAGES: [golang-1-linux]
+        PRIVATE_YML: ((bpm-private-yml))
     - task: test-acceptance
       file: bpm-release/ci/test-acceptance.yml
+      input_mapping:
+        bpm-release: bumped-bpm-release
       params:
         STEMCELL_NAME: ubuntu-bionic
       privileged: true
     - put: bpm-release
       params:
-        repository: bpm-release
+        repository: bumped-bpm-release
         rebase: true
 
 - name: bump-patch
@@ -262,14 +264,30 @@ jobs:
       trigger: true
     - get: bosh-ecosystem-docker-image
     - get: bpm-release
+    - get: golang-release
     - task: bump-deps
+      file: golang-release/ci/tasks/shared/bump-deps.yml
+      input_mapping:
+        input_repo: bpm-release
+      output_mapping:
+        output_repo: bumped-bpm-release
+    - task: bump-runc-package
       image: bosh-ecosystem-docker-image
+      input_mapping:
+        bpm-release: bumped-bpm-release
+      output_mapping:
+        bpm-release: bumped-bpm-release
       params:
         BOSH_PRIVATE_CONFIG: ((bpm-private-yml))
-      file: bpm-release/ci/tasks/bump-deps.yml
+      file: bpm-release/ci/tasks/bump-runc-package.yml
+    - task: test-unit
+      file: bpm-release/ci/test-unit.yml
+      privileged: true
+      input_mapping:
+        bpm-release: bumped-bpm-release
     - put: bpm-release
       params:
-        repository: bpm-release
+        repository: bumped-bpm-release
 
 - name: build-bpm-ci
   serial: true

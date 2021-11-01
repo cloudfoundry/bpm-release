@@ -6,12 +6,6 @@ task_dir=$PWD
 
 cd bpm-release
 
-pushd src/bpm
-  go get -u ./...
-  go mod tidy
-  go mod vendor
-popd
-
 runc_version_go_mod=$(grep 'runc' src/bpm/go.mod | sed 's/.* v//')
 if ! $(grep -q "$runc_version_go_mod" config/blobs.yml); then
   curl -o $task_dir/runc_filename.tar.xz -L https://github.com/opencontainers/runc/releases/download/v${runc_version_go_mod}/runc.tar.xz
@@ -28,8 +22,8 @@ fi
 
 if [ "$(git status --porcelain)" != "" ]; then
   git status
-  git config --global user.email "cf-bpm@pivotal.io"
-  git config --global user.name "CF BPM"
+  git config --global user.email "$GIT_USER_EMAIL"
+  git config --global user.name "$GIT_USER_NAME"
   git add .
-  git commit -m "Updated dependencies"
+  git commit -m "Update runc to ${runc_version_go_mod}"
 fi
