@@ -53,6 +53,7 @@ resources:
     pre_release: true
     access_token: ((bpm-machine-github-token))
     order_by: time # without this v1.0.0-rc9 > v1.0.0-rc10
+    tag_filter: 'v((\d|\.)+)$'
 
 - name: tini
   type: github-release
