@@ -13,7 +13,7 @@ require (
 	github.com/moby/sys/mountinfo v0.5.0
 	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/gomega v1.16.0
-	github.com/opencontainers/runc v1.0.3
+	github.com/opencontainers/runc v1.1.0
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
 	github.com/satori/go.uuid v1.2.0
 	github.com/spf13/cobra v1.3.0
@@ -30,7 +30,6 @@ require (
 	github.com/go-task/slim-sprig v0.0.0-20210107165309-348f09dbbbc0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/nxadm/tail v1.4.8 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	golang.org/x/mod v0.5.0 // indirect
