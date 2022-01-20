@@ -22,7 +22,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
+	"strings"
 	"syscall"
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
@@ -182,8 +182,7 @@ func decodeContainerStateErr(b []byte, err error) error {
 	if e != nil {
 		return err
 	}
-	r := regexp.MustCompile(`\s*container "[^"]*" does not exist\s*`)
-	if r.MatchString(jsonErr.Msg) {
+	if strings.Contains(jsonErr.Msg, "container does not exist") {
 		return nil
 	}
 	return err
