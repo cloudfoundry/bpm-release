@@ -7,7 +7,7 @@ require (
 	code.cloudfoundry.org/clock v1.0.0
 	code.cloudfoundry.org/lager v2.0.0+incompatible
 	github.com/cyphar/filepath-securejoin v0.2.3 // indirect
-	github.com/godbus/dbus/v5 v5.0.6 // indirect
+	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/golang/mock v1.6.0
 	github.com/kr/pty v1.1.8
 	github.com/moby/sys/mountinfo v0.6.0
@@ -19,7 +19,7 @@ require (
 	github.com/spf13/cobra v1.3.0
 	github.com/tedsuo/ifrit v0.0.0-20191009134036-9a97d0632f00 // indirect
 	golang.org/x/net v0.0.0-20210813160813-60bc85c4be6d // indirect
-	golang.org/x/sys v0.0.0-20220209214540-3681064d5158
+	golang.org/x/sys v0.0.0-20220227234510-4e6760a101f9
 	gopkg.in/yaml.v2 v2.4.0
 )
 
