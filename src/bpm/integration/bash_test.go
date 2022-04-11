@@ -20,8 +20,8 @@ import (
 )
 
 func defaultBash(path string) string {
-	return fmt.Sprintf(`trap "echo 'Received a TERM signal' && kill -9 $child" SIGTERM;
-trap "echo 'Received an INT signal' && kill -9 $child" SIGINT;
+	return fmt.Sprintf(`trap 'echo "Received a TERM signal" && kill -9 $child' SIGTERM;
+trap 'echo "Received an INT signal" && kill -9 $child' SIGINT;
 echo $LANG;
 echo "Logging to STDOUT";
 echo "Logging to STDERR" 1>&2;
@@ -31,7 +31,7 @@ child=$!;
 wait $child`, path)
 }
 
-const alternativeBash = `trap "kill -9 $child" SIGTERM;
+const alternativeBash = `trap 'kill -9 $child' SIGTERM;
 echo $LANG;
 echo "Alternate Logging to STDOUT";
 echo "Alternate Logging to STDERR" 1>&2;
@@ -48,7 +48,7 @@ const netBindServiceCapabilityBash = `echo PRIVILEGED | nc -l 127.0.0.1 80`
 
 // See https://codegolf.stackexchange.com/questions/24485/create-a-memory-leak-without-any-fork-bombs
 const memoryLeakBash = `start_memory_leak() { :(){ : $@$@;};: : ;};
-trap "kill $child" SIGTERM;
+trap 'kill -9 $child' SIGTERM;
 sleep 100 &
 child=$!;
 wait $child;
@@ -57,14 +57,14 @@ start_memory_leak`
 func fileLeakBash(path string) string {
 	return fmt.Sprintf(`file_dir=%s;
 start_file_leak() { for i in $(seq 1 20); do touch $file_dir/file-$i; done; tail -f $file_dir/* ;};
-trap "kill $child" SIGTERM;
+trap 'kill -9 $child' SIGTERM;
 sleep 100 &
 child=$!;
 wait $child;
 start_file_leak`, path)
 }
 
-const processLeakBash = `trap "if [ \"$child\" ]; then kill $child; fi" SIGTERM;
+const processLeakBash = `trap 'kill -9 $child' SIGTERM;
 sleep 100 &
 child=$!;
 wait $child;
@@ -75,7 +75,7 @@ func messageQueueBash(id int) string {
 	return fmt.Sprintf(`ipcs -q -i %d; sleep 5`, id)
 }
 
-const logsBash = `trap "kill -9 $child" SIGTERM;
+const logsBash = `trap 'kill -9 $child' SIGTERM;
 for i in $(seq 1 100); do
   echo "Logging Line #$i to STDOUT"
   echo "Logging Line #$i to STDERR" 1>&2
@@ -85,7 +85,7 @@ sleep 100 &
 child=$!;
 wait $child`
 
-const alternativeLogsBash = `trap "kill -9 $child" SIGTERM;
+const alternativeLogsBash = `trap 'kill -9 $child' SIGTERM;
 for i in $(seq 1 100); do
   echo "Logging Line #$i to ALT STDOUT"
   echo "Logging Line #$i to ALT STDERR" 1>&2
@@ -95,12 +95,7 @@ sleep 100 &
 child=$!;
 wait $child`
 
-const waitForSigUSR1Bash = `trap "kill -9 $child" SIGUSR1;
-sleep 100 &
-child=$!;
-wait $child`
-
-const privilegedBash = `trap "kill -9 $child" SIGTERM;
+const privilegedBash = `trap 'kill -9 $child' SIGTERM;
 echo "Running as $(whoami)"
 echo "Privileges: $(cat /proc/1/status | grep CapEff)"
 if ! grep nosuid /proc/mounts; then
@@ -111,7 +106,7 @@ child=$!;
 wait $child`
 
 func catBash(path string) string {
-	return fmt.Sprintf(`trap "echo 'Received a Signal' && kill -9 $child" SIGTERM;
+	return fmt.Sprintf(`trap 'echo "Received a Signal" && kill -9 $child' SIGTERM;
 cat %s;
 sleep 100 &
 child=$!;
@@ -119,7 +114,7 @@ wait $child`, path)
 }
 
 func findBash(path string) string {
-	return fmt.Sprintf(`trap "echo 'Received a Signal' && kill -9 $child" SIGTERM;
+	return fmt.Sprintf(`trap 'echo "Received a Signal" && kill -9 $child' SIGTERM;
 find %s;
 sleep 100 &
 child=$!;

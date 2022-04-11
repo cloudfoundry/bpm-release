@@ -330,7 +330,6 @@ var _ = Describe("start", func() {
 
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
-			Expect(err).ShouldNot(HaveOccurred())
 			<-session.Exited
 
 			Expect(session).To(gexec.Exit(0))
