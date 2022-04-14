@@ -16,6 +16,7 @@
 package integration_test
 
 import (
+	"bpm/bosh"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -42,9 +43,11 @@ var _ = Describe("stop", func() {
 		bpmLog      string
 		containerID string
 		job         string
-		logFile     string
 		runcRoot    string
 		stdout      string
+
+		boshEnv *bosh.Env
+		logFile bosh.Path
 	)
 
 	BeforeEach(func() {
@@ -55,13 +58,15 @@ var _ = Describe("stop", func() {
 		boshRoot, err = ioutil.TempDir(bpmTmpDir, "stop-test")
 		Expect(err).NotTo(HaveOccurred())
 		Expect(os.Chmod(boshRoot, 0755)).To(Succeed())
+		boshEnv = bosh.NewEnv(boshRoot)
+
 		runcRoot = setupBoshDirectories(boshRoot, job)
 
 		stdout = filepath.Join(boshRoot, "sys", "log", job, fmt.Sprintf("%s.stdout.log", job))
 		bpmLog = filepath.Join(boshRoot, "sys", "log", job, "bpm.log")
-		logFile = filepath.Join(boshRoot, "sys", "log", job, "foo.log")
+		logFile = boshEnv.LogDir(job).Join("foo.log")
 
-		cfg = newJobConfig(job, defaultBash(logFile))
+		cfg = newJobConfig(job, defaultBash(logFile.Internal()))
 	})
 
 	JustBeforeEach(func() {
@@ -212,7 +217,7 @@ var _ = Describe("stop", func() {
 
 	Context("when the job exists and the parsed config does not have a process that matches the job", func() {
 		JustBeforeEach(func() {
-			cfg = newJobConfig("definitely-not-job", defaultBash(logFile))
+			cfg = newJobConfig("definitely-not-job", defaultBash(logFile.Internal()))
 			writeConfig(boshRoot, job, cfg)
 		})
 
