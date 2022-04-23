@@ -19,7 +19,7 @@ require (
 	github.com/spf13/cobra v1.4.0
 	github.com/tedsuo/ifrit v0.0.0-20191009134036-9a97d0632f00 // indirect
 	golang.org/x/net v0.0.0-20210813160813-60bc85c4be6d // indirect
-	golang.org/x/sys v0.0.0-20220412211240-33da011f77ad
+	golang.org/x/sys v0.0.0-20220422013727-9388b58f7150
 	gopkg.in/yaml.v2 v2.4.0
 )
 
