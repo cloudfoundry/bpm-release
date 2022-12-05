@@ -133,8 +133,7 @@ var _ = Describe("BpmAcceptance", func() {
 		body, err := ioutil.ReadAll(resp.Body)
 		Expect(err).NotTo(HaveOccurred())
 
-		Expect(string(body)).To(ContainSubstring("0+0 records in"))
-		Expect(string(body)).To(ContainSubstring("0+0 records out"))
+		Expect(string(body)).To(Equal(""))
 	})
 
 	It("only has access to store, data, jobs, sys, and packages in /var/vcap", func() {
