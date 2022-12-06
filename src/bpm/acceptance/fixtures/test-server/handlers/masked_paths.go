@@ -30,25 +30,40 @@ func MaskedPaths(w http.ResponseWriter, r *http.Request) {
 	emptyFileOutput := regexp.MustCompile("0\\+0 records in\n0\\+0 records out")
 
 	for _, path := range specbuilder.DefaultSpec().Linux.MaskedPaths {
-		_, err := os.Stat(path)
+		stat, err := os.Stat(path)
 		if err != nil {
 			continue
 		}
 
-		cmd := exec.Command("/bin/dd", "if="+path)
-		output, err := cmd.CombinedOutput()
-		defer cmd.Process.Kill() // as dd could run indefinitely and cause issues with other tests...
+		if stat.IsDir() {
+			contents, err := os.ReadDir(path)
 
-		if err != nil {
-			readablePaths += fmt.Sprintf("Error reading path: %s\n", path)
-			continue
+			if err != nil {
+				readablePaths += fmt.Sprintf("Error reading directory: %s\n", path)
+				continue
+			}
+
+			if len(contents) == 0 {
+				continue
+			}
+
+			readablePaths += fmt.Sprintf("Unexpected readable directory contents: %s\n", path)
+		} else {
+			cmd := exec.Command("/bin/dd", fmt.Sprintf("if=%s", path))
+			output, err := cmd.CombinedOutput()
+			defer cmd.Process.Kill() // as dd could run indefinitely and cause issues with other tests...
+
+			if err != nil {
+				readablePaths += fmt.Sprintf("Error reading path: %s\n", path)
+				continue
+			}
+
+			if emptyFileOutput.Match(output) {
+				continue
+			}
+
+			readablePaths += fmt.Sprintf("Unexpected readable path: %s\n", path)
 		}
-
-		if emptyFileOutput.Match(output) {
-			continue
-		}
-
-		readablePaths += fmt.Sprintf("Unexpected readable path: %s\n", path)
 	}
 
 	fmt.Fprintln(w, string(readablePaths))
