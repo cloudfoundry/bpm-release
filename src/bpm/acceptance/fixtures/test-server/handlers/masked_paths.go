@@ -18,17 +18,38 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"os/exec"
+	"regexp"
+
+	"bpm/runc/specbuilder"
 )
 
 func MaskedPaths(w http.ResponseWriter, r *http.Request) {
-	cmd := exec.Command("/bin/dd", "if=/proc/sched_debug")
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+	readablePaths := ""
+	emptyFileOutput := regexp.MustCompile("0\\+0 records in\n0\\+0 records out")
+
+	for _, path := range specbuilder.DefaultSpec().Linux.MaskedPaths {
+		_, err := os.Stat(path)
+		if err != nil {
+			continue
+		}
+
+		cmd := exec.Command("/bin/dd", "if="+path)
+		output, err := cmd.CombinedOutput()
+		defer cmd.Process.Kill() // as dd could run indefinitely and cause issues with other tests...
+
+		if err != nil {
+			readablePaths += fmt.Sprintf("Error reading path: %s\n", path)
+			continue
+		}
+
+		if emptyFileOutput.Match(output) {
+			continue
+		}
+
+		readablePaths += fmt.Sprintf("Unexpected readable path: %s\n", path)
 	}
 
-	fmt.Fprintln(w, string(output))
-	cmd.Process.Kill() // as dd could run indefinitely and cause issues with other tests...
+	fmt.Fprintln(w, string(readablePaths))
 }
