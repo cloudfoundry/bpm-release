@@ -1,3 +1,11 @@
+resource_types:
+- name: gcs-resource
+  type: docker-image
+  source:
+    repository: frodenas/gcs-resource
+    username: ((docker.username))
+    password: ((docker.password))
+
 resources:
 - name: bpm-release
   type: git
@@ -33,6 +41,21 @@ resources:
     key: current-version
     initial_version: 0.0.0
     json_key: ((bpm-version-gcs-json-key))
+
+- name: github-release
+  type: github-release
+  source:
+    owner: cloudfoundry
+    repository: bpm-release
+    access_token: ((github_public_repo_token))
+
+- name: release-notes
+  type: gcs-resource
+  source:
+    bucket: bosh-ci-release-notes
+    json_key: ((gcp_credentials_json))
+    versioned_file: bpm-release/release-notes.md
+    initial_content_text: ""
 
 - name: boshlite-bionic-stemcell
   type: bosh-io-stemcell
@@ -213,19 +236,103 @@ jobs:
     params:
       file: version/version
 
+- name: pre-release-fan-in
+  plan:
+  - get: bpm-release
+    passed:
+    - test-acceptance-bionic
+    - test-acceptance-xenial
+    - test-unit
+    - test-upgrade
+
+- name: release-new-patch
+  serial_groups:
+  - version
+  plan:
+  - get: bpm-release
+    passed:
+    - pre-release-fan-in
+  - get: version
+    params:
+      bump: patch
+  - put: version
+    params:
+      file: version/version
+
+- name: release-new-minor
+  serial_groups:
+  - version
+  plan:
+  - get: bpm-release
+    passed:
+    - pre-release-fan-in
+  - get: version
+    params:
+      bump: minor
+  - put: version
+    params:
+      file: version/version
+
+- name: release-new-major
+  serial_groups:
+  - version
+  plan:
+  - get: bpm-release
+    passed:
+    - pre-release-fan-in
+  - get: version
+    params:
+      bump: major
+  - put: version
+    params:
+      file: version/version
+
+- name: automatically-release-new-patch
+  serial_groups:
+  - version
+  plan:
+  - in_parallel:
+    - get: bpm-release
+      trigger: true
+      passed:
+      - pre-release-fan-in
+    - get: golang-release
+    - get: version
+    - get: bosh-ecosystem-docker-image
+  - try:
+      task: check-for-patched-cves
+      file: golang-release/ci/tasks/shared/check-for-patched-cves.yml
+      input_mapping:
+        input_repo: bpm-release
+      params:
+        SEVERITY: CRITICAL,HIGH
+        SOURCE_PATH: src/bpm
+      on_success:
+        do:
+        - put: release-notes
+          params:
+            file: patched_cves/release-notes.md
+        - put: version
+          params:
+            bump: patch
+  - task: ensure-cve-checker-succeeded
+    file: golang-release/ci/tasks/shared/ensure-cve-checker-succeeded.yml
+    image: bosh-ecosystem-docker-image
+    params:
+      description: |
+        Since the previous step is wrapped in a "try", this task checks that the previous step fully executed.
+
 - name: create-final-release
   serial_groups: [version]
   plan:
   - in_parallel:
     - get: bpm-release
       passed:
-      - test-acceptance-bionic
-      - test-acceptance-xenial
-      - test-unit
-      - test-upgrade
+      - pre-release-fan-in
     - get: version
       params:
         bump: final
+    - get: release-notes
   - task: bump-local-version
     file: bpm-release/ci/bump-local-version.yml
   - task: finalize-release
@@ -244,6 +351,11 @@ jobs:
       rebase: true
       tag: version/version
       tag_prefix: v
+  - put: github-release
+    params:
+      name: final-release-tag/tag
+      tag: final-release-tag/tag
+      body: release-notes/release-notes.md
   - task: bump-local-version
     file: bpm-release/ci/bump-local-version.yml
     input_mapping:
@@ -257,6 +369,19 @@ jobs:
       repository: release-repo
       submodules: none
       rebase: true
+
+- name: clear-release-notes
+  plan:
+  - get: version
+    passed:
+    - create-final-release
+    trigger: true
+  - get: golang-release
+  - task: clear-release-notes
+    file: golang-release/ci/tasks/shared/clear-release-notes.yml
+  - put: release-notes
+    params:
+      file: release-notes/release-notes.md
 
 - name: bump-deps
   public: true
