@@ -85,4 +85,6 @@ builds:
     version: 1.1.17
   f6e6dfad-1da8-400b-4ca0-7e5a77b479bc:
     version: 0.2.0
+  fad1f480-cc12-4655-6e99-aa24d338e90d:
+    version: 1.1.21
 format-version: "2"
