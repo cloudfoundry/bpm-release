@@ -8,6 +8,7 @@ BOSH_RELEASE_DIR=$PWD/bpm-release
 # outputs
 FINAL_RELEASE_TARBALL_DIR="${PWD}/final-release-tarball"
 FINAL_RELEASE_REPO="${PWD}/final-release-repo"
+FINAL_RELEASE_TAG="${PWD}/final-release-tag"
 
 VERSION=$(cat ./version/version)
 if [ -z "$VERSION" ]; then
@@ -44,4 +45,4 @@ fi
 
 bosh -n create-release --tarball "${FINAL_RELEASE_TARBALL}" "${RELEASE_YML}"
 
-echo "v${VERSION}" > final-release-tag/tag
+echo "v${VERSION}" > "${FINAL_RELEASE_TAG}/tag"
