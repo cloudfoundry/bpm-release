@@ -13,6 +13,7 @@ inputs:
 outputs:
 - name: final-release-repo
 - name: final-release-tarball
+- name: final-release-tag
 
 params:
   RELEASE_NAME:

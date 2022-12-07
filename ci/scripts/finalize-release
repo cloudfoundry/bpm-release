@@ -43,3 +43,5 @@ if ! [ -e "${RELEASE_YML}" ]; then
 fi
 
 bosh -n create-release --tarball "${FINAL_RELEASE_TARBALL}" "${RELEASE_YML}"
+
+echo "v${VERSION}" > final-release-tag/tag
