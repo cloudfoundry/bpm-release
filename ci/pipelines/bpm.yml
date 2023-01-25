@@ -206,43 +206,10 @@ jobs:
         repository: bumped-bpm-release
         rebase: true
 
-- name: bump-patch
-  serial_groups:
-  - version
-  plan:
-  - get: version
-    passed:
-    params:
-      bump: patch
-  - put: version
-    params:
-      file: version/version
-
-- name: bump-minor
-  serial_groups:
-  - version
-  plan:
-  - get: version
-    params:
-      bump: minor
-  - put: version
-    params:
-      file: version/version
-
-- name: bump-major
-  serial_groups:
-  - version
-  plan:
-  - get: version
-    params:
-      bump: major
-  - put: version
-    params:
-      file: version/version
-
 - name: pre-release-fan-in
   plan:
   - get: bpm-release
+    trigger: true
     passed:
     - test-acceptance-bionic
     - test-acceptance-xenial
@@ -334,6 +301,7 @@ jobs:
       passed:
       - pre-release-fan-in
     - get: version
+      trigger: true
       params:
         bump: final
     - get: release-notes
