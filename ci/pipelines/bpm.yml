@@ -11,7 +11,7 @@ resources:
   type: git
   source:
     branch: master
-    private_key: ((bpm-github-deploy-key))
+    private_key: ((github_deploy_key_bpm-release.private_key))
     uri: git@github.com:cloudfoundry-incubator/bpm-release.git
 
 - name: bosh-ecosystem-docker-image
@@ -40,7 +40,7 @@ resources:
     bucket: bpm-release-version
     key: current-version
     initial_version: 0.0.0
-    json_key: ((bpm-version-gcs-json-key))
+    json_key: ((cf-secenablement-bpm_bpm-release-version_gcp_credentials_json))
 
 - name: github-release
   type: github-release
@@ -92,15 +92,14 @@ resources:
     uri: git@github.com:cloudfoundry-incubator/bpm-release
     branch: master
     paths: [ci/Dockerfile]
-    private_key: ((bpm-github-deploy-key))
+    private_key: ((github_deploy_key_bpm-release.private_key))
 
 - name: bpm-ci-image
   type: docker-image
   source:
     repository: cfbpm/bpm-ci
-    username: ((docker-username))
-    email: ((docker-email))
-    password: ((docker-password))
+    username: ((bpm-docker.username))
+    password: ((bpm-docker.password))
 
 - name: golang-image
   type: docker-image
@@ -189,7 +188,12 @@ jobs:
         output_repo: bumped-bpm-release
       params:
         PACKAGES: [golang-1-linux]
-        PRIVATE_YML: ((bpm-private-yml))
+        PRIVATE_YML: |
+          ---
+          blobstore:
+            options:
+              credentials_source: static
+              json_key: '((cf-secenablement-bpm_bpm-release_gcp_credentials_json))'
     - task: test-acceptance
       file: bpm-release/ci/test-acceptance.yml
       input_mapping:
@@ -341,7 +345,12 @@ jobs:
       bpm-release: release-repo
     params:
       RELEASE_NAME: bpm
-      BLOBSTORE_PRIVATE_YML: ((bpm-private-yml))
+      BLOBSTORE_PRIVATE_YML: |
+        ---
+        blobstore:
+          options:
+            credentials_source: static
+            json_key: '((cf-secenablement-bpm_bpm-release_gcp_credentials_json))'
   - put: bpm-release
     get_params:
       submodules: none
@@ -406,7 +415,12 @@ jobs:
       output_mapping:
         bpm-release: bumped-bpm-release
       params:
-        BOSH_PRIVATE_CONFIG: ((bpm-private-yml))
+        BOSH_PRIVATE_CONFIG: |
+          ---
+          blobstore:
+            options:
+              credentials_source: static
+              json_key: '((cf-secenablement-bpm_bpm-release_gcp_credentials_json))'
       file: bpm-release/ci/tasks/bump-runc-package.yml
     - task: test-unit
       file: bpm-release/ci/test-unit.yml
