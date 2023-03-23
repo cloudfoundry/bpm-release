@@ -87,7 +87,7 @@ func (c *BPMConfig) Stdout() bosh.Path {
 }
 
 func (c *BPMConfig) Stderr() bosh.Path {
-	return c.LogDir().Join(fmt.Sprintf("%s.stderr.log", c.procName))
+	return c.LogDir().Join(fmt.Sprintf("%s.stderr2.log", c.procName))
 }
 
 func (c *BPMConfig) PidDir() bosh.Path {
