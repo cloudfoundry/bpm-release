@@ -422,7 +422,7 @@ var _ = Describe("RuncAdapter", func() {
 				Destination: "/dev",
 				Type:        "tmpfs",
 				Source:      "tmpfs",
-				Options:     []string{"nosuid", "noexec", "mode=755", "size=65536k"},
+				Options:     []string{"nosuid", "noexec", "mode=755"},
 			}))
 			Expect(spec.Mounts).To(HaveMount(specs.Mount{
 				Destination: "/dev/pts",
@@ -434,7 +434,7 @@ var _ = Describe("RuncAdapter", func() {
 				Destination: "/dev/shm",
 				Type:        "tmpfs",
 				Source:      "shm",
-				Options:     []string{"nosuid", "noexec", "nodev", "mode=1777", "size=65536k"},
+				Options:     []string{"nosuid", "noexec", "nodev", "mode=1777"},
 			}))
 			Expect(spec.Mounts).To(HaveMount(specs.Mount{
 				Destination: "/dev/mqueue",
