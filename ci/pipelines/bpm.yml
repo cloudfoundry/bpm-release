@@ -57,6 +57,11 @@ resources:
     versioned_file: bpm-release/release-notes.md
     initial_content_text: ""
 
+- name: boshlite-jammy-stemcell
+  type: bosh-io-stemcell
+  source:
+    name: bosh-warden-boshlite-ubuntu-jammy-go_agent
+
 - name: boshlite-bionic-stemcell
   type: bosh-io-stemcell
   source:
@@ -123,6 +128,21 @@ jobs:
     trigger: true
   - task: test-unit
     file: bpm-release/ci/test-unit.yml
+    privileged: true
+
+- name: test-acceptance-jammy
+  plan:
+  - in_parallel:
+    - get: bpm-release
+      trigger: true
+    - get: boshlite-jammy-stemcell
+      trigger: true
+  - task: test-acceptance
+    file: bpm-release/ci/test-acceptance.yml
+    params:
+      STEMCELL_NAME: ubuntu-jammy
+    input_mapping:
+      bosh-stemcell: boshlite-jammy-stemcell
     privileged: true
 
 - name: test-acceptance-bionic
@@ -213,6 +233,7 @@ jobs:
     passed:
     - test-acceptance-bionic
     - test-acceptance-xenial
+    - test-acceptance-jammy
     - test-unit
     - test-upgrade
 
