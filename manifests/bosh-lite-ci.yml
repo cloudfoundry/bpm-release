@@ -11,6 +11,7 @@ instance_groups:
     release: bpm
   vm_type: default
   stemcell: default
+  persistent_disk: 1024
   networks:
   - name: default
 
