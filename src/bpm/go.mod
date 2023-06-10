@@ -14,7 +14,7 @@ require (
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.27.6
 	github.com/opencontainers/runc v1.1.7
-	github.com/opencontainers/runtime-spec v1.1.0-rc.2
+	github.com/opencontainers/runtime-spec v1.1.0-rc.3
 	github.com/satori/go.uuid v1.2.0
 	github.com/spf13/cobra v1.7.0
 	golang.org/x/net v0.10.0 // indirect
@@ -30,7 +30,7 @@ require (
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/nxadm/tail v1.4.8 // indirect
-	github.com/sirupsen/logrus v1.9.2 // indirect
+	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	golang.org/x/mod v0.10.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
