@@ -23,7 +23,7 @@ import (
 	"path/filepath"
 
 	"code.cloudfoundry.org/clock"
-	"code.cloudfoundry.org/lager"
+	"code.cloudfoundry.org/lager/v3"
 	"github.com/spf13/cobra"
 
 	"bpm/bosh"

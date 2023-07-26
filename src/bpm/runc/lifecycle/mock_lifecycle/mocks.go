@@ -27,7 +27,7 @@ import (
 	exec "os/exec"
 	reflect "reflect"
 
-	lager "code.cloudfoundry.org/lager"
+	lager "code.cloudfoundry.org/lager/v3"
 	gomock "github.com/golang/mock/gomock"
 	specs_go "github.com/opencontainers/runtime-spec/specs-go"
 )

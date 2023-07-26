@@ -29,7 +29,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"code.cloudfoundry.org/bytefmt"
-	"code.cloudfoundry.org/lager/lagertest"
+	"code.cloudfoundry.org/lager/v3/lagertest"
 	"github.com/onsi/gomega/types"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 

@@ -16,6 +16,8 @@
 package lifecycle_test
 
 import (
+	"code.cloudfoundry.org/lager/v3"
+	"code.cloudfoundry.org/lager/v3/lagertest"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -27,8 +29,6 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 
 	"code.cloudfoundry.org/clock/fakeclock"
-	"code.cloudfoundry.org/lager"
-	"code.cloudfoundry.org/lager/lagertest"
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
