@@ -386,14 +386,6 @@ jobs:
       repository: release-repo
       submodules: none
       rebase: true
-
-- name: clear-release-notes
-  plan:
-  - get: version
-    passed:
-    - create-final-release
-    trigger: true
-  - get: golang-release
   - task: clear-release-notes
     file: golang-release/ci/tasks/shared/clear-release-notes.yml
   - put: release-notes
