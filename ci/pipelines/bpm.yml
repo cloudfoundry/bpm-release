@@ -289,7 +289,8 @@ jobs:
       passed:
       - pre-release-fan-in
     - get: golang-release
-    - get: version
+    - get: current-version
+      resource: version
     - get: patched-version
       resource: version
       params:
@@ -300,6 +301,7 @@ jobs:
       file: golang-release/ci/tasks/shared/check-for-updated-golang-package.yml
       input_mapping:
         input_repo: bpm-release
+        version: current-version
       params:
         PACKAGES: [ golang-1-linux ]
       on_success:
@@ -315,6 +317,7 @@ jobs:
       file: golang-release/ci/tasks/shared/check-for-patched-cves.yml
       input_mapping:
         input_repo: bpm-release
+        version: current-version
       params:
         SEVERITY: CRITICAL,HIGH
         SOURCE_PATH: src/bpm
@@ -345,6 +348,7 @@ jobs:
       params:
         bump: final
     - get: release-notes
+    - get: golang-release
   - task: bump-local-version
     file: bpm-release/ci/bump-local-version.yml
   - task: finalize-release
