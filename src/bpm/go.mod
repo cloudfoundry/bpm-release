@@ -22,7 +22,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 )
 
-require github.com/onsi/ginkgo/v2 v2.12.0
+require github.com/onsi/ginkgo/v2 v2.12.1
 
 require (
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
