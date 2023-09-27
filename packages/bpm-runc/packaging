@@ -90,7 +90,7 @@ RUNC_PACKAGE_PATH=github.com/opencontainers/runc
     GOPROXY=off \
     go build \
       -buildmode=pie \
-      -ldflags "-X main.gitCommit=unknown -X main.version=${RUNC_VERSION}-bpm -r ${LIBSECCOMP_RUNTIME_PATH}" \
+      -ldflags "-X main.gitCommit=unknown -X main.version=${RUNC_VERSION} -r ${LIBSECCOMP_RUNTIME_PATH}" \
       -tags "seccomp apparmor" \
 	    -mod=vendor \
       -o "${BOSH_INSTALL_TARGET}/bin/runc" \
