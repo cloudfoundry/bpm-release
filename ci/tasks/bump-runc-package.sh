@@ -6,8 +6,10 @@ task_dir=$PWD
 
 cd bpm-release
 
-runc_version_go_mod=$(grep 'runc' src/bpm/go.mod | sed 's/.* v//')
-if ! $(grep -q "$runc_version_go_mod" config/blobs.yml); then
+pushd src/bpm
+  runc_version_go_mod=$(go list -m -f '{{ .Version }}' github.com/opencontainers/runc | sed 's/v//')
+popd
+if ! $(grep -q -F "runc-${runc_version_go_mod}" config/blobs.yml); then
   curl -o $task_dir/runc_filename.tar.xz -L https://github.com/opencontainers/runc/releases/download/v${runc_version_go_mod}/runc.tar.xz
   runc_old_version=$(grep 'runc' config/blobs.yml |  sed 's/.$//')
   bosh remove-blob $runc_old_version
