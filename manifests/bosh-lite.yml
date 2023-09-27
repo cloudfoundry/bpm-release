@@ -23,7 +23,7 @@ instance_groups:
 
 stemcells:
 - alias: default
-  os: ubuntu-bionic
+  os: ubuntu-jammy
   version: latest
 
 update:

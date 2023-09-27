@@ -62,11 +62,6 @@ resources:
   source:
     name: bosh-warden-boshlite-ubuntu-jammy-go_agent
 
-- name: boshlite-bionic-stemcell
-  type: bosh-io-stemcell
-  source:
-    name: bosh-warden-boshlite-ubuntu-bionic-go_agent
-
 - name: boshlite-xenial-stemcell
   type: bosh-io-stemcell
   source:
@@ -145,21 +140,6 @@ jobs:
       bosh-stemcell: boshlite-jammy-stemcell
     privileged: true
 
-- name: test-acceptance-bionic
-  plan:
-  - in_parallel:
-    - get: bpm-release
-      trigger: true
-    - get: boshlite-bionic-stemcell
-      trigger: true
-  - task: test-acceptance
-    file: bpm-release/ci/test-acceptance.yml
-    params:
-      STEMCELL_NAME: ubuntu-bionic
-    input_mapping:
-      bosh-stemcell: boshlite-bionic-stemcell
-    privileged: true
-
 - name: test-acceptance-xenial
   plan:
   - in_parallel:
@@ -199,7 +179,7 @@ jobs:
         - get: golang-release
           trigger: true
         - get: bosh-stemcell
-          resource: boshlite-bionic-stemcell
+          resource: boshlite-jammy-stemcell
     - task: bump-golang-packages
       file: golang-release/ci/tasks/shared/bump-golang-package.yml
       input_mapping:
@@ -219,7 +199,7 @@ jobs:
       input_mapping:
         bpm-release: bumped-bpm-release
       params:
-        STEMCELL_NAME: ubuntu-bionic
+        STEMCELL_NAME: ubuntu-jammy
       privileged: true
     - put: bpm-release
       params:
@@ -231,7 +211,6 @@ jobs:
   - get: bpm-release
     trigger: true
     passed:
-    - test-acceptance-bionic
     - test-acceptance-xenial
     - test-acceptance-jammy
     - test-unit
