@@ -1,4 +1,4 @@
-# code.cloudfoundry.org/bytefmt v0.0.0-20230612151507-41ef4d1f67a4
+# code.cloudfoundry.org/bytefmt v0.0.0-20231017140541-3b893ed0421b
 ## explicit; go 1.20
 code.cloudfoundry.org/bytefmt
 # code.cloudfoundry.org/clock v1.1.0
@@ -164,7 +164,7 @@ golang.org/x/mod/internal/lazyregexp
 golang.org/x/mod/modfile
 golang.org/x/mod/module
 golang.org/x/mod/semver
-# golang.org/x/net v0.16.0
+# golang.org/x/net v0.17.0
 ## explicit; go 1.17
 golang.org/x/net/context
 golang.org/x/net/html

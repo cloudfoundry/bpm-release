@@ -3,7 +3,7 @@ module bpm
 go 1.21
 
 require (
-	code.cloudfoundry.org/bytefmt v0.0.0-20230612151507-41ef4d1f67a4
+	code.cloudfoundry.org/bytefmt v0.0.0-20231017140541-3b893ed0421b
 	code.cloudfoundry.org/clock v1.1.0
 	code.cloudfoundry.org/lager/v3 v3.0.2
 	github.com/cyphar/filepath-securejoin v0.2.4 // indirect
@@ -17,7 +17,7 @@ require (
 	github.com/opencontainers/runtime-spec v1.1.0
 	github.com/satori/go.uuid v1.2.0
 	github.com/spf13/cobra v1.7.0
-	golang.org/x/net v0.16.0 // indirect
+	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/sys v0.13.0
 	gopkg.in/yaml.v3 v3.0.1
 )
