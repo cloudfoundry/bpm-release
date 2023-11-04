@@ -45,7 +45,7 @@ github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
-# github.com/google/pprof v0.0.0-20231023181126-ff6d637d2a7b
+# github.com/google/pprof v0.0.0-20231101202521-4ca4178f5c7a
 ## explicit; go 1.19
 github.com/google/pprof/profile
 # github.com/inconshreveable/mousetrap v1.1.0
@@ -131,7 +131,7 @@ github.com/onsi/gomega/matchers/support/goraph/edge
 github.com/onsi/gomega/matchers/support/goraph/node
 github.com/onsi/gomega/matchers/support/goraph/util
 github.com/onsi/gomega/types
-# github.com/opencontainers/runc v1.1.9
+# github.com/opencontainers/runc v1.1.10
 ## explicit; go 1.17
 github.com/opencontainers/runc/libcontainer/cgroups
 github.com/opencontainers/runc/libcontainer/configs
