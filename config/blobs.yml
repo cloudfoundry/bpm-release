@@ -10,10 +10,10 @@ pkg-config/pkg-config-0.29.2.tar.gz:
   size: 2016830
   object_id: 68ebd5e6-b02b-49fb-4fd2-a594125b3808
   sha: 76e501663b29cb7580245720edfb6106164fad2b
-runc/runc-1.1.9.tar.xz:
-  size: 1466968
-  object_id: db718404-aaa4-4823-723a-0fe2472e5147
-  sha: sha256:7695febe134e17559b26224821a2a123bc9e9a637ad4a8c47e99ae0a1ec71dc2
+runc/runc-1.1.10.tar.xz:
+  size: 1468508
+  object_id: 57764cbc-5ec9-4aa8-5b32-2b7400fdef93
+  sha: sha256:bd3e89ae89319ef344e7e26f392b40e344bcd5bbdea84ca459a43189451615bf
 tini/tini-0.18.0.tar.gz:
   size: 32152
   object_id: 71944e0b-7d0e-411a-5600-1ea5eeb9f433
