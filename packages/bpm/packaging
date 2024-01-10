@@ -2,6 +2,7 @@ set -e
 
 source /var/vcap/packages/golang-1-linux/bosh/compile.env
 
+export CGO_ENABLED=0
 export GOPATH=${BOSH_INSTALL_TARGET}
 export GOPROXY=off
 

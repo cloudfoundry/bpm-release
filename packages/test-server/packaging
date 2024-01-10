@@ -1,6 +1,7 @@
 set -e
 
 source /var/vcap/packages/golang-1-linux/bosh/compile.env
+export CGO_ENABLED=0
 
 pushd bpm/acceptance/fixtures/test-server
   go build -mod=vendor -o ${BOSH_INSTALL_TARGET}/bin/test-server .
