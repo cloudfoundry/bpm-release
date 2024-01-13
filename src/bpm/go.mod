@@ -17,12 +17,12 @@ require (
 	github.com/opencontainers/runtime-spec v1.1.0
 	github.com/satori/go.uuid v1.2.0
 	github.com/spf13/cobra v1.8.0
-	golang.org/x/net v0.19.0 // indirect
+	golang.org/x/net v0.20.0 // indirect
 	golang.org/x/sys v0.16.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
-require github.com/onsi/ginkgo/v2 v2.13.2
+require github.com/onsi/ginkgo/v2 v2.14.0
 
 require (
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
@@ -39,7 +39,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	golang.org/x/mod v0.14.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
-	golang.org/x/tools v0.16.1 // indirect
+	golang.org/x/tools v0.17.0 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 )
 
