@@ -63,9 +63,13 @@ resources:
     name: bosh-warden-boshlite-ubuntu-jammy-go_agent
 
 - name: boshlite-xenial-stemcell
-  type: bosh-io-stemcell
+  type: s3
   source:
-    name: bosh-warden-boshlite-ubuntu-xenial-go_agent
+    bucket: pcf-lts-stemcells-candidate
+    access_key_id: ((publish_us_assume_aws_access_key.username))
+    secret_access_key: ((publish_us_assume_aws_access_key.password))
+    aws_role_arn: ((publish_us_assume_aws_access_key.role_arn))
+    regexp: warden/bosh-stemcell-(621.*)-warden-boshlite-ubuntu-xenial-go_agent.tgz
 
 - name: runc-linux
   type: github-release
@@ -160,15 +164,15 @@ jobs:
   - in_parallel:
     - get: bpm-release
       trigger: true
-    - get: boshlite-xenial-stemcell
+    - get: boshlite-jammy-stemcell
       trigger: true
     - get: bpm-bosh-io
   - task: test-acceptance
     file: bpm-release/ci/test-upgrade.yml
     params:
-      STEMCELL_NAME: ubuntu-xenial
+      STEMCELL_NAME: ubuntu-jammy
     input_mapping:
-      bosh-stemcell: boshlite-xenial-stemcell
+      bosh-stemcell: boshlite-jammy-stemcell
     privileged: true
 
 - name: bump-golang-package
