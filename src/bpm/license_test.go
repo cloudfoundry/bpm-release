@@ -16,15 +16,13 @@
 package bpm_test
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+	"testing"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-
-	"testing"
 )
 
 func TestLicenses(t *testing.T) {
@@ -67,7 +65,7 @@ var _ = Describe("our go source code", func() {
 				return nil
 			}
 
-			bs, err := ioutil.ReadFile(path)
+			bs, err := os.ReadFile(path)
 			if err != nil {
 				return err
 			}

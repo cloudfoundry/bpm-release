@@ -17,7 +17,6 @@ package integration_test
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -50,7 +49,7 @@ var _ = Describe("pid", func() {
 
 		job = uuid.NewV4().String()
 		containerID = jobid.Encode(job)
-		boshRoot, err = ioutil.TempDir(bpmTmpDir, "pid-test")
+		boshRoot, err = os.MkdirTemp(bpmTmpDir, "pid-test")
 		Expect(err).NotTo(HaveOccurred())
 		Expect(os.Chmod(boshRoot, 0755)).To(Succeed())
 		runcRoot = setupBoshDirectories(boshRoot, job)

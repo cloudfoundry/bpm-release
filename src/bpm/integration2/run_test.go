@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -77,7 +76,7 @@ func TestRun(t *testing.T) {
 		t.Errorf("stdout/stderr did not contain %q, contents: %q", sentinel, contents)
 	}
 
-	stdout, err := ioutil.ReadFile(s.Path("sys", "log", "errand", "errand.stdout.log"))
+	stdout, err := os.ReadFile(s.Path("sys", "log", "errand", "errand.stdout.log"))
 	if err != nil {
 		t.Fatalf("failed to read stdout log: %v", err)
 	}
@@ -85,7 +84,7 @@ func TestRun(t *testing.T) {
 		t.Errorf("stdout log file did not contain %q, contents: %q", sentinel, contents)
 	}
 
-	stderr, err := ioutil.ReadFile(s.Path("sys", "log", "errand", "errand.stderr.log"))
+	stderr, err := os.ReadFile(s.Path("sys", "log", "errand", "errand.stderr.log"))
 	if err != nil {
 		t.Fatalf("failed to read stderr log: %v", err)
 	}
@@ -164,7 +163,7 @@ func TestRunWithVolumeFlags(t *testing.T) {
 		t.Errorf("mount contained read only option, contents: %s", mnt.Options)
 	}
 
-	fileContents, err := ioutil.ReadFile(extraVolumeFile)
+	fileContents, err := os.ReadFile(extraVolumeFile)
 	if err != nil {
 		t.Fatalf("failed to read extra volume file: %v", err)
 	}

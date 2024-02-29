@@ -17,7 +17,6 @@ package integration_test
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -68,7 +67,7 @@ var _ = Describe("list", func() {
 		invalidJob = fmt.Sprintf("invalid-%s", uuid.NewV4().String())
 		unimplementedJob = fmt.Sprintf("unimplemented-%s", uuid.NewV4().String())
 
-		boshRoot, err = ioutil.TempDir(bpmTmpDir, "list-test")
+		boshRoot, err = os.MkdirTemp(bpmTmpDir, "list-test")
 		Expect(err).NotTo(HaveOccurred())
 		Expect(os.Chmod(boshRoot, 0755)).To(Succeed())
 		runcRoot = setupBoshDirectories(boshRoot, job)
@@ -97,12 +96,12 @@ var _ = Describe("list", func() {
 	AfterEach(func() {
 		err := runcCommand(runcRoot, "delete", "--force", containerID).Run()
 		if err != nil {
-			fmt.Fprintf(GinkgoWriter, "WARNING: Failed to cleanup container: %s\n", err.Error())
+			fmt.Fprintf(GinkgoWriter, "WARNING: Failed to cleanup container: %s\n", err.Error()) //nolint:errcheck
 		}
 
 		err = runcCommand(runcRoot, "delete", "--force", failedContainerID).Run()
 		if err != nil {
-			fmt.Fprintf(GinkgoWriter, "WARNING: Failed to cleanup container: %s\n", err.Error())
+			fmt.Fprintf(GinkgoWriter, "WARNING: Failed to cleanup container: %s\n", err.Error()) //nolint:errcheck
 		}
 		Expect(os.RemoveAll(boshRoot)).To(Succeed())
 	})

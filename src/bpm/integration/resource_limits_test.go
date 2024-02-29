@@ -19,7 +19,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -55,7 +54,7 @@ var _ = Describe("resource limits", func() {
 
 		job = uuid.NewV4().String()
 		containerID = jobid.Encode(job)
-		boshRoot, err = ioutil.TempDir(bpmTmpDir, "resource-limits-test")
+		boshRoot, err = os.MkdirTemp(bpmTmpDir, "resource-limits-test")
 		Expect(err).NotTo(HaveOccurred())
 		boshEnv = bosh.NewEnv(boshRoot)
 		Expect(os.Chmod(boshRoot, 0755)).To(Succeed())

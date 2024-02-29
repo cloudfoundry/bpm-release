@@ -16,7 +16,7 @@
 package bosh
 
 import (
-	"io/ioutil"
+	"os"
 	"path/filepath"
 )
 
@@ -43,7 +43,7 @@ func NewEnv(root string) *Env {
 func (e *Env) JobNames() []string {
 	var jobs []string
 
-	fileInfos, err := ioutil.ReadDir(filepath.Join(e.root, "jobs"))
+	fileInfos, err := os.ReadDir(filepath.Join(e.root, "jobs"))
 	if err != nil {
 		return jobs
 	}

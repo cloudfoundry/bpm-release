@@ -16,7 +16,6 @@
 package hostlock_test
 
 import (
-	"io/ioutil"
 	"os"
 
 	. "github.com/onsi/ginkgo"
@@ -30,7 +29,7 @@ var _ = Describe("Hostlock", func() {
 
 	BeforeEach(func() {
 		var err error
-		tmpdir, err = ioutil.TempDir("", "hostlock_test")
+		tmpdir, err = os.MkdirTemp("", "hostlock_test")
 		Expect(err).NotTo(HaveOccurred())
 	})
 

@@ -17,7 +17,6 @@ package integration_test
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -60,7 +59,7 @@ var _ = Describe("start", func() {
 
 		job = uuid.NewV4().String()
 		containerID = jobid.Encode(job)
-		boshRoot, err = ioutil.TempDir(bpmTmpDir, "start-test")
+		boshRoot, err = os.MkdirTemp(bpmTmpDir, "start-test")
 		Expect(err).NotTo(HaveOccurred())
 		Expect(os.Chmod(boshRoot, 0755)).To(Succeed())
 		boshEnv = bosh.NewEnv(boshRoot)
@@ -99,7 +98,7 @@ var _ = Describe("start", func() {
 
 		state := runcState(runcRoot, containerID)
 		Expect(state.Status).To(Equal(specs.StateRunning))
-		pidText, err := ioutil.ReadFile(pidFile)
+		pidText, err := os.ReadFile(pidFile)
 		Expect(err).NotTo(HaveOccurred())
 
 		pid, err := strconv.Atoi(string(pidText))
@@ -191,7 +190,7 @@ var _ = Describe("start", func() {
 
 			state := runcState(runcRoot, containerID)
 			Expect(state.Status).To(Equal(specs.StateRunning))
-			pidText, err := ioutil.ReadFile(pidFile)
+			pidText, err := os.ReadFile(pidFile)
 			Expect(err).NotTo(HaveOccurred())
 
 			pid, err := strconv.Atoi(string(pidText))
@@ -320,7 +319,7 @@ var _ = Describe("start", func() {
 			Expect(session).To(gexec.Exit(0))
 			Eventually(func() specs.ContainerState { return runcState(runcRoot, containerID).Status }, 20*time.Second).Should(Equal(specs.StateStopped))
 
-			err = ioutil.WriteFile(filepath.Join(runcRoot, containerID, "state.json"), nil, 0600)
+			err = os.WriteFile(filepath.Join(runcRoot, containerID, "state.json"), nil, 0600)
 			Expect(err).ToNot(HaveOccurred())
 		})
 
@@ -411,13 +410,13 @@ var _ = Describe("start", func() {
 			Expect(os.MkdirAll(filepath.Join(boshRoot, "jobs", "job-2", "config"), 0700)).To(Succeed())
 
 			firstIndicator := filepath.Join(boshRoot, "jobs", "job-1", "config", "indicators.yml")
-			Expect(ioutil.WriteFile(firstIndicator, []byte("i am the first indicator file"), 0700)).To(Succeed())
+			Expect(os.WriteFile(firstIndicator, []byte("i am the first indicator file"), 0700)).To(Succeed())
 
 			secondIndicator := filepath.Join(boshRoot, "jobs", "job-2", "config", "indicators.yml")
-			Expect(ioutil.WriteFile(secondIndicator, []byte("i am the second indicator file"), 0700)).To(Succeed())
+			Expect(os.WriteFile(secondIndicator, []byte("i am the second indicator file"), 0700)).To(Succeed())
 
 			secret := filepath.Join(boshRoot, "jobs", "job-1", "config", "secrets.yml")
-			Expect(ioutil.WriteFile(secret, []byte("i am the secret file"), 0700)).To(Succeed())
+			Expect(os.WriteFile(secret, []byte("i am the secret file"), 0700)).To(Succeed())
 
 			cfg = newJobConfig(job, findBash(filepath.Join(boshRoot, "jobs")))
 			cfg.Processes[0].Unsafe = &config.Unsafe{

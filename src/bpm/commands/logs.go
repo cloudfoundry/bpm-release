@@ -106,7 +106,7 @@ func logsForJob(cmd *cobra.Command, _ []string) error {
 	for {
 		select {
 		case sig := <-signals: // Forward signal received by parent to child
-			tailCmd.Process.Signal(sig)
+			tailCmd.Process.Signal(sig) //nolint:errcheck
 		case err := <-errCh: // Signal parent when child dies
 			if err != nil && err.Error() != "signal: interrupt" {
 				return err

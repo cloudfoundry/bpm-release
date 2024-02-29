@@ -17,12 +17,11 @@ package handlers
 
 import (
 	"io"
-	"io/ioutil"
 	"net/http"
 )
 
 func Curl(w http.ResponseWriter, r *http.Request) {
-	address, err := ioutil.ReadAll(r.Body)
+	address, err := io.ReadAll(r.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return

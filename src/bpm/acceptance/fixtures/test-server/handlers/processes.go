@@ -17,8 +17,8 @@ package handlers
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"path/filepath"
 )
 
@@ -30,12 +30,12 @@ func Processes(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, item := range items {
-		body, err := ioutil.ReadFile(filepath.Join(item, "cmdline"))
+		body, err := os.ReadFile(filepath.Join(item, "cmdline"))
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		fmt.Fprintln(w, fmt.Sprintf("%s %s", filepath.Base(item), string(body)))
+		fmt.Fprintf(w, "%s %s\n", filepath.Base(item), string(body))
 	}
 }

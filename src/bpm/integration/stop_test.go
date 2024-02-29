@@ -16,12 +16,12 @@
 package integration_test
 
 import (
-	"bpm/bosh"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	"bpm/bosh"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -55,7 +55,7 @@ var _ = Describe("stop", func() {
 
 		job = uuid.NewV4().String()
 		containerID = jobid.Encode(job)
-		boshRoot, err = ioutil.TempDir(bpmTmpDir, "stop-test")
+		boshRoot, err = os.MkdirTemp(bpmTmpDir, "stop-test")
 		Expect(err).NotTo(HaveOccurred())
 		Expect(os.Chmod(boshRoot, 0755)).To(Succeed())
 		boshEnv = bosh.NewEnv(boshRoot)

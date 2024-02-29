@@ -1,0 +1,15 @@
+name: go
+on:
+  push:
+  pull_request:
+jobs:
+  lint:
+    runs-on: [ubuntu-latest]
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-go@v4
+      with:
+        go-version-file: src/bpm/go.mod
+    - uses: golangci/golangci-lint-action@v3
+      with:
+        working-directory: src/bpm/

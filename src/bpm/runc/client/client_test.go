@@ -17,7 +17,6 @@ package client_test
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"syscall"
@@ -55,7 +54,7 @@ var _ = Describe("RuncClient", func() {
 			}
 
 			var err error
-			bundlesRoot, err = ioutil.TempDir("", "bundle-builder")
+			bundlesRoot, err = os.MkdirTemp("", "bundle-builder")
 			Expect(err).ToNot(HaveOccurred())
 
 			bundlePath = filepath.Join(bundlesRoot, "bundle")
@@ -87,7 +86,7 @@ var _ = Describe("RuncClient", func() {
 			Expect(f.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(0)))
 			Expect(f.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(0)))
 
-			infos, err := ioutil.ReadDir(bundlefs)
+			infos, err := os.ReadDir(bundlefs)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(infos).To(HaveLen(0))
 		})
@@ -104,7 +103,7 @@ var _ = Describe("RuncClient", func() {
 			expectedConfigData, err := json.MarshalIndent(&jobSpec, "", "\t")
 			Expect(err).NotTo(HaveOccurred())
 
-			configData, err := ioutil.ReadFile(configPath)
+			configData, err := os.ReadFile(configPath)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(configData).To(MatchJSON(expectedConfigData))
 		})
@@ -142,7 +141,7 @@ var _ = Describe("RuncClient", func() {
 
 		BeforeEach(func() {
 			var err error
-			bundlePath, err = ioutil.TempDir("", "bundle-builder")
+			bundlePath, err = os.MkdirTemp("", "bundle-builder")
 			Expect(err).ToNot(HaveOccurred())
 
 			jobSpec := specs.Spec{
@@ -176,7 +175,7 @@ var _ = Describe("RuncClient", func() {
 
 		BeforeEach(func() {
 			var err error
-			tempDir, err = ioutil.TempDir("", "")
+			tempDir, err = os.MkdirTemp("", "")
 			Expect(err).NotTo(HaveOccurred())
 
 			fakeRuncPath = filepath.Join(tempDir, "fakeRunc")
@@ -200,7 +199,7 @@ echo -n '[]'
 exit 0
 `)
 
-				err := ioutil.WriteFile(fakeRuncPath, contents, 0700)
+				err := os.WriteFile(fakeRuncPath, contents, 0700)
 				Expect(err).NotTo(HaveOccurred())
 			})
 
@@ -220,7 +219,7 @@ exit 0
 
 		BeforeEach(func() {
 			var err error
-			tempDir, err = ioutil.TempDir("", "")
+			tempDir, err = os.MkdirTemp("", "")
 			Expect(err).NotTo(HaveOccurred())
 
 			fakeRuncPath = filepath.Join(tempDir, "fakeRunc")
@@ -235,7 +234,7 @@ else
 fi
 `)
 
-			err = ioutil.WriteFile(fakeRuncPath, contents, 0700)
+			err = os.WriteFile(fakeRuncPath, contents, 0700)
 			Expect(err).NotTo(HaveOccurred())
 
 			runcClient = client.NewRuncClient(fakeRuncPath, "/path/to/things", true)
@@ -260,7 +259,7 @@ fi
 
 		BeforeEach(func() {
 			var err error
-			tempDir, err = ioutil.TempDir("", "")
+			tempDir, err = os.MkdirTemp("", "")
 			Expect(err).NotTo(HaveOccurred())
 
 			fakeRuncPath = filepath.Join(tempDir, "fakeRunc")
@@ -280,7 +279,7 @@ echo -n '{"msg": "container does not exist"}'
 exit 1
 `)
 
-				err := ioutil.WriteFile(fakeRuncPath, contents, 0700)
+				err := os.WriteFile(fakeRuncPath, contents, 0700)
 				Expect(err).NotTo(HaveOccurred())
 			})
 
@@ -299,7 +298,7 @@ echo '         {"msg":"container does not exist"}     '
 exit 1
 `)
 
-					err := ioutil.WriteFile(fakeRuncPath, contents, 0700)
+					err := os.WriteFile(fakeRuncPath, contents, 0700)
 					Expect(err).NotTo(HaveOccurred())
 				})
 
@@ -319,7 +318,7 @@ echo -n 'some unrelated error'
 exit 1
 `)
 
-				err := ioutil.WriteFile(fakeRuncPath, contents, 0700)
+				err := os.WriteFile(fakeRuncPath, contents, 0700)
 				Expect(err).NotTo(HaveOccurred())
 			})
 
