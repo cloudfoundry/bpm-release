@@ -16,7 +16,6 @@
 package bosh_test
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -31,7 +30,7 @@ var _ = Describe("Bosh Environment", func() {
 
 	BeforeEach(func() {
 		var err error
-		root, err = ioutil.TempDir("", "bosh_test")
+		root, err = os.MkdirTemp("", "bosh_test")
 		Expect(err).NotTo(HaveOccurred())
 	})
 

@@ -19,7 +19,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -66,7 +65,7 @@ var _ = SynchronizedAfterSuite(func() {}, func() {
 
 func fileContents(path string) func() string {
 	return func() string {
-		contents, err := ioutil.ReadFile(path)
+		contents, err := os.ReadFile(path)
 		Expect(err).NotTo(HaveOccurred())
 		return string(contents)
 	}
@@ -165,7 +164,7 @@ func copyFile(dst, src string) error {
 		return err
 	}
 	if _, err := io.Copy(d, s); err != nil {
-		d.Close()
+		d.Close() //nolint:errcheck
 		return err
 	}
 	return d.Close()
@@ -194,7 +193,7 @@ func writeConfig(root, job string, cfg config.JobConfig) {
 	Expect(os.MkdirAll(configDir, 0755)).To(Succeed())
 
 	configPath := filepath.Join(configDir, "bpm.yml")
-	Expect(ioutil.WriteFile(configPath, data, 0644)).To(Succeed())
+	Expect(os.WriteFile(configPath, data, 0644)).To(Succeed())
 }
 
 func writeInvalidConfig(root, job string) {
@@ -202,7 +201,7 @@ func writeInvalidConfig(root, job string) {
 	Expect(os.MkdirAll(configDir, 0755)).To(Succeed())
 
 	configPath := filepath.Join(configDir, "bpm.yml")
-	Expect(ioutil.WriteFile(configPath, []byte("{{"), 0644)).To(Succeed())
+	Expect(os.WriteFile(configPath, []byte("{{"), 0644)).To(Succeed())
 }
 
 func startJob(root, bpmPath, j string) {

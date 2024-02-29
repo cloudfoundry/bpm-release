@@ -18,7 +18,7 @@ package bpm_acceptance_test
 import (
 	"bufio"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"sort"
 	"strings"
@@ -41,7 +41,7 @@ var _ = Describe("BpmAcceptance", func() {
 
 		Expect(resp.StatusCode).To(Equal(http.StatusOK))
 
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(string(body)).To(Equal("BPM is SWEET!\n"))
 	})
@@ -51,7 +51,7 @@ var _ = Describe("BpmAcceptance", func() {
 		Expect(err).NotTo(HaveOccurred())
 		defer resp.Body.Close()
 
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(string(body)).To(Equal("vcap\n"))
 	})
@@ -61,7 +61,7 @@ var _ = Describe("BpmAcceptance", func() {
 		Expect(err).NotTo(HaveOccurred())
 		defer resp.Body.Close()
 
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		Expect(err).NotTo(HaveOccurred())
 
 		mounts := parseMounts(string(body))
@@ -108,7 +108,7 @@ var _ = Describe("BpmAcceptance", func() {
 		Expect(err).NotTo(HaveOccurred())
 		defer resp.Body.Close()
 
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		Expect(err).NotTo(HaveOccurred())
 
 		mounts := parseMounts(string(body))
@@ -130,7 +130,7 @@ var _ = Describe("BpmAcceptance", func() {
 		Expect(err).NotTo(HaveOccurred())
 		defer resp.Body.Close()
 
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(string(body)).To(Equal(""))
@@ -141,7 +141,7 @@ var _ = Describe("BpmAcceptance", func() {
 		Expect(err).NotTo(HaveOccurred())
 		defer resp.Body.Close()
 
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		Expect(err).NotTo(HaveOccurred())
 		directories := strings.Split(strings.Trim(string(body), "\n"), "\n")
 		Expect(directories).To(ConsistOf("store", "data", "jobs", "packages", "sys"))
@@ -152,7 +152,7 @@ var _ = Describe("BpmAcceptance", func() {
 		Expect(err).NotTo(HaveOccurred())
 		defer resp.Body.Close()
 
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		Expect(err).NotTo(HaveOccurred())
 		directories := strings.Split(strings.Trim(string(body), "\n"), "\n")
 		Expect(directories).To(ConsistOf("test-server", "packages", "shared"))
@@ -163,7 +163,7 @@ var _ = Describe("BpmAcceptance", func() {
 		Expect(err).NotTo(HaveOccurred())
 		defer resp.Body.Close()
 
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		Expect(err).NotTo(HaveOccurred())
 		directories := strings.Split(strings.Trim(string(body), "\n"), "\n")
 		Expect(directories).To(ConsistOf("test-server"))
@@ -174,7 +174,7 @@ var _ = Describe("BpmAcceptance", func() {
 		Expect(err).NotTo(HaveOccurred())
 		defer resp.Body.Close()
 
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		Expect(err).NotTo(HaveOccurred())
 		processes := strings.Split(strings.Trim(string(body), "\n"), "\n")
 
@@ -191,7 +191,7 @@ var _ = Describe("BpmAcceptance", func() {
 		Expect(err).NotTo(HaveOccurred())
 		defer resp.Body.Close()
 
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(string(body)).To(ContainSubstring("/var/vcap/jobs/test-server/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin:."))
 	})
@@ -204,7 +204,7 @@ var _ = Describe("BpmAcceptance", func() {
 		Expect(err).NotTo(HaveOccurred())
 		defer resp.Body.Close()
 
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(string(body)).To(ContainSubstring("/var/vcap/data/"))
 	})
@@ -217,7 +217,7 @@ var _ = Describe("BpmAcceptance", func() {
 
 			Expect(resp.StatusCode).To(Equal(http.StatusOK))
 
-			body, err := ioutil.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(string(body)).To(ContainSubstring("Expected success occurred"))
 		})
@@ -229,7 +229,7 @@ var _ = Describe("BpmAcceptance", func() {
 
 			Expect(resp.StatusCode).To(Equal(http.StatusOK))
 
-			body, err := ioutil.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(string(body)).To(ContainSubstring("Expected error occurred"))
 		})

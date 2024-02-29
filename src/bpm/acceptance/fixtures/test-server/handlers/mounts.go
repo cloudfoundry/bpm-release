@@ -17,12 +17,12 @@ package handlers
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/http"
+	"os"
 )
 
 func Mounts(w http.ResponseWriter, r *http.Request) {
-	data, err := ioutil.ReadFile("/proc/mounts")
+	data, err := os.ReadFile("/proc/mounts")
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return

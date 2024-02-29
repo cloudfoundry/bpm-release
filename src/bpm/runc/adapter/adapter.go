@@ -141,7 +141,7 @@ func (a *RuncAdapter) makeShared(volume config.Volume) error {
 	if err != nil {
 		return err
 	}
-	defer held.Unlock()
+	defer held.Unlock() //nolint:errcheck
 
 	if err := a.shareMount(volume.Path); err != nil {
 		return err

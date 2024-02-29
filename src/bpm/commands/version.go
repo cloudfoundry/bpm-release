@@ -36,7 +36,7 @@ var versionCommand = &cobra.Command{
 
 func version(cmd *cobra.Command, args []string) {
 	if len(args) != 0 {
-		cmd.Usage()
+		cmd.Usage() //nolint:errcheck
 		os.Exit(1)
 	}
 

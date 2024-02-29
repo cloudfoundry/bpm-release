@@ -17,12 +17,12 @@ package handlers
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/http"
+	"os"
 )
 
 func VarVcap(w http.ResponseWriter, r *http.Request) {
-	items, err := ioutil.ReadDir("/var/vcap")
+	items, err := os.ReadDir("/var/vcap")
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -34,7 +34,7 @@ func VarVcap(w http.ResponseWriter, r *http.Request) {
 }
 
 func VarVcapJobs(w http.ResponseWriter, r *http.Request) {
-	items, err := ioutil.ReadDir("/var/vcap/jobs")
+	items, err := os.ReadDir("/var/vcap/jobs")
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -46,7 +46,7 @@ func VarVcapJobs(w http.ResponseWriter, r *http.Request) {
 }
 
 func VarVcapData(w http.ResponseWriter, r *http.Request) {
-	items, err := ioutil.ReadDir("/var/vcap/data")
+	items, err := os.ReadDir("/var/vcap/data")
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return

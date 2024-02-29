@@ -51,7 +51,8 @@ func MaskedPaths(w http.ResponseWriter, r *http.Request) {
 		} else {
 			cmd := exec.Command("/bin/dd", fmt.Sprintf("if=%s", path))
 			output, err := cmd.CombinedOutput()
-			defer cmd.Process.Kill() // as dd could run indefinitely and cause issues with other tests...
+			// as dd could run indefinitely and cause issues with other tests...
+			defer cmd.Process.Kill() //nolint:errcheck
 
 			if err != nil {
 				readablePaths += fmt.Sprintf("Error reading path: %s\n", path)

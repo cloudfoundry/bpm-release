@@ -18,7 +18,6 @@ package adapter
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
@@ -67,7 +66,7 @@ var _ = Describe("RuncAdapter", func() {
 		user = specs.User{UID: 200, GID: 300, Username: "vcap"}
 
 		var err error
-		systemRoot, err = ioutil.TempDir("", "runc-adapter-system-files")
+		systemRoot, err = os.MkdirTemp("", "runc-adapter-system-files")
 		Expect(err).NotTo(HaveOccurred())
 		boshEnv := bosh.NewEnv(systemRoot)
 
@@ -176,7 +175,7 @@ var _ = Describe("RuncAdapter", func() {
 			var tempFilePath string
 
 			BeforeEach(func() {
-				f, err := ioutil.TempFile(systemRoot, "temp-file")
+				f, err := os.CreateTemp(systemRoot, "temp-file")
 				Expect(err).NotTo(HaveOccurred())
 				defer f.Close()
 

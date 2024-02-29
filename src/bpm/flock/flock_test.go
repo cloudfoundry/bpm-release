@@ -16,7 +16,6 @@
 package flock_test
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -31,7 +30,7 @@ var _ = Describe("Flock", func() {
 
 	BeforeEach(func() {
 		var err error
-		tmpdir, err = ioutil.TempDir("", "flocktest")
+		tmpdir, err = os.MkdirTemp("", "flocktest")
 		Expect(err).NotTo(HaveOccurred())
 	})
 
@@ -56,7 +55,7 @@ var _ = Describe("Flock", func() {
 
 		It("cannot be unlocked again", func() {
 			Expect(func() {
-				lock.Unlock()
+				lock.Unlock() //nolint:errcheck
 			}).Should(Panic())
 		})
 
@@ -76,7 +75,7 @@ var _ = Describe("Flock", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(func() {
-				lock.Unlock()
+				lock.Unlock() //nolint:errcheck
 			}).Should(Panic())
 		})
 

@@ -18,7 +18,6 @@ package bpmsandbox
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -40,7 +39,7 @@ type Sandbox struct {
 func New(t *testing.T) *Sandbox {
 	t.Helper()
 
-	root, err := ioutil.TempDir("", "bpm_sandbox")
+	root, err := os.MkdirTemp("", "bpm_sandbox")
 	if err != nil {
 		t.Fatalf("could not create sandbox root directory: %v", err)
 	}

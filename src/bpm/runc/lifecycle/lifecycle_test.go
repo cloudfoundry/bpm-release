@@ -18,7 +18,6 @@ package lifecycle_test
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -92,9 +91,9 @@ var _ = Describe("RuncJobLifecycle", func() {
 		expectedUser = specs.User{Username: "vcap", UID: 300, GID: 400}
 
 		var err error
-		expectedStdout, err = ioutil.TempFile("", "runc-lifecycle-stdout")
+		expectedStdout, err = os.CreateTemp("", "runc-lifecycle-stdout")
 		Expect(err).NotTo(HaveOccurred())
-		expectedStderr, err = ioutil.TempFile("", "runc-lifecycle-stderr")
+		expectedStderr, err = os.CreateTemp("", "runc-lifecycle-stderr")
 		Expect(err).NotTo(HaveOccurred())
 
 		expectedJobName = "example"

@@ -18,7 +18,6 @@ package integration_test
 import (
 	"bufio"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"os"
 	"os/exec"
@@ -51,7 +50,7 @@ var _ = Describe("capabilities", func() {
 
 		job = uuid.NewV4().String()
 		containerID = jobid.Encode(job)
-		boshRoot, err = ioutil.TempDir(bpmTmpDir, "capabiliteis-test")
+		boshRoot, err = os.MkdirTemp(bpmTmpDir, "capabilities-test")
 		Expect(err).NotTo(HaveOccurred())
 		Expect(os.Chmod(boshRoot, 0755)).To(Succeed())
 		runcRoot = setupBoshDirectories(boshRoot, job)
@@ -70,7 +69,7 @@ var _ = Describe("capabilities", func() {
 	AfterEach(func() {
 		err := runcCommand(runcRoot, "delete", "--force", containerID).Run()
 		if err != nil {
-			fmt.Fprintf(GinkgoWriter, "WARNING: Failed to cleanup container: %s\n", err.Error())
+			fmt.Fprintf(GinkgoWriter, "WARNING: Failed to cleanup container: %s\n", err.Error()) //nolint:errcheck
 		}
 		Expect(os.RemoveAll(boshRoot)).To(Succeed())
 	})

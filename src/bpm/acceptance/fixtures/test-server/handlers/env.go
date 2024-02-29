@@ -17,13 +17,13 @@ package handlers
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 )
 
 func Env(w http.ResponseWriter, r *http.Request) {
-	envKey, err := ioutil.ReadAll(r.Body)
+	envKey, err := io.ReadAll(r.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return

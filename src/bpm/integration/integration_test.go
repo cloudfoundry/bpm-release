@@ -17,7 +17,6 @@ package integration_test
 
 import (
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -35,7 +34,7 @@ var _ = Describe("bpm", func() {
 
 		BeforeEach(func() {
 			var err error
-			unPrivilegedBPMDir, err = ioutil.TempDir("", "vcap-bpm")
+			unPrivilegedBPMDir, err = os.MkdirTemp("", "vcap-bpm")
 			Expect(err).NotTo(HaveOccurred())
 
 			f, err := os.Create(filepath.Join(unPrivilegedBPMDir, "bpm"))
