@@ -105,10 +105,10 @@ resources:
     username: ((bpm-docker.username))
     password: ((bpm-docker.password))
 
-- name: golang-image
+- name: bosh-golang-release-image
   type: docker-image
   source:
-    repository: golang
+    repository: bosh/golang-release
 
 - name: daily
   type: time
@@ -427,7 +427,7 @@ jobs:
     - get: bpm-ci
       trigger: true
       attempts: 3
-    - get: golang-image
+    - get: bosh-golang-release-image
       trigger: true
       attempts: 3
       params: {save: true}
@@ -443,6 +443,6 @@ jobs:
   - put: bpm-ci-image
     attempts: 3
     params:
-      load_base: golang-image
+      load_base: bosh-golang-release-image
       build: .
       dockerfile: bpm-ci/ci/Dockerfile

@@ -1,4 +1,4 @@
-FROM golang:latest
+FROM bosh/golang-release
 MAINTAINER CF BPM <cf-bpm@pivotal.io>
 
 RUN apt-get update && apt-get -y install \
