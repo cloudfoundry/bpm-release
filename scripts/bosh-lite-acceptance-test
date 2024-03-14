@@ -35,7 +35,7 @@ AGENT_HOST="$(bosh vms | grep running | grep bpm | awk '{print $4}')"
 agent_port=1337
 
 pushd "${release_dir}/src/bpm/acceptance" > /dev/null
-  ginkgo -mod=vendor -r -p -race -randomizeAllSpecs -- --agent-uri="http://${AGENT_HOST}:${agent_port}"
+  go run github.com/onsi/ginkgo/ginkgo -mod=vendor -r -p -race -randomizeAllSpecs -- --agent-uri="http://${AGENT_HOST}:${agent_port}"
 popd > /dev/null
 
 # We run the errand twice to make sure there is no state left on the VM which

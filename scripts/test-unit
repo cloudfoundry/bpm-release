@@ -11,6 +11,5 @@ scripts_path=$(absolute_path "$(dirname "$0")" )
 export RELEASE_PATH=$scripts_path/..
 
 pushd "${RELEASE_PATH}/src/bpm" > /dev/null
-  go install -mod=vendor github.com/onsi/ginkgo/ginkgo
-  ginkgo -mod=vendor -r -p -race -randomizeAllSpecs -skipPackage "acceptance" "$@"
+  go run github.com/onsi/ginkgo/ginkgo -mod=vendor -r -p -race -randomizeAllSpecs -skipPackage "acceptance" "$@"
 popd

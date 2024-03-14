@@ -22,16 +22,10 @@ bosh deploy \
   -v "stemcell_name=${STEMCELL_NAME}"
 
 export RELEASE_PATH="$PWD/bpm-release"
-export GOBIN="$RELEASE_PATH/bin"
-export PATH="$PATH:$GOBIN"
-
-pushd "${RELEASE_PATH}/src/bpm" > /dev/null
-  go install -mod=vendor github.com/onsi/ginkgo/ginkgo
-popd
 
 AGENT_HOST="$(bosh -d bpm instances | grep running | awk '{ print $4 }')"
 agent_port=1337
 
 pushd "${RELEASE_PATH}/src/bpm/acceptance" > /dev/null
-  ginkgo -mod=vendor -r -p -race -randomizeAllSpecs -- --agent-uri="http://${AGENT_HOST}:${agent_port}"
+  go run github.com/onsi/ginkgo/ginkgo -mod=vendor -r -p -race -randomizeAllSpecs -- --agent-uri="http://${AGENT_HOST}:${agent_port}"
 popd > /dev/null
