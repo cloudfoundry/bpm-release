@@ -1,6 +1,8 @@
 FROM bosh/golang-release
 MAINTAINER CF BPM <cf-bpm@pivotal.io>
 
+ENV DEBIAN_FRONTEND=noninteractive
+
 RUN apt-get update && apt-get -y install \
     dnsutils \
     netcat-openbsd \
