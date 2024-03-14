@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
-set -eux
+set -x
 
 absolute_path() {
   (cd "$1" && pwd)
