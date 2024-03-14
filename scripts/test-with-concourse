@@ -1,11 +1,11 @@
 #!/bin/bash
 
 absolute_path() {
-  (cd $1 && pwd)
+  (cd "$1" && pwd)
 }
 
 FLY_TARGET=${FLY_TARGET:-ci}
 
-scripts_path=$(absolute_path `dirname $0`)
+scripts_path=$(absolute_path "$(dirname "$0")" )
 
-fly -t ${FLY_TARGET} execute -p -c ${scripts_path}/../ci/test-unit.yml "$@"
+fly -t "${FLY_TARGET}" execute -p -c "${scripts_path}/../ci/test-unit.yml" "$@"
