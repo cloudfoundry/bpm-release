@@ -21,14 +21,13 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"bpm/bosh"
-
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
 	uuid "github.com/satori/go.uuid"
 
+	"bpm/bosh"
 	"bpm/config"
 	"bpm/jobid"
 )
