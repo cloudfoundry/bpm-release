@@ -4,9 +4,11 @@ set -euo pipefail
 RELEASE_PATH="$(cd "$(dirname "$0")/.." && pwd)"
 export RELEASE_PATH
 
-. "${RELEASE_PATH}/scripts/checkdocker.sh"
-
-if user_can_docker; then
+# The Docker CLI does not need to be run as root in order to be safe in all
+# cases. For example, when running on MacOS it is quarantined to a different
+# virtual machine. If you are running daemon on a local machine then practice
+# caution with sudo-less docker invocations.
+if ! docker info 2>&1 | grep -q "permission denied"; then
   DOCKER="docker"
 else
   # On development workstations docker must run as root.
@@ -19,4 +21,4 @@ $DOCKER run \
   --privileged \
   -v  "${RELEASE_PATH}:/bpm" \
   -it cfbpm/bpm-ci:latest \
-  /bin/bash
+  "${@:-/bin/bash}"
