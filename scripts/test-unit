@@ -1,13 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-absolute_path() {
-  (cd "$1" && pwd)
-}
-
-scripts_path=$(absolute_path "$(dirname "$0")" )
-
-export RELEASE_PATH=$scripts_path/..
+RELEASE_PATH="$(cd "$(dirname "$0")/.." && pwd)"
+export RELEASE_PATH
 
 pushd "${RELEASE_PATH}/src/bpm" > /dev/null
   go run github.com/onsi/ginkgo/ginkgo -mod=vendor -r -p -race -randomizeAllSpecs -skipPackage "acceptance" "$@"

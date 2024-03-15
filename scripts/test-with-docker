@@ -1,12 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-absolute_path() {
-  (cd "$1" && pwd)
-}
-scripts_path=$(absolute_path "$(dirname "$0")" )
+RELEASE_PATH="$(cd "$(dirname "$0")/.." && pwd)"
+export RELEASE_PATH
 
-. "$scripts_path/checkdocker.sh"
+. "${RELEASE_PATH}/scripts/checkdocker.sh"
 
 if user_can_docker; then
   DOCKER="docker"
@@ -20,6 +18,6 @@ $DOCKER pull cfbpm/bpm-ci:latest
 
 $DOCKER run \
   --privileged \
-  -v "${scripts_path}/..:/bpm" \
+  -v "${RELEASE_PATH}:/bpm" \
   -t cfbpm/bpm-ci:latest \
   /bpm/scripts/test-unit "$@"

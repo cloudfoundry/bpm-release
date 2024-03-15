@@ -3,19 +3,15 @@ set -euo pipefail
 
 set -x
 
-absolute_path() {
-  (cd "$1" && pwd)
-}
-
-scripts_path=$(absolute_path "$(dirname "$0")" )
-release_dir="${scripts_path}/.."
+RELEASE_PATH="$(cd "$(dirname "$0")/.." && pwd)"
+export RELEASE_PATH
 
 export BOSH_DEPLOYMENT=bpm
 export BOSH_NON_INTERACTIVE=true
 export BOSH_ENVIRONMENT=vbox
 
 bosh create-release \
-  --dir "${release_dir}" --force
+  --dir "${RELEASE_PATH}" --force
 
 # Currently bosh will upload event if it has it, so check first
 STEMCELL=$(bosh stemcells | grep warden | awk '{print $1}')
@@ -24,10 +20,10 @@ if [ -z "$STEMCELL" ]; then
 fi
 
 bosh upload-release \
-  --dir "${release_dir}"
+  --dir "${RELEASE_PATH}"
 
 bosh deploy \
-  "${release_dir}/manifests/bosh-lite.yml"
+  "${RELEASE_PATH}/manifests/bosh-lite.yml"
 
 # This is the IP of the first VM in the bosh in the concourse container.
 # It will not change unless we deploy more instances/jobs etc or the upstream
@@ -35,7 +31,7 @@ bosh deploy \
 AGENT_HOST="$(bosh vms | grep running | grep bpm | awk '{print $4}')"
 agent_port=1337
 
-pushd "${release_dir}/src/bpm/acceptance" > /dev/null
+pushd "${RELEASE_PATH}/src/bpm/acceptance" > /dev/null
   go run github.com/onsi/ginkgo/ginkgo -mod=vendor -r -p -race -randomizeAllSpecs -- --agent-uri="http://${AGENT_HOST}:${agent_port}"
 popd > /dev/null
 

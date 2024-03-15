@@ -1,12 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-absolute_path() {
-  (cd "$1" && pwd)
-}
+RELEASE_PATH="$(cd "$(dirname "$0")/.." && pwd)"
+export RELEASE_PATH
 
 FLY_TARGET=${FLY_TARGET:-ci}
 
-scripts_path=$(absolute_path "$(dirname "$0")" )
-
-fly -t "${FLY_TARGET}" execute -p -c "${scripts_path}/../ci/test-unit.yml" "$@"
+fly -t "${FLY_TARGET}" execute -p -c "${RELEASE_PATH}/ci/test-unit.yml" "$@"
