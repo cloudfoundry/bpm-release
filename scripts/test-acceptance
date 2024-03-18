@@ -28,5 +28,5 @@ AGENT_HOST="$(bosh -d bpm instances | grep running | awk '{ print $4 }')"
 agent_port=1337
 
 pushd "${RELEASE_PATH}/src/bpm/acceptance" > /dev/null
-  go run github.com/onsi/ginkgo/ginkgo -mod=vendor -r -p -race -randomizeAllSpecs -- --agent-uri="http://${AGENT_HOST}:${agent_port}"
+  go run github.com/onsi/ginkgo/v2/ginkgo -r -p --race --randomize-all -- --agent-uri="http://${AGENT_HOST}:${agent_port}"
 popd > /dev/null

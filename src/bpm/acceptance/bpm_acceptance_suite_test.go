@@ -18,12 +18,11 @@ package bpm_acceptance_test
 import (
 	"flag"
 	"net/http"
+	"testing"
 	"time"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
-	"testing"
 )
 
 var (

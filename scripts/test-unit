@@ -5,5 +5,5 @@ RELEASE_PATH="$(cd "$(dirname "$0")/.." && pwd)"
 export RELEASE_PATH
 
 pushd "${RELEASE_PATH}/src/bpm" > /dev/null
-  go run github.com/onsi/ginkgo/ginkgo -mod=vendor -r -p -race -randomizeAllSpecs -skipPackage "acceptance" "$@"
+  go run github.com/onsi/ginkgo/v2/ginkgo -r -p --race --randomize-all --skip-package "acceptance" "$@"
 popd
