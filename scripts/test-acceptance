@@ -3,26 +3,25 @@ set -euo pipefail
 
 set -x
 
+RELEASE_PATH="$(cd "$(dirname "$0")/.." && pwd)"
+export RELEASE_PATH
+
 . start-bosh
 
 source /tmp/local-bosh/director/env
 
 bosh upload-stemcell bosh-stemcell/*.tgz
 
-bosh create-release \
-  --dir "$PWD/bpm-release/"
+bosh create-release --dir "${RELEASE_PATH}/"
 
-bosh upload-release \
-  --dir "$PWD/bpm-release/"
+bosh upload-release --dir "${RELEASE_PATH}/"
 
 export BOSH_DEPLOYMENT=bpm
 export BOSH_NON_INTERACTIVE=true
 
 bosh deploy \
-  "$PWD/bpm-release/manifests/bosh-lite-ci.yml" \
+  "${RELEASE_PATH}/manifests/bosh-lite-ci.yml" \
   -v "stemcell_name=${STEMCELL_NAME}"
-
-export RELEASE_PATH="$PWD/bpm-release"
 
 AGENT_HOST="$(bosh -d bpm instances | grep running | awk '{ print $4 }')"
 agent_port=1337
