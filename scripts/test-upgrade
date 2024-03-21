@@ -16,26 +16,13 @@ export BOSH_NON_INTERACTIVE=true
 bosh upload-stemcell bosh-stemcell/*.tgz
 
 echo "Deploying latest final version of bpm"
-
 bosh upload-release bpm-bosh-io/*.tgz
-
 bosh deploy \
   "${RELEASE_PATH}/manifests/bosh-lite-ci.yml" \
   -v "stemcell_name=${STEMCELL_NAME}"
 
 echo "Deploying latest dev version of bpm"
-
 bosh create-release --dir "${RELEASE_PATH}/" --timestamp-version
-
 bosh upload-release --dir "${RELEASE_PATH}/"
 
-bosh deploy \
-  "${RELEASE_PATH}/manifests/bosh-lite-ci.yml" \
-  -v "stemcell_name=${STEMCELL_NAME}"
-
-AGENT_HOST="$(bosh -d bpm instances | grep running | awk '{ print $4 }')"
-agent_port=1337
-
-pushd "${RELEASE_PATH}/src/bpm/acceptance" > /dev/null
-  go run github.com/onsi/ginkgo/v2/ginkgo -r -p --race -randomizeAllSpecs -- --agent-uri="http://${AGENT_HOST}:${agent_port}"
-popd > /dev/null
+"${RELEASE_PATH}/scripts/run-acceptance-specs"

@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+set -x
+
+RELEASE_PATH="$(cd "$(dirname "$0")/.." && pwd)"
+export RELEASE_PATH
+
+bosh deploy \
+  "${RELEASE_PATH}/manifests/bosh-lite-ci.yml" \
+  -v "stemcell_name=${STEMCELL_NAME}"
+
+AGENT_HOST="$(bosh -d bpm instances | grep running | awk '{ print $4 }')"
+agent_port=1337
+
+pushd "${RELEASE_PATH}/src/bpm/acceptance" > /dev/null
+  go run github.com/onsi/ginkgo/v2/ginkgo -r -p --race --randomize-all -- --agent-uri="http://${AGENT_HOST}:${agent_port}"
+popd > /dev/null

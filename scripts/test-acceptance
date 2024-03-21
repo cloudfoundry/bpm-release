@@ -10,22 +10,12 @@ export RELEASE_PATH
 
 source /tmp/local-bosh/director/env
 
-bosh upload-stemcell bosh-stemcell/*.tgz
-
-bosh create-release --dir "${RELEASE_PATH}/"
-
-bosh upload-release --dir "${RELEASE_PATH}/"
-
 export BOSH_DEPLOYMENT=bpm
 export BOSH_NON_INTERACTIVE=true
 
-bosh deploy \
-  "${RELEASE_PATH}/manifests/bosh-lite-ci.yml" \
-  -v "stemcell_name=${STEMCELL_NAME}"
+bosh upload-stemcell bosh-stemcell/*.tgz
 
-AGENT_HOST="$(bosh -d bpm instances | grep running | awk '{ print $4 }')"
-agent_port=1337
+bosh create-release --dir "${RELEASE_PATH}/"
+bosh upload-release --dir "${RELEASE_PATH}/"
 
-pushd "${RELEASE_PATH}/src/bpm/acceptance" > /dev/null
-  go run github.com/onsi/ginkgo/v2/ginkgo -r -p --race --randomize-all -- --agent-uri="http://${AGENT_HOST}:${agent_port}"
-popd > /dev/null
+"${RELEASE_PATH}/scripts/run-acceptance-specs"
