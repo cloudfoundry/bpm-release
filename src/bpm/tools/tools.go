@@ -13,11 +13,12 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 
+//go:build tools
 // +build tools
 
 package tools
 
 import (
 	_ "github.com/golang/mock/mockgen"
-	_ "github.com/onsi/ginkgo/ginkgo"
+	_ "github.com/onsi/ginkgo/v2/ginkgo"
 )
