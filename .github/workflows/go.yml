@@ -10,6 +10,8 @@ jobs:
     - uses: actions/setup-go@v4
       with:
         go-version-file: src/bpm/go.mod
+    - run: go generate ./...
+      working-directory: src/bpm/
     - uses: golangci/golangci-lint-action@v3
       with:
         working-directory: src/bpm/
