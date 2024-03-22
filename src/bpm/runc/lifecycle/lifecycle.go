@@ -34,6 +34,8 @@ import (
 	"bpm/usertools"
 )
 
+//go:generate go run go.uber.org/mock/mockgen -destination ./mock_lifecycle/mocks.go bpm/runc/lifecycle UserFinder,CommandRunner,RuncAdapter,RuncClient
+
 const (
 	ContainerSigQuitGracePeriod = 2 * time.Second
 	ContainerStatePollInterval  = 1 * time.Second
@@ -51,8 +53,6 @@ var (
 func IsNotExist(err error) bool {
 	return err == isNotExistError
 }
-
-//go:generate go run go.uber.org/mock/mockgen -copyright_file ./mock_lifecycle/header.txt -destination ./mock_lifecycle/mocks.go bpm/runc/lifecycle UserFinder,CommandRunner,RuncAdapter,RuncClient
 
 type UserFinder interface {
 	Lookup(username string) (specs.User, error)

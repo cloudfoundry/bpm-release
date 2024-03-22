@@ -61,7 +61,7 @@ var _ = Describe("our go source code", func() {
 			}
 
 			// Skip generated code
-			if strings.HasPrefix(filepath.Base(path), "fake_") {
+			if strings.HasPrefix(filepath.Base(path), "mock_") {
 				return nil
 			}
 
