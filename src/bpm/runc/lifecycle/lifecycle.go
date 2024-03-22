@@ -52,7 +52,7 @@ func IsNotExist(err error) bool {
 	return err == isNotExistError
 }
 
-//go:generate go run github.com/golang/mock/mockgen -copyright_file ./mock_lifecycle/header.txt -destination ./mock_lifecycle/mocks.go bpm/runc/lifecycle UserFinder,CommandRunner,RuncAdapter,RuncClient
+//go:generate go run go.uber.org/mock/mockgen -copyright_file ./mock_lifecycle/header.txt -destination ./mock_lifecycle/mocks.go bpm/runc/lifecycle UserFinder,CommandRunner,RuncAdapter,RuncClient
 
 type UserFinder interface {
 	Lookup(username string) (specs.User, error)

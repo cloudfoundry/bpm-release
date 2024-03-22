@@ -8,7 +8,6 @@ require (
 	code.cloudfoundry.org/lager/v3 v3.0.3
 	github.com/cyphar/filepath-securejoin v0.2.4 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
-	github.com/golang/mock v1.6.0
 	github.com/kr/pty v1.1.8
 	github.com/moby/sys/mountinfo v0.7.1
 	github.com/onsi/gomega v1.32.0
@@ -21,7 +20,10 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 )
 
-require github.com/onsi/ginkgo/v2 v2.17.0
+require (
+	github.com/onsi/ginkgo/v2 v2.17.0
+	go.uber.org/mock v0.4.0
+)
 
 require (
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect

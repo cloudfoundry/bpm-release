@@ -23,14 +23,12 @@ import (
 	"path/filepath"
 	"time"
 
+	"code.cloudfoundry.org/clock/fakeclock"
 	"code.cloudfoundry.org/lager/v3"
 	"code.cloudfoundry.org/lager/v3/lagertest"
+	"github.com/opencontainers/runtime-spec/specs-go"
+	"go.uber.org/mock/gomock"
 
-	specs "github.com/opencontainers/runtime-spec/specs-go"
-
-	"code.cloudfoundry.org/clock/fakeclock"
-
-	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
