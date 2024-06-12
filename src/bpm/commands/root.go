@@ -94,7 +94,7 @@ func rootPre(cmd *cobra.Command, _ []string) error {
 	return nil
 }
 
-func root(cmd *cobra.Command, args []string) error {
+func root(_ *cobra.Command, _ []string) error {
 	return errors.New("Exit code 1")
 }
 
