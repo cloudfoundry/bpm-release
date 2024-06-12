@@ -185,14 +185,12 @@ func newRuncLifecycle() (*lifecycle.RuncLifecycle, error) {
 	}
 
 	runcAdapter := adapter.NewRuncAdapter(*features, filepath.Glob, sharedvolume.MakeShared, locks)
-	clock := clock.NewClock()
-
 	return lifecycle.NewRuncLifecycle(
 		runcClient,
 		runcAdapter,
 		userFinder,
 		lifecycle.NewCommandRunner(),
-		clock,
+		clock.NewClock(),
 		os.RemoveAll,
 	), nil
 }
