@@ -88,7 +88,7 @@ into the tool. However, we eschew blanket automatic dependency updates as they
 can often cause more problems than they solve via supply chain attacks.
 
 We update the Go dependency automatically in CI as we have decided to trust
-that supply chain and it is the dependency which updates the most frequently.
+that supply chain, and it is the dependency which updates the most frequently.
 
 The other dependencies are updated manually using their distributables (be that
 source code or, in the case of libseccomp, the amended source code from their

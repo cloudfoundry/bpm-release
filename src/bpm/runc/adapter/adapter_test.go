@@ -89,7 +89,7 @@ var _ = Describe("RuncAdapter", func() {
 	})
 
 	JustBeforeEach(func() {
-		// Most tests in this file do not use globs in their volume paths and
+		// Most tests in this file do not use globs in their volume paths, and
 		// we do not want to depend on filesystem state for these tests.
 		identityGlob := func(pattern string) ([]string, error) {
 			return []string{pattern}, nil
@@ -594,7 +594,7 @@ var _ = Describe("RuncAdapter", func() {
 				specs.LinuxNamespace{Type: "uts"},
 			))
 
-			// This must be part of the existing It block to preven test pollution
+			// This must be part of the existing It block to prevent test pollution
 			By("the presence of /run/resolvconf on the host")
 
 			Expect(os.MkdirAll(resolvConfDir, 0700)).To(Succeed())
@@ -957,7 +957,7 @@ func HaveMount(expected specs.Mount) types.GomegaMatcher {
 }
 
 // BeMount is a Gomega matcher which checks if two mounts are the same. Mounts
-// are considered equivalent if their dstination, source, type are the same as
+// are considered equivalent if their destination, source, type are the same as
 // well as the set of options being the same (order independent).
 func BeMount(expected specs.Mount) types.GomegaMatcher {
 	return &beMountMatcher{

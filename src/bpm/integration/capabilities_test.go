@@ -57,7 +57,7 @@ var _ = Describe("capabilities", func() {
 
 		stdout = filepath.Join(boshRoot, "sys", "log", job, fmt.Sprintf("%s.stdout.log", job))
 
-		cfg = newJobConfig(job, effectiveCapabiltiesBash)
+		cfg = newJobConfig(job, effectiveCapabilitiesBash)
 	})
 
 	JustBeforeEach(func() {

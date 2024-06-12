@@ -30,11 +30,11 @@ import (
 const cgroupRoot = "/sys/fs/cgroup"
 
 func Setup() error {
-	mnts, err := mountinfo.GetMounts(mountinfo.ParentsFilter(cgroupRoot))
+	mounts, err := mountinfo.GetMounts(mountinfo.ParentsFilter(cgroupRoot))
 	if err != nil {
 		return err
 	}
-	if err := mountCgroupTmpfsIfNotPresent(mnts); err != nil {
+	if err := mountCgroupTmpfsIfNotPresent(mounts); err != nil {
 		return err
 	}
 

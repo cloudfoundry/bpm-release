@@ -358,7 +358,7 @@ func (a *RuncAdapter) globExpandVolumes(volumes []config.Volume) ([]config.Volum
 }
 
 func userProvidedIdentityMounts(bpmCfg *config.BPMConfig, volumes []config.Volume) []specs.Mount {
-	var mnts []specs.Mount
+	var mounts []specs.Mount
 
 	for _, vol := range volumes {
 		opts := []MountOption{WithRecursiveBind()}
@@ -371,10 +371,10 @@ func userProvidedIdentityMounts(bpmCfg *config.BPMConfig, volumes []config.Volum
 			opts = append(opts, AllowWrites())
 		}
 
-		mnts = append(mnts, IdentityMount(vol.Path, opts...))
+		mounts = append(mounts, IdentityMount(vol.Path, opts...))
 	}
 
-	return mnts
+	return mounts
 }
 
 func processEnvironment(env map[string]string, cfg *config.BPMConfig) []string {

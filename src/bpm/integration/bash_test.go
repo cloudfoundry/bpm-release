@@ -42,7 +42,7 @@ wait $child`
 const preStartBash = `#!/bin/bash
 echo "Executing Pre Start"`
 
-const effectiveCapabiltiesBash = `cat /proc/1/status | grep CapEff`
+const effectiveCapabilitiesBash = `cat /proc/1/status | grep CapEff`
 
 const netBindServiceCapabilityBash = `echo PRIVILEGED | nc -l 127.0.0.1 80`
 

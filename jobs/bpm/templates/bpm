@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Setting ulimit due to changes in rlimit being inherited from
-# process thats runs it. Monit hard limit on xenial/bionic
+# process that runs it. Monit hard limit on xenial/bionic
 # stecemlls are 4096 and is 524288 on jammy. 
 # Refer to https://github.com/golang/go/issues/59064 for more info
 ulimit -n 524288
