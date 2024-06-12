@@ -30,7 +30,7 @@ import (
 	"code.cloudfoundry.org/bytefmt"
 	"code.cloudfoundry.org/lager/v3/lagertest"
 	"github.com/onsi/gomega/types"
-	specs "github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/opencontainers/runtime-spec/specs-go"
 
 	"bpm/bosh"
 	"bpm/config"
@@ -765,8 +765,8 @@ var _ = Describe("RuncAdapter", func() {
 					Expect(spec.Process.Rlimits).To(ConsistOf([]specs.POSIXRlimit{
 						{
 							Type: "RLIMIT_NOFILE",
-							Hard: uint64(expectedOpenFilesLimit),
-							Soft: uint64(expectedOpenFilesLimit),
+							Hard: expectedOpenFilesLimit,
+							Soft: expectedOpenFilesLimit,
 						},
 					}))
 				})
