@@ -72,7 +72,7 @@ func rootPre(cmd *cobra.Command, _ []string) error {
 
 	usr, err := user.Current()
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to get current user: %s", err)
 	}
 
 	if usr.Uid != "0" && usr.Gid != "0" {
@@ -88,7 +88,11 @@ func rootPre(cmd *cobra.Command, _ []string) error {
 	locks = hostlock.NewHandle(lockDir)
 
 	if !isRunningSystemd() {
-		return cgroups.Setup()
+		err := cgroups.Setup()
+		if err != nil {
+			err = fmt.Errorf("unable to setup cgroups: %s", err)
+		}
+		return err
 	}
 
 	return nil
