@@ -17,6 +17,7 @@ package cgroups
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -32,24 +33,27 @@ const cgroupRoot = "/sys/fs/cgroup"
 func Setup() error {
 	mounts, err := mountinfo.GetMounts(mountinfo.ParentsFilter(cgroupRoot))
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to retrieve mounts: %s", err)
 	}
-	if err := mountCgroupTmpfsIfNotPresent(mounts); err != nil {
-		return err
+	if err = mountCgroupTmpfsIfNotPresent(mounts); err != nil {
+		return fmt.Errorf("unable to mount cgroup tmpfs: %s", err)
 	}
 
 	subsystems, err := cgroups.GetAllSubsystems()
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to retrieve cgroup subsystems: %s", err)
 	}
 
 	for _, sub := range subsystems {
-		group, err := SubsystemGrouping(sub)
+		var group string
+		group, err = SubsystemGrouping(sub)
 		if err != nil {
-			return err
+			return fmt.Errorf("unable to retrieve subsystem grouping for %s: %s", sub, err)
 		}
-		if err := mountCgroupSubsystem(group); err != nil {
-			return err
+
+		err = mountCgroupSubsystem(group)
+		if err != nil {
+			return fmt.Errorf("unable to mount subsystem for %s: %s", sub, err)
 		}
 	}
 
@@ -95,8 +99,8 @@ func subsystemGrouping(f io.Reader, subsystem string) (string, error) {
 	return subsystem, nil
 }
 
-func mountCgroupTmpfsIfNotPresent(mnts []*mountinfo.Info) error {
-	for _, mnt := range mnts {
+func mountCgroupTmpfsIfNotPresent(mountInfos []*mountinfo.Info) error {
+	for _, mnt := range mountInfos {
 		if mnt.Mountpoint == cgroupRoot {
 			return nil
 		}
@@ -111,23 +115,23 @@ func mountCgroupTmpfsIfNotPresent(mnts []*mountinfo.Info) error {
 }
 
 func mountCgroupSubsystem(subsystem string) error {
-	mountPoint := filepath.Join(cgroupRoot, subsystem)
-	if _, err := os.Stat(mountPoint); os.IsNotExist(err) {
-		if err := os.MkdirAll(mountPoint, 0755); err != nil {
+	mountpoint := filepath.Join(cgroupRoot, subsystem)
+	if _, err := os.Stat(mountpoint); os.IsNotExist(err) {
+		if err := os.MkdirAll(mountpoint, 0755); err != nil {
 			return err
 		}
-		if err := os.Chmod(mountPoint, 0755); err != nil {
+		if err := os.Chmod(mountpoint, 0755); err != nil {
 			return err
 		}
 	}
 
-	err := unix.Mount("cgroup", mountPoint, "cgroup", 0, subsystem)
+	err := unix.Mount("cgroup", mountpoint, "cgroup", 0, subsystem)
 	switch err {
 	// EBUSY is returned if the mountpoint already has something mounted on it
 	case unix.EBUSY, nil:
 		return nil
 	default:
-		return err
+		return fmt.Errorf("unable to maount %s: %s", mountpoint, err)
 	}
 }
 
