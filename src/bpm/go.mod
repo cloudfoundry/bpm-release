@@ -11,10 +11,10 @@ require (
 	github.com/kr/pty v1.1.8
 	github.com/moby/sys/mountinfo v0.7.1
 	github.com/onsi/gomega v1.33.1
-	github.com/opencontainers/runc v1.1.12
+	github.com/opencontainers/runc v1.1.13
 	github.com/opencontainers/runtime-spec v1.2.0
 	github.com/satori/go.uuid v1.2.0
-	github.com/spf13/cobra v1.8.0
+	github.com/spf13/cobra v1.8.1
 	golang.org/x/net v0.26.0 // indirect
 	golang.org/x/sys v0.21.0
 	gopkg.in/yaml.v3 v3.0.1
