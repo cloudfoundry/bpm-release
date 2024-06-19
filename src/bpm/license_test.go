@@ -65,6 +65,11 @@ var _ = Describe("our go source code", func() {
 				return nil
 			}
 
+			// Skip macOS tar cruft
+			if strings.HasPrefix(filepath.Base(path), "._") {
+				return nil
+			}
+
 			bs, err := os.ReadFile(path)
 			if err != nil {
 				return err
