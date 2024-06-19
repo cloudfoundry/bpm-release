@@ -131,7 +131,7 @@ func mountCgroupSubsystem(subsystem string) error {
 	case unix.EBUSY, nil:
 		return nil
 	default:
-		return fmt.Errorf("unable to maount %s: %s", mountpoint, err)
+		return fmt.Errorf("unable to mount %s: %w", mountpoint, err)
 	}
 }
 

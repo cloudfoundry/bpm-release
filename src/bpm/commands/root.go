@@ -72,7 +72,7 @@ func rootPre(cmd *cobra.Command, _ []string) error {
 
 	usr, err := user.Current()
 	if err != nil {
-		return fmt.Errorf("unable to get current user: %s", err)
+		return fmt.Errorf("unable to get current user: %w", err)
 	}
 
 	if usr.Uid != "0" && usr.Gid != "0" {
@@ -90,7 +90,7 @@ func rootPre(cmd *cobra.Command, _ []string) error {
 	if !isRunningSystemd() {
 		err := cgroups.Setup()
 		if err != nil {
-			err = fmt.Errorf("unable to setup cgroups: %s", err)
+			err = fmt.Errorf("unable to setup cgroups: %w", err)
 		}
 		return err
 	}
@@ -185,7 +185,7 @@ func newRuncLifecycle() (*lifecycle.RuncLifecycle, error) {
 	)
 	features, err := sysfeat.Fetch()
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch system features: %q", err)
+		return nil, fmt.Errorf("failed to fetch system features: %w", err)
 	}
 
 	runcAdapter := adapter.NewRuncAdapter(*features, filepath.Glob, sharedvolume.MakeShared, locks)
@@ -227,12 +227,12 @@ func forceCleanupBrokenRuncState(logger lager.Logger, runcLifecycle *lifecycle.R
 
 	if err := os.RemoveAll(statePath); err != nil {
 		logger.Error("failed-to-remove-state-file", err)
-		return fmt.Errorf("failed to clean up stale state file: %s", err)
+		return fmt.Errorf("failed to clean up stale state file: %w", err)
 	}
 
 	if err := runcLifecycle.RemoveProcess(logger, bpmCfg); err != nil {
 		logger.Error("failed-to-cleanup", err)
-		return fmt.Errorf("failed to clean up stale job-process: %s", err)
+		return fmt.Errorf("failed to clean up stale job-process: %w", err)
 	}
 
 	return nil
