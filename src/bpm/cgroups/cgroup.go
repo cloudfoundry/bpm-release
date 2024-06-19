@@ -46,7 +46,7 @@ func Setup() error {
 
 	for _, sub := range subsystems {
 		var group string
-		group, err = SubsystemGrouping(sub)
+		group, err = subsystemGrouping(sub)
 		if err != nil {
 			return fmt.Errorf("unable to retrieve subsystem grouping for %s: %s", sub, err)
 		}
@@ -60,9 +60,7 @@ func Setup() error {
 	return nil
 }
 
-// SubsystemGrouping fetches the parent cgroup grouping (if any) for a
-// particular subsystem.
-func SubsystemGrouping(subsystem string) (string, error) {
+func subsystemGrouping(subsystem string) (string, error) {
 	f, err := os.Open("/proc/self/cgroup")
 	if os.IsNotExist(err) {
 		// If the current process is not in a cgroup then we can do as we
@@ -76,10 +74,10 @@ func SubsystemGrouping(subsystem string) (string, error) {
 
 	// If the current process is in a cgroup then we need to match the
 	// grouping of the parent cgroup.
-	return subsystemGrouping(f, subsystem)
+	return subsystemGroupingFromProcCgroup(f, subsystem)
 }
 
-func subsystemGrouping(f io.Reader, subsystem string) (string, error) {
+func subsystemGroupingFromProcCgroup(f io.Reader, subsystem string) (string, error) {
 	s := bufio.NewScanner(f)
 	for s.Scan() {
 		line := s.Text()

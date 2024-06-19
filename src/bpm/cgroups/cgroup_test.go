@@ -43,13 +43,13 @@ var _ = Describe("Cgroups", func() {
 		})
 
 		It("handles singleton groups", func() {
-			group, err := subsystemGrouping(r, "memory")
+			group, err := subsystemGroupingFromProcCgroup(r, "memory")
 			Expect(err).ToNot(HaveOccurred())
 			Expect(group).To(Equal("memory"))
 		})
 
 		It("handles grouped subsystems", func() {
-			group, err := subsystemGrouping(r, "cpu")
+			group, err := subsystemGroupingFromProcCgroup(r, "cpu")
 			Expect(err).ToNot(HaveOccurred())
 			Expect(group).To(Equal("cpu,cpuacct"))
 		})
