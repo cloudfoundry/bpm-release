@@ -21,6 +21,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/moby/sys/mountinfo"
@@ -84,7 +85,7 @@ func subsystemGroupingFromProcCgroup(f io.Reader, subsystem string) (string, err
 		fields := strings.Split(line, ":")
 		grouping := fields[1]
 		subs := strings.Split(grouping, ",")
-		if containsElement(subs, subsystem) {
+		if slices.Contains(subs, subsystem) {
 			return grouping, nil
 		}
 	}
@@ -131,14 +132,4 @@ func mountCgroupSubsystem(subsystem string) error {
 	default:
 		return fmt.Errorf("unable to mount %s: %w", mountpoint, err)
 	}
-}
-
-func containsElement(elements []string, element string) bool {
-	for _, e := range elements {
-		if e == element {
-			return true
-		}
-	}
-
-	return false
 }
