@@ -49,7 +49,7 @@ func (s Signal) String() string {
 	}
 }
 
-// https://github.com/opencontainers/runc/blob/master/list.go#L24-L45
+// ContainerState see https://github.com/opencontainers/runc/blob/master/list.go#L24-L45
 type ContainerState struct {
 	// ID is the container ID
 	ID string `json:"id"`
@@ -148,10 +148,10 @@ func (c *RuncClient) Exec(containerID, command string, stdin io.Reader, stdout, 
 }
 
 // ContainerState returns the following:
-// - state, nil if the job is running,and no errors were encountered.
-// - nil,nil if the container state is not running and no other errors were encountered
-// - nil,error if there is any other error getting the container state
-//   (e.g. the container is running but in an unreachable state)
+//   - state, nil if the job is running,and no errors were encountered.
+//   - nil,nil if the container state is not running and no other errors were encountered
+//   - nil,error if there is any other error getting the container state
+//     (e.g. the container is running but in an unreachable state)
 func (c *RuncClient) ContainerState(containerID string) (*specs.State, error) {
 	runcCmd := c.buildCmd(
 		"--log-format",
