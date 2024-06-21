@@ -43,7 +43,7 @@ func (p Path) Internal() string {
 	return filepath.Join(DefaultRoot, p.dir)
 }
 
-// Internal returns the external representation of the Path.
+// External returns the external representation of the Path.
 func (p Path) External() string {
 	return filepath.Join(p.root, p.dir)
 }
@@ -58,7 +58,7 @@ func (p Path) Join(elements ...string) Path {
 // String implements the Stringer interface but should never be used. This was
 // added to avoid the common mistake of doing:
 //
-//  fmt.{S,F,}Printf("... %s ...", bosh.Path{...})
+//	fmt.{S,F,}Printf("... %s ...", bosh.Path{...})
 //
 // Which will does not make it clear if the internal or external representation
 // is wanted and is likely a bug. Omitting this function returns the standard
