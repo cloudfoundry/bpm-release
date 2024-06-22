@@ -35,7 +35,7 @@ import (
 	"bpm/config"
 )
 
-// This needs to be different than /tmp as /tmp is bind mounted into the
+// This needs to be different from /tmp as /tmp is bind mounted into the
 // container
 const bpmTmpDir = "/bpmtmp"
 
@@ -96,8 +96,8 @@ func runcState(root string, containerID string) specs.State {
 	if err != nil {
 		// XXX: do something smart here based on the error
 		//
-		// Sometimes the state returns some junk error message but we don't
-		// want to return an error because it'll cause the Eventually's to
+		// Sometimes the state returns some junk error message, but we don't
+		// want to return an error because it'll cause the Eventually()'s to
 		// fail. We probably need to return more information in the error here
 		// so that we can tell if this error is temporary or not.
 		return stateResponse
