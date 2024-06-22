@@ -79,6 +79,9 @@ var _ = Describe("logs", func() {
 		if err != nil {
 			fmt.Fprintf(GinkgoWriter, "WARNING: Failed to cleanup container: %s\n", err.Error())
 		}
+		copyContentsToGinkgoWrite(stdout)
+		copyContentsToGinkgoWrite(stderr)
+
 		Expect(os.RemoveAll(boshRoot)).To(Succeed())
 	})
 

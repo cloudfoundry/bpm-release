@@ -49,6 +49,9 @@ var _ = Describe("list", func() {
 		runcRoot          string
 		stoppedProcess    string
 		unimplementedJob  string
+
+		stderr string
+		stdout string
 	)
 
 	BeforeEach(func() {
@@ -90,6 +93,9 @@ var _ = Describe("list", func() {
 
 		command = exec.Command(bpmPath, "list")
 		command.Env = append(command.Env, fmt.Sprintf("BPM_BOSH_ROOT=%s", boshRoot))
+
+		stdout = filepath.Join(boshRoot, "sys", "log", job, fmt.Sprintf("%s.stdout.log", job))
+		stderr = filepath.Join(boshRoot, "sys", "log", job, fmt.Sprintf("%s.stderr.log", job))
 	})
 
 	AfterEach(func() {
@@ -102,6 +108,9 @@ var _ = Describe("list", func() {
 		if err != nil {
 			fmt.Fprintf(GinkgoWriter, "WARNING: Failed to cleanup container: %s\n", err.Error()) //nolint:errcheck
 		}
+		copyContentsToGinkgoWrite(stdout)
+		copyContentsToGinkgoWrite(stderr)
+
 		Expect(os.RemoveAll(boshRoot)).To(Succeed())
 	})
 

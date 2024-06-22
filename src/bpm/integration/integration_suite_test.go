@@ -213,3 +213,17 @@ func startJob(root, bpmPath, j string) {
 	<-session.Exited
 	Expect(session).To(gexec.Exit(0))
 }
+
+func copyContentsToGinkgoWrite(filePath string) {
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		return
+	}
+
+	stderrReader, err := os.Open(filePath)
+	Expect(err).NotTo(HaveOccurred())
+
+	GinkgoWriter.Printf("BEGIN '%s'\n", filePath)
+	_, err = io.Copy(GinkgoWriter, stderrReader)
+	Expect(err).NotTo(HaveOccurred())
+	GinkgoWriter.Printf("END   '%s'\n", filePath)
+}

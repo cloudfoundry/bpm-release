@@ -47,6 +47,7 @@ var _ = Describe("resource limits", func() {
 		job         string
 		runcRoot    string
 		stderr      string
+		stdout      string
 	)
 
 	BeforeEach(func() {
@@ -61,6 +62,7 @@ var _ = Describe("resource limits", func() {
 		runcRoot = setupBoshDirectories(boshRoot, job)
 
 		stderr = filepath.Join(boshRoot, "sys", "log", job, fmt.Sprintf("%s.stderr.log", job))
+		stdout = filepath.Join(boshRoot, "sys", "log", job, fmt.Sprintf("%s.stdout.log", job))
 	})
 
 	JustBeforeEach(func() {
@@ -74,6 +76,9 @@ var _ = Describe("resource limits", func() {
 		if err != nil {
 			fmt.Fprintf(GinkgoWriter, "WARNING: Failed to cleanup container: %s\n", err.Error())
 		}
+		copyContentsToGinkgoWrite(stderr)
+		copyContentsToGinkgoWrite(stdout)
+
 		Expect(os.RemoveAll(boshRoot)).To(Succeed())
 	})
 

@@ -42,6 +42,8 @@ var _ = Describe("pid", func() {
 		containerID string
 		job         string
 		runcRoot    string
+		stderr      string
+		stdout      string
 	)
 
 	BeforeEach(func() {
@@ -53,6 +55,9 @@ var _ = Describe("pid", func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(os.Chmod(boshRoot, 0755)).To(Succeed())
 		runcRoot = setupBoshDirectories(boshRoot, job)
+
+		stdout = filepath.Join(boshRoot, "sys", "log", job, fmt.Sprintf("%s.stdout.log", job))
+		stderr = filepath.Join(boshRoot, "sys", "log", job, fmt.Sprintf("%s.stderr.log", job))
 
 		logFile := filepath.Join(boshRoot, "sys", "log", job, "foo.log")
 		cfg = newJobConfig(job, defaultBash(logFile))
@@ -69,6 +74,9 @@ var _ = Describe("pid", func() {
 		if err != nil {
 			fmt.Fprintf(GinkgoWriter, "WARNING: Failed to cleanup container: %s\n", err.Error())
 		}
+		copyContentsToGinkgoWrite(stdout)
+		copyContentsToGinkgoWrite(stderr)
+
 		Expect(os.RemoveAll(boshRoot)).To(Succeed())
 	})
 

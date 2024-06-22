@@ -43,6 +43,7 @@ var _ = Describe("stop", func() {
 		containerID string
 		job         string
 		runcRoot    string
+		stderr      string
 		stdout      string
 
 		boshEnv *bosh.Env
@@ -62,6 +63,7 @@ var _ = Describe("stop", func() {
 		runcRoot = setupBoshDirectories(boshRoot, job)
 
 		stdout = filepath.Join(boshRoot, "sys", "log", job, fmt.Sprintf("%s.stdout.log", job))
+		stderr = filepath.Join(boshRoot, "sys", "log", job, fmt.Sprintf("%s.stderr.log", job))
 		bpmLog = filepath.Join(boshRoot, "sys", "log", job, "bpm.log")
 		logFile = boshEnv.LogDir(job).Join("foo.log")
 
@@ -87,6 +89,9 @@ var _ = Describe("stop", func() {
 		if err != nil {
 			fmt.Fprintf(GinkgoWriter, "WARNING: Failed to cleanup container: %s\n", err.Error())
 		}
+		copyContentsToGinkgoWrite(stdout)
+		copyContentsToGinkgoWrite(stderr)
+
 		Expect(os.RemoveAll(boshRoot)).To(Succeed())
 	})
 
