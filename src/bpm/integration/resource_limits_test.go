@@ -74,7 +74,7 @@ var _ = Describe("resource limits", func() {
 	AfterEach(func() {
 		err := runcCommand(runcRoot, "delete", "--force", containerID).Run()
 		if err != nil {
-			fmt.Fprintf(GinkgoWriter, "WARNING: Failed to cleanup container: %s\n", err.Error())
+			GinkgoWriter.Printf("WARNING: Failed to cleanup container: %s\n", err.Error())
 		}
 		copyContentsToGinkgoWrite(stderr)
 		copyContentsToGinkgoWrite(stdout)

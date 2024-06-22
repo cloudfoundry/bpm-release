@@ -71,7 +71,7 @@ var _ = Describe("capabilities", func() {
 	AfterEach(func() {
 		err := runcCommand(runcRoot, "delete", "--force", containerID).Run()
 		if err != nil {
-			fmt.Fprintf(GinkgoWriter, "WARNING: Failed to cleanup container: %s\n", err.Error()) //nolint:errcheck
+			GinkgoWriter.Printf("WARNING: Failed to cleanup container: %s\n", err.Error()) //nolint:errcheck
 		}
 		copyContentsToGinkgoWrite(stdout)
 		copyContentsToGinkgoWrite(stderr)

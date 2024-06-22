@@ -77,7 +77,7 @@ var _ = Describe("logs", func() {
 	AfterEach(func() {
 		err := runcCommand(runcRoot, "delete", "--force", containerID).Run()
 		if err != nil {
-			fmt.Fprintf(GinkgoWriter, "WARNING: Failed to cleanup container: %s\n", err.Error())
+			GinkgoWriter.Printf("WARNING: Failed to cleanup container: %s\n", err.Error())
 		}
 		copyContentsToGinkgoWrite(stdout)
 		copyContentsToGinkgoWrite(stderr)
@@ -288,7 +288,7 @@ var _ = Describe("logs", func() {
 		AfterEach(func() {
 			err := runcCommand(runcRoot, "delete", "--force", otherContainerID).Run()
 			if err != nil {
-				fmt.Fprintf(GinkgoWriter, "WARNING: Failed to cleanup container: %s\n", err.Error())
+				GinkgoWriter.Printf("WARNING: Failed to cleanup container: %s\n", err.Error())
 			}
 			Expect(os.RemoveAll(boshRoot)).To(Succeed())
 		})
