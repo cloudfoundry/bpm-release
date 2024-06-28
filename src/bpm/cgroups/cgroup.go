@@ -32,6 +32,10 @@ import (
 const cgroupRoot = "/sys/fs/cgroup"
 
 func Setup() error {
+	if cgroups.IsCgroup2UnifiedMode() {
+		return nil
+	}
+
 	mounts, err := mountinfo.GetMounts(mountinfo.ParentsFilter(cgroupRoot))
 	if err != nil {
 		return fmt.Errorf("unable to retrieve mounts: %s", err)
