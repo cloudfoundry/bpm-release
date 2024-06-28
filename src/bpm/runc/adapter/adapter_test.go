@@ -410,7 +410,7 @@ var _ = Describe("RuncAdapter", func() {
 				Path: bpmCfg.RootFSPath(),
 			}))
 
-			Expect(spec.Mounts).To(HaveLen(24))
+			Expect(spec.Mounts).To(HaveLen(24), fmt.Sprintf("spec.Mounts is actually length %d", len(spec.Mounts)))
 			Expect(spec.Mounts).To(HaveMount(specs.Mount{
 				Destination: "/proc",
 				Type:        "proc",
@@ -868,6 +868,8 @@ var _ = Describe("RuncAdapter", func() {
 					UnrestrictedVolumes: []config.Volume{
 						{Path: "/this/is/an/unrestricted/path"},
 						{Path: "/writable/executable/path", Writable: true, AllowExecutions: true},
+						{Path: "/var/vcap/jobs/example/config/config.yml", MountOnly: true},
+						{Path: "/var/vcap/jobs/other/config/config.yml", MountOnly: true},
 					},
 				}
 			})
@@ -888,6 +890,24 @@ var _ = Describe("RuncAdapter", func() {
 					Source:      "/writable/executable/path",
 					Options:     []string{"nodev", "nosuid", "exec", "rbind", "rw"},
 				}))
+				Expect(spec.Mounts).To(HaveMount(specs.Mount{
+					Destination: "/var/vcap/jobs/other/config/config.yml",
+					Type:        "bind",
+					Source:      "/var/vcap/jobs/other/config/config.yml",
+					Options:     []string{"nodev", "nosuid", "noexec", "rbind", "ro"},
+				}))
+			})
+
+			It("does not add the volume if it is a subdirectory of a bosh mount for this job", func() {
+				spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(spec.Mounts).NotTo(HaveMount(specs.Mount{
+					Destination: "/var/vcap/jobs/example/config/config.yml",
+					Type:        "bind",
+					Source:      "/var/vcap/jobs/example/config/config.yml",
+					Options:     []string{"nodev", "nosuid", "noexec", "rbind", "ro"},
+				}))
 			})
 
 			Context("when the user requests a glob", func() {
@@ -895,6 +915,7 @@ var _ = Describe("RuncAdapter", func() {
 					procCfg.Unsafe = &config.Unsafe{
 						UnrestrictedVolumes: []config.Volume{
 							{Path: "/*/file.txt", Writable: true, AllowExecutions: true},
+							{Path: "/var/vcap/jobs/*/config/config.yml", MountOnly: true},
 						},
 					}
 				})
@@ -906,6 +927,11 @@ var _ = Describe("RuncAdapter", func() {
 							return []string{
 								"/unrestricted/file.txt",
 								"/other/file.txt",
+							}, nil
+						case "/var/vcap/jobs/*/config/config.yml":
+							return []string{
+								"/var/vcap/jobs/example/config/config.yml",
+								"/var/vcap/jobs/other-job/config/config.yml",
 							}, nil
 						default:
 							return []string{pattern}, nil
@@ -929,6 +955,24 @@ var _ = Describe("RuncAdapter", func() {
 						Type:        "bind",
 						Source:      "/other/file.txt",
 						Options:     []string{"nodev", "nosuid", "exec", "rbind", "rw"},
+					}))
+					Expect(spec.Mounts).To(HaveMount(specs.Mount{
+						Destination: "/var/vcap/jobs/other-job/config/config.yml",
+						Type:        "bind",
+						Source:      "/var/vcap/jobs/other-job/config/config.yml",
+						Options:     []string{"nodev", "nosuid", "noexec", "rbind", "ro"},
+					}))
+				})
+
+				It("does not add the volume if the glob is a subdirectory of a bosh mount for this job", func() {
+					spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(spec.Mounts).NotTo(HaveMount(specs.Mount{
+						Destination: "/var/vcap/jobs/example/config/config.yml",
+						Type:        "bind",
+						Source:      "/var/vcap/jobs/example/config/config.yml",
+						Options:     []string{"nodev", "nosuid", "noexec", "rbind", "ro"},
 					}))
 				})
 

@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"code.cloudfoundry.org/bytefmt"
 	"code.cloudfoundry.org/lager/v3"
@@ -227,14 +228,16 @@ func (a *RuncAdapter) BuildSpec(
 
 	ms := newMountDedup(logger)
 	ms.addMounts(systemIdentityMounts(mountResolvConf))
-	ms.addMounts(boshMounts(bpmCfg, procCfg.EphemeralDisk, procCfg.PersistentDisk))
+	boshMounts := boshMounts(bpmCfg, procCfg.EphemeralDisk, procCfg.PersistentDisk)
+	ms.addMounts(boshMounts)
 	ms.addMounts(userProvidedIdentityMounts(bpmCfg, procCfg.AdditionalVolumes))
 	if procCfg.Unsafe != nil && len(procCfg.Unsafe.UnrestrictedVolumes) > 0 {
 		expanded, err := a.globExpandVolumes(procCfg.Unsafe.UnrestrictedVolumes)
 		if err != nil {
 			return specs.Spec{}, err
 		}
-		ms.addMounts(userProvidedIdentityMounts(bpmCfg, expanded))
+		filteredVolumes := filterVolumesUnderBoshMounts(boshMounts, expanded)
+		ms.addMounts(userProvidedIdentityMounts(bpmCfg, filteredVolumes))
 	}
 
 	wrappedExe, wrappedArgs := wrapWithInit(bpmCfg, procCfg)
@@ -283,6 +286,24 @@ func (a *RuncAdapter) BuildSpec(
 	}
 
 	return *spec, nil
+}
+
+func filterVolumesUnderBoshMounts(mounts []specs.Mount, volumes []config.Volume) []config.Volume {
+	var filteredVolumes []config.Volume
+	for _, v := range volumes {
+		keep := true
+		for _, m := range mounts {
+			if strings.HasPrefix(v.Path, m.Destination) {
+				keep = false
+			}
+		}
+
+		if keep {
+			filteredVolumes = append(filteredVolumes, v)
+		}
+	}
+
+	return filteredVolumes
 }
 
 func wrapWithInit(bpmCfg *config.BPMConfig, procCfg *config.ProcessConfig) (string, []string) {
