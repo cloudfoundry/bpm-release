@@ -25,7 +25,11 @@ import (
 )
 
 const (
-	swapPath = "memory.memsw.limit_in_bytes"
+	swapPathCgroup1 = "memory.memsw.limit_in_bytes"
+	swapPathCgroup2 = "memory.swap.max"
+
+	unifiedMountpoint = "/sys/fs/cgroup"
+	hybridMountpoint  = "/sys/fs/cgroup/unified"
 )
 
 // Features contains information about what features the host system supports.
@@ -35,17 +39,43 @@ type Features struct {
 }
 
 func Fetch() (*Features, error) {
-	mountpoint, err := cgroups.FindCgroupMountpoint("", "memory")
+	supported, err := swapLimitSupported()
 	if err != nil {
 		return nil, err
 	}
 
 	return &Features{
-		SwapLimitSupported: swapLimitSupported(mountpoint),
+		SwapLimitSupported: supported,
 	}, nil
 }
 
-func swapLimitSupported(mount string) bool {
-	_, err := os.Stat(filepath.Join(mount, swapPath))
-	return err == nil
+func swapLimitSupported() (bool, error) {
+	if cgroups.IsCgroup2UnifiedMode() {
+		return swapLimitSupportedCgroup2()
+	}
+
+	return swapLimitSupportedCgroup1()
+}
+
+func swapLimitSupportedCgroup2() (bool, error) {
+	mountpoint := unifiedMountpoint
+	if cgroups.IsCgroup2HybridMode() {
+		mountpoint = hybridMountpoint
+	}
+
+	if cgroups.PathExists(filepath.Join(mountpoint, swapPathCgroup2)) {
+		return true, nil
+	}
+
+	return false, nil
+}
+
+func swapLimitSupportedCgroup1() (bool, error) {
+	mountPoint, err := cgroups.FindCgroupMountpoint("", "memory")
+	if err != nil {
+		return false, err
+	}
+
+	_, err = os.Stat(filepath.Join(mountPoint, swapPathCgroup1))
+	return err == nil, nil
 }
