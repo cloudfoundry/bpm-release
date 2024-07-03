@@ -1,4 +1,4 @@
-# bpm [![ci.bosh-ecosystem.cf-app.com](https://ci.bosh-ecosystem.cf-app.com/api/v1/teams/main/pipelines/bpm/jobs/test-acceptance-xenial/badge)](https://ci.bosh-ecosystem.cf-app.com/teams/main/pipelines/bpm)
+# bpm [![ci.bosh-ecosystem.cf-app.com](https://ci.bosh-ecosystem.cf-app.com/api/v1/teams/main/pipelines/bpm/jobs/test-acceptance-jammy/badge)](https://ci.bosh-ecosystem.cf-app.com/teams/main/pipelines/bpm)
 
 > Isolated BOSH Jobs
 
