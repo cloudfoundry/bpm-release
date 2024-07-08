@@ -232,11 +232,11 @@ func (a *RuncAdapter) BuildSpec(
 	ms.addMounts(boshMounts)
 	ms.addMounts(userProvidedIdentityMounts(bpmCfg, procCfg.AdditionalVolumes))
 	if procCfg.Unsafe != nil && len(procCfg.Unsafe.UnrestrictedVolumes) > 0 {
-		expanded, err := a.globExpandVolumes(procCfg.Unsafe.UnrestrictedVolumes)
+		expandUnrestrictedVolumes, err := a.globExpandVolumes(procCfg.Unsafe.UnrestrictedVolumes)
 		if err != nil {
 			return specs.Spec{}, err
 		}
-		filteredVolumes := filterVolumesUnderBoshMounts(boshMounts, expanded)
+		filteredVolumes := filterVolumesUnderBoshMounts(boshMounts, expandUnrestrictedVolumes)
 		ms.addMounts(userProvidedIdentityMounts(bpmCfg, filteredVolumes))
 	}
 
@@ -288,11 +288,11 @@ func (a *RuncAdapter) BuildSpec(
 	return *spec, nil
 }
 
-func filterVolumesUnderBoshMounts(mounts []specs.Mount, volumes []config.Volume) []config.Volume {
+func filterVolumesUnderBoshMounts(boshMounts []specs.Mount, unrestrictedVolumes []config.Volume) []config.Volume {
 	var filteredVolumes []config.Volume
-	for _, v := range volumes {
+	for _, v := range unrestrictedVolumes {
 		keep := true
-		for _, m := range mounts {
+		for _, m := range boshMounts {
 			if strings.HasPrefix(v.Path, m.Destination) {
 				keep = false
 			}
