@@ -869,7 +869,8 @@ var _ = Describe("RuncAdapter", func() {
 						{Path: "/this/is/an/unrestricted/path"},
 						{Path: "/writable/executable/path", Writable: true, AllowExecutions: true},
 						{Path: "/var/vcap/jobs/example/config/config.yml", MountOnly: true},
-						{Path: "/var/vcap/jobs/other/config/config.yml", MountOnly: true},
+						{Path: "/var/vcap/jobs/other/config/config.yml", MountOnly: true, AllowExecutions: true},
+						{Path: "/var/vcap/jobs/example-two/config/config.yml", MountOnly: true, AllowExecutions: true},
 					},
 				}
 			})
@@ -894,7 +895,13 @@ var _ = Describe("RuncAdapter", func() {
 					Destination: "/var/vcap/jobs/other/config/config.yml",
 					Type:        "bind",
 					Source:      "/var/vcap/jobs/other/config/config.yml",
-					Options:     []string{"nodev", "nosuid", "noexec", "rbind", "ro"},
+					Options:     []string{"nodev", "nosuid", "rbind", "exec", "ro"},
+				}))
+				Expect(spec.Mounts).To(HaveMount(specs.Mount{
+					Destination: "/var/vcap/jobs/example-two/config/config.yml",
+					Type:        "bind",
+					Source:      "/var/vcap/jobs/example-two/config/config.yml",
+					Options:     []string{"nodev", "nosuid", "rbind", "exec", "ro"},
 				}))
 			})
 
