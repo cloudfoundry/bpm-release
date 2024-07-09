@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"code.cloudfoundry.org/bytefmt"
@@ -293,8 +294,18 @@ func filterVolumesUnderBoshMounts(boshMounts []specs.Mount, unrestrictedVolumes 
 	for _, v := range unrestrictedVolumes {
 		keep := true
 		for _, m := range boshMounts {
-			if strings.HasPrefix(v.Path, m.Destination) {
-				keep = false
+			// Check to see whether the "directory parts" of the volume are a sub-set of and existing BPM-default
+			// directory (that will already be mounted) so that we do not accidentally filter out mounts which
+			// have a name that is a sub-string of the existing job. For example the job `service-metrics` should be
+			// able to have an unrestricted volume mount of the `service-metrics-adapter` job directory.
+			boshMountDirParts := strings.Split(m.Destination, fmt.Sprintf("%c", filepath.Separator))
+			volumeDirParts := strings.Split(v.Path, fmt.Sprintf("%c", filepath.Separator))
+
+			if len(boshMountDirParts) <= len(volumeDirParts) {
+				volumeDirPartsPrefix := volumeDirParts[:len(boshMountDirParts)]
+				if slices.Compare(boshMountDirParts, volumeDirPartsPrefix) == 0 {
+					keep = false
+				}
 			}
 		}
 
