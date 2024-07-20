@@ -9,7 +9,7 @@ require (
 	github.com/cyphar/filepath-securejoin v0.3.0 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/kr/pty v1.1.8
-	github.com/moby/sys/mountinfo v0.7.1
+	github.com/moby/sys/mountinfo v0.7.2
 	github.com/onsi/gomega v1.33.1
 	github.com/opencontainers/runc v1.1.13
 	github.com/opencontainers/runtime-spec v1.2.0
