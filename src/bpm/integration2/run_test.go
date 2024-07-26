@@ -62,6 +62,8 @@ func TestRun(t *testing.T) {
 	defer s.Cleanup()
 
 	s.LoadFixture("errand", "testdata/errand.yml")
+	stdoutSentinel := "stdout"
+	stderrSentinel := "stderr"
 
 	cmd := s.BPMCmd("run", "errand")
 	output, err := cmd.CombinedOutput()
@@ -69,31 +71,36 @@ func TestRun(t *testing.T) {
 		t.Fatalf("failed to run bpm: %s", output)
 	}
 
-	if contents, sentinel := string(output), "stdout"; !strings.Contains(contents, sentinel) {
-		t.Errorf("stdout/stderr did not contain %q, contents: %q", sentinel, contents)
+	combinedOutput := string(output)
+	if !strings.Contains(combinedOutput, stdoutSentinel) {
+		t.Errorf("stdout/stderr did not contain %q, contents: %q", stdoutSentinel, combinedOutput)
 	}
-	if contents, sentinel := string(output), "stderr"; !strings.Contains(contents, sentinel) {
-		t.Errorf("stdout/stderr did not contain %q, contents: %q", sentinel, contents)
+	if !strings.Contains(combinedOutput, stderrSentinel) {
+		t.Errorf("stdout/stderr did not contain %q, contents: %q", stderrSentinel, combinedOutput)
 	}
 
 	stdout, err := os.ReadFile(s.Path("sys", "log", "errand", "errand.stdout.log"))
 	if err != nil {
 		t.Fatalf("failed to read stdout log: %v", err)
 	}
-	if contents, sentinel := string(stdout), "stdout"; !strings.Contains(contents, sentinel) {
-		t.Errorf("stdout log file did not contain %q, contents: %q", sentinel, contents)
+
+	stdoutLog := string(stdout)
+	if !strings.Contains(stdoutLog, stdoutSentinel) {
+		t.Errorf("stdout log file did not contain %q, stdoutLog: %q", stdoutSentinel, stdoutLog)
 	}
 
 	stderr, err := os.ReadFile(s.Path("sys", "log", "errand", "errand.stderr.log"))
 	if err != nil {
 		t.Fatalf("failed to read stderr log: %v", err)
 	}
-	if contents, sentinel := string(stderr), "stderr"; !strings.Contains(contents, sentinel) {
-		t.Errorf("stderr log file did not contain %q, contents: %q", sentinel, contents)
+	stderrLog := string(stderr)
+	if !strings.Contains(stderrLog, stderrSentinel) {
+		t.Errorf("stderr log file did not contain %q, contents: %q", stderrSentinel, stderrLog)
 	}
 
 	pidfile := s.Path("sys", "run", "bpm", "errand", "errand.pid")
-	if _, err := os.Stat(pidfile); !os.IsNotExist(err) {
+	_, err = os.Stat(pidfile)
+	if !os.IsNotExist(err) {
 		t.Errorf("expected %q not to exist but it did", pidfile)
 	}
 }
@@ -115,7 +122,9 @@ func TestRunWithEnvFlags(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to run bpm: %s", output)
 	}
-	if contents, sentinel := string(output), sentinel; !strings.Contains(contents, sentinel) {
+
+	contents := string(output)
+	if !strings.Contains(contents, sentinel) {
 		t.Errorf("output did not contain %q; contents: %q", sentinel, contents)
 	}
 }
@@ -167,7 +176,10 @@ func TestRunWithVolumeFlags(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to read extra volume file: %v", err)
 	}
-	if contents, sentinel := string(fileContents), "success"; !strings.Contains(contents, sentinel) {
+
+	sentinel := "success"
+	contents := string(fileContents)
+	if !strings.Contains(contents, sentinel) {
 		t.Errorf("extra volume file did not contain %q, contents: %q", sentinel, contents)
 	}
 }
