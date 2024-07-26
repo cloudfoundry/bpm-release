@@ -146,21 +146,21 @@ func TestRunWithVolumeFlags(t *testing.T) {
 	if len(mounts) != 1 {
 		t.Fatalf("more than one mount was grepped, got: %d (%#v)", len(mounts), mounts)
 	}
-	mnt := mounts[0]
+	firstMount := mounts[0]
 
 	// check the path of the mount
-	if have, want := mnt.MountPoint, extraVolumeDir; have != want {
+	if have, want := firstMount.MountPoint, extraVolumeDir; have != want {
 		t.Errorf("mountpoint did not contain %q, have: %q", want, have)
 	}
 
 	// check the mount has no read only option
-	if mountHasOption(mnt, "ro") {
-		t.Errorf("mount contained read only option, contents: %q", mnt.Options)
+	if mountHasOption(firstMount, "ro") {
+		t.Errorf("mount contained read only option, contents: %q", firstMount.Options)
 	}
 
 	// check the mount has no noexec option
-	if mountHasOption(mnt, "noexec") {
-		t.Errorf("mount contained read only option, contents: %s", mnt.Options)
+	if mountHasOption(firstMount, "noexec") {
+		t.Errorf("mount contained read only option, contents: %s", firstMount.Options)
 	}
 
 	fileContents, err := os.ReadFile(extraVolumeFile)
