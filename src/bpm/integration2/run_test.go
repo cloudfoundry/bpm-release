@@ -203,15 +203,15 @@ func TestRunUnusualExitStatus(t *testing.T) {
 	}
 }
 
-type mnt struct {
+type mount struct {
 	MountPoint string
 	Options    []string
 }
 
 // ParseFstab parses byte slices which contain the contents of files formatted
 // as described by fstab(5).
-func parseFstab(contents []byte) ([]mnt, error) {
-	var mnts []mnt
+func parseFstab(contents []byte) ([]mount, error) {
+	var mounts []mount
 
 	r := bytes.NewBuffer(contents)
 	scanner := bufio.NewScanner(r)
@@ -222,16 +222,16 @@ func parseFstab(contents []byte) ([]mnt, error) {
 		}
 
 		options := strings.Split(fields[3], ",")
-		mnts = append(mnts, mnt{
+		mounts = append(mounts, mount{
 			MountPoint: fields[1],
 			Options:    options,
 		})
 	}
 
-	return mnts, nil
+	return mounts, nil
 }
 
-func mountHasOption(m mnt, opt string) bool {
+func mountHasOption(m mount, opt string) bool {
 	for _, o := range m.Options {
 		if o == opt {
 			return true
