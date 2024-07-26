@@ -29,7 +29,7 @@ RUN ln -s /bin/runc /var/vcap/packages/bpm/bin/runc \
 # add vcap user for tests; grant ownership of /var/vcap
 RUN groupadd vcap -g 3000 \
   && useradd vcap -u 2000 -g 3000 \
-  && chown -R vcap:vcap /var/vcap \
+  && chown -R vcap:vcap /var/vcap
 
 WORKDIR /bpm
 
