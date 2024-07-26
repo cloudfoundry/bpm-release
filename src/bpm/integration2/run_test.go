@@ -41,7 +41,7 @@ func TestMain(m *testing.M) {
 	if *bpmExe == "" {
 		path, err := gexec.Build("bpm/cmd/bpm")
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "failed to compile bpm: %v", err)
+			_, _ = fmt.Fprintf(os.Stderr, "failed to compile bpm: %v", err)
 			os.Exit(1)
 		}
 		*bpmExe = path
