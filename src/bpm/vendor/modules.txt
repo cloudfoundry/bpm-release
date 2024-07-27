@@ -1,4 +1,4 @@
-# code.cloudfoundry.org/bytefmt v0.0.0-20240711175842-1bcb71f1f634
+# code.cloudfoundry.org/bytefmt v0.0.0-20240726181224-f9b67668c814
 ## explicit; go 1.20
 code.cloudfoundry.org/bytefmt
 # code.cloudfoundry.org/clock v1.2.0
@@ -17,7 +17,7 @@ github.com/coreos/go-systemd/v22/dbus
 # github.com/creack/pty v1.1.7
 ## explicit
 github.com/creack/pty
-# github.com/cyphar/filepath-securejoin v0.3.0
+# github.com/cyphar/filepath-securejoin v0.3.1
 ## explicit; go 1.20
 github.com/cyphar/filepath-securejoin
 # github.com/go-logr/logr v1.4.2
@@ -37,7 +37,7 @@ github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
-# github.com/google/pprof v0.0.0-20240711041743-f6c9dda6c6da
+# github.com/google/pprof v0.0.0-20240722153945-304e4f0156b8
 ## explicit; go 1.19
 github.com/google/pprof/profile
 # github.com/inconshreveable/mousetrap v1.1.0
@@ -49,7 +49,7 @@ github.com/kr/pty
 # github.com/moby/sys/mountinfo v0.7.2
 ## explicit; go 1.17
 github.com/moby/sys/mountinfo
-# github.com/onsi/ginkgo/v2 v2.19.0
+# github.com/onsi/ginkgo/v2 v2.19.1
 ## explicit; go 1.20
 github.com/onsi/ginkgo/v2
 github.com/onsi/ginkgo/v2/config
@@ -71,7 +71,7 @@ github.com/onsi/ginkgo/v2/internal/parallel_support
 github.com/onsi/ginkgo/v2/internal/testingtproxy
 github.com/onsi/ginkgo/v2/reporters
 github.com/onsi/ginkgo/v2/types
-# github.com/onsi/gomega v1.33.1
+# github.com/onsi/gomega v1.34.0
 ## explicit; go 1.20
 github.com/onsi/gomega
 github.com/onsi/gomega/format
