@@ -62,15 +62,6 @@ resources:
   source:
     name: bosh-warden-boshlite-ubuntu-jammy-go_agent
 
-- name: boshlite-xenial-stemcell
-  type: s3
-  source:
-    bucket: pcf-lts-stemcells-candidate
-    access_key_id: ((publish_us_assume_aws_access_key.username))
-    secret_access_key: ((publish_us_assume_aws_access_key.password))
-    aws_role_arn: ((publish_us_assume_aws_access_key.role_arn))
-    regexp: warden/bosh-stemcell-(621.*)-warden-boshlite-ubuntu-xenial-go_agent.tgz
-
 - name: runc-linux
   type: github-release
   check_every: 24h
@@ -144,21 +135,6 @@ jobs:
       bosh-stemcell: boshlite-jammy-stemcell
     privileged: true
 
-- name: test-acceptance-xenial
-  plan:
-  - in_parallel:
-    - get: bpm-release
-      trigger: true
-    - get: boshlite-xenial-stemcell
-      trigger: true
-  - task: test-acceptance
-    file: bpm-release/ci/test-acceptance.yml
-    params:
-      STEMCELL_NAME: ubuntu-xenial
-    input_mapping:
-      bosh-stemcell: boshlite-xenial-stemcell
-    privileged: true
-
 - name: test-upgrade
   plan:
   - in_parallel:
@@ -215,7 +191,6 @@ jobs:
   - get: bpm-release
     trigger: true
     passed:
-    - test-acceptance-xenial
     - test-acceptance-jammy
     - test-unit
     - test-upgrade
