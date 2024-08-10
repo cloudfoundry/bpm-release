@@ -335,6 +335,8 @@ jobs:
       name: final-release-tag/tag
       tag: final-release-tag/tag
       body: release-notes/release-notes.md
+      commitish: bpm-release/.git/ref
+      generate_release_notes: true
   - task: bump-local-version
     file: bpm-release/ci/bump-local-version.yml
     input_mapping:
