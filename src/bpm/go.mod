@@ -3,9 +3,9 @@ module bpm
 go 1.21.0
 
 require (
-	code.cloudfoundry.org/bytefmt v0.1.0
-	code.cloudfoundry.org/clock v1.3.0
-	code.cloudfoundry.org/lager/v3 v3.1.0
+	code.cloudfoundry.org/bytefmt v0.3.0
+	code.cloudfoundry.org/clock v1.5.0
+	code.cloudfoundry.org/lager/v3 v3.3.0
 	github.com/cyphar/filepath-securejoin v0.3.1 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/kr/pty v1.1.8
@@ -21,7 +21,7 @@ require (
 )
 
 require (
-	github.com/onsi/ginkgo/v2 v2.20.0
+	github.com/onsi/ginkgo/v2 v2.20.1
 	go.uber.org/mock v0.4.0
 )
 
@@ -36,7 +36,7 @@ require (
 	github.com/openzipkin/zipkin-go v0.4.3 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	golang.org/x/exp v0.0.0-20240808152545-0cdaa3abc0fa // indirect
+	golang.org/x/exp v0.0.0-20240823005443-9b4947da3948 // indirect
 	golang.org/x/mod v0.20.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
 	golang.org/x/text v0.17.0 // indirect
