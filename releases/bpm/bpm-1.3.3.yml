@@ -1,0 +1,52 @@
+name: bpm
+version: 1.3.3
+commit_hash: "9663272"
+uncommitted_changes: false
+jobs:
+- name: bpm
+  version: fe5d6181192098072bf91100996403120609ee42
+  fingerprint: fe5d6181192098072bf91100996403120609ee42
+  sha1: 8c0ba094256eede7eb3f6bfe16042c44dedd4808
+- name: test-errand
+  version: 1ccf9ec7a47043218a7d080a5d674077bfc28529
+  fingerprint: 1ccf9ec7a47043218a7d080a5d674077bfc28529
+  sha1: ff901be8452289d0590a36eb7823174ae8104c7f
+- name: test-server
+  version: c08344f7e84506aa5974ac3b784249a0e2c33828
+  fingerprint: c08344f7e84506aa5974ac3b784249a0e2c33828
+  sha1: 6af4764623ea2b815cda7e95409a32ab9c5aa8bd
+packages:
+- name: bpm
+  version: d958e7af80242abed230e8e8068d676ffbbfc46b
+  fingerprint: d958e7af80242abed230e8e8068d676ffbbfc46b
+  sha1: fe7b0e235f419790839b0a7f065faa988ee5ed3c
+  dependencies:
+  - golang-1-linux
+  - bpm-runc
+  - tini
+- name: bpm-runc
+  version: ea9ddc9aaeeea32d531b22e83e72d69ff667ed70
+  fingerprint: ea9ddc9aaeeea32d531b22e83e72d69ff667ed70
+  sha1: 33ce8796238b84212067741210f0eeac0b6d86ad
+  dependencies:
+  - golang-1-linux
+- name: golang-1-linux
+  version: f46b6d3e8b659ee6bc5324ead33bc8e0b19a78e65afbfe2573828b55aa0def66
+  fingerprint: f46b6d3e8b659ee6bc5324ead33bc8e0b19a78e65afbfe2573828b55aa0def66
+  sha1: sha256:494d56e65e80c0a03603210888c0d88a448ac43960891c7320746e1b83527fda
+  dependencies: []
+- name: test-server
+  version: 4831e700998e201f51c8c5dfd7961afa79001ae2
+  fingerprint: 4831e700998e201f51c8c5dfd7961afa79001ae2
+  sha1: 3a5b0c5db8dd63d9881ee9d0e537d079f51cbd42
+  dependencies:
+  - golang-1-linux
+- name: tini
+  version: 3d7b02f3eeb480b9581bec4a0096dab9ebdfa4bc
+  fingerprint: 3d7b02f3eeb480b9581bec4a0096dab9ebdfa4bc
+  sha1: 3d16adbc5ed9bc46a46503cd4f12d883a28fa991
+  dependencies: []
+license:
+  version: 0bdacfd75ea8fabb4e80e6d4763bfc511d3b2651
+  fingerprint: 0bdacfd75ea8fabb4e80e6d4763bfc511d3b2651
+  sha1: 7d1901f806e5a227f0e61e367d953377b5fa90d4
