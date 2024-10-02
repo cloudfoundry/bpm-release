@@ -598,6 +598,7 @@ var _ = Describe("RuncAdapter", func() {
 			By("the presence of /run/resolvconf on the host")
 
 			Expect(os.MkdirAll(resolvConfDir, 0700)).To(Succeed())
+			Expect(os.MkdirAll(systemdResolvedConfDir, 0700)).To(Succeed())
 
 			specWithResolvConf, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
 			Expect(err).NotTo(HaveOccurred())
@@ -608,8 +609,17 @@ var _ = Describe("RuncAdapter", func() {
 				Source:      resolvConfDir,
 				Options:     []string{"nosuid", "nodev", "bind", "ro", "noexec"},
 			}))
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(specWithResolvConf.Mounts).To(HaveMount(specs.Mount{
+				Destination: systemdResolvedConfDir,
+				Type:        "bind",
+				Source:      systemdResolvedConfDir,
+				Options:     []string{"nosuid", "nodev", "bind", "ro", "noexec"},
+			}))
 
 			Expect(os.RemoveAll(resolvConfDir)).To(Succeed())
+			Expect(os.RemoveAll(systemdResolvedConfDir)).To(Succeed())
 		})
 
 		Context("when a user provides TMPDIR, LANG and PATH, and HOME environment variables", func() {

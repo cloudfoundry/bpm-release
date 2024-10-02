@@ -34,8 +34,9 @@ import (
 )
 
 const (
-	resolvConfDir = "/run/resolvconf"
-	defaultLang   = "en_US.UTF-8"
+	resolvConfDir          = "/run/resolvconf"
+	systemdResolvedConfDir = "/run/systemd/resolve"
+	defaultLang            = "en_US.UTF-8"
 )
 
 // GlobFunc is a function which when given a file path pattern returns a list
@@ -222,13 +223,26 @@ func (a *RuncAdapter) BuildSpec(
 		cwd = procCfg.WorkDir
 	}
 
-	mountResolvConf, err := checkDirExists(resolvConfDir)
+	ms := newMountDedup(logger)
+	mounts := systemIdentityMounts()
+
+	resolveConfDirExists, err := checkDirExists(resolvConfDir)
 	if err != nil {
 		return specs.Spec{}, err
 	}
+	if resolveConfDirExists {
+		mounts = append(mounts, IdentityMount(resolvConfDir))
+	}
 
-	ms := newMountDedup(logger)
-	ms.addMounts(systemIdentityMounts(mountResolvConf))
+	systemdResolvedConfDirExists, err := checkDirExists(systemdResolvedConfDir)
+	if err != nil {
+		return specs.Spec{}, err
+	}
+	if systemdResolvedConfDirExists {
+		mounts = append(mounts, IdentityMount(systemdResolvedConfDir))
+	}
+
+	ms.addMounts(mounts)
 	boshMounts := boshMounts(bpmCfg, procCfg.EphemeralDisk, procCfg.PersistentDisk)
 	ms.addMounts(boshMounts)
 	ms.addMounts(userProvidedIdentityMounts(bpmCfg, procCfg.AdditionalVolumes))
@@ -323,7 +337,7 @@ func wrapWithInit(bpmCfg *config.BPMConfig, procCfg *config.ProcessConfig) (stri
 	return exe, args
 }
 
-func systemIdentityMounts(mountResolvConf bool) []specs.Mount {
+func systemIdentityMounts() []specs.Mount {
 	mounts := []specs.Mount{
 		IdentityMount("/bin", AllowExec()),
 		IdentityMount("/etc", AllowExec()),
@@ -331,10 +345,6 @@ func systemIdentityMounts(mountResolvConf bool) []specs.Mount {
 		IdentityMount("/lib64", AllowExec()),
 		IdentityMount("/sbin", AllowExec()),
 		IdentityMount("/usr", AllowExec()),
-	}
-
-	if mountResolvConf {
-		mounts = append(mounts, IdentityMount("/run/resolvconf"))
 	}
 
 	return mounts
