@@ -1,11 +1,11 @@
-# code.cloudfoundry.org/bytefmt v0.10.0
+# code.cloudfoundry.org/bytefmt v0.11.0
 ## explicit; go 1.22.0
 code.cloudfoundry.org/bytefmt
-# code.cloudfoundry.org/clock v1.13.0
+# code.cloudfoundry.org/clock v1.14.0
 ## explicit; go 1.22.0
 code.cloudfoundry.org/clock
 code.cloudfoundry.org/clock/fakeclock
-# code.cloudfoundry.org/lager/v3 v3.6.0
+# code.cloudfoundry.org/lager/v3 v3.8.0
 ## explicit; go 1.22.0
 code.cloudfoundry.org/lager/v3
 code.cloudfoundry.org/lager/v3/internal/truncate
@@ -17,8 +17,8 @@ github.com/coreos/go-systemd/v22/dbus
 # github.com/creack/pty v1.1.7
 ## explicit
 github.com/creack/pty
-# github.com/cyphar/filepath-securejoin v0.3.2
-## explicit; go 1.20
+# github.com/cyphar/filepath-securejoin v0.3.3
+## explicit; go 1.21
 github.com/cyphar/filepath-securejoin
 # github.com/go-logr/logr v1.4.2
 ## explicit; go 1.18
@@ -37,7 +37,7 @@ github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
-# github.com/google/pprof v0.0.0-20240927233043-f3f46ee36851
+# github.com/google/pprof v0.0.0-20241001023024-f4c0cfd0cf1d
 ## explicit; go 1.22
 github.com/google/pprof/profile
 # github.com/inconshreveable/mousetrap v1.1.0
@@ -124,7 +124,7 @@ golang.org/x/mod/internal/lazyregexp
 golang.org/x/mod/modfile
 golang.org/x/mod/module
 golang.org/x/mod/semver
-# golang.org/x/net v0.29.0
+# golang.org/x/net v0.30.0
 ## explicit; go 1.18
 golang.org/x/net/context
 golang.org/x/net/html
@@ -133,11 +133,11 @@ golang.org/x/net/html/charset
 # golang.org/x/sync v0.8.0
 ## explicit; go 1.18
 golang.org/x/sync/errgroup
-# golang.org/x/sys v0.25.0
+# golang.org/x/sys v0.26.0
 ## explicit; go 1.18
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/text v0.18.0
+# golang.org/x/text v0.19.0
 ## explicit; go 1.18
 golang.org/x/text/encoding
 golang.org/x/text/encoding/charmap
@@ -156,7 +156,7 @@ golang.org/x/text/internal/utf8internal
 golang.org/x/text/language
 golang.org/x/text/runes
 golang.org/x/text/transform
-# golang.org/x/tools v0.25.0
+# golang.org/x/tools v0.26.0
 ## explicit; go 1.22.0
 golang.org/x/tools/cover
 golang.org/x/tools/go/ast/astutil
