@@ -33,6 +33,11 @@ resources:
   source:
     uri: https://github.com/cloudfoundry/bosh-package-golang-release.git
 
+- name: bosh-shared-ci
+  type: git
+  source:
+    uri: https://github.com/cloudfoundry/bosh-shared-ci.git
+
 - name: version
   type: semver
   source:
@@ -247,6 +252,7 @@ jobs:
       passed:
       - pre-release-fan-in
     - get: golang-release
+    - get: bosh-shared-ci
     - get: current-version
       resource: version
     - get: patched-version
@@ -272,7 +278,7 @@ jobs:
               file: patched-version/version
   - try:
       task: check-for-patched-cves
-      file: golang-release/ci/tasks/shared/check-for-patched-cves.yml
+      file: bosh-shared-ci/tasks/release/check-for-patched-cves.yml
       input_mapping:
         input_repo: bpm-release
         version: current-version
@@ -288,11 +294,31 @@ jobs:
           params:
             file: patched-version/version
   - task: ensure-cve-checker-succeeded
-    file: golang-release/ci/tasks/shared/ensure-cve-checker-succeeded.yml
+    file: bosh-shared-ci/release/ensure-task-succeeded.yml
     image: bosh-ecosystem-docker-image
-    params:
-      description: |
-        Since the previous step is wrapped in a "try", this task checks that the previous step fully executed.
+    input_mapping:
+      task-output-folder: patched_cves
+  - try:
+      task: check-for-updated-blobs
+      file: bosh-src/ci/tasks/check-for-updated-blobs.yml
+      input_mapping:
+        version: current-version
+      params:
+        BLOBS:
+          - runc
+      on_success:
+        do:
+          - put: release-notes
+            params:
+              file: release-notes/release-notes.md
+          - put: version
+            params:
+              file: patched-version/version
+  - task: ensure-blob-update-checker-succeeded
+    file: bosh-shared-ci/release/ensure-task-succeeded.yml
+    image: bosh-ecosystem-docker-image
+    input_mapping:
+      task-output-folder: blob-updates
 
 - name: create-final-release
   serial_groups: [version]
