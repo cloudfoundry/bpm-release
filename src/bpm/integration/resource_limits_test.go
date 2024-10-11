@@ -85,7 +85,7 @@ var _ = Describe("resource limits", func() {
 	Context("memory", func() {
 		BeforeEach(func() {
 			cfg = newJobConfig(job, memoryLeakBash)
-			limit := "8M"
+			limit := "16M"
 			cfg.Processes[0].Limits = &config.Limits{Memory: &limit}
 		})
 
