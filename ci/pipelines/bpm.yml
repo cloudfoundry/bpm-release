@@ -294,15 +294,16 @@ jobs:
           params:
             file: patched-version/version
   - task: ensure-cve-checker-succeeded
-    file: bosh-shared-ci/release/ensure-task-succeeded.yml
+    file: bosh-shared-ci/tasks/release/ensure-task-succeeded.yml
     image: bosh-ecosystem-docker-image
     input_mapping:
       task-output-folder: patched_cves
   - try:
       task: check-for-updated-blobs
-      file: bosh-src/ci/tasks/check-for-updated-blobs.yml
+      file: bosh-shared-ci/tasks/release/check-for-updated-blobs.yml
       input_mapping:
         version: current-version
+        input_repo: bpm-release
       params:
         BLOBS:
           - runc
@@ -315,7 +316,7 @@ jobs:
             params:
               file: patched-version/version
   - task: ensure-blob-update-checker-succeeded
-    file: bosh-shared-ci/release/ensure-task-succeeded.yml
+    file: bosh-shared-ci/tasks/release/ensure-task-succeeded.yml
     image: bosh-ecosystem-docker-image
     input_mapping:
       task-output-folder: blob-updates
