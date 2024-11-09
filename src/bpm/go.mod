@@ -3,20 +3,20 @@ module bpm
 go 1.22.0
 
 require (
-	code.cloudfoundry.org/bytefmt v0.16.0
-	code.cloudfoundry.org/clock v1.19.0
-	code.cloudfoundry.org/lager/v3 v3.13.0
+	code.cloudfoundry.org/bytefmt v0.17.0
+	code.cloudfoundry.org/clock v1.20.0
+	code.cloudfoundry.org/lager/v3 v3.14.0
 	github.com/cyphar/filepath-securejoin v0.3.4 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/kr/pty v1.1.8
 	github.com/moby/sys/mountinfo v0.7.2
-	github.com/onsi/gomega v1.34.2
+	github.com/onsi/gomega v1.35.1
 	github.com/opencontainers/runc v1.2.1
 	github.com/opencontainers/runtime-spec v1.2.0
 	github.com/satori/go.uuid v1.2.0
 	github.com/spf13/cobra v1.8.1
-	golang.org/x/net v0.30.0 // indirect
-	golang.org/x/sys v0.26.0
+	golang.org/x/net v0.31.0 // indirect
+	golang.org/x/sys v0.27.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -37,10 +37,10 @@ require (
 	github.com/openzipkin/zipkin-go v0.4.3 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	golang.org/x/mod v0.21.0 // indirect
-	golang.org/x/sync v0.8.0 // indirect
-	golang.org/x/text v0.19.0 // indirect
-	golang.org/x/tools v0.26.0 // indirect
+	golang.org/x/mod v0.22.0 // indirect
+	golang.org/x/sync v0.9.0 // indirect
+	golang.org/x/text v0.20.0 // indirect
+	golang.org/x/tools v0.27.0 // indirect
 )
 
 exclude github.com/willf/bitset v1.2.0
