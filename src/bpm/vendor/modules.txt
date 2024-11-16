@@ -1,11 +1,11 @@
-# code.cloudfoundry.org/bytefmt v0.17.0
+# code.cloudfoundry.org/bytefmt v0.18.0
 ## explicit; go 1.22.0
 code.cloudfoundry.org/bytefmt
-# code.cloudfoundry.org/clock v1.20.0
+# code.cloudfoundry.org/clock v1.21.0
 ## explicit; go 1.22.0
 code.cloudfoundry.org/clock
 code.cloudfoundry.org/clock/fakeclock
-# code.cloudfoundry.org/lager/v3 v3.14.0
+# code.cloudfoundry.org/lager/v3 v3.15.0
 ## explicit; go 1.22.0
 code.cloudfoundry.org/lager/v3
 code.cloudfoundry.org/lager/v3/internal/truncate
@@ -88,7 +88,7 @@ github.com/onsi/gomega/matchers/support/goraph/edge
 github.com/onsi/gomega/matchers/support/goraph/node
 github.com/onsi/gomega/matchers/support/goraph/util
 github.com/onsi/gomega/types
-# github.com/opencontainers/runc v1.2.1
+# github.com/opencontainers/runc v1.2.2
 ## explicit; go 1.22
 github.com/opencontainers/runc/libcontainer/cgroups
 github.com/opencontainers/runc/libcontainer/configs
