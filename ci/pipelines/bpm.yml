@@ -7,6 +7,13 @@ resource_types:
     password: ((docker.password))
 
 resources:
+- name: bosh-integration-image
+  type: registry-image
+  source:
+    repository: bosh/integration
+    username: ((dockerhub_username))
+    password: ((dockerhub_password))
+
 - name: bpm-release
   type: git
   source:
@@ -325,6 +332,8 @@ jobs:
   serial_groups: [version]
   plan:
   - in_parallel:
+    - get: bosh-shared-ci
+    - get: bosh-integration-image
     - get: bpm-release
       passed:
       - pre-release-fan-in
@@ -337,12 +346,15 @@ jobs:
   - task: bump-local-version
     file: bpm-release/ci/bump-local-version.yml
   - task: finalize-release
-    file: bpm-release/ci/finalize-release.yml
+    file: bosh-shared-ci/tasks/release/create-final-release.yml
+    image: bosh-integration-image
     input_mapping:
-      bpm-release: release-repo
+      release_repo: release-repo
+      version: version
     params:
-      RELEASE_NAME: bpm
-      BLOBSTORE_PRIVATE_YML: |
+      GIT_USER_NAME: CI Bot
+      GIT_USER_EMAIL: bots@cloudfoundry.org
+      PRIVATE_YML: |
         ---
         blobstore:
           options:
@@ -352,22 +364,21 @@ jobs:
     get_params:
       submodules: none
     params:
-      repository: final-release-repo
+      repository: release_repo
       submodules: none
       rebase: true
-      tag: version/version
-      tag_prefix: v
+      tag: release_metadata/tag-name
   - put: github-release
     params:
-      name: final-release-tag/tag
-      tag: final-release-tag/tag
+      name: release_metadata/tag-name
+      tag: release_metadata/tag-name
       body: release-notes/release-notes.md
       commitish: bpm-release/.git/ref
       generate_release_notes: true
   - task: bump-local-version
     file: bpm-release/ci/bump-local-version.yml
     input_mapping:
-      bpm-release: final-release-repo
+      bpm-release: release_repo
     params:
       DEV: true
   - put: bpm-release
