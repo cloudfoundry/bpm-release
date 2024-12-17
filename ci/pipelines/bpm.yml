@@ -11,8 +11,8 @@ resources:
   type: registry-image
   source:
     repository: bosh/integration
-    username: ((dockerhub_username))
-    password: ((dockerhub_password))
+    username: ((docker.username))
+    password: ((docker.password))
 
 - name: bpm-release
   type: git
