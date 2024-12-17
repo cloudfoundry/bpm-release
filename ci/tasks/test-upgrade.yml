@@ -12,7 +12,7 @@ inputs:
 - name: bosh-stemcell
 
 params:
-  STEMCELL_NAME: ubuntu-xenial
+  STEMCELL_NAME: ubuntu-jammy
 
 run:
   path: bpm-release/scripts/test-upgrade

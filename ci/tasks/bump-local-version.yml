@@ -17,4 +17,4 @@ params:
   DEV: ~
 
 run:
-  path: bpm-release/ci/scripts/bump-local-version
+  path: bpm-release/ci/tasks/bump-local-version

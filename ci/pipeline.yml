@@ -129,7 +129,7 @@ jobs:
   - get: bpm-release
     trigger: true
   - task: test-unit
-    file: bpm-release/ci/test-unit.yml
+    file: bpm-release/ci/tasks/test-unit.yml
     privileged: true
 
 - name: test-acceptance-jammy
@@ -140,7 +140,7 @@ jobs:
     - get: boshlite-jammy-stemcell
       trigger: true
   - task: test-acceptance
-    file: bpm-release/ci/test-acceptance.yml
+    file: bpm-release/ci/tasks/test-acceptance.yml
     params:
       STEMCELL_NAME: ubuntu-jammy
     input_mapping:
@@ -156,9 +156,7 @@ jobs:
       trigger: true
     - get: bpm-bosh-io
   - task: test-acceptance
-    file: bpm-release/ci/test-upgrade.yml
-    params:
-      STEMCELL_NAME: ubuntu-jammy
+    file: bpm-release/ci/tasks/test-upgrade.yml
     input_mapping:
       bosh-stemcell: boshlite-jammy-stemcell
     privileged: true
@@ -187,7 +185,7 @@ jobs:
               credentials_source: static
               json_key: '((cf-secenablement-bpm_bpm-release_gcp_credentials_json))'
     - task: test-acceptance
-      file: bpm-release/ci/test-acceptance.yml
+      file: bpm-release/ci/tasks/test-acceptance.yml
       input_mapping:
         bpm-release: bumped-bpm-release
       params:
@@ -344,7 +342,7 @@ jobs:
     - get: release-notes
     - get: golang-release
   - task: bump-local-version
-    file: bpm-release/ci/bump-local-version.yml
+    file: bpm-release/ci/tasks/bump-local-version.yml
     image: bosh-integration-image
   - task: finalize-release
     file: bosh-shared-ci/tasks/release/create-final-release.yml
@@ -378,7 +376,7 @@ jobs:
       generate_release_notes: true
   - task: bump-local-version
     image: bosh-integration-image
-    file: bpm-release/ci/bump-local-version.yml
+    file: bpm-release/ci/tasks/bump-local-version.yml
     input_mapping:
       bpm-release: release_repo
     params:
@@ -427,7 +425,7 @@ jobs:
               json_key: '((cf-secenablement-bpm_bpm-release_gcp_credentials_json))'
       file: bpm-release/ci/tasks/bump-runc-package.yml
     - task: test-unit
-      file: bpm-release/ci/test-unit.yml
+      file: bpm-release/ci/tasks/test-unit.yml
       privileged: true
       input_mapping:
         bpm-release: bumped-bpm-release
