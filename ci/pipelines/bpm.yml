@@ -345,6 +345,7 @@ jobs:
     - get: golang-release
   - task: bump-local-version
     file: bpm-release/ci/bump-local-version.yml
+    image: bosh-integration-image
   - task: finalize-release
     file: bosh-shared-ci/tasks/release/create-final-release.yml
     image: bosh-integration-image
@@ -376,6 +377,7 @@ jobs:
       commitish: bpm-release/.git/ref
       generate_release_notes: true
   - task: bump-local-version
+    image: bosh-integration-image
     file: bpm-release/ci/bump-local-version.yml
     input_mapping:
       bpm-release: release_repo
