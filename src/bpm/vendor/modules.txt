@@ -1,11 +1,11 @@
-# code.cloudfoundry.org/bytefmt v0.22.0
+# code.cloudfoundry.org/bytefmt v0.23.0
 ## explicit; go 1.22.0
 code.cloudfoundry.org/bytefmt
-# code.cloudfoundry.org/clock v1.25.0
+# code.cloudfoundry.org/clock v1.26.0
 ## explicit; go 1.22.0
 code.cloudfoundry.org/clock
 code.cloudfoundry.org/clock/fakeclock
-# code.cloudfoundry.org/lager/v3 v3.19.0
+# code.cloudfoundry.org/lager/v3 v3.20.0
 ## explicit; go 1.22.0
 code.cloudfoundry.org/lager/v3
 code.cloudfoundry.org/lager/v3/internal/truncate
@@ -125,7 +125,7 @@ golang.org/x/mod/internal/lazyregexp
 golang.org/x/mod/modfile
 golang.org/x/mod/module
 golang.org/x/mod/semver
-# golang.org/x/net v0.32.0
+# golang.org/x/net v0.33.0
 ## explicit; go 1.18
 golang.org/x/net/html
 golang.org/x/net/html/atom
