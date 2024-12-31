@@ -1,6 +1,7 @@
 resource_types:
 - name: gcs-resource
-  type: docker-image
+  type: registry-image
+  check_every: 168h
   source:
     repository: frodenas/gcs-resource
     username: ((docker.username))
@@ -9,8 +10,17 @@ resource_types:
 resources:
 - name: bosh-integration-image
   type: registry-image
+  check_every: 168h
   source:
     repository: bosh/integration
+    username: ((docker.username))
+    password: ((docker.password))
+
+- name: bosh-security-scanner-registry-image
+  type: registry-image
+  check_every: 24h
+  source:
+    repository: bosh/security-scanner
     username: ((docker.username))
     password: ((docker.password))
 
@@ -20,13 +30,6 @@ resources:
     branch: master
     private_key: ((github_deploy_key_bpm-release.private_key))
     uri: git@github.com:cloudfoundry-incubator/bpm-release.git
-
-- name: bosh-ecosystem-docker-image
-  type: docker-image
-  source:
-    repository: bosh/bosh-ecosystem-concourse
-    username: ((docker.username))
-    password: ((docker.password))
 
 - name: weekly
   type: time
@@ -101,8 +104,17 @@ resources:
     paths: [ci/Dockerfile]
     private_key: ((github_deploy_key_bpm-release.private_key))
 
+- name: bpm-ci-registry-image
+  type: registry-image
+  check_every: 168h
+  source:
+    repository: cfbpm/bpm-ci
+    username: ((bpm-docker.username))
+    password: ((bpm-docker.password))
+
 - name: bpm-ci-image
   type: docker-image
+  check_every: never
   source:
     repository: cfbpm/bpm-ci
     username: ((bpm-docker.username))
@@ -110,6 +122,7 @@ resources:
 
 - name: bosh-golang-release-image
   type: docker-image
+  check_every: 1h
   source:
     repository: bosh/golang-release
 
@@ -256,7 +269,6 @@ jobs:
       trigger: true
       passed:
       - pre-release-fan-in
-    - get: golang-release
     - get: bosh-shared-ci
     - get: current-version
       resource: version
@@ -264,13 +276,36 @@ jobs:
       resource: version
       params:
         bump: patch
-    - get: bosh-ecosystem-docker-image
+    - get: bosh-security-scanner-registry-image
   - try:
-      task: check-for-updated-golang-package
-      file: golang-release/ci/tasks/shared/check-for-updated-golang-package.yml
+      task: check-for-patched-cves
+      file: bosh-shared-ci/tasks/release/check-for-patched-cves.yml
+      image: bosh-security-scanner-registry-image
       input_mapping:
         input_repo: bpm-release
         version: current-version
+      params:
+        SEVERITY: CRITICAL,HIGH
+        SOURCE_PATH: src/bpm
+      on_success:
+        do:
+          - put: release-notes
+            params:
+              file: release-notes/release-notes.md
+          - put: version
+            params:
+              file: patched-version/version
+  - task: ensure-cve-checker-succeeded
+    file: bosh-shared-ci/tasks/release/ensure-task-succeeded.yml
+    image: bosh-security-scanner-registry-image
+    input_mapping:
+      task-output-folder: patched_cves
+  - try:
+      task: check-for-updated-vendored-packages
+      file: bosh-shared-ci/tasks/release/check-for-updated-vendored-packages.yml
+      image: bosh-security-scanner-registry-image
+      input_mapping:
+        input_repo: bpm-release
       params:
         PACKAGES: [ golang-1-linux ]
       on_success:
@@ -281,31 +316,15 @@ jobs:
           - put: version
             params:
               file: patched-version/version
-  - try:
-      task: check-for-patched-cves
-      file: bosh-shared-ci/tasks/release/check-for-patched-cves.yml
-      input_mapping:
-        input_repo: bpm-release
-        version: current-version
-      params:
-        SEVERITY: CRITICAL,HIGH
-        SOURCE_PATH: src/bpm
-      on_success:
-        do:
-        - put: release-notes
-          params:
-            file: release-notes/release-notes.md
-        - put: version
-          params:
-            file: patched-version/version
-  - task: ensure-cve-checker-succeeded
+  - task: ensure-update-package-check-succeeded
     file: bosh-shared-ci/tasks/release/ensure-task-succeeded.yml
-    image: bosh-ecosystem-docker-image
+    image: bosh-security-scanner-registry-image
     input_mapping:
-      task-output-folder: patched_cves
+      task-output-folder: package-updates
   - try:
       task: check-for-updated-blobs
       file: bosh-shared-ci/tasks/release/check-for-updated-blobs.yml
+      image: bosh-security-scanner-registry-image
       input_mapping:
         version: current-version
         input_repo: bpm-release
@@ -322,7 +341,7 @@ jobs:
               file: patched-version/version
   - task: ensure-blob-update-checker-succeeded
     file: bosh-shared-ci/tasks/release/ensure-task-succeeded.yml
-    image: bosh-ecosystem-docker-image
+    image: bosh-security-scanner-registry-image
     input_mapping:
       task-output-folder: blob-updates
 
@@ -340,7 +359,6 @@ jobs:
       params:
         bump: final
     - get: release-notes
-    - get: golang-release
   - task: bump-local-version
     file: bpm-release/ci/tasks/bump-local-version.yml
     image: bosh-integration-image
@@ -388,18 +406,16 @@ jobs:
       repository: release-repo
       submodules: none
       rebase: true
-  - task: clear-release-notes
-    file: golang-release/ci/tasks/shared/clear-release-notes.yml
   - put: release-notes
     params:
-      file: release-notes/release-notes.md
+      file: release_repo/empty-file
 
 - name: bump-deps
   public: true
   plan:
     - get: weekly
       trigger: true
-    - get: bosh-ecosystem-docker-image
+    - get: bpm-ci-registry-image
     - get: bpm-release
     - get: golang-release
     - task: bump-deps
@@ -411,7 +427,7 @@ jobs:
       params:
         SOURCE_PATH: src/bpm
     - task: bump-runc-package
-      image: bosh-ecosystem-docker-image
+      image: bpm-ci-registry-image
       input_mapping:
         bpm-release: bumped-bpm-release
       output_mapping:
