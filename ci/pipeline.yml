@@ -347,6 +347,7 @@ jobs:
 
 - name: create-final-release
   serial_groups: [version]
+  disable_manual_trigger: true
   plan:
   - in_parallel:
     - get: bosh-shared-ci
