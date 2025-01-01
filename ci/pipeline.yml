@@ -306,6 +306,7 @@ jobs:
       image: bosh-security-scanner-registry-image
       input_mapping:
         input_repo: bpm-release
+        version: current-version
       params:
         PACKAGES: [ golang-1-linux ]
       on_success:
