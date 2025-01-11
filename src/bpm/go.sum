@@ -1,9 +1,9 @@
-code.cloudfoundry.org/bytefmt v0.24.0 h1:+2pyjxsGhmvatU91MlzssonaXTefcCqzTlwQ15ax7E8=
-code.cloudfoundry.org/bytefmt v0.24.0/go.mod h1:zWZoE+y48TUx0XoqBZunvZivXf+NnAq0fepqUj7Ys1U=
-code.cloudfoundry.org/clock v1.27.0 h1:7G40by73zmdMiyaFgZuqrlXASU/UTuljm1bEXpCZMao=
-code.cloudfoundry.org/clock v1.27.0/go.mod h1:1vbUoaDxc8QrBF1mrCWLi5Yw6I0fg3CyW8qNjUwv5fM=
-code.cloudfoundry.org/lager/v3 v3.21.0 h1:MgH9v28suq2b9h1LgnaifmfVCElzIR4/14h60GohZXo=
-code.cloudfoundry.org/lager/v3 v3.21.0/go.mod h1:LG8h2mMDjfgooL1OuSUn9IZ2zZgOCZ2nWi50qzaVKqU=
+code.cloudfoundry.org/bytefmt v0.25.0 h1:nGKr+VMSVjHYmVdIkFblfsNi2CefO5vURvM/zKXsBjY=
+code.cloudfoundry.org/bytefmt v0.25.0/go.mod h1:XDUChKlvyhYeC7OxLZvNcsP4lTbE4oIGWNaRV6b4g4Y=
+code.cloudfoundry.org/clock v1.28.0 h1:pAF3ykQCUor1iQfhTHDG9IpavGh5/Uw4wbhF5Zl6I8E=
+code.cloudfoundry.org/clock v1.28.0/go.mod h1:B1SaAriBEjF6FjXPlSS1bAPTNvJEnwuc+T5F0fiv+cQ=
+code.cloudfoundry.org/lager/v3 v3.22.0 h1:F8+AuJb5Hh1KswKNlm0Qlafgrg4ESo0yZKHAnLDGV+U=
+code.cloudfoundry.org/lager/v3 v3.22.0/go.mod h1:WbzeUscDNJxkBxCjOSHEdRF4KqxM9Y5QRhJoX3iqPOM=
 github.com/coreos/go-systemd/v22 v22.5.0 h1:RrqgGjYQKalulkV8NGVIfkXQf6YYmOyiJKk8iXXhfZs=
 github.com/coreos/go-systemd/v22 v22.5.0/go.mod h1:Y58oyj3AT4RCenI/lSvhwexgC+NSVTIJ3seZv2GcEnc=
 github.com/cpuguy83/go-md2man/v2 v2.0.4/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46tRHOmNcaadrF8o=
@@ -37,8 +37,8 @@ github.com/onsi/ginkgo/v2 v2.22.2 h1:/3X8Panh8/WwhU/3Ssa6rCKqPLuAkVY2I0RoyDLySlU
 github.com/onsi/ginkgo/v2 v2.22.2/go.mod h1:oeMosUL+8LtarXBHu/c0bx2D/K9zyQ6uX3cTyztHwsk=
 github.com/onsi/gomega v1.36.2 h1:koNYke6TVk6ZmnyHrCXba/T/MoLBXFjeC1PtvYgw0A8=
 github.com/onsi/gomega v1.36.2/go.mod h1:DdwyADRjrc825LhMEkD76cHR5+pUnjhUN8GlHlRPHzY=
-github.com/opencontainers/runc v1.2.3 h1:fxE7amCzfZflJO2lHXf4y/y8M1BoAqp+FVmG19oYB80=
-github.com/opencontainers/runc v1.2.3/go.mod h1:nSxcWUydXrsBZVYNSkTjoQ/N6rcyTtn+1SD5D4+kRIM=
+github.com/opencontainers/runc v1.2.4 h1:yWFgLkghp71D76Fa0l349yAl5g4Gse7DPYNlvkQ9Eiw=
+github.com/opencontainers/runc v1.2.4/go.mod h1:nSxcWUydXrsBZVYNSkTjoQ/N6rcyTtn+1SD5D4+kRIM=
 github.com/opencontainers/runtime-spec v1.2.0 h1:z97+pHb3uELt/yiAWD691HNHQIF07bE7dzrbT927iTk=
 github.com/opencontainers/runtime-spec v1.2.0/go.mod h1:jwyrGlmzljRJv/Fgzds9SsS/C5hL+LL3ko9hs6T5lQ0=
 github.com/openzipkin/zipkin-go v0.4.3 h1:9EGwpqkgnwdEIJ+Od7QVSEIH+ocmm5nPat0G7sjsSdg=
