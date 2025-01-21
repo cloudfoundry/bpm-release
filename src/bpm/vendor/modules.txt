@@ -1,11 +1,11 @@
-# code.cloudfoundry.org/bytefmt v0.25.0
+# code.cloudfoundry.org/bytefmt v0.26.0
 ## explicit; go 1.22.0
 code.cloudfoundry.org/bytefmt
 # code.cloudfoundry.org/clock v1.28.0
 ## explicit; go 1.22.0
 code.cloudfoundry.org/clock
 code.cloudfoundry.org/clock/fakeclock
-# code.cloudfoundry.org/lager/v3 v3.22.0
+# code.cloudfoundry.org/lager/v3 v3.23.0
 ## explicit; go 1.22.0
 code.cloudfoundry.org/lager/v3
 code.cloudfoundry.org/lager/v3/internal/truncate
@@ -17,7 +17,7 @@ github.com/coreos/go-systemd/v22/dbus
 # github.com/creack/pty v1.1.7
 ## explicit
 github.com/creack/pty
-# github.com/cyphar/filepath-securejoin v0.3.6
+# github.com/cyphar/filepath-securejoin v0.4.0 => github.com/cyphar/filepath-securejoin v0.3.6
 ## explicit; go 1.18
 github.com/cyphar/filepath-securejoin
 # github.com/go-logr/logr v1.4.2
@@ -37,7 +37,7 @@ github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
-# github.com/google/pprof v0.0.0-20241210010833-40e02aabc2ad
+# github.com/google/pprof v0.0.0-20250121033306-997b0b79cac0
 ## explicit; go 1.22
 github.com/google/pprof/profile
 # github.com/inconshreveable/mousetrap v1.1.0
@@ -185,3 +185,4 @@ golang.org/x/tools/internal/versions
 # gopkg.in/yaml.v3 v3.0.1
 ## explicit
 gopkg.in/yaml.v3
+# github.com/cyphar/filepath-securejoin => github.com/cyphar/filepath-securejoin v0.3.6

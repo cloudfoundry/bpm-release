@@ -2,11 +2,13 @@ module bpm
 
 go 1.22.0
 
+replace github.com/cyphar/filepath-securejoin => github.com/cyphar/filepath-securejoin v0.3.6
+
 require (
-	code.cloudfoundry.org/bytefmt v0.25.0
+	code.cloudfoundry.org/bytefmt v0.26.0
 	code.cloudfoundry.org/clock v1.28.0
-	code.cloudfoundry.org/lager/v3 v3.22.0
-	github.com/cyphar/filepath-securejoin v0.3.6 // indirect
+	code.cloudfoundry.org/lager/v3 v3.23.0
+	github.com/cyphar/filepath-securejoin v0.4.0 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/kr/pty v1.1.8
 	github.com/moby/sys/mountinfo v0.7.2
@@ -31,7 +33,7 @@ require (
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
-	github.com/google/pprof v0.0.0-20241210010833-40e02aabc2ad // indirect
+	github.com/google/pprof v0.0.0-20250121033306-997b0b79cac0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/moby/sys/userns v0.1.0 // indirect
 	github.com/openzipkin/zipkin-go v0.4.3 // indirect
