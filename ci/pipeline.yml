@@ -391,7 +391,7 @@ jobs:
     params:
       name: release_metadata/tag-name
       tag: release_metadata/tag-name
-      body: release-notes/release-notes.md
+      body: release_metadata/empty-file
       commitish: bpm-release/.git/ref
       generate_release_notes: true
   - task: bump-local-version
