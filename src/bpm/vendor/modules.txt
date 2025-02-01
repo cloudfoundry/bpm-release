@@ -1,11 +1,11 @@
-# code.cloudfoundry.org/bytefmt v0.26.0
+# code.cloudfoundry.org/bytefmt v0.27.0
 ## explicit; go 1.22.0
 code.cloudfoundry.org/bytefmt
 # code.cloudfoundry.org/clock v1.28.0
 ## explicit; go 1.22.0
 code.cloudfoundry.org/clock
 code.cloudfoundry.org/clock/fakeclock
-# code.cloudfoundry.org/lager/v3 v3.23.0
+# code.cloudfoundry.org/lager/v3 v3.24.0
 ## explicit; go 1.22.0
 code.cloudfoundry.org/lager/v3
 code.cloudfoundry.org/lager/v3/internal/truncate
@@ -17,7 +17,7 @@ github.com/coreos/go-systemd/v22/dbus
 # github.com/creack/pty v1.1.7
 ## explicit
 github.com/creack/pty
-# github.com/cyphar/filepath-securejoin v0.4.0 => github.com/cyphar/filepath-securejoin v0.3.6
+# github.com/cyphar/filepath-securejoin v0.4.1 => github.com/cyphar/filepath-securejoin v0.3.6
 ## explicit; go 1.18
 github.com/cyphar/filepath-securejoin
 # github.com/go-logr/logr v1.4.2
@@ -37,7 +37,7 @@ github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
-# github.com/google/pprof v0.0.0-20250125003558-7fdb3d7e6fa0
+# github.com/google/pprof v0.0.0-20250128161936-077ca0a936bf
 ## explicit; go 1.22
 github.com/google/pprof/profile
 # github.com/inconshreveable/mousetrap v1.1.0
@@ -111,7 +111,7 @@ github.com/sirupsen/logrus
 # github.com/spf13/cobra v1.8.1
 ## explicit; go 1.15
 github.com/spf13/cobra
-# github.com/spf13/pflag v1.0.5
+# github.com/spf13/pflag v1.0.6
 ## explicit; go 1.12
 github.com/spf13/pflag
 # go.uber.org/mock v0.5.0

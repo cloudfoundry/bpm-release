@@ -5,10 +5,10 @@ go 1.22.0
 replace github.com/cyphar/filepath-securejoin => github.com/cyphar/filepath-securejoin v0.3.6
 
 require (
-	code.cloudfoundry.org/bytefmt v0.26.0
+	code.cloudfoundry.org/bytefmt v0.27.0
 	code.cloudfoundry.org/clock v1.28.0
-	code.cloudfoundry.org/lager/v3 v3.23.0
-	github.com/cyphar/filepath-securejoin v0.4.0 // indirect
+	code.cloudfoundry.org/lager/v3 v3.24.0
+	github.com/cyphar/filepath-securejoin v0.4.1 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/kr/pty v1.1.8
 	github.com/moby/sys/mountinfo v0.7.2
@@ -33,12 +33,12 @@ require (
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
-	github.com/google/pprof v0.0.0-20250125003558-7fdb3d7e6fa0 // indirect
+	github.com/google/pprof v0.0.0-20250128161936-077ca0a936bf // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/moby/sys/userns v0.1.0 // indirect
 	github.com/openzipkin/zipkin-go v0.4.3 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
-	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/spf13/pflag v1.0.6 // indirect
 	golang.org/x/mod v0.22.0 // indirect
 	golang.org/x/sync v0.10.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
