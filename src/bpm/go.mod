@@ -1,23 +1,21 @@
 module bpm
 
-go 1.22.0
-
-replace github.com/cyphar/filepath-securejoin => github.com/cyphar/filepath-securejoin v0.3.6
+go 1.23.0
 
 require (
-	code.cloudfoundry.org/bytefmt v0.28.0
+	code.cloudfoundry.org/bytefmt v0.29.0
 	code.cloudfoundry.org/clock v1.28.0
-	code.cloudfoundry.org/lager/v3 v3.25.0
+	code.cloudfoundry.org/lager/v3 v3.26.0
 	github.com/cyphar/filepath-securejoin v0.4.1 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/kr/pty v1.1.8
 	github.com/moby/sys/mountinfo v0.7.2
 	github.com/onsi/gomega v1.36.2
-	github.com/opencontainers/runc v1.2.4
+	github.com/opencontainers/runc v1.2.5
 	github.com/opencontainers/runtime-spec v1.2.0
 	github.com/satori/go.uuid v1.2.0
-	github.com/spf13/cobra v1.8.1
-	golang.org/x/net v0.34.0 // indirect
+	github.com/spf13/cobra v1.9.1
+	golang.org/x/net v0.35.0 // indirect
 	golang.org/x/sys v0.30.0
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -41,8 +39,8 @@ require (
 	github.com/spf13/pflag v1.0.6 // indirect
 	golang.org/x/mod v0.23.0 // indirect
 	golang.org/x/sync v0.11.0 // indirect
-	golang.org/x/text v0.21.0 // indirect
-	golang.org/x/tools v0.29.0 // indirect
+	golang.org/x/text v0.22.0 // indirect
+	golang.org/x/tools v0.30.0 // indirect
 )
 
 exclude github.com/willf/bitset v1.2.0
