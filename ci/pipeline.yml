@@ -56,7 +56,7 @@ resources:
     bucket: bpm-release-version
     key: current-version
     initial_version: 0.0.0
-    json_key: ((cf-secenablement-bpm_bpm-release-version_gcp_credentials_json))
+    json_key: ((cloud-foundry-gcp-credentials))
 
 - name: github-release
   type: github-release
@@ -68,9 +68,9 @@ resources:
 - name: release-notes
   type: gcs-resource
   source:
-    bucket: bosh-ci-release-notes
-    json_key: ((gcp_credentials_json))
-    versioned_file: bpm-release/release-notes.md
+    bucket: bpm-release-notes
+    json_key: ((cloud-foundry-gcp-credentials))
+    versioned_file: release-notes.md
     initial_content_text: ""
 
 - name: boshlite-jammy-stemcell
@@ -85,7 +85,7 @@ resources:
     owner: opencontainers
     repository: runc
     pre_release: true
-    access_token: ((bpm-machine-github-token))
+    access_token: ((github_public_repo_token))
     order_by: time # without this v1.0.0-rc9 > v1.0.0-rc10
     tag_filter: 'v((\d|\.)+)$'
 
@@ -95,7 +95,7 @@ resources:
   source:
     owner: krallin
     repository: tini
-    access_token: ((bpm-machine-github-token))
+    access_token: ((github_public_repo_token))
 
 - name: bpm-ci
   type: git
@@ -198,7 +198,7 @@ jobs:
           blobstore:
             options:
               credentials_source: static
-              json_key: '((cf-secenablement-bpm_bpm-release_gcp_credentials_json))'
+              json_key: '((cloud-foundry-gcp-credentials))'
     - task: test-acceptance
       file: bpm-release/ci/tasks/test-acceptance.yml
       input_mapping:
@@ -380,7 +380,7 @@ jobs:
         blobstore:
           options:
             credentials_source: static
-            json_key: '((cf-secenablement-bpm_bpm-release_gcp_credentials_json))'
+            json_key: '((cloud-foundry-gcp-credentials))'
   - put: bpm-release
     get_params:
       submodules: none
@@ -393,7 +393,7 @@ jobs:
     params:
       name: release_metadata/tag-name
       tag: release_metadata/tag-name
-      body: release_metadata/empty-file
+      body: release-notes/release-notes.md
       commitish: bpm-release/.git/ref
       generate_release_notes: true
   - task: bump-local-version
@@ -412,7 +412,7 @@ jobs:
       rebase: true
   - put: release-notes
     params:
-      file: release-notes/release-notes.md
+      file: release_repo/empty-file
 
 - name: bump-deps
   public: true
@@ -442,7 +442,7 @@ jobs:
           blobstore:
             options:
               credentials_source: static
-              json_key: '((cf-secenablement-bpm_bpm-release_gcp_credentials_json))'
+              json_key: '((cloud-foundry-gcp-credentials))'
       file: bpm-release/ci/tasks/bump-runc-package.yml
     - task: test-unit
       file: bpm-release/ci/tasks/test-unit.yml
