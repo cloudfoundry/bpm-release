@@ -236,7 +236,7 @@ var _ = Describe("BpmAcceptance", func() {
 	})
 
 	It("it can communicate with the public internet", func() {
-		req, err := http.NewRequest("GET", fmt.Sprintf("%s/curl", *agentURI), strings.NewReader("http://www.google.com"))
+		req, err := http.NewRequest("GET", fmt.Sprintf("%s/curl", *agentURI), strings.NewReader("https://www.google.com"))
 		Expect(err).NotTo(HaveOccurred())
 
 		resp, err := client.Do(req)
