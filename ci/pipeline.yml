@@ -28,8 +28,9 @@ resources:
   type: git
   source:
     branch: master
-    private_key: ((github_deploy_key_bpm-release.private_key))
-    uri: git@github.com:cloudfoundry-incubator/bpm-release.git
+    username: bosh-admin-bot
+    password: ((github_read_write_token))
+    uri: https://github.com/cloudfoundry-incubator/bpm-release.git
 
 - name: weekly
   type: time
@@ -99,10 +100,11 @@ resources:
 - name: bpm-ci
   type: git
   source:
-    uri: git@github.com:cloudfoundry-incubator/bpm-release
+    uri: https://github.com/cloudfoundry-incubator/bpm-release
+    username: bosh-admin-bot
+    password: ((github_read_write_token))
     branch: master
     paths: [ci/Dockerfile]
-    private_key: ((github_deploy_key_bpm-release.private_key))
 
 - name: bpm-ci-registry-image
   type: registry-image
