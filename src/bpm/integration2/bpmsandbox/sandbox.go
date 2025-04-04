@@ -106,7 +106,7 @@ func (s *Sandbox) LoadFixture(job, path string) {
 func (s *Sandbox) Cleanup() {
 	s.t.Helper()
 	s.t.Logf("deleting sandbox %s", s.root)
-	_ = os.RemoveAll(s.root)
+	_ = os.RemoveAll(s.root) //nolint:errcheck
 }
 
 func copyFile(dst, src string) error {
@@ -114,13 +114,13 @@ func copyFile(dst, src string) error {
 	if err != nil {
 		return err
 	}
-	defer s.Close()
+	defer s.Close() //nolint:errcheck
 	d, err := os.Create(dst)
 	if err != nil {
 		return err
 	}
 	if _, err := io.Copy(d, s); err != nil {
-		d.Close()
+		d.Close() //nolint:errcheck
 		return err
 	}
 	return d.Close()

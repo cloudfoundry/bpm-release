@@ -29,12 +29,12 @@ func SyscallAllowed(w http.ResponseWriter, r *http.Request) {
 		log.Println("SyscallAllowed - expected success did not occur")
 
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, "Expected success did not occur")
+		fmt.Fprintf(w, "Expected success did not occur") //nolint:errcheck
 		return
 	}
 
 	fmt.Println("SyscallAllowed - expected success occurred")
 
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "Expected success occurred")
+	fmt.Fprintf(w, "Expected success occurred") //nolint:errcheck
 }

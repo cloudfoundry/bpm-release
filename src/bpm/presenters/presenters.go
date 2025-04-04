@@ -49,5 +49,5 @@ func PrintJobs(processes []*models.Process, stdout io.Writer) error {
 
 func printRow(w io.Writer, args ...string) {
 	row := strings.Join(args, "\t")
-	fmt.Fprintf(w, "%s\n", row)
+	fmt.Fprintf(w, "%s\n", row) //nolint:errcheck
 }

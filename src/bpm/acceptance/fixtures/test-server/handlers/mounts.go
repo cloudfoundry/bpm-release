@@ -28,5 +28,5 @@ func Mounts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintln(w, string(data))
+	fmt.Fprintln(w, string(data)) //nolint:errcheck
 }

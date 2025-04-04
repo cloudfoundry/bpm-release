@@ -43,5 +43,5 @@ func version(cmd *cobra.Command, args []string) {
 	if Version == "" {
 		Version = "[DEV BUILD]"
 	}
-	fmt.Fprintf(cmd.OutOrStdout(), "%s\n", Version)
+	fmt.Fprintf(cmd.OutOrStdout(), "%s\n", Version) //nolint:errcheck
 }

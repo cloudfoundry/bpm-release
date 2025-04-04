@@ -67,5 +67,5 @@ func MaskedPaths(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	fmt.Fprint(w, string(readablePaths))
+	fmt.Fprint(w, readablePaths) //nolint:errcheck
 }

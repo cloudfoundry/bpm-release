@@ -55,7 +55,7 @@ func pidForJob(cmd *cobra.Command, _ []string) error {
 		return errors.New("process is not running or could not be found")
 	}
 
-	fmt.Fprintf(cmd.OutOrStdout(), "%d\n", process.Pid)
+	fmt.Fprintf(cmd.OutOrStdout(), "%d\n", process.Pid) //nolint:errcheck
 
 	return nil
 }

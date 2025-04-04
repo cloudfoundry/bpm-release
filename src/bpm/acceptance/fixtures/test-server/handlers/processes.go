@@ -36,6 +36,6 @@ func Processes(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		fmt.Fprintf(w, "%s %s\n", filepath.Base(item), string(body))
+		fmt.Fprintf(w, "%s %s\n", filepath.Base(item), string(body)) //nolint:errcheck
 	}
 }

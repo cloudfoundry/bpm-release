@@ -41,7 +41,7 @@ func MakeShared(path string) error {
 	// --make-shared`.
 	if err := unix.Mount("none", path, "", unix.MS_SHARED, ""); err != nil {
 		if !isMount {
-			_ = unix.Unmount(path, 0)
+			_ = unix.Unmount(path, 0) //nolint:errcheck
 			return err
 		}
 	}

@@ -85,7 +85,7 @@ func handleSignals(signals chan os.Signal) {
 		case syscall.SIGQUIT:
 			// Ignore the error here because if it occurs then there's nothing we can
 			// do. We've already failed writing something to standard error!
-			_ = pprof.Lookup("goroutine").WriteTo(os.Stderr, 1)
+			_ = pprof.Lookup("goroutine").WriteTo(os.Stderr, 1) //nolint:errcheck
 			os.Exit(0)
 		default:
 			log.Printf("unhandled signal: %#v\n", sig)
