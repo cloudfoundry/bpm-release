@@ -77,7 +77,7 @@ func rootPre(cmd *cobra.Command, _ []string) error {
 
 	if usr.Uid != "0" && usr.Gid != "0" {
 		cmd.SilenceUsage = true
-		return errors.New("bpm must be run as root. Please run 'sudo -i' to become the root user.")
+		return errors.New("bpm must be run as root. Please run 'sudo -i' to become the root user.") //nolint:staticcheck
 	}
 
 	lockDir := config.LocksPath(boshEnv)
@@ -99,7 +99,7 @@ func rootPre(cmd *cobra.Command, _ []string) error {
 }
 
 func root(_ *cobra.Command, _ []string) error {
-	return errors.New("Exit code 1")
+	return errors.New("Exit code 1") //nolint:staticcheck
 }
 
 func validateInput(args []string) error {

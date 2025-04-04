@@ -177,7 +177,7 @@ var _ = Describe("RuncAdapter", func() {
 			BeforeEach(func() {
 				f, err := os.CreateTemp(systemRoot, "temp-file")
 				Expect(err).NotTo(HaveOccurred())
-				defer f.Close()
+				defer f.Close() //nolint:errcheck
 
 				tempFilePath = f.Name()
 

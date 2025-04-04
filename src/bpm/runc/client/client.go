@@ -95,7 +95,7 @@ func (*RuncClient) CreateBundle(
 		// This is super hard to test as we are root.
 		return err
 	}
-	defer f.Close()
+	defer f.Close() //nolint:errcheck
 
 	enc := json.NewEncoder(f)
 	enc.SetIndent("", "\t")

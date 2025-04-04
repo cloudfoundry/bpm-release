@@ -28,5 +28,5 @@ func Env(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	fmt.Fprintf(w, "%s env variable has a value %s!\n", string(envKey), os.Getenv(string(envKey)))
+	fmt.Fprintf(w, "%s env variable has a value %s!\n", string(envKey), os.Getenv(string(envKey))) //nolint:errcheck
 }

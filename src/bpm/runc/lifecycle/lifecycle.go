@@ -46,8 +46,8 @@ const (
 )
 
 var (
-	timeoutError    = errors.New("failed to stop job within timeout")
-	isNotExistError = errors.New("process is not running or could not be found")
+	timeoutError    = errors.New("failed to stop job within timeout")            //nolint:staticcheck
+	isNotExistError = errors.New("process is not running or could not be found") //nolint:staticcheck
 )
 
 func IsNotExist(err error) bool {
@@ -114,8 +114,8 @@ func (j *RuncLifecycle) StartProcess(logger lager.Logger, bpmCfg *config.BPMConf
 	if err != nil {
 		return err
 	}
-	defer stdout.Close()
-	defer stderr.Close()
+	defer stdout.Close() //nolint:errcheck
+	defer stderr.Close() //nolint:errcheck
 
 	logger.Info("running-container")
 	_, err = j.runcClient.RunContainer(
@@ -139,8 +139,8 @@ func (j *RuncLifecycle) RunProcess(logger lager.Logger, bpmCfg *config.BPMConfig
 	if err != nil {
 		return 0, err
 	}
-	defer stdout.Close()
-	defer stderr.Close()
+	defer stdout.Close() //nolint:errcheck
+	defer stderr.Close() //nolint:errcheck
 
 	logger.Info("running-container")
 	return j.runcClient.RunContainer(

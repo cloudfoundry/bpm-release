@@ -33,19 +33,19 @@ func SyscallDisallowed(w http.ResponseWriter, r *http.Request) {
 
 			log.Printf("SyscallDisallowed - unexpected error occurred: %s\n", err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Fprintf(w, "Unexpected error occurred: %s", err.Error())
+			fmt.Fprintf(w, "Unexpected error occurred: %s", err.Error()) //nolint:errcheck
 			return
 		}
 
 		fmt.Printf("SyscallDisallowed - expected error occurred: %s\n", err.Error())
 
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintf(w, "Expected error occurred: %s", err.Error())
+		fmt.Fprintf(w, "Expected error occurred: %s", err.Error()) //nolint:errcheck
 		return
 	}
 
 	log.Println("SyscallDisallowed - expected error did not occur")
 
 	w.WriteHeader(http.StatusInternalServerError)
-	fmt.Fprintf(w, "Expected error did not occur")
+	fmt.Fprintf(w, "Expected error did not occur") //nolint:errcheck
 }

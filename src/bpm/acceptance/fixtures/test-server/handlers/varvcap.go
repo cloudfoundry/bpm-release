@@ -29,7 +29,7 @@ func VarVcap(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, item := range items {
-		fmt.Fprintln(w, item.Name())
+		fmt.Fprintln(w, item.Name()) //nolint:errcheck
 	}
 }
 
@@ -41,7 +41,7 @@ func VarVcapJobs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, item := range items {
-		fmt.Fprintln(w, item.Name())
+		fmt.Fprintln(w, item.Name()) //nolint:errcheck
 	}
 }
 
@@ -53,6 +53,6 @@ func VarVcapData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, item := range items {
-		fmt.Fprintln(w, item.Name())
+		fmt.Fprintln(w, item.Name()) //nolint:errcheck
 	}
 }

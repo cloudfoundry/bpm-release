@@ -22,5 +22,5 @@ import (
 )
 
 func Hello(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "BPM is %s!\n", os.Getenv("BPM"))
+	fmt.Fprintf(w, "BPM is %s!\n", os.Getenv("BPM")) //nolint:errcheck
 }

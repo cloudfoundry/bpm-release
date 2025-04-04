@@ -39,11 +39,11 @@ var _ = Describe("bpm", func() {
 
 			f, err := os.Create(filepath.Join(unPrivilegedBPMDir, "bpm"))
 			Expect(err).NotTo(HaveOccurred())
-			defer f.Close()
+			defer f.Close() //nolint:errcheck
 
 			bpmFile, err := os.Open(bpmPath)
 			Expect(err).NotTo(HaveOccurred())
-			defer bpmFile.Close()
+			defer bpmFile.Close() //nolint:errcheck
 
 			_, err = io.Copy(f, bpmFile)
 			Expect(err).NotTo(HaveOccurred())

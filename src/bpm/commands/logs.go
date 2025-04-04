@@ -112,7 +112,7 @@ func logsForJob(cmd *cobra.Command, _ []string) error {
 				return err
 			}
 
-			fmt.Fprintln(cmd.OutOrStdout(), "")
+			fmt.Fprintln(cmd.OutOrStdout(), "") //nolint:errcheck
 			return nil
 		}
 	}

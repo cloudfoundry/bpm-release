@@ -32,7 +32,7 @@ func Curl(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	_, err = io.Copy(w, resp.Body)
 	if err != nil {

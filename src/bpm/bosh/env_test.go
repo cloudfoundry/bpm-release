@@ -35,7 +35,7 @@ var _ = Describe("Bosh Environment", func() {
 	})
 
 	AfterEach(func() {
-		os.RemoveAll(root)
+		os.RemoveAll(root) //nolint:errcheck
 	})
 
 	Describe("environment", func() {

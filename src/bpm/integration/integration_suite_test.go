@@ -158,7 +158,7 @@ func copyFile(dst, src string) error {
 	if err != nil {
 		return err
 	}
-	defer s.Close()
+	defer s.Close() //nolint:errcheck
 	d, err := os.Create(dst)
 	if err != nil {
 		return err

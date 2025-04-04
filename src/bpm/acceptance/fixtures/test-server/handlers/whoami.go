@@ -28,5 +28,5 @@ func Whoami(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintln(w, usr.Username)
+	fmt.Fprintln(w, usr.Username) //nolint:errcheck
 }

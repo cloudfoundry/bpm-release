@@ -49,7 +49,7 @@ func listContainers(cmd *cobra.Command, _ []string) error {
 		}
 
 		if err != nil {
-			fmt.Fprintf(cmd.OutOrStderr(), "invalid config for %s: %s", job, err.Error())
+			fmt.Fprintf(cmd.OutOrStderr(), "invalid config for %s: %s", job, err.Error()) //nolint:errcheck
 			continue
 		}
 
@@ -68,20 +68,20 @@ func listContainers(cmd *cobra.Command, _ []string) error {
 	}
 	runningProcesses, err := runcLifecycle.ListProcesses()
 	if err != nil {
-		fmt.Fprintf(cmd.OutOrStderr(), "failed to list jobs: %s\n", err.Error())
+		fmt.Fprintf(cmd.OutOrStderr(), "failed to list jobs: %s\n", err.Error()) //nolint:errcheck
 		return err
 	}
 
 	for _, process := range runningProcesses {
 		processes, err = updateProcess(processes, process)
 		if err != nil {
-			fmt.Fprintf(cmd.OutOrStderr(), "extra process running: %s", err.Error())
+			fmt.Fprintf(cmd.OutOrStderr(), "extra process running: %s", err.Error()) //nolint:errcheck
 		}
 	}
 
 	err = presenters.PrintJobs(processes, cmd.OutOrStdout())
 	if err != nil {
-		fmt.Fprintf(cmd.OutOrStderr(), "failed to display jobs: %s\n", err.Error())
+		fmt.Fprintf(cmd.OutOrStderr(), "failed to display jobs: %s\n", err.Error()) //nolint:errcheck
 		return err
 	}
 

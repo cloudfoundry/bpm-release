@@ -75,7 +75,7 @@ func subsystemGrouping(subsystem string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer f.Close()
+	defer f.Close() //nolint:errcheck
 
 	// If the current process is in a cgroup then we need to match the
 	// grouping of the parent cgroup.

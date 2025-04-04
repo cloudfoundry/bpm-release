@@ -25,15 +25,15 @@ func Syslog(w http.ResponseWriter, r *http.Request) {
 	log, err := syslog.New(syslog.LOG_LOCAL0, "")
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintln(w, err)
+		fmt.Fprintln(w, err) //nolint:errcheck
 		return
 	}
 
 	if _, err := log.Write([]byte("hello")); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintln(w, err)
+		fmt.Fprintln(w, err) //nolint:errcheck
 		return
 	}
 
-	fmt.Fprintln(w, "logged!")
+	fmt.Fprintln(w, "logged!") //nolint:errcheck
 }
