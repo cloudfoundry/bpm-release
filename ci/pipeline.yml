@@ -4,8 +4,8 @@ resource_types:
   check_every: 168h
   source:
     repository: frodenas/gcs-resource
-    username: ((docker.username))
-    password: ((docker.password))
+    username: ((dockerhub_username))
+    password: ((dockerhub_password))
 
 resources:
 - name: bosh-integration-image
@@ -13,24 +13,23 @@ resources:
   check_every: 168h
   source:
     repository: bosh/integration
-    username: ((docker.username))
-    password: ((docker.password))
+    username: ((dockerhub_username))
+    password: ((dockerhub_password))
 
 - name: bosh-security-scanner-registry-image
   type: registry-image
   check_every: 24h
   source:
     repository: bosh/security-scanner
-    username: ((docker.username))
-    password: ((docker.password))
+    username: ((dockerhub_username))
+    password: ((dockerhub_password))
 
 - name: bpm-release
   type: git
   source:
     branch: master
-    username: bosh-admin-bot
-    password: ((github_read_write_token))
-    uri: https://github.com/cloudfoundry-incubator/bpm-release.git
+    private_key: ((github_deploy_key_bpm-release.private_key))
+    uri: git@github.com:cloudfoundry/bpm-release.git
 
 - name: weekly
   type: time
@@ -56,7 +55,7 @@ resources:
     bucket: bpm-release-version
     key: current-version
     initial_version: 0.0.0
-    json_key: ((cloud-foundry-gcp-credentials))
+    json_key: ((gcp_json_key))
 
 - name: github-release
   type: github-release
@@ -69,7 +68,7 @@ resources:
   type: gcs-resource
   source:
     bucket: bpm-release-notes
-    json_key: ((cloud-foundry-gcp-credentials))
+    json_key: ((gcp_json_key))
     versioned_file: release-notes.md
     initial_content_text: ""
 
@@ -100,11 +99,10 @@ resources:
 - name: bpm-ci
   type: git
   source:
-    uri: https://github.com/cloudfoundry-incubator/bpm-release
-    username: bosh-admin-bot
-    password: ((github_read_write_token))
+    uri: git@github.com:cloudfoundry/bpm-release
     branch: master
     paths: [ci/Dockerfile]
+    private_key: ((github_deploy_key_bpm-release.private_key))
 
 - name: bpm-ci-registry-image
   type: registry-image
@@ -198,7 +196,7 @@ jobs:
           blobstore:
             options:
               credentials_source: static
-              json_key: '((cloud-foundry-gcp-credentials))'
+              json_key: '((gcp_json_key))'
     - task: test-acceptance
       file: bpm-release/ci/tasks/test-acceptance.yml
       input_mapping:
@@ -380,7 +378,7 @@ jobs:
         blobstore:
           options:
             credentials_source: static
-            json_key: '((cloud-foundry-gcp-credentials))'
+            json_key: '((gcp_json_key))'
   - put: bpm-release
     get_params:
       submodules: none
@@ -442,7 +440,7 @@ jobs:
           blobstore:
             options:
               credentials_source: static
-              json_key: '((cloud-foundry-gcp-credentials))'
+              json_key: '((gcp_json_key))'
       file: bpm-release/ci/tasks/bump-runc-package.yml
     - task: test-unit
       file: bpm-release/ci/tasks/test-unit.yml
