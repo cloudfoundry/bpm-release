@@ -6,15 +6,7 @@ set -x
 RELEASE_PATH="$(cd "$(dirname "$0")/.." && pwd)"
 export RELEASE_PATH
 
-# get the nameservers in the concourse container formatted as a json array--we will pass these along to bosh so that it has something usable
-NAMESERVERS=$(grep "nameserver" /etc/resolv.conf | awk 'BEGIN{sep="";printf "["} {printf "%s%s", sep, $2; sep=","} END{print "]"}')
-
-pushd /usr/local/bosh-deployment
-bosh int docker/cloud-config.yml -o misc/dns.yml -v internal_dns="${NAMESERVERS}" > /tmp/cc.yml
-mv /tmp/cc.yml docker/cloud-config.yml
-popd
-
-. start-bosh -o misc/dns.yml -v internal_dns="${NAMESERVERS}"
+. start-bosh
 
 source /tmp/local-bosh/director/env
 
