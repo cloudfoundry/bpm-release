@@ -398,7 +398,7 @@ jobs:
     image: bosh-integration-image
     file: bpm-release/ci/tasks/bump-local-version.yml
     input_mapping:
-      bpm-release: release_repo
+      bpm-release: release-repo
     params:
       DEV: true
   - put: bpm-release
@@ -410,7 +410,7 @@ jobs:
       rebase: true
   - put: release-notes
     params:
-      file: release_repo/empty-file
+      file: release-repo/empty-file
 
 - name: bump-deps
   public: true
