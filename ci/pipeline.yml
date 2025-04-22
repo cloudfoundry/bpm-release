@@ -410,7 +410,7 @@ jobs:
       rebase: true
   - put: release-notes
     params:
-      file: release_repo/empty-file
+      file: release_metadata/empty-file
 
 - name: bump-deps
   public: true
