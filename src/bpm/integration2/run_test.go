@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"strings"
@@ -30,9 +31,19 @@ import (
 	"bpm/integration2/bpmsandbox"
 )
 
+const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
 var runcExe = flag.String("runcExe", "/var/vcap/packages/bpm/bin/runc", "path to the runc executable")
 var tiniExe = flag.String("tiniExe", "/var/vcap/packages/bpm/bin/tini", "path to the tini executable")
 var bpmExe = flag.String("bpmExe", "", "path to bpm executable")
+
+func randomString(length int) string {
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = charset[rand.Intn(len(charset))]
+	}
+	return string(b)
+}
 
 func TestMain(m *testing.M) {
 	flag.Parse()
@@ -61,11 +72,12 @@ func TestRun(t *testing.T) {
 	s := bpmsandbox.New(t)
 	defer s.Cleanup()
 
-	s.LoadFixture("errand", "testdata/errand.yml")
+	errandJob := generateJobName("errand")
+	s.LoadFixture(errandJob, "testdata/errand.yml")
 	stdoutSentinel := "stdout"
 	stderrSentinel := "stderr"
 
-	cmd := s.BPMCmd("run", "errand")
+	cmd := s.BPMCmd("run", errandJob, "-p", "errand")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("failed to run bpm: %s", output)
@@ -79,7 +91,7 @@ func TestRun(t *testing.T) {
 		t.Errorf("stdout/stderr did not contain %q, contents: %q", stderrSentinel, combinedOutput)
 	}
 
-	stdout, err := os.ReadFile(s.Path("sys", "log", "errand", "errand.stdout.log"))
+	stdout, err := os.ReadFile(s.Path("sys", "log", errandJob, "errand.stdout.log"))
 	if err != nil {
 		t.Fatalf("failed to read stdout log: %v", err)
 	}
@@ -89,7 +101,7 @@ func TestRun(t *testing.T) {
 		t.Errorf("stdout log file did not contain %q, stdoutLog: %q", stdoutSentinel, stdoutLog)
 	}
 
-	stderr, err := os.ReadFile(s.Path("sys", "log", "errand", "errand.stderr.log"))
+	stderr, err := os.ReadFile(s.Path("sys", "log", errandJob, "errand.stderr.log"))
 	if err != nil {
 		t.Fatalf("failed to read stderr log: %v", err)
 	}
@@ -98,11 +110,15 @@ func TestRun(t *testing.T) {
 		t.Errorf("stderr log file did not contain %q, contents: %q", stderrSentinel, stderrLog)
 	}
 
-	pidfile := s.Path("sys", "run", "bpm", "errand", "errand.pid")
+	pidfile := s.Path("sys", "run", "bpm", errandJob, "errand.pid")
 	_, err = os.Stat(pidfile)
 	if !os.IsNotExist(err) {
 		t.Errorf("expected %q not to exist but it did", pidfile)
 	}
+}
+
+func generateJobName(prefix string) string {
+	return fmt.Sprintf("%s-%s", prefix, randomString(6))
 }
 
 func TestRunWithEnvFlags(t *testing.T) {
@@ -110,12 +126,14 @@ func TestRunWithEnvFlags(t *testing.T) {
 	s := bpmsandbox.New(t)
 	defer s.Cleanup()
 
-	s.LoadFixture("errand", "testdata/env-flag.yml")
+	errandJob := generateJobName("errand")
+	s.LoadFixture(errandJob, "testdata/env-flag.yml")
 	sentinel := "sentinel"
 
 	cmd := s.BPMCmd(
 		"run",
-		"errand",
+		errandJob,
+		"-p", "errand",
 		"-e", fmt.Sprintf("ENVKEY=%s", sentinel),
 	)
 	output, err := cmd.CombinedOutput()
@@ -134,13 +152,15 @@ func TestRunWithVolumeFlags(t *testing.T) {
 	s := bpmsandbox.New(t)
 	defer s.Cleanup()
 
-	s.LoadFixture("errand", "testdata/volume-flag.yml")
+	errandJob := generateJobName("errand")
+	s.LoadFixture(errandJob, "testdata/volume-flag.yml")
 	extraVolumeDir := s.Path("data", "extra-volume")
 	extraVolumeFile := filepath.Join(extraVolumeDir, "data.txt")
 
 	cmd := s.BPMCmd(
 		"run",
-		"errand",
+		errandJob,
+		"-p", "errand",
 		"-v", fmt.Sprintf("%s:writable,allow_executions", extraVolumeDir),
 		"-e", fmt.Sprintf("FILE_TO_WRITE_TO=%s", extraVolumeFile),
 	)
