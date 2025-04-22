@@ -37,12 +37,15 @@ var runcExe = flag.String("runcExe", "/var/vcap/packages/bpm/bin/runc", "path to
 var tiniExe = flag.String("tiniExe", "/var/vcap/packages/bpm/bin/tini", "path to the tini executable")
 var bpmExe = flag.String("bpmExe", "", "path to bpm executable")
 
-func randomString(length int) string {
-	b := make([]byte, length)
+// uniqueJobName appends a random suffix to a job name.
+// This is used by tests that run the same job in parallel inorder to not conflict with each other.
+func uniqueJobName(prefix string) string {
+	charset := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	b := make([]byte, 6)
 	for i := range b {
 		b[i] = charset[rand.Intn(len(charset))]
 	}
-	return string(b)
+	return fmt.Sprintf("%s-%s", prefix, string(b))
 }
 
 func TestMain(m *testing.M) {
@@ -72,7 +75,7 @@ func TestRun(t *testing.T) {
 	s := bpmsandbox.New(t)
 	defer s.Cleanup()
 
-	errandJob := generateJobName("errand")
+	errandJob := uniqueJobName("errand")
 	s.LoadFixture(errandJob, "testdata/errand.yml")
 	stdoutSentinel := "stdout"
 	stderrSentinel := "stderr"
@@ -117,16 +120,12 @@ func TestRun(t *testing.T) {
 	}
 }
 
-func generateJobName(prefix string) string {
-	return fmt.Sprintf("%s-%s", prefix, randomString(6))
-}
-
 func TestRunWithEnvFlags(t *testing.T) {
 	t.Parallel()
 	s := bpmsandbox.New(t)
 	defer s.Cleanup()
 
-	errandJob := generateJobName("errand")
+	errandJob := uniqueJobName("errand")
 	s.LoadFixture(errandJob, "testdata/env-flag.yml")
 	sentinel := "sentinel"
 
@@ -152,7 +151,7 @@ func TestRunWithVolumeFlags(t *testing.T) {
 	s := bpmsandbox.New(t)
 	defer s.Cleanup()
 
-	errandJob := generateJobName("errand")
+	errandJob := uniqueJobName("errand")
 	s.LoadFixture(errandJob, "testdata/volume-flag.yml")
 	extraVolumeDir := s.Path("data", "extra-volume")
 	extraVolumeFile := filepath.Join(extraVolumeDir, "data.txt")
