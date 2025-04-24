@@ -31,8 +31,6 @@ import (
 	"bpm/integration2/bpmsandbox"
 )
 
-const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-
 var runcExe = flag.String("runcExe", "/var/vcap/packages/bpm/bin/runc", "path to the runc executable")
 var tiniExe = flag.String("tiniExe", "/var/vcap/packages/bpm/bin/tini", "path to the tini executable")
 var bpmExe = flag.String("bpmExe", "", "path to bpm executable")
@@ -40,8 +38,8 @@ var bpmExe = flag.String("bpmExe", "", "path to bpm executable")
 // uniqueJobName appends a random suffix to a job name.
 // This is used by tests that run the same job in parallel inorder to not conflict with each other.
 func uniqueJobName(prefix string) string {
-	charset := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	b := make([]byte, 6)
+	const charset = "0123456789abcdef"
+	b := make([]byte, 8)
 	for i := range b {
 		b[i] = charset[rand.Intn(len(charset))]
 	}
