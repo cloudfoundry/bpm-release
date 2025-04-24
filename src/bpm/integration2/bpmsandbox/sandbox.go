@@ -115,13 +115,17 @@ func copyFile(dst, src string) error {
 		return err
 	}
 	defer s.Close() //nolint:errcheck
+
 	d, err := os.Create(dst)
 	if err != nil {
 		return err
 	}
-	if _, err := io.Copy(d, s); err != nil {
-		d.Close() //nolint:errcheck
+	defer d.Close() //nolint:errcheck
+
+	_, err = io.Copy(d, s)
+	if err != nil {
 		return err
 	}
+
 	return d.Close()
 }
