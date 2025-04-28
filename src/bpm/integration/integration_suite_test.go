@@ -33,6 +33,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"bpm/config"
+	"bpm/integration/sandbox"
 )
 
 // This needs to be different from /tmp as /tmp is bind mounted into the
@@ -55,6 +56,7 @@ var _ = SynchronizedBeforeSuite(func() []byte {
 	return []byte(bpmPath)
 }, func(data []byte) {
 	bpmPath = string(data)
+	sandbox.BPMPath = bpmPath
 	SetDefaultEventuallyTimeout(5 * time.Second)
 })
 
