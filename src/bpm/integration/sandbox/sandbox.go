@@ -13,7 +13,7 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 
-package bpmsandbox
+package sandbox
 
 import (
 	"fmt"
@@ -24,19 +24,21 @@ import (
 	"testing"
 )
 
-var (
-	RuncPath string
-	BPMPath  string
-	TiniPath string
+var BPMPath string
+
+const (
+	// Binary paths inside the container used to run tests
+	runcExe = "/var/vcap/packages/bpm/bin/runc"
+	tiniExe = "/var/vcap/packages/bpm/bin/tini"
 )
 
 type Sandbox struct {
-	t *testing.T
+	t testing.TB
 
 	root string
 }
 
-func New(t *testing.T) *Sandbox {
+func New(t testing.TB) *Sandbox {
 	t.Helper()
 
 	root, err := os.MkdirTemp("", "bpm_sandbox")
@@ -60,12 +62,12 @@ func New(t *testing.T) *Sandbox {
 	}
 
 	runcSandboxPath := filepath.Join(root, "packages", "bpm", "bin", "runc")
-	if err := os.Symlink(RuncPath, runcSandboxPath); err != nil {
+	if err := os.Symlink(runcExe, runcSandboxPath); err != nil {
 		t.Fatalf("could not link runc executable into sandbox: %v", err)
 	}
 
 	tiniSandboxPath := filepath.Join(root, "packages", "bpm", "bin", "tini")
-	if err := copyFile(tiniSandboxPath, TiniPath); err != nil {
+	if err := copyFile(tiniSandboxPath, tiniExe); err != nil {
 		t.Fatalf("could not copy tini executable into sandbox: %v", err)
 	}
 	if err := os.Chown(tiniSandboxPath, 2000, 3000); err != nil {
