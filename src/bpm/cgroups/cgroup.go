@@ -25,7 +25,7 @@ import (
 	"strings"
 
 	"github.com/moby/sys/mountinfo"
-	"github.com/opencontainers/runc/libcontainer/cgroups"
+	"github.com/opencontainers/cgroups"
 	"golang.org/x/sys/unix"
 )
 
