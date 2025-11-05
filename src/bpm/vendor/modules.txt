@@ -14,12 +14,22 @@ code.cloudfoundry.org/lager/v3/lagertest
 # github.com/coreos/go-systemd/v22 v22.5.0
 ## explicit; go 1.12
 github.com/coreos/go-systemd/v22/dbus
-# github.com/creack/pty v1.1.7
-## explicit
+# github.com/creack/pty v1.1.9
+## explicit; go 1.13
 github.com/creack/pty
-# github.com/cyphar/filepath-securejoin v0.4.1
+# github.com/cyphar/filepath-securejoin v0.5.1
 ## explicit; go 1.18
 github.com/cyphar/filepath-securejoin
+github.com/cyphar/filepath-securejoin/internal/consts
+github.com/cyphar/filepath-securejoin/pathrs-lite
+github.com/cyphar/filepath-securejoin/pathrs-lite/internal
+github.com/cyphar/filepath-securejoin/pathrs-lite/internal/assert
+github.com/cyphar/filepath-securejoin/pathrs-lite/internal/fd
+github.com/cyphar/filepath-securejoin/pathrs-lite/internal/gocompat
+github.com/cyphar/filepath-securejoin/pathrs-lite/internal/kernelversion
+github.com/cyphar/filepath-securejoin/pathrs-lite/internal/linux
+github.com/cyphar/filepath-securejoin/pathrs-lite/internal/procfs
+github.com/cyphar/filepath-securejoin/pathrs-lite/procfs
 # github.com/go-logr/logr v1.4.3
 ## explicit; go 1.18
 github.com/go-logr/logr
@@ -43,6 +53,8 @@ github.com/google/pprof/profile
 # github.com/inconshreveable/mousetrap v1.1.0
 ## explicit; go 1.18
 github.com/inconshreveable/mousetrap
+# github.com/kr/pretty v0.3.1
+## explicit; go 1.12
 # github.com/kr/pty v1.1.8
 ## explicit; go 1.12
 github.com/kr/pty
@@ -89,12 +101,13 @@ github.com/onsi/gomega/matchers/support/goraph/edge
 github.com/onsi/gomega/matchers/support/goraph/node
 github.com/onsi/gomega/matchers/support/goraph/util
 github.com/onsi/gomega/types
-# github.com/opencontainers/cgroups v0.0.3
+# github.com/opencontainers/cgroups v0.0.4
 ## explicit; go 1.23.0
 github.com/opencontainers/cgroups
 github.com/opencontainers/cgroups/devices/config
-# github.com/opencontainers/runc v1.3.0
+# github.com/opencontainers/runc v1.3.3
 ## explicit; go 1.23.0
+github.com/opencontainers/runc/internal/pathrs
 github.com/opencontainers/runc/libcontainer/utils
 # github.com/opencontainers/runtime-spec v1.2.1
 ## explicit
@@ -103,6 +116,8 @@ github.com/opencontainers/runtime-spec/specs-go
 ## explicit; go 1.20
 github.com/openzipkin/zipkin-go/idgenerator
 github.com/openzipkin/zipkin-go/model
+# github.com/rogpeppe/go-internal v1.11.0
+## explicit; go 1.19
 # github.com/satori/go.uuid v1.2.0
 ## explicit
 github.com/satori/go.uuid
