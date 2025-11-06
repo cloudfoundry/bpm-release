@@ -4,4 +4,4 @@ set -euo pipefail
 RELEASE_PATH="$(cd "$(dirname "$0")/.." && pwd)"
 export RELEASE_PATH
 
-"${RELEASE_PATH}/scripts/start-docker" /bpm/scripts/test-unit
+"${RELEASE_PATH}/scripts/start-docker" /bpm/scripts/test-unit "$@"

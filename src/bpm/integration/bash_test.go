@@ -56,7 +56,8 @@ start_memory_leak`
 
 func fileLeakBash(path string) string {
 	return fmt.Sprintf(`file_dir=%s;
-start_file_leak() { for i in $(seq 1 20); do touch $file_dir/file-$i; done; tail -f $file_dir/* ;};
+echo "File descriptor limit: $(ulimit -n)" 1>&2;
+start_file_leak() { for i in $(seq 1 200); do touch $file_dir/file-$i; done; tail -f $file_dir/* ;};
 trap 'kill -9 $child' SIGTERM;
 sleep 100 &
 child=$!;

@@ -139,7 +139,7 @@ var _ = Describe("resource limits", func() {
 	Context("open files", func() {
 		BeforeEach(func() {
 			cfg = newJobConfig(job, fileLeakBash(boshEnv.DataDir(job).Internal()))
-			limit := uint64(10)
+			limit := uint64(20)
 			cfg.Processes[0].Limits = &config.Limits{OpenFiles: &limit}
 			cfg.Processes[0].EphemeralDisk = true
 		})
@@ -148,8 +148,11 @@ var _ = Describe("resource limits", func() {
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 			<-session.Exited
-			Expect(session).To(gexec.Exit(1))
-			Eventually(fileContents(stderr)).Should(ContainSubstring("too many open files"))
+			Expect(session).To(gexec.Exit(0))
+
+			Eventually(func() specs.ContainerState { return runcState(runcRoot, containerID).Status }).Should(Equal(specs.StateRunning))
+			Expect(runcCommand(runcRoot, "kill", containerID).Run()).To(Succeed())
+			Eventually(fileContents(stderr)).Should(ContainSubstring("Too many open files"))
 		})
 	})
 
