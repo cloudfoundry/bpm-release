@@ -12,6 +12,6 @@ jobs:
         go-version-file: src/bpm/go.mod
     - run: go generate ./...
       working-directory: src/bpm/
-    - uses: golangci/golangci-lint-action@v8
+    - uses: golangci/golangci-lint-action@v9
       with:
         working-directory: src/bpm/
