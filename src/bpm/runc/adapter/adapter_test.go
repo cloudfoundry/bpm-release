@@ -798,7 +798,7 @@ var _ = Describe("RuncAdapter", func() {
 					Expect(spec.Linux.Resources).NotTo(BeNil())
 					Expect(spec.Linux.Resources.Pids).NotTo(BeNil())
 					Expect(*spec.Linux.Resources.Pids).To(Equal(specs.LinuxPids{
-						Limit: pidLimit,
+						Limit: &pidLimit,
 					}))
 				})
 			})

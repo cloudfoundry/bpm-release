@@ -170,7 +170,7 @@ func WithMemoryLimit(limit int64, features sysfeat.Features) SpecOption {
 func WithPidLimit(limit int64) SpecOption {
 	return func(spec *specs.Spec) {
 		spec.Linux.Resources.Pids = &specs.LinuxPids{
-			Limit: limit,
+			Limit: &limit,
 		}
 	}
 }
