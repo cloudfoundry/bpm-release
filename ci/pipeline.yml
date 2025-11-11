@@ -86,7 +86,7 @@ resources:
     pre_release: true
     access_token: ((github_public_repo_token))
     order_by: time # without this v1.0.0-rc9 > v1.0.0-rc10
-    tag_filter: 'v((\d|\.)+)$'
+    tag_filter: 'v(1\.2\.(\d|\.)+)$'
 
 - name: tini
   type: github-release
