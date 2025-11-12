@@ -124,7 +124,7 @@ resources:
   type: docker-image
   check_every: 1h
   source:
-    repository: bosh/golang-release
+    repository: ghcr.io/cloudfoundry/bosh/golang-release
 
 - name: daily
   type: time
