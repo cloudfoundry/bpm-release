@@ -20,6 +20,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -108,16 +109,16 @@ var _ = Describe("logs", func() {
 			command = exec.Command(bpmPath, "logs", job, "-f")
 		})
 
-		It("streams the logs until it receives a SIGINT signal", func() {
+		It("streams the logs until it receives a SIGINT signal", func(ctx SpecContext) {
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).ShouldNot(HaveOccurred())
-			session.Out.Detect("Logging Line #100 to STDOUT\n")
-			session.Out.CancelDetects()
 
-			Consistently(session).ShouldNot(gexec.Exit())
+			Eventually(session.Out).WithContext(ctx).Should(gbytes.Say("Logging Line #100 to STDOUT\n"))
+			Consistently(session).WithContext(ctx).ShouldNot(gexec.Exit())
 			session.Interrupt()
-			<-session.Exited
-		})
+
+			Eventually(session).WithContext(ctx).Should(gexec.Exit())
+		}, SpecTimeout(10*time.Second))
 	})
 
 	Context("when the -n flag is specified", func() {
