@@ -145,6 +145,11 @@ Only volume paths inside the `/var/vcap/data`, and (when present) the
 `/var/vcap/store` directories are currently permitted. Specifying paths which
 are not inside this directory will cause the job to fail to start.
 
+> **Warning:** bpm will not unmount shared volumes. It is therefore the
+> author's responsibility to unmount, likely in a `post-stop` script. Special
+> care should be taken to ensure subpaths of `/var/vcap/store` are unmounted, as
+> mounted paths here may cause issues when BOSH manages persistent disks.
+
 ## `monit` Workarounds
 
 There are various `monit` quirks that bpm attempts to hide or smooth over.
