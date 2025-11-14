@@ -50,6 +50,7 @@ func DefaultSeccomp() *specs.LinuxSeccomp {
 			AllowSyscall("clock_gettime"),
 			AllowSyscall("clock_nanosleep"),
 			AllowSyscall("clone", specs.LinuxSeccompArg{Index: 0, Value: 2080505856, ValueTwo: 0, Op: specs.OpMaskedEqual}),
+			AllowSyscall("clone3"),
 			AllowSyscall("close"),
 			AllowSyscall("connect"),
 			AllowSyscall("copy_file_range"),
