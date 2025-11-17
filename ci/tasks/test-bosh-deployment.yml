@@ -1,0 +1,17 @@
+---
+platform: linux
+
+image_resource:
+  type: registry-image
+  source:
+    repository: bosh/docker-cpi
+
+inputs:
+- name: bpm-release
+- name: bosh-deployment
+
+params:
+  STEMCELL_NAME:
+
+run:
+  path: bpm-release/ci/tasks/test-bosh-deployment.sh

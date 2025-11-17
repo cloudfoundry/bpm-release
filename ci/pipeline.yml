@@ -31,6 +31,11 @@ resources:
     private_key: ((github_deploy_key_bpm-release.private_key))
     uri: git@github.com:cloudfoundry/bpm-release.git
 
+- name: bosh-deployment
+  type: git
+  source:
+    uri: https://github.com/cloudfoundry/bosh-deployment
+
 - name: weekly
   type: time
   source:
@@ -145,6 +150,17 @@ jobs:
     file: bpm-release/ci/tasks/test-unit.yml
     privileged: true
 
+- name: test-bosh-deployment
+  plan:
+  - in_parallel:
+    - get: bpm-release
+      trigger: true
+    - get: bosh-deployment
+  - task: test-bosh-deployment
+    file: bpm-release/ci/tasks/test-bosh-deployment.yml
+    privileged: true
+
+
 - name: test-acceptance-jammy
   plan:
   - in_parallel:
@@ -217,6 +233,7 @@ jobs:
     - test-acceptance-jammy
     - test-unit
     - test-upgrade
+    - test-bosh-deployment
 
 - name: release-new-patch
   serial_groups:
