@@ -15,7 +15,10 @@
 
 package specbuilder
 
-import "github.com/opencontainers/runtime-spec/specs-go"
+import (
+	"github.com/opencontainers/runtime-spec/specs-go"
+	"golang.org/x/sys/unix"
+)
 
 // Originally from
 // https://github.com/cloudfoundry/guardian/blob/master/guardiancmd/seccomp.go
@@ -49,7 +52,19 @@ func DefaultSeccomp() *specs.LinuxSeccomp {
 			AllowSyscall("clock_getres"),
 			AllowSyscall("clock_gettime"),
 			AllowSyscall("clock_nanosleep"),
-			AllowSyscall("clone", specs.LinuxSeccompArg{Index: 0, Value: 2080505856, ValueTwo: 0, Op: specs.OpMaskedEqual}),
+			AllowSyscall(
+				"clone",
+				specs.LinuxSeccompArg{
+					Index:    0,
+					Value:    unix.CLONE_NEWNS | unix.CLONE_NEWUTS | unix.CLONE_NEWIPC | unix.CLONE_NEWUSER | unix.CLONE_NEWPID | unix.CLONE_NEWNET,
+					ValueTwo: 0,
+					Op:       specs.OpMaskedEqual,
+				},
+			),
+			// clone3 cannot be restricted using a bitmask due to it using
+			// struct args. Most of the above flags above on clone can only be
+			// used when CAP_SYS_ADMIN is set, which BPM only allows when
+			// running in unsafe privileged mode.
 			AllowSyscall("clone3"),
 			AllowSyscall("close"),
 			AllowSyscall("connect"),
