@@ -25,6 +25,7 @@ import (
 // Once the variable is exported consume that directly.
 
 func DefaultSeccomp() *specs.LinuxSeccomp {
+	enosys := uint(unix.ENOSYS)
 	return &specs.LinuxSeccomp{
 		DefaultAction: specs.ActErrno,
 		Architectures: []specs.Arch{
@@ -61,11 +62,11 @@ func DefaultSeccomp() *specs.LinuxSeccomp {
 					Op:       specs.OpMaskedEqual,
 				},
 			),
-			// clone3 cannot be restricted using a bitmask due to it using
-			// struct args. Most of the above flags above on clone can only be
-			// used when CAP_SYS_ADMIN is set, which BPM only allows when
-			// running in unsafe privileged mode.
-			AllowSyscall("clone3"),
+			{
+				Names:    []string{"clone3"},
+				Action:   specs.ActErrno,
+				ErrnoRet: &enosys,
+			},
 			AllowSyscall("close"),
 			AllowSyscall("connect"),
 			AllowSyscall("copy_file_range"),
