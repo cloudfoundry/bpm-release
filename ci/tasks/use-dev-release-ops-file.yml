@@ -1,0 +1,5 @@
+- path: /releases/name=bpm
+  type: replace
+  value:
+    name: bpm
+    url: file://((local_bpm_release))
