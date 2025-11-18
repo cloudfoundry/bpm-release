@@ -160,7 +160,6 @@ jobs:
     file: bpm-release/ci/tasks/test-bosh-deployment.yml
     privileged: true
 
-
 - name: test-acceptance-jammy
   plan:
   - in_parallel:
