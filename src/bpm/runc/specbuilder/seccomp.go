@@ -24,6 +24,13 @@ import (
 // https://github.com/cloudfoundry/guardian/blob/master/guardiancmd/seccomp.go
 // Once the variable is exported consume that directly.
 
+const (
+	// See documentation for personality and sys/personality.h
+	personality_per_linux   = 0x0000
+	personality_per_linux32 = 0x0008
+	personality_query       = 0xFFFFFFFF
+)
+
 func DefaultSeccomp() *specs.LinuxSeccomp {
 	enosys := uint(unix.ENOSYS)
 	return &specs.LinuxSeccomp{
@@ -215,9 +222,9 @@ func DefaultSeccomp() *specs.LinuxSeccomp {
 			AllowSyscall("openat"),
 			AllowSyscall("openat2"),
 			AllowSyscall("pause"),
-			AllowSyscall("personality", specs.LinuxSeccompArg{Index: 0, Value: 0, ValueTwo: 0, Op: specs.OpEqualTo}),
-			AllowSyscall("personality", specs.LinuxSeccompArg{Index: 0, Value: 4294967295, ValueTwo: 0, Op: specs.OpEqualTo}),
-			AllowSyscall("personality", specs.LinuxSeccompArg{Index: 0, Value: 8, ValueTwo: 0, Op: specs.OpEqualTo}),
+			AllowSyscall("personality", specs.LinuxSeccompArg{Index: 0, Value: personality_per_linux, ValueTwo: 0, Op: specs.OpEqualTo}),
+			AllowSyscall("personality", specs.LinuxSeccompArg{Index: 0, Value: personality_query, ValueTwo: 0, Op: specs.OpEqualTo}),
+			AllowSyscall("personality", specs.LinuxSeccompArg{Index: 0, Value: personality_per_linux32, ValueTwo: 0, Op: specs.OpEqualTo}),
 			AllowSyscall("pipe"),
 			AllowSyscall("pipe2"),
 			AllowSyscall("poll"),
