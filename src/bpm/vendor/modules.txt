@@ -1,11 +1,11 @@
-# code.cloudfoundry.org/bytefmt v0.57.0
+# code.cloudfoundry.org/bytefmt v0.58.0
 ## explicit; go 1.24.0
 code.cloudfoundry.org/bytefmt
-# code.cloudfoundry.org/clock v1.54.0
+# code.cloudfoundry.org/clock v1.55.0
 ## explicit; go 1.24.0
 code.cloudfoundry.org/clock
 code.cloudfoundry.org/clock/fakeclock
-# code.cloudfoundry.org/lager/v3 v3.54.0
+# code.cloudfoundry.org/lager/v3 v3.55.0
 ## explicit; go 1.24.0
 code.cloudfoundry.org/lager/v3
 code.cloudfoundry.org/lager/v3/internal/truncate
@@ -26,7 +26,7 @@ github.com/coreos/go-systemd/v22/dbus
 # github.com/creack/pty v1.1.7
 ## explicit
 github.com/creack/pty
-# github.com/cyphar/filepath-securejoin v0.6.0
+# github.com/cyphar/filepath-securejoin v0.6.1
 ## explicit; go 1.18
 github.com/cyphar/filepath-securejoin
 github.com/cyphar/filepath-securejoin/internal/consts
