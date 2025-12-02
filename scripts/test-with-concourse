@@ -4,6 +4,6 @@ set -euo pipefail
 RELEASE_PATH="$(cd "$(dirname "$0")/.." && pwd)"
 export RELEASE_PATH
 
-FLY_TARGET=${FLY_TARGET:-ci}
+FLY_TARGET=${FLY_TARGET:-bosh}
 
-fly -t "${FLY_TARGET}" execute -p -c "${RELEASE_PATH}/ci/test-unit.yml" "$@"
+fly -t "${FLY_TARGET}" execute -p -c "${RELEASE_PATH}/ci/tasks/test-unit.yml" "$@"
