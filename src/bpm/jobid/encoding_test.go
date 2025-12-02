@@ -13,9 +13,10 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 
-package jobid
+package jobid_test
 
 import (
+	"bpm/jobid"
 	"os"
 	"regexp"
 	"testing/quick"
@@ -29,7 +30,7 @@ import (
 var _ = Describe("Job ID Codec", func() {
 	DescribeTable("encoding job IDs",
 		func(input, output string) {
-			enc := Encode(input)
+			enc := jobid.Encode(input)
 			Expect(enc).To(Equal(output))
 			Expect(validRuncID(enc)).To(BeTrue())
 		},
@@ -43,7 +44,7 @@ var _ = Describe("Job ID Codec", func() {
 
 	DescribeTable("decoding job IDs",
 		func(input, output string) {
-			dec, err := Decode(input)
+			dec, err := jobid.Decode(input)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(dec).To(Equal(output))
 		},
@@ -56,7 +57,7 @@ var _ = Describe("Job ID Codec", func() {
 
 	DescribeTable("invalid job IDs",
 		func(input string) {
-			_, err := Decode(input)
+			_, err := jobid.Decode(input)
 			Expect(err).To(HaveOccurred())
 		},
 		Entry("no prefix", "unknown"),
@@ -65,10 +66,10 @@ var _ = Describe("Job ID Codec", func() {
 
 	DescribeTable("edge cases",
 		func(input string) {
-			enc := Encode(input)
+			enc := jobid.Encode(input)
 			Expect(validRuncID(enc)).To(BeTrue())
 
-			dec, err := Decode(enc)
+			dec, err := jobid.Decode(enc)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(dec).To(Equal(input))
 		},
@@ -77,10 +78,10 @@ var _ = Describe("Job ID Codec", func() {
 
 	It("can successfully roundtrip job IDs no matter what string contents they contain", func() {
 		rt := func(name string) bool {
-			enc := Encode(name)
+			enc := jobid.Encode(name)
 			Expect(validRuncID(enc)).To(BeTrue())
 
-			dec, err := Decode(enc)
+			dec, err := jobid.Decode(enc)
 			Expect(err).NotTo(HaveOccurred())
 			return dec == name
 		}
