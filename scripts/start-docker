@@ -16,8 +16,8 @@ else
   DOCKER="sudo docker"
 fi
 
-$DOCKER pull cfbpm/bpm-ci:latest
-$DOCKER run \
+$DOCKER pull --platform linux/amd64 cfbpm/bpm-ci:latest
+$DOCKER run  --platform linux/amd64 \
   --privileged \
   -v  "${RELEASE_PATH}:/bpm" \
   -it cfbpm/bpm-ci:latest \
