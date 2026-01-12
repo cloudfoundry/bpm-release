@@ -47,7 +47,8 @@ var _ = Describe("Mount with Symlink Resolution", func() {
 	})
 
 	AfterEach(func() {
-		os.RemoveAll(tempDir)
+		err := os.RemoveAll(tempDir)
+		Expect(err).NotTo(HaveOccurred())
 	})
 
 	Context("when mounting a symlinked path", func() {
