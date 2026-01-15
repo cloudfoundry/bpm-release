@@ -1,0 +1,57 @@
+name: bpm
+version: 1.4.24
+commit_hash: 45432d26
+uncommitted_changes: false
+jobs:
+- name: bpm
+  version: a63c94595b94354acf14f69c961cf8b76d9bd3b50579ce88c6367191a3ecc981
+  fingerprint: a63c94595b94354acf14f69c961cf8b76d9bd3b50579ce88c6367191a3ecc981
+  sha1: sha256:49f1e36c1cc5095dd3c613a04689d7b360d7a97f40a653d3863d5ee6cbaf49ae
+  packages:
+  - bpm
+- name: test-errand
+  version: 4c6e1d3a1ca2e6ede0d582404f8b90d5a503748ad714ca5f84a87bbe6a6ae42a
+  fingerprint: 4c6e1d3a1ca2e6ede0d582404f8b90d5a503748ad714ca5f84a87bbe6a6ae42a
+  sha1: sha256:1139a447f51a770d8b69b3520217101a7cc4cbd32370ba9dba676ef15230ff34
+  packages: []
+- name: test-server
+  version: e7fbc065c06eac6a30f7b9b9d364c7ecd57891d8909c91b702a1f8fb509e02c4
+  fingerprint: e7fbc065c06eac6a30f7b9b9d364c7ecd57891d8909c91b702a1f8fb509e02c4
+  sha1: sha256:9f3a219fd51261aaf691bbed9c04c2adccb3b78f43611e3a8e2d49399b88a631
+  packages:
+  - test-server
+packages:
+- name: bpm
+  version: 55173ca5b1f34dc0d62f9eec01bf847639d4b6d3f5858b59a39eb1a85bd810c2
+  fingerprint: 55173ca5b1f34dc0d62f9eec01bf847639d4b6d3f5858b59a39eb1a85bd810c2
+  sha1: sha256:25613b9a6c7ee044f434eb2d3eddaec5a670ffa03901fb083e4a6ae2e7228d85
+  dependencies:
+  - golang-1-linux
+  - bpm-runc
+  - tini
+- name: bpm-runc
+  version: 74fa21c5d73f80e34ca2bb0263d48a0e60e9f67439bbbd3b6bf6bec0fd9760ad
+  fingerprint: 74fa21c5d73f80e34ca2bb0263d48a0e60e9f67439bbbd3b6bf6bec0fd9760ad
+  sha1: sha256:be7a613869830d98a29096efd36c33e280bf9df78e95519884b59560e8564521
+  dependencies:
+  - golang-1-linux
+- name: golang-1-linux
+  version: 55ba20c67a47d3cee41903d151c5d5a6f995badc027ac767a1a020e2efb2be9b
+  fingerprint: 55ba20c67a47d3cee41903d151c5d5a6f995badc027ac767a1a020e2efb2be9b
+  sha1: sha256:f06101aef0079c3deb519cc5f0fd4b75e6252f789fab6ed29caab09de17671a3
+  dependencies: []
+- name: test-server
+  version: 279f49b7e41a5e6dcdd083ecf7d91b40bdec93602f81132dc2f36802fd1dccc1
+  fingerprint: 279f49b7e41a5e6dcdd083ecf7d91b40bdec93602f81132dc2f36802fd1dccc1
+  sha1: sha256:dfa6f32039600f3cd78bf9e712f8e30197a60da46a6f3e97ab078b8e45b50343
+  dependencies:
+  - golang-1-linux
+- name: tini
+  version: bf4b98c300b214d8b83160db11b32f596da5bc236c22ae0c95fea75e7b3c4e05
+  fingerprint: bf4b98c300b214d8b83160db11b32f596da5bc236c22ae0c95fea75e7b3c4e05
+  sha1: sha256:81329ddef8babe27898c0ec3f34dcc6bfc65df82612b9e2206bb1c301540aeb4
+  dependencies: []
+license:
+  version: 39d18ab677b1df47f1d94aa01fbc63c16a34bbd9090c94282d8f3040a4c6cc4c
+  fingerprint: 39d18ab677b1df47f1d94aa01fbc63c16a34bbd9090c94282d8f3040a4c6cc4c
+  sha1: sha256:ff564ca72e714d99215f8a6984464eea52ecf9f5515607a469ec1da0ea655354
