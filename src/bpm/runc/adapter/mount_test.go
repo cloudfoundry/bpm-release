@@ -22,14 +22,14 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	. "bpm/runc/adapter"
+	"bpm/runc/adapter"
 )
 
 var _ = Describe("Mount with Symlink Resolution", func() {
 	var (
-		tempDir     string
-		realDir     string
-		symlinkPath string
+		tempDir          string
+		realDir          string
+		symlinkToRealDir string
 	)
 
 	BeforeEach(func() {
@@ -41,8 +41,8 @@ var _ = Describe("Mount with Symlink Resolution", func() {
 		err = os.Mkdir(realDir, 0755)
 		Expect(err).NotTo(HaveOccurred())
 
-		symlinkPath = filepath.Join(tempDir, "symlink")
-		err = os.Symlink(realDir, symlinkPath)
+		symlinkToRealDir = filepath.Join(tempDir, "symlink")
+		err = os.Symlink(realDir, symlinkToRealDir)
 		Expect(err).NotTo(HaveOccurred())
 	})
 
@@ -53,7 +53,7 @@ var _ = Describe("Mount with Symlink Resolution", func() {
 
 	Context("when mounting a symlinked path", func() {
 		It("resolves the symlink to the real path", func() {
-			mount := Mount(symlinkPath, "/container/path")
+			mount := adapter.Mount(symlinkToRealDir, "/container/path")
 
 			Expect(mount.Source).To(Equal(realDir))
 			Expect(mount.Destination).To(Equal("/container/path"))
@@ -63,7 +63,7 @@ var _ = Describe("Mount with Symlink Resolution", func() {
 
 	Context("when mounting a non-symlinked path", func() {
 		It("uses the path as-is", func() {
-			mount := Mount(realDir, "/container/path")
+			mount := adapter.Mount(realDir, "/container/path")
 
 			Expect(mount.Source).To(Equal(realDir))
 			Expect(mount.Destination).To(Equal("/container/path"))
@@ -74,7 +74,7 @@ var _ = Describe("Mount with Symlink Resolution", func() {
 	Context("when the symlink path does not exist", func() {
 		It("uses the original path", func() {
 			nonExistentPath := filepath.Join(tempDir, "does-not-exist")
-			mount := Mount(nonExistentPath, "/container/path")
+			mount := adapter.Mount(nonExistentPath, "/container/path")
 
 			Expect(mount.Source).To(Equal(nonExistentPath))
 			Expect(mount.Destination).To(Equal("/container/path"))
@@ -83,13 +83,13 @@ var _ = Describe("Mount with Symlink Resolution", func() {
 
 	Context("with IdentityMount", func() {
 		It("resolves symlinks in both source and destination", func() {
-			mount := IdentityMount(symlinkPath)
+			mount := adapter.IdentityMount(symlinkToRealDir)
 
 			// Source should be resolved, but destination stays as-is
 			// because IdentityMount(path) calls Mount(path, path)
 			// and the destination is not resolved
 			Expect(mount.Source).To(Equal(realDir))
-			Expect(mount.Destination).To(Equal(symlinkPath))
+			Expect(mount.Destination).To(Equal(symlinkToRealDir))
 		})
 	})
 })
