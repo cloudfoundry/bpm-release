@@ -16,6 +16,7 @@
 package adapter
 
 import (
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -34,9 +35,15 @@ func Mount(from, to string, opts ...MountOption) specs.Mount {
 		opt(mountOpts)
 	}
 
+	// Resolve symlinks in source path for Noble stemcell compatibility
+	resolvedFrom := from
+	if resolved, err := filepath.EvalSymlinks(from); err == nil {
+		resolvedFrom = resolved
+	}
+
 	return specs.Mount{
 		Destination: to,
-		Source:      from,
+		Source:      resolvedFrom,
 		Type:        "bind",
 		Options:     mountOpts.opts(),
 	}
