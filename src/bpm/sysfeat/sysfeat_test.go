@@ -50,11 +50,13 @@ var _ = Describe("Features", func() {
 
 		Context("when BPM_DISABLE_SECCOMP_DETECTION is set", func() {
 			BeforeEach(func() {
-				os.Setenv("BPM_DISABLE_SECCOMP_DETECTION", "1")
+				err := os.Setenv("BPM_DISABLE_SECCOMP_DETECTION", "1")
+				Expect(err).NotTo(HaveOccurred())
 			})
 
 			AfterEach(func() {
-				os.Unsetenv("BPM_DISABLE_SECCOMP_DETECTION")
+				err := os.Unsetenv("BPM_DISABLE_SECCOMP_DETECTION")
+				Expect(err).NotTo(HaveOccurred())
 			})
 
 			It("forces SeccompSupported to true", func() {
