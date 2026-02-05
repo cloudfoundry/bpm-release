@@ -65,7 +65,7 @@ var _ = Describe("SpecBuilder", func() {
 		It("does not affect capabilities", func() {
 			// Add some capabilities
 			specbuilder.Apply(spec, specbuilder.WithCapabilities([]string{"CAP_NET_BIND_SERVICE"}))
-			
+
 			originalCaps := spec.Process.Capabilities
 
 			specbuilder.Apply(spec, specbuilder.WithoutSeccomp())
