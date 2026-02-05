@@ -114,8 +114,8 @@ func seccompSupported() bool {
 	}
 
 	// Check if Go binary architecture matches kernel architecture
-	goArch := runtime.GOARCH          // e.g., "amd64"
-	kernelArch := getKernelArch()     // e.g., "x86_64"
+	goArch := runtime.GOARCH      // e.g., "amd64"
+	kernelArch := getKernelArch() // e.g., "x86_64"
 
 	expectedKernelArch, ok := goArchToKernelArch[goArch]
 	if !ok {
