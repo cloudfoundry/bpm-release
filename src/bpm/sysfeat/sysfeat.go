@@ -103,9 +103,21 @@ func swapLimitSupportedCgroup1() (bool, error) {
 // current environment. It returns false when running in a container with
 // architecture emulation (e.g., x86_64 binaries on ARM64 kernels).
 func seccompSupported() bool {
+	// Allow override to force seccomp disabled in emulated environments
+	if os.Getenv("BPM_FORCE_DISABLE_SECCOMP") != "" {
+		return false
+	}
+
 	// Allow override to force seccomp enabled even in emulated environments
 	if os.Getenv("BPM_DISABLE_SECCOMP_DETECTION") != "" {
 		return true
+	}
+
+	// Check if running under Rosetta emulation on Apple Silicon
+	// This is the most reliable detection because Rosetta intercepts uname
+	// and lies to x86 binaries about the kernel architecture.
+	if isRunningUnderRosetta() {
+		return false
 	}
 
 	// If not in a container, seccomp works normally
@@ -130,6 +142,30 @@ func seccompSupported() bool {
 	}
 
 	return true
+}
+
+// isRunningUnderRosetta detects if we're running under Apple's Rosetta
+// translation layer on Apple Silicon. Rosetta intercepts the uname syscall
+// and returns "x86_64" to x86 binaries even though the kernel is actually
+// ARM64 (aarch64). This breaks seccomp BPF filters because they're
+// architecture-specific.
+func isRunningUnderRosetta() bool {
+	// Check if rosetta is registered in binfmt_misc
+	// This is a reliable indicator that we're on a system with Rosetta
+	if _, err := os.Stat("/proc/sys/fs/binfmt_misc/rosetta"); err == nil {
+		return true
+	}
+
+	// Check /proc/cpuinfo for VirtualApple vendor
+	// This indicates Apple Silicon virtualization/emulation
+	data, err := os.ReadFile("/proc/cpuinfo")
+	if err == nil {
+		if strings.Contains(string(data), "VirtualApple") {
+			return true
+		}
+	}
+
+	return false
 }
 
 // isRunningInContainer checks whether the current process is running inside
