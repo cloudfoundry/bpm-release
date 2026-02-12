@@ -396,11 +396,8 @@ jobs:
             credentials_source: static
             json_key: '((gcp_json_key))'
   - put: bpm-release
-    get_params:
-      submodules: none
     params:
       repository: release_repo
-      submodules: none
       rebase: true
       tag: release_metadata/tag-name
   - put: github-release
@@ -418,11 +415,8 @@ jobs:
     params:
       DEV: true
   - put: bpm-release
-    get_params:
-      submodules: none
     params:
       repository: release-repo
-      submodules: none
       rebase: true
   - put: release-notes
     params:
