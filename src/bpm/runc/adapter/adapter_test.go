@@ -816,6 +816,90 @@ var _ = Describe("RuncAdapter", func() {
 			})
 		})
 
+		Context("when seccomp is not supported", func() {
+			BeforeEach(func() {
+				features.SeccompSupported = false
+				identityGlob := func(pattern string) ([]string, error) {
+					return []string{pattern}, nil
+				}
+				runcAdapter = NewRuncAdapter(features, identityGlob, mountSharer.MakeShared, volumeLocker)
+			})
+
+			It("disables seccomp in the spec", func() {
+				spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(spec.Linux.Seccomp).To(BeNil())
+			})
+
+			It("does not affect other security features", func() {
+				spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
+				Expect(err).NotTo(HaveOccurred())
+
+				// User should still be the unprivileged user
+				Expect(spec.Process.User).To(Equal(user))
+
+				// NoNewPrivileges should still be true
+				Expect(spec.Process.NoNewPrivileges).To(BeTrue())
+
+				// Masked and readonly paths should still be set
+				Expect(spec.Linux.MaskedPaths).NotTo(BeEmpty())
+				Expect(spec.Linux.ReadonlyPaths).NotTo(BeEmpty())
+
+				// Capabilities should still be limited
+				Expect(spec.Process.Capabilities.Bounding).To(Equal([]string{"CAP_TAIN", "CAP_SAICIN"}))
+
+				// Mounts should still have nosuid
+				var hasMountWithNosuid bool
+				for _, mount := range spec.Mounts {
+					for _, opt := range mount.Options {
+						if opt == "nosuid" {
+							hasMountWithNosuid = true
+							break
+						}
+					}
+				}
+				Expect(hasMountWithNosuid).To(BeTrue())
+			})
+
+			Context("when privileged mode is also enabled", func() {
+				BeforeEach(func() {
+					procCfg.Unsafe = &config.Unsafe{Privileged: true}
+				})
+
+				It("privileged mode takes precedence", func() {
+					spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
+					Expect(err).NotTo(HaveOccurred())
+
+					// Seccomp should still be nil
+					Expect(spec.Linux.Seccomp).To(BeNil())
+
+					// But other privileged settings should apply
+					Expect(spec.Process.User).To(Equal(specs.User{UID: 0, GID: 0}))
+					Expect(spec.Process.NoNewPrivileges).To(BeFalse())
+					Expect(spec.Linux.MaskedPaths).To(Equal([]string{}))
+					Expect(spec.Linux.ReadonlyPaths).To(Equal([]string{}))
+				})
+			})
+		})
+
+		Context("when seccomp is supported", func() {
+			BeforeEach(func() {
+				features.SeccompSupported = true
+				identityGlob := func(pattern string) ([]string, error) {
+					return []string{pattern}, nil
+				}
+				runcAdapter = NewRuncAdapter(features, identityGlob, mountSharer.MakeShared, volumeLocker)
+			})
+
+			It("includes seccomp in the spec", func() {
+				spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(spec.Linux.Seccomp).NotTo(BeNil())
+				Expect(spec.Linux.Seccomp.Architectures).NotTo(BeEmpty())
+				Expect(spec.Linux.Seccomp.Syscalls).NotTo(BeEmpty())
+			})
+		})
+
 		Context("when the user requests a privileged container", func() {
 			BeforeEach(func() {
 				procCfg.Unsafe = &config.Unsafe{Privileged: true}
