@@ -30,27 +30,29 @@ source /var/vcap/packages/golang-1-linux/bosh/compile.env
 
 RUNC_VERSION="$(ls runc/runc-*.tar.xz | sed 's/runc\/runc-//' | sed 's/.tar.xz//')"
 
-PKG_CONFIG_VERSION=0.29.2
+PKGCONF_VERSION="$(ls pkgconf/pkgconf-*.tar.gz | sed 's|pkgconf/pkgconf-||' | sed 's|.tar.gz||')"
 PKG_CONFIG_PREFIX="$(mktemp -d)"
 
-GPERF_VERSION=3.1
+GPERF_VERSION="$(ls gperf/gperf-*.tar.gz | sed 's|gperf/gperf-||' | sed 's|.tar.gz||')"
 GPERF_PREFIX="${BOSH_INSTALL_TARGET}/gperf"
 
 LIBSECCOMP_PREFIX="${BOSH_INSTALL_TARGET}/lib/libseccomp"
 LIBSECCOMP_RUNTIME_PATH=/var/vcap/packages/bpm/lib/libseccomp/lib
-LIBSECCOMP_VERSION=2.5.1
+LIBSECCOMP_VERSION="$(ls libseccomp/libseccomp-*.tar.gz | sed 's|libseccomp/libseccomp-||' | sed 's|.tar.gz||')"
 
 RUNC_PACKAGE_PATH=github.com/opencontainers/runc
 
-# compile pkg-config
+# compile pkgconf
 (
   set -eu
 
-  tar xf "pkg-config/pkg-config-${PKG_CONFIG_VERSION}.tar.gz"
-  cd "pkg-config-${PKG_CONFIG_VERSION}"
-  ./configure --prefix="${PKG_CONFIG_PREFIX}" --with-internal-glib
+  tar xf "pkgconf/pkgconf-${PKGCONF_VERSION}.tar.gz"
+  cd "pkgconf-pkgconf-${PKGCONF_VERSION}"
+  ./autogen.sh
+  ./configure --prefix="${PKG_CONFIG_PREFIX}"
   make
   make install prefix="${PKG_CONFIG_PREFIX}"
+  ln -sf pkgconf "${PKG_CONFIG_PREFIX}/bin/pkg-config"
 )
 
 # compile gperf

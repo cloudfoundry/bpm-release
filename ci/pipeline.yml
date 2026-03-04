@@ -425,12 +425,14 @@ jobs:
 - name: bump-deps
   public: true
   plan:
-    - get: weekly
-      trigger: true
-    - get: bpm-ci-registry-image
-    - get: bpm-release
-    - get: golang-release
-    - task: bump-deps
+    - in_parallel:
+      - get: weekly
+        trigger: true
+      - get: bpm-ci-registry-image
+      - get: bpm-release
+      - get: golang-release
+      - get: boshlite-noble-stemcell
+    - task: bump-go-deps
       file: golang-release/ci/tasks/shared/bump-deps.yml
       input_mapping:
         input_repo: bpm-release
@@ -452,11 +454,75 @@ jobs:
               credentials_source: static
               json_key: '((gcp_json_key))'
       file: bpm-release/ci/tasks/bump-runc-package.yml
+    - task: bump-gperf-package
+      image: bpm-ci-registry-image
+      input_mapping:
+        bpm-release: bumped-bpm-release
+      output_mapping:
+        bpm-release: bumped-bpm-release
+      params:
+        BOSH_PRIVATE_CONFIG: |
+          ---
+          blobstore:
+            options:
+              credentials_source: static
+              json_key: '((gcp_json_key))'
+      file: bpm-release/ci/tasks/bump-gperf-package.yml
+    - task: bump-libseccomp-package
+      image: bpm-ci-registry-image
+      input_mapping:
+        bpm-release: bumped-bpm-release
+      output_mapping:
+        bpm-release: bumped-bpm-release
+      params:
+        BOSH_PRIVATE_CONFIG: |
+          ---
+          blobstore:
+            options:
+              credentials_source: static
+              json_key: '((gcp_json_key))'
+      file: bpm-release/ci/tasks/bump-libseccomp-package.yml
+    - task: bump-pkgconf-package
+      image: bpm-ci-registry-image
+      input_mapping:
+        bpm-release: bumped-bpm-release
+      output_mapping:
+        bpm-release: bumped-bpm-release
+      params:
+        BOSH_PRIVATE_CONFIG: |
+          ---
+          blobstore:
+            options:
+              credentials_source: static
+              json_key: '((gcp_json_key))'
+      file: bpm-release/ci/tasks/bump-pkgconf-package.yml
+    - task: bump-tini-package
+      image: bpm-ci-registry-image
+      input_mapping:
+        bpm-release: bumped-bpm-release
+      output_mapping:
+        bpm-release: bumped-bpm-release
+      params:
+        BOSH_PRIVATE_CONFIG: |
+          ---
+          blobstore:
+            options:
+              credentials_source: static
+              json_key: '((gcp_json_key))'
+      file: bpm-release/ci/tasks/bump-tini-package.yml
     - task: test-unit
       file: bpm-release/ci/tasks/test-unit.yml
       privileged: true
       input_mapping:
         bpm-release: bumped-bpm-release
+    - task: test-acceptance
+      file: bpm-release/ci/tasks/test-acceptance.yml
+      params:
+        STEMCELL_NAME: ubuntu-noble
+      input_mapping:
+        bpm-release: bumped-bpm-release
+        bosh-stemcell: boshlite-noble-stemcell
+      privileged: true
     - put: bpm-release
       params:
         repository: bumped-bpm-release

@@ -23,9 +23,9 @@ if ! $(grep -q -F "runc-${runc_version_go_mod}" config/blobs.yml); then
 fi
 
 if [ "$(git status --porcelain)" != "" ]; then
-  git status
   git config --global user.email "$GIT_USER_EMAIL"
   git config --global user.name "$GIT_USER_NAME"
   git add .
+  git status
   git commit -m "Update runc to ${runc_version_go_mod}"
 fi
