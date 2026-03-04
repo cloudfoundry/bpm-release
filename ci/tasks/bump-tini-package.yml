@@ -1,0 +1,15 @@
+platform: linux
+
+inputs:
+- name: bpm-release
+
+outputs:
+- name: bpm-release
+
+run:
+  path: bpm-release/ci/tasks/bump-tini-package.sh
+
+params:
+  BOSH_PRIVATE_CONFIG:
+  GIT_USER_EMAIL: bots@cloudfoundry.org
+  GIT_USER_NAME: CI Bot

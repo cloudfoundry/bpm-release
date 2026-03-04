@@ -5,7 +5,10 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update \
     && apt-get install -y \
+        autoconf \
+        automake \
         dnsutils \
+        libtool \
         netcat-openbsd \
         pkg-config \
         strace \
