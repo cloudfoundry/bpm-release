@@ -1,4 +1,4 @@
-FROM bosh/golang-release
+FROM ghcr.io/cloudfoundry/bosh/golang-release
 MAINTAINER CF BPM <cf-bpm@pivotal.io>
 
 ENV DEBIAN_FRONTEND=noninteractive

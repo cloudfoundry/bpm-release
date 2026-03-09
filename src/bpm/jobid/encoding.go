@@ -37,7 +37,7 @@ func Encode(name string) string {
 	for i := 0; i < len(name); i++ {
 		chr := name[i]
 		if needsEscaping(chr) {
-			id.WriteString(fmt.Sprintf(".%.2x", chr))
+			id.WriteString(fmt.Sprintf(".%.2x", chr)) //nolint:staticcheck
 		} else {
 			id.WriteByte(chr)
 		}
