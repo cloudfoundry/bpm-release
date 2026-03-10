@@ -33,6 +33,7 @@ import (
 	"bpm/bosh"
 	"bpm/config"
 	"bpm/jobid"
+	"bpm/sysfeat"
 )
 
 var _ = Describe("resource limits", func() {
@@ -114,7 +115,12 @@ var _ = Describe("resource limits", func() {
 		}
 
 		It("gets OOMed when it exceeds its memory limit", func() {
-			GinkgoWriter.Printf("If this test fails, then make sure you have enabled swap accounting! Details are in the README.")
+			features, err := sysfeat.Fetch()
+			Expect(err).NotTo(HaveOccurred())
+
+			if !features.SwapLimitSupported {
+				Skip("Swap accounting is not enabled on this system. Enable it with swapaccount=1 kernel parameter.")
+			}
 
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
