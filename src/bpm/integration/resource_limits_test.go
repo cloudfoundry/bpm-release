@@ -16,13 +16,10 @@
 package integration_test
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -82,60 +79,6 @@ var _ = Describe("resource limits", func() {
 		Expect(os.RemoveAll(boshRoot)).To(Succeed())
 	})
 
-	Context("memory", func() {
-		BeforeEach(func() {
-			cfg = newJobConfig(job, memoryLeakBash)
-			limit := "16M"
-			cfg.Processes[0].Limits = &config.Limits{Memory: &limit}
-		})
-
-		streamOOMEvents := func(stdout io.Reader) chan event {
-			oomEvents := make(chan event)
-			decoder := json.NewDecoder(stdout)
-
-			go func() {
-				defer GinkgoRecover()
-				defer close(oomEvents)
-
-				for {
-					var actualEvent event
-					if err := decoder.Decode(&actualEvent); err != nil {
-						return
-					}
-
-					if actualEvent.Type == "oom" {
-						oomEvents <- actualEvent
-					}
-					time.Sleep(100 * time.Millisecond)
-				}
-			}()
-
-			return oomEvents
-		}
-
-		It("gets OOMed when it exceeds its memory limit", func() {
-			GinkgoWriter.Printf("If this test fails, then make sure you have enabled swap accounting! Details are in the README.")
-
-			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
-			Expect(err).NotTo(HaveOccurred())
-			<-session.Exited
-			Expect(session).To(gexec.Exit(0))
-			Eventually(func() specs.ContainerState { return runcState(runcRoot, containerID).Status }).Should(Equal(specs.StateRunning))
-
-			eventsCmd := runcCommand(runcRoot, "events", containerID)
-			stdout, err := eventsCmd.StdoutPipe()
-			Expect(err).NotTo(HaveOccurred())
-
-			oomEventsChan := streamOOMEvents(stdout)
-			Expect(eventsCmd.Start()).To(Succeed())
-
-			Expect(runcCommand(runcRoot, "kill", containerID).Run()).To(Succeed())
-			Eventually(oomEventsChan).Should(Receive())
-			Expect(eventsCmd.Process.Kill()).To(Succeed())
-			Eventually(oomEventsChan).Should(BeClosed())
-		})
-	})
-
 	Context("open files", func() {
 		BeforeEach(func() {
 			cfg = newJobConfig(job, fileLeakBash(boshEnv.DataDir(job).Internal()))
@@ -173,8 +116,3 @@ var _ = Describe("resource limits", func() {
 		})
 	})
 })
-
-type event struct {
-	Type      string                 `json:"type"`
-	Arbitrary map[string]interface{} `json:",inline"`
-}

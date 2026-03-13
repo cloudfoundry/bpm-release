@@ -7,8 +7,9 @@ processes:
   env:
     BPM: SWEET
   limits:
-    memory: 1G
-    open_files: 1024
+    memory: 743M
+    open_files: 2444
+    processes: 503
   ephemeral_disk: true
   persistent_disk: true
   additional_volumes:
@@ -25,3 +26,16 @@ processes:
     - --ignore-signals
   env:
     BPM: CONTAINED
+
+- name: privileged-observer
+  executable: /var/vcap/packages/test-server/bin/test-server
+  args:
+    - --port
+    - 1339
+  env:
+    BPM: OBSERVER
+  unsafe:
+    privileged: true
+    host_pid_namespace: true
+    unrestricted_volumes:
+    - path: /sys/fs/cgroup

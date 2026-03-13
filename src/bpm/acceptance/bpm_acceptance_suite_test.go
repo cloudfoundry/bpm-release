@@ -26,8 +26,9 @@ import (
 )
 
 var (
-	client   *http.Client
-	agentURI = flag.String("agent-uri", "", "HTTP address of the test-server")
+	client      *http.Client
+	agentURI    = flag.String("agent-uri", "", "HTTP address of the test-server")
+	observerURI = flag.String("observer-uri", "", "HTTP address of the privileged-observer")
 )
 
 func TestBPMAcceptance(t *testing.T) {

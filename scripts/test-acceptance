@@ -8,7 +8,7 @@ export RELEASE_PATH
 
 . start-bosh
 
-source /tmp/local-bosh/director/env
+source /tmp/local-bosh/director/bosh-env
 
 export BOSH_DEPLOYMENT=bpm
 export BOSH_NON_INTERACTIVE=true
