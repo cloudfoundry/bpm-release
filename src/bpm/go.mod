@@ -3,9 +3,9 @@ module bpm
 go 1.25.0
 
 require (
-	code.cloudfoundry.org/bytefmt v0.64.0
-	code.cloudfoundry.org/clock v1.61.0
-	code.cloudfoundry.org/lager/v3 v3.61.0
+	code.cloudfoundry.org/bytefmt v0.66.0
+	code.cloudfoundry.org/clock v1.63.0
+	code.cloudfoundry.org/lager/v3 v3.63.0
 	github.com/cyphar/filepath-securejoin v0.6.1 // indirect
 	github.com/godbus/dbus/v5 v5.2.2 // indirect
 	github.com/kr/pty v1.1.8
@@ -15,8 +15,8 @@ require (
 	github.com/opencontainers/runtime-spec v1.3.0
 	github.com/satori/go.uuid v1.2.0
 	github.com/spf13/cobra v1.10.2
-	golang.org/x/net v0.50.0 // indirect
-	golang.org/x/sys v0.41.0
+	golang.org/x/net v0.52.0 // indirect
+	golang.org/x/sys v0.42.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -34,17 +34,17 @@ require (
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
-	github.com/google/pprof v0.0.0-20260202012954-cb029daf43ef // indirect
+	github.com/google/pprof v0.0.0-20260302011040-a15ffb7f9dcc // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/moby/sys/userns v0.1.0 // indirect
 	github.com/openzipkin/zipkin-go v0.4.3 // indirect
 	github.com/sirupsen/logrus v1.9.4 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/mod v0.33.0 // indirect
-	golang.org/x/sync v0.19.0 // indirect
-	golang.org/x/text v0.34.0 // indirect
-	golang.org/x/tools v0.42.0 // indirect
+	golang.org/x/mod v0.34.0 // indirect
+	golang.org/x/sync v0.20.0 // indirect
+	golang.org/x/text v0.35.0 // indirect
+	golang.org/x/tools v0.43.0 // indirect
 )
 
 exclude github.com/willf/bitset v1.2.0
