@@ -60,6 +60,9 @@ func main() {
 	http.HandleFunc("/whoami", handlers.Whoami)
 	http.HandleFunc("/env", handlers.Env)
 	http.HandleFunc("/syslog", handlers.Syslog)
+	http.HandleFunc("/resource-limits", handlers.ResourceLimits)
+	http.HandleFunc("/cgroup-limits", handlers.CgroupLimits)
+	http.HandleFunc("/spawn-processes", handlers.SpawnProcesses)
 
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals)

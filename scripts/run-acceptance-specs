@@ -16,5 +16,7 @@ agent_port=1337
 "${RELEASE_PATH}/scripts/go-generate"
 
 pushd "${RELEASE_PATH}/src/bpm/acceptance" > /dev/null
-  go run github.com/onsi/ginkgo/v2/ginkgo -r -p --race --randomize-all -- --agent-uri="http://${AGENT_HOST}:${agent_port}"
+  go run github.com/onsi/ginkgo/v2/ginkgo -r -p --race --randomize-all -- \
+    --agent-uri="http://${AGENT_HOST}:${agent_port}" \
+    --observer-uri="http://${AGENT_HOST}:1339"
 popd > /dev/null

@@ -17,6 +17,7 @@ package bpm_acceptance_test
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -256,7 +257,88 @@ var _ = Describe("BpmAcceptance", func() {
 
 		Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	})
+
+	Context("resource limits", func() {
+		It("enforces the configured open_files limit", func() {
+			resp, err := client.Get(fmt.Sprintf("%s/resource-limits", *agentURI))
+			Expect(err).NotTo(HaveOccurred())
+			defer resp.Body.Close() //nolint:errcheck
+
+			Expect(resp.StatusCode).To(Equal(http.StatusOK))
+
+			var limits struct {
+				OpenFiles string `json:"open_files"`
+			}
+			Expect(json.NewDecoder(resp.Body).Decode(&limits)).To(Succeed())
+
+			Expect(limits.OpenFiles).To(Equal("2444"), "RLIMIT_NOFILE should match bpm.yml open_files: 2444")
+		})
+	})
 })
+
+var _ = Describe("CgroupLimits", func() {
+	BeforeEach(func() {
+		Expect(*observerURI).NotTo(BeEmpty(), "-observer-uri must be provided")
+	})
+
+	It("sets the correct memory limit on test-server", func() {
+		limits := getCgroupLimits("test-server")
+		// 743M = 743 * 1024 * 1024 = 779091968
+		Expect(limits.MemoryMax).To(Equal("779091968"),
+			"memory cgroup limit should match bpm.yml memory: 743M (cgroup_dir: %s)", limits.CgroupDir)
+	})
+
+	It("sets the correct pids limit on test-server", func() {
+		limits := getCgroupLimits("test-server")
+		Expect(limits.PidsMax).To(Equal("503"),
+			"pids cgroup limit should match bpm.yml processes: 503 (cgroup_dir: %s)", limits.CgroupDir)
+	})
+})
+
+var _ = Describe("PidLimit", func() {
+	BeforeEach(func() {
+		Expect(*agentURI).NotTo(BeEmpty(), "-agent-uri must be provided")
+	})
+
+	It("prevents the process from exceeding its pid limit", func() {
+		resp, err := client.Get(fmt.Sprintf("%s/", *agentURI))
+		Expect(err).NotTo(HaveOccurred())
+		resp.Body.Close() //nolint:errcheck
+		Expect(resp.StatusCode).To(Equal(http.StatusOK))
+
+		// test-server has processes: 503. Spawning 510 sleep processes should
+		// exceed the limit. The pids cgroup controller makes fork/clone return
+		// EAGAIN without killing existing processes, so the server stays alive
+		// and reports the fork failure in the response body.
+		resp, err = client.Get(fmt.Sprintf("%s/spawn-processes?count=510", *agentURI))
+		Expect(err).NotTo(HaveOccurred())
+		body, err := io.ReadAll(resp.Body)
+		resp.Body.Close() //nolint:errcheck
+		Expect(err).NotTo(HaveOccurred())
+		Expect(string(body)).To(ContainSubstring("fork failed"),
+			"expected fork to fail due to pid limit, but server reported: %s", string(body))
+	})
+})
+
+type cgroupLimitsResult struct {
+	MemoryMax string `json:"memory_max"`
+	PidsMax   string `json:"pids_max"`
+	CgroupDir string `json:"cgroup_dir,omitempty"`
+	Error     string `json:"error,omitempty"`
+}
+
+func getCgroupLimits(process string) cgroupLimitsResult {
+	resp, err := client.Get(fmt.Sprintf("%s/cgroup-limits?process=%s", *observerURI, process))
+	ExpectWithOffset(1, err).NotTo(HaveOccurred())
+	defer resp.Body.Close() //nolint:errcheck
+
+	ExpectWithOffset(1, resp.StatusCode).To(Equal(http.StatusOK))
+
+	var result cgroupLimitsResult
+	ExpectWithOffset(1, json.NewDecoder(resp.Body).Decode(&result)).To(Succeed())
+	ExpectWithOffset(1, result.Error).To(BeEmpty(), "cgroup-limits returned error: %s", result.Error)
+	return result
+}
 
 func containsString(list []string, item string) bool {
 	for _, s := range list {

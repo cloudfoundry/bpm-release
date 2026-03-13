@@ -46,14 +46,6 @@ const effectiveCapabilitiesBash = `cat /proc/1/status | grep CapEff`
 
 const netBindServiceCapabilityBash = `echo PRIVILEGED | nc -l 127.0.0.1 80`
 
-// See https://codegolf.stackexchange.com/questions/24485/create-a-memory-leak-without-any-fork-bombs
-const memoryLeakBash = `start_memory_leak() { :(){ : $@$@;};: : ;};
-trap 'kill -9 $child' SIGTERM;
-sleep 100 &
-child=$!;
-wait $child;
-start_memory_leak`
-
 func fileLeakBash(path string) string {
 	return fmt.Sprintf(`file_dir=%s;
 echo "File descriptor limit: $(ulimit -n)" 1>&2;
