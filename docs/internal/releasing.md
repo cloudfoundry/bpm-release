@@ -6,11 +6,11 @@ with the tagged commit.
 
 ## Process
 
-Currently, creating a new release of bpm involves manually triggering a couple
-of concourse builds and creating a Github release through the web interface. The
-process is as follows:
+Creating a new release of bpm involves manually triggering a couple of
+Concourse builds and creating a GitHub release through the web interface.
+The process is as follows:
 
-1. Finish accepting any delivered or finished stories.
+1. Ensure all delivered or finished stories have been accepted.
 
 1. Trigger the appropriate concourse build to bump the semantic version
 
@@ -18,9 +18,9 @@ process is as follows:
    [semantic version resource](https://github.com/concourse/semver-resource).
    In order to increment the version, you will need to trigger the appropriate
    build to bump either the patch, minor, or major versions. All of these builds
-   can be found [here](https://ci.bosh-ecosystem.cf-app.com/teams/main/pipelines/bpm).
+   can be found [here](https://bosh.ci.cloudfoundry.org/teams/main/pipelines/bpm).
 
-1. Trigger the [create-final-release](https://ci.bosh-ecosystem.cf-app.com/teams/main/pipelines/bpm/jobs/create-final-release) build
+1. Trigger the [create-final-release](https://bosh.ci.cloudfoundry.org/teams/main/pipelines/bpm/jobs/create-final-release) build
 
    This build will perform the necessary steps to create a final BOSH release and
    tag the corresponding commit associated with the final release. Specifically it

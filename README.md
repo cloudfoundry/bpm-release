@@ -43,7 +43,7 @@ eventually become the official source of bpm documentation.
 
 ## Usage
 
-bpm has now reached 1.0 and has a stable [public API](docs/public_interface.md) 
+bpm has now reached 1.0 and has a stable [public API](docs/public_interface.md)
 which should be usable for the majority of BOSH jobs. We do not plan on making
 any more backwards incompatible changes to the public API before 2.0.
 
@@ -68,22 +68,22 @@ container:
 * Enable swap accounting by running the following commands as root:
 
     ```sh
-    # sed -i 's/GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="swapaccount=1"/' /etc/default/grub
-    # update-grub
-    # reboot
+    sed -i 's/GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="swapaccount=1"/' /etc/default/grub
+    update-grub
+    reboot
     ```
 
 * Clone this repository and submodules:
 
     ```sh
-    $ cd ~/workspace
-    $ git clone https://github.com/cloudfoundry/bpm-release.git
-    $ cd ~/workspace/bpm-release
+    cd ~/workspace
+    git clone https://github.com/cloudfoundry/bpm-release.git
+    cd ~/workspace/bpm-release
     ```
 
 * Run tests:
 
     ```sh
-    $ cd ~/workspace/bpm-release
-    $ ./scripts/test-with-docker
+    cd ~/workspace/bpm-release
+    ./scripts/test-with-docker
     ```
