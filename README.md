@@ -1,4 +1,4 @@
-# bpm [![ci.bosh-ecosystem.cf-app.com](https://ci.bosh-ecosystem.cf-app.com/api/v1/teams/main/pipelines/bpm/jobs/test-acceptance-jammy/badge)](https://ci.bosh-ecosystem.cf-app.com/teams/main/pipelines/bpm)
+# bpm
 
 > Isolated BOSH Jobs
 
@@ -77,7 +77,7 @@ container:
 
     ```sh
     $ cd ~/workspace
-    $ git clone https://github.com/pivotal-cf/bpm-release.git
+    $ git clone https://github.com/cloudfoundry/bpm-release.git
     $ cd ~/workspace/bpm-release
     ```
 

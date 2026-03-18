@@ -14,7 +14,7 @@ inputs:
 - name: bosh-stemcell
 
 params:
-  STEMCELL_NAME: ubuntu-jammy
+  STEMCELL_NAME: ubuntu-noble
 
 run:
   path: bpm-release/scripts/test-upgrade
