@@ -77,10 +77,10 @@ resources:
     versioned_file: release-notes.md
     initial_content_text: ""
 
-- name: boshlite-jammy-stemcell
+- name: boshlite-noble-stemcell
   type: bosh-io-stemcell
   source:
-    name: bosh-warden-boshlite-ubuntu-jammy-go_agent
+    name: bosh-warden-boshlite-ubuntu-noble
 
 - name: runc-linux
   type: github-release
@@ -160,19 +160,19 @@ jobs:
     file: bpm-release/ci/tasks/test-bosh-deployment.yml
     privileged: true
 
-- name: test-acceptance-jammy
+- name: test-acceptance-noble
   plan:
   - in_parallel:
     - get: bpm-release
       trigger: true
-    - get: boshlite-jammy-stemcell
+    - get: boshlite-noble-stemcell
       trigger: true
   - task: test-acceptance
     file: bpm-release/ci/tasks/test-acceptance.yml
     params:
-      STEMCELL_NAME: ubuntu-jammy
+      STEMCELL_NAME: ubuntu-noble
     input_mapping:
-      bosh-stemcell: boshlite-jammy-stemcell
+      bosh-stemcell: boshlite-noble-stemcell
     privileged: true
 
 - name: test-upgrade
@@ -180,13 +180,13 @@ jobs:
   - in_parallel:
     - get: bpm-release
       trigger: true
-    - get: boshlite-jammy-stemcell
+    - get: boshlite-noble-stemcell
       trigger: true
     - get: bpm-bosh-io
   - task: test-acceptance
     file: bpm-release/ci/tasks/test-upgrade.yml
     input_mapping:
-      bosh-stemcell: boshlite-jammy-stemcell
+      bosh-stemcell: boshlite-noble-stemcell
     privileged: true
 
 - name: bump-golang-package
@@ -197,7 +197,7 @@ jobs:
         - get: golang-release
           trigger: true
         - get: bosh-stemcell
-          resource: boshlite-jammy-stemcell
+          resource: boshlite-noble-stemcell
     - task: bump-golang-packages
       file: golang-release/ci/tasks/shared/bump-golang-package.yml
       input_mapping:
@@ -217,7 +217,7 @@ jobs:
       input_mapping:
         bpm-release: bumped-bpm-release
       params:
-        STEMCELL_NAME: ubuntu-jammy
+        STEMCELL_NAME: ubuntu-noble
       privileged: true
     - put: bpm-release
       params:
@@ -229,7 +229,7 @@ jobs:
   - get: bpm-release
     trigger: true
     passed:
-    - test-acceptance-jammy
+    - test-acceptance-noble
     - test-unit
     - test-upgrade
     - test-bosh-deployment
