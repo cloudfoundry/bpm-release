@@ -14,7 +14,7 @@ runc/runc-1.2.8.tar.xz:
   size: 1665124
   object_id: b2889dde-d4b1-475f-54d8-7213e868d03d
   sha: sha256:add42d467087ac18e43d18de7061e145d4d2b2aa3608e684c907ffd6c816d007
-tini/tini-0.18.0.tar.gz:
-  size: 32152
-  object_id: 71944e0b-7d0e-411a-5600-1ea5eeb9f433
-  sha: 27b7529ae87ea688e21d0a061b6d9299ff9362f6
+tini/tini-0.19.0.tar.gz:
+  size: 32369
+  object_id: 54fb6a60-45d2-4606-469b-b5dfba22af7e
+  sha: sha256:0fd35a7030052acd9f58948d1d900fe1e432ee37103c5561554408bdac6bbf0d
