@@ -5,7 +5,7 @@ TINI_VERSION="$(ls tini/tini-*.tar.gz | sed 's|tini/tini-||' | sed 's|.tar.gz||'
 tar xvzf "tini/tini-${TINI_VERSION}.tar.gz"
 pushd "tini-${TINI_VERSION}"
   export CFLAGS="-DPR_SET_CHILD_SUBREAPER=36 -DPR_GET_CHILD_SUBREAPER=37"
-  cmake .
+  cmake -DCMAKE_POLICY_VERSION_MINIMUM=3.5 .
   make
 
   mkdir -p "${BOSH_INSTALL_TARGET}/bin"
