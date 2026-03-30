@@ -30,12 +30,19 @@ const (
 
 	unifiedMountpoint = "/sys/fs/cgroup"
 	hybridMountpoint  = "/sys/fs/cgroup/unified"
+
+	rosettaBinfmtPath = "/proc/sys/fs/binfmt_misc/rosetta"
 )
 
 // Features contains information about what features the host system supports.
 type Features struct {
 	// Whether the system supports limiting the swap space of a process or not.
 	SwapLimitSupported bool
+	// Whether the system supports seccomp BPF filtering. This is false when
+	// Rosetta binfmt_misc translation is registered, because seccomp BPF
+	// filters are architecture-specific and will not work correctly under
+	// Rosetta's x86_64-on-ARM64 emulation.
+	SeccompSupported bool
 }
 
 func Fetch() (*Features, error) {
@@ -46,6 +53,7 @@ func Fetch() (*Features, error) {
 
 	return &Features{
 		SwapLimitSupported: supported,
+		SeccompSupported:   seccompSupported(),
 	}, nil
 }
 
@@ -78,4 +86,15 @@ func swapLimitSupportedCgroup1() (bool, error) {
 
 	_, err = os.Stat(filepath.Join(mountPoint, swapPathCgroup1))
 	return err == nil, nil
+}
+
+// seccompSupported returns false when Rosetta binfmt_misc translation is
+// registered on the host. This is the only scenario where BPM needs to
+// disable seccomp: Colima (or similar) VMs on Apple Silicon register
+// /proc/sys/fs/binfmt_misc/rosetta so that x86_64 binaries can run on the
+// ARM64 kernel, but seccomp BPF filters are architecture-specific and will
+// reject the translated syscalls.
+func seccompSupported() bool {
+	_, err := os.Stat(rosettaBinfmtPath)
+	return err != nil
 }

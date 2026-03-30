@@ -190,6 +190,17 @@ var RootUser = specs.User{
 	GID: 0,
 }
 
+// WithoutSeccomp disables seccomp filtering. This is needed when running
+// in environments where seccomp BPF filters cannot be loaded (e.g., when
+// running x86_64 binaries on an ARM64 kernel via Rosetta emulation).
+// Unlike WithPrivileged(), this only disables seccomp without granting
+// additional privileges or removing other security features.
+func WithoutSeccomp() SpecOption {
+	return func(spec *specs.Spec) {
+		spec.Linux.Seccomp = nil
+	}
+}
+
 func WithPrivileged() SpecOption {
 	return func(spec *specs.Spec) {
 		Apply(spec, WithCapabilities(DefaultPrivilegedCapabilities()))

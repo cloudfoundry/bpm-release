@@ -296,6 +296,10 @@ func (a *RuncAdapter) BuildSpec(
 		specbuilder.Apply(spec, specbuilder.WithNamespace("pid"))
 	}
 
+	if !a.features.SeccompSupported {
+		specbuilder.Apply(spec, specbuilder.WithoutSeccomp())
+	}
+
 	if procCfg.Unsafe != nil && procCfg.Unsafe.Privileged {
 		specbuilder.Apply(spec, specbuilder.WithPrivileged())
 	}
