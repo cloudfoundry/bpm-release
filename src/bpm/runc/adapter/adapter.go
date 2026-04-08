@@ -243,7 +243,19 @@ func (a *RuncAdapter) BuildSpec(
 	}
 
 	ms.addMounts(mounts)
-	boshMounts := boshMounts(bpmCfg, procCfg.EphemeralDisk, procCfg.PersistentDisk)
+
+	packageDir := bpmCfg.PackageDir()
+	dataPackageDir := bpmCfg.DataPackageDir()
+	resolvedPackageDir := resolveSymlink(packageDir.External())
+	resolvedDataPackageDir := resolveSymlink(dataPackageDir.External())
+
+	boshMounts := boshMountsWithResolvedPaths(
+		bpmCfg,
+		procCfg.EphemeralDisk,
+		procCfg.PersistentDisk,
+		resolvedPackageDir,
+		resolvedDataPackageDir,
+	)
 	ms.addMounts(boshMounts)
 	ms.addMounts(userProvidedIdentityMounts(bpmCfg, procCfg.AdditionalVolumes))
 	if procCfg.Unsafe != nil && len(procCfg.Unsafe.UnrestrictedVolumes) > 0 {
@@ -354,7 +366,19 @@ func systemIdentityMounts() []specs.Mount {
 	return mounts
 }
 
-func boshMounts(bpmCfg *config.BPMConfig, mountData, mountStore bool) []specs.Mount {
+func resolveSymlink(path string) string {
+	resolved, err := filepath.EvalSymlinks(path)
+	if err != nil {
+		return path
+	}
+	return resolved
+}
+
+func boshMountsWithResolvedPaths(
+	bpmCfg *config.BPMConfig,
+	mountData, mountStore bool,
+	resolvedPackageDir, resolvedDataPackageDir string,
+) []specs.Mount {
 	jobDir := bpmCfg.JobDir()
 	logDir := bpmCfg.LogDir()
 	tmpDir := bpmCfg.TempDir()
@@ -365,8 +389,8 @@ func boshMounts(bpmCfg *config.BPMConfig, mountData, mountStore bool) []specs.Mo
 		Mount(tmpDir.External(), "/tmp", WithRecursiveBind(), AllowWrites()),
 		Mount(tmpDir.External(), "/var/tmp", WithRecursiveBind(), AllowWrites()),
 		Mount(tmpDir.External(), tmpDir.Internal(), WithRecursiveBind(), AllowWrites()),
-		Mount(dataPackageDir.External(), dataPackageDir.Internal(), AllowExec()),
-		Mount(packageDir.External(), packageDir.Internal(), AllowExec()),
+		Mount(resolvedDataPackageDir, dataPackageDir.Internal(), AllowExec()),
+		Mount(resolvedPackageDir, packageDir.Internal(), AllowExec()),
 		Mount(jobDir.External(), jobDir.Internal(), AllowExec()),
 		Mount(logDir.External(), logDir.Internal(), WithRecursiveBind(), AllowWrites()),
 	}

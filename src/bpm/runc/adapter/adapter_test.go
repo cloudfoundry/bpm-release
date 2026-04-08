@@ -692,6 +692,65 @@ var _ = Describe("RuncAdapter", func() {
 			})
 		})
 
+		Context("when package directories are symlinks", func() {
+			var (
+				tempDir            string
+				realPackageDir     string
+				realDataPackageDir string
+				symlinkPackageDir  string
+				symlinkDataDir     string
+			)
+
+			BeforeEach(func() {
+				var err error
+				tempDir, err = os.MkdirTemp("", "bpm-adapter-test")
+				Expect(err).NotTo(HaveOccurred())
+
+				// Create real directories
+				realPackageDir = filepath.Join(tempDir, "real-packages")
+				err = os.Mkdir(realPackageDir, 0755)
+				Expect(err).NotTo(HaveOccurred())
+
+				realDataPackageDir = filepath.Join(tempDir, "real-data-packages")
+				err = os.Mkdir(realDataPackageDir, 0755)
+				Expect(err).NotTo(HaveOccurred())
+
+				// Create symlinks pointing to real directories
+				symlinkPackageDir = filepath.Join(systemRoot, "packages")
+				symlinkDataDir = filepath.Join(systemRoot, "data", "packages")
+
+				// Remove existing directories if they exist
+				_ = os.RemoveAll(symlinkPackageDir) //nolint:errcheck
+				_ = os.RemoveAll(symlinkDataDir)    //nolint:errcheck
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			AfterEach(func() {
+				err := os.RemoveAll(tempDir)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			It("resolves symlinks in package directory mounts", func() {
+				spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
+				Expect(err).NotTo(HaveOccurred())
+
+				// Verify that the mount sources use the resolved real paths, not the symlinks
+				Expect(spec.Mounts).To(HaveMount(specs.Mount{
+					Destination: "/var/vcap/packages",
+					Type:        "bind",
+					Source:      realPackageDir,
+					Options:     []string{"nodev", "nosuid", "exec", "bind", "ro"},
+				}))
+
+				Expect(spec.Mounts).To(HaveMount(specs.Mount{
+					Destination: "/var/vcap/data/packages",
+					Type:        "bind",
+					Source:      realDataPackageDir,
+					Options:     []string{"nodev", "nosuid", "exec", "bind", "ro"},
+				}))
+			})
+		})
+
 		Context("when limits are provided", func() {
 			BeforeEach(func() {
 				procCfg.Limits = &config.Limits{}
