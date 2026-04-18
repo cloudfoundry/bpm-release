@@ -1,11 +1,11 @@
-# code.cloudfoundry.org/bytefmt v0.68.0
+# code.cloudfoundry.org/bytefmt v0.69.0
 ## explicit; go 1.25.0
 code.cloudfoundry.org/bytefmt
-# code.cloudfoundry.org/clock v1.65.0
+# code.cloudfoundry.org/clock v1.66.0
 ## explicit; go 1.25.0
 code.cloudfoundry.org/clock
 code.cloudfoundry.org/clock/fakeclock
-# code.cloudfoundry.org/lager/v3 v3.65.0
+# code.cloudfoundry.org/lager/v3 v3.66.0
 ## explicit; go 1.25.0
 code.cloudfoundry.org/lager/v3
 code.cloudfoundry.org/lager/v3/internal/truncate
