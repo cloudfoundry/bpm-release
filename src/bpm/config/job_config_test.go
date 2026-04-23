@@ -43,6 +43,7 @@ var _ = Describe("Config", func() {
 
 			expectedMemoryLimit := "100G"
 			expectedOpenFilesLimit := uint64(100)
+			expectedCoreDumpLimit := uint64(1073741824)
 
 			Expect(cfg.Processes).To(HaveLen(3))
 
@@ -53,6 +54,7 @@ var _ = Describe("Config", func() {
 			Expect(cfg.Processes[0].Env).To(HaveKeyWithValue("BAZ", "BUZZ"))
 			Expect(cfg.Processes[0].Limits.Memory).To(Equal(&expectedMemoryLimit))
 			Expect(cfg.Processes[0].Limits.OpenFiles).To(Equal(&expectedOpenFilesLimit))
+			Expect(cfg.Processes[0].Limits.CoreFileSize).To(Equal(&expectedCoreDumpLimit))
 			Expect(cfg.Processes[0].AdditionalVolumes).To(ConsistOf(
 				config.Volume{Path: "/var/vcap/data/program/foobar", Writable: true},
 				config.Volume{Path: "/var/vcap/data/alternate-program"},
