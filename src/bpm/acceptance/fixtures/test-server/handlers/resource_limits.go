@@ -23,12 +23,14 @@ import (
 )
 
 type resourceLimitsResponse struct {
-	OpenFiles string `json:"open_files"`
+	OpenFiles    string `json:"open_files"`
+	CoreFileSize string `json:"core_file_size"`
 }
 
 func ResourceLimits(w http.ResponseWriter, r *http.Request) {
 	resp := resourceLimitsResponse{
-		OpenFiles: readOpenFilesLimit(),
+		OpenFiles:    readOpenFilesLimit(),
+		CoreFileSize: readCoreFileSizeLimit(),
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -40,6 +42,14 @@ func ResourceLimits(w http.ResponseWriter, r *http.Request) {
 func readOpenFilesLimit() string {
 	var rlimit syscall.Rlimit
 	if err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rlimit); err != nil {
+		return fmt.Sprintf("error: %v", err)
+	}
+	return fmt.Sprintf("%d", rlimit.Max)
+}
+
+func readCoreFileSizeLimit() string {
+	var rlimit syscall.Rlimit
+	if err := syscall.Getrlimit(syscall.RLIMIT_CORE, &rlimit); err != nil {
 		return fmt.Sprintf("error: %v", err)
 	}
 	return fmt.Sprintf("%d", rlimit.Max)

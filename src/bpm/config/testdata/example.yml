@@ -11,6 +11,7 @@ processes:
   limits:
     memory: 100G
     open_files: 100
+    core_file_size: 1073741824
   additional_volumes:
   - path: /var/vcap/data/program/foobar
     writable: true

@@ -60,7 +60,7 @@ container will be written to `/var/vcap/sys/log/JOB` in the host system.
 ## Resource Limits
 
 bpm can enforce various [resource limits][limits] on your processes. There are
-currently 3 different types: memory, open files, and processes.
+currently 4 different types: memory, open files, processes, and core file size.
 
 ### Memory
 
@@ -81,6 +81,32 @@ This setting places a limit on the number of PIDs which your process is allowed
 to create. This is to protect against fork-bombs and other resource exhaustion
 mistakes or attacks. Threads also count towards this limit as they are
 also given PIDs.
+
+### Core File Size
+
+This setting controls the maximum size of core dump files produced when a
+process crashes. It is equivalent to setting `ulimit -c` for your process. By
+default the limit is zero, which means core dumps are disabled. Setting this
+value allows operators to capture core dumps for post-mortem debugging.
+
+To enable core dumps you also need to ensure the following:
+
+* **Writable working directory:** The kernel writes core dumps to the path
+  configured in `/proc/sys/kernel/core_pattern` (which often defaults to
+  `core`, i.e. the process's current working directory). In bpm the default
+  working directory is the job directory (`/var/vcap/jobs/JOB`), which is
+  mounted read-only. Set `workdir` to a writable location (e.g.
+  `/var/vcap/data/JOB` with `ephemeral_disk: true`) or configure
+  `core_pattern` on the host to point to a writable path.
+* **`fs.suid_dumpable` sysctl:** Because bpm switches from root to the `vcap`
+  user, the kernel may clear the "dumpable" flag on the process. The host
+  sysctl `fs.suid_dumpable` must be set to `1` or `2` for core dumps to work.
+  This is a host-level setting and should be configured in the BOSH
+  `pre-start` script (see [Setting Sysctl Kernel Parameters][sysctl]).
+* **Disk space:** Core dumps can be as large as the process's virtual memory.
+  Make sure the target disk has enough free space.
+
+[sysctl]: config.md#setting-sysctl-kernel-parameters
 
 [limits]: config.md#limits-schema
 

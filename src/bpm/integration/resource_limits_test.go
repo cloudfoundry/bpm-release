@@ -115,4 +115,24 @@ var _ = Describe("resource limits", func() {
 			Eventually(fileContents(stderr)).Should(ContainSubstring("fork: retry: Resource temporarily unavailable"))
 		})
 	})
+
+	Context("core file size", func() {
+		BeforeEach(func() {
+			limit := uint64(1048576)
+			cfg = newJobConfig(job, coreFileSizeBash)
+			cfg.Processes[0].Limits = &config.Limits{CoreFileSize: &limit}
+		})
+
+		It("sets the core file size rlimit", func() {
+			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+			<-session.Exited
+
+			Expect(session).To(gexec.Exit(0))
+
+			Eventually(func() specs.ContainerState { return runcState(runcRoot, containerID).Status }).Should(Equal(specs.StateRunning))
+			Expect(runcCommand(runcRoot, "kill", containerID).Run()).To(Succeed())
+			Eventually(fileContents(stdout)).Should(ContainSubstring("core_file_size=1024"))
+		})
+	})
 })

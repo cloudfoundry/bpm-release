@@ -60,11 +60,12 @@ directory of your job.
 
 #### `limits` Schema
 
-| **Property** | **Type** | **Required** | **Description**                                                                                                             |
-|--------------|----------|--------------|-----------------------------------------------------------------------------------------------------------------------------|
-| `memory`     | string   | No           | The memory limit to apply to this process. It is formatted as a number and then a single character for units e.g. 1G, 256M. |
-| `open_files` | int      | No           | The number of files this process is allowed to have open at any one time.                                                   |
-| `processes`  | int      | No           | The number of processes which this process is allowed to have running at any one moment (inclusive of the main process).    |
+| **Property** | **Type** | **Required** | **Description**                                                                                                                 |
+|--------------|----------|--------------|---------------------------------------------------------------------------------------------------------------------------------|
+| `memory`         | string   | No           | The memory limit to apply to this process. It is formatted as a number and then a single character for units e.g. 1G, 256M. |
+| `open_files`     | int      | No           | The number of files this process is allowed to have open at any one time.                                                   |
+| `processes`      | int      | No           | The number of processes which this process is allowed to have running at any one moment (inclusive of the main process).    |
+| `core_file_size` | int      | No           | The maximum size (in bytes) of a core dump file. Set to enable core dump generation for post-mortem debugging.              |
 
 #### `unsafe` Schema
 

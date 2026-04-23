@@ -290,6 +290,10 @@ func (a *RuncAdapter) BuildSpec(
 		if procCfg.Limits.OpenFiles != nil {
 			specbuilder.Apply(spec, specbuilder.WithOpenFileLimit(*procCfg.Limits.OpenFiles))
 		}
+
+		if procCfg.Limits.CoreFileSize != nil {
+			specbuilder.Apply(spec, specbuilder.WithCoreFileSizeLimit(*procCfg.Limits.CoreFileSize))
+		}
 	}
 
 	if procCfg.Unsafe == nil || !procCfg.Unsafe.HostPidNamespace {

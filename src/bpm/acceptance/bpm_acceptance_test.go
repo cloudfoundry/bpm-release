@@ -273,6 +273,21 @@ var _ = Describe("BpmAcceptance", func() {
 
 			Expect(limits.OpenFiles).To(Equal("2444"), "RLIMIT_NOFILE should match bpm.yml open_files: 2444")
 		})
+
+		It("enforces the configured core_file_size limit", func() {
+			resp, err := client.Get(fmt.Sprintf("%s/resource-limits", *agentURI))
+			Expect(err).NotTo(HaveOccurred())
+			defer resp.Body.Close() //nolint:errcheck
+
+			Expect(resp.StatusCode).To(Equal(http.StatusOK))
+
+			var limits struct {
+				CoreFileSize string `json:"core_file_size"`
+			}
+			Expect(json.NewDecoder(resp.Body).Decode(&limits)).To(Succeed())
+
+			Expect(limits.CoreFileSize).To(Equal("1073741824"), "RLIMIT_CORE should match bpm.yml core_file_size: 1073741824")
+		})
 	})
 })
 

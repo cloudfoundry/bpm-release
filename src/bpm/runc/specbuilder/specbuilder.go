@@ -185,6 +185,16 @@ func WithOpenFileLimit(limit uint64) SpecOption {
 	}
 }
 
+func WithCoreFileSizeLimit(limit uint64) SpecOption {
+	return func(spec *specs.Spec) {
+		spec.Process.Rlimits = append(spec.Process.Rlimits, specs.POSIXRlimit{
+			Type: "RLIMIT_CORE",
+			Hard: limit,
+			Soft: limit,
+		})
+	}
+}
+
 var RootUser = specs.User{
 	UID: 0,
 	GID: 0,

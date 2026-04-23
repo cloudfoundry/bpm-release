@@ -49,9 +49,10 @@ type ProcessConfig struct {
 }
 
 type Limits struct {
-	Memory    *string `yaml:"memory"`
-	OpenFiles *uint64 `yaml:"open_files"`
-	Processes *int64  `yaml:"processes"`
+	Memory       *string `yaml:"memory"`
+	OpenFiles    *uint64 `yaml:"open_files"`
+	Processes    *int64  `yaml:"processes"`
+	CoreFileSize *uint64 `yaml:"core_file_size"`
 }
 
 type Hooks struct {

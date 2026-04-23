@@ -782,6 +782,28 @@ var _ = Describe("RuncAdapter", func() {
 				})
 			})
 
+			Context("CoreFileSize", func() {
+				var expectedCoreFileSize uint64
+
+				BeforeEach(func() {
+					expectedCoreFileSize = 4096
+					procCfg.Limits.CoreFileSize = &expectedCoreFileSize
+				})
+
+				It("sets the rlimit on the process", func() {
+					spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(spec.Process.Rlimits).To(ConsistOf([]specs.POSIXRlimit{
+						{
+							Type: "RLIMIT_CORE",
+							Hard: expectedCoreFileSize,
+							Soft: expectedCoreFileSize,
+						},
+					}))
+				})
+			})
+
 			Context("Pids", func() {
 				var pidLimit int64
 

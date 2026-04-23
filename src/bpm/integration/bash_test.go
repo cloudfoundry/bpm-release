@@ -57,6 +57,12 @@ wait $child;
 start_file_leak`, path)
 }
 
+const coreFileSizeBash = `trap 'kill -9 $child' SIGTERM;
+echo "core_file_size=$(ulimit -c)";
+sleep 100 &
+child=$!;
+wait $child`
+
 const processLeakBash = `trap 'kill -9 $child' SIGTERM;
 sleep 100 &
 child=$!;
