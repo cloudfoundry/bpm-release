@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	code.cloudfoundry.org/bytefmt v0.69.0
-	code.cloudfoundry.org/clock v1.66.0
+	code.cloudfoundry.org/clock v1.67.0
 	code.cloudfoundry.org/lager/v3 v3.66.0
 	github.com/cyphar/filepath-securejoin v0.6.1 // indirect
 	github.com/godbus/dbus/v5 v5.2.2 // indirect
