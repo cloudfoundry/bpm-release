@@ -312,6 +312,51 @@ var _ = Describe("RuncAdapter", func() {
 			})
 		})
 
+		Context("when the log path is a symlink to a non-existent target", func() {
+			var sentinel string
+
+			BeforeEach(func() {
+				logDir := bpmCfg.LogDir().External()
+				Expect(os.MkdirAll(logDir, 0700)).To(Succeed())
+
+				sentinel = filepath.Join(systemRoot, "sentinel.target")
+				Expect(os.Symlink(sentinel, bpmCfg.Stdout().External())).To(Succeed())
+			})
+
+			It("refuses to follow the symlink and does not create the target", func() {
+				_, _, err := runcAdapter.CreateJobPrerequisites(bpmCfg, procCfg, user)
+				Expect(err).To(HaveOccurred())
+
+				Expect(sentinel).NotTo(BeAnExistingFile())
+			})
+		})
+
+		Context("when the log path is a symlink to an existing file", func() {
+			var sentinel string
+
+			BeforeEach(func() {
+				// We must create the log dir first so we can plant a symlink inside it.
+				// CreateJobPrerequisites will just chown it.
+				logDir := bpmCfg.LogDir().External()
+				Expect(os.MkdirAll(logDir, 0700)).To(Succeed())
+
+				sentinel = filepath.Join(systemRoot, "sentinel.target")
+				Expect(os.WriteFile(sentinel, []byte("untouched"), 0600)).To(Succeed())
+
+				// Plant a symlink at the stdout log path pointing to the sentinel.
+				Expect(os.Symlink(sentinel, bpmCfg.Stdout().External())).To(Succeed())
+			})
+
+			It("refuses to follow the symlink and does not modify the target", func() {
+				_, _, err := runcAdapter.CreateJobPrerequisites(bpmCfg, procCfg, user)
+				Expect(err).To(HaveOccurred())
+
+				contents, readErr := os.ReadFile(sentinel)
+				Expect(readErr).NotTo(HaveOccurred())
+				Expect(string(contents)).To(Equal("untouched"))
+			})
+		})
+
 		Context("when the user requests an ephemeral disk", func() {
 			BeforeEach(func() {
 				procCfg.EphemeralDisk = true

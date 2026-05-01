@@ -92,6 +92,32 @@ var _ = Describe("start", func() {
 		Expect(os.RemoveAll(boshRoot)).To(Succeed())
 	})
 
+	Context("when the bpm.log path is a symlink to an existing file", func() {
+		var sentinel string
+
+		JustBeforeEach(func() {
+			logDir := filepath.Dir(bpmLog)
+			Expect(os.MkdirAll(logDir, 0700)).To(Succeed())
+
+			sentinel = filepath.Join(boshRoot, "sentinel.target")
+			Expect(os.WriteFile(sentinel, []byte("untouched"), 0600)).To(Succeed())
+			Expect(os.Symlink(sentinel, bpmLog)).To(Succeed())
+		})
+
+		It("fails to start and does not modify the target file", func() {
+			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+			<-session.Exited
+
+			Expect(session).To(gexec.Exit(1))
+			Expect(session.Err).Should(gbytes.Say("refusing to open symlink at"))
+
+			contents, readErr := os.ReadFile(sentinel)
+			Expect(readErr).NotTo(HaveOccurred())
+			Expect(string(contents)).To(Equal("untouched"))
+		})
+	})
+
 	It("writes the processes pid to the pidfile", func() {
 		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())

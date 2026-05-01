@@ -30,6 +30,7 @@ import (
 	"bpm/config"
 	"bpm/hostlock"
 	"bpm/runc/specbuilder"
+	"bpm/safeio"
 	"bpm/sysfeat"
 )
 
@@ -188,28 +189,17 @@ func createLogFiles(bpmCfg *config.BPMConfig, user specs.User) (*os.File, *os.Fi
 	files := make([]*os.File, 2)
 	paths := []string{bpmCfg.Stdout().External(), bpmCfg.Stderr().External()}
 	for i, path := range paths {
-		f, err := createFileFor(path, int(user.UID), int(user.GID))
+		f, err := safeio.OpenAppendChown(path, int(user.UID), int(user.GID), 0600)
 		if err != nil {
+			for j := 0; j < i; j++ {
+				_ = files[j].Close() //nolint:errcheck
+			}
 			return nil, nil, err
 		}
 		files[i] = f
 	}
 
 	return files[0], files[1], nil
-}
-
-func createFileFor(path string, uid, gid int) (*os.File, error) {
-	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0600)
-	if err != nil {
-		return nil, err
-	}
-
-	err = os.Chown(path, uid, gid)
-	if err != nil {
-		return nil, err
-	}
-
-	return f, nil
 }
 
 func (a *RuncAdapter) BuildSpec(
