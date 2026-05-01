@@ -33,6 +33,7 @@ import (
 	"bpm/runc/adapter"
 	"bpm/runc/client"
 	"bpm/runc/lifecycle"
+	"bpm/safeio"
 	"bpm/sharedvolume"
 	"bpm/sysfeat"
 	"bpm/usertools"
@@ -119,13 +120,7 @@ func validateInput(args []string) error {
 }
 
 func setupBpmLogs(sessionName string) error {
-	err := os.MkdirAll(bpmCfg.LogDir().External(), 0750)
-	if err != nil {
-		return err
-	}
-
-	logFile, err := os.OpenFile(bpmCfg.BPMLog(), os.O_RDWR|os.O_CREATE|os.O_APPEND, 0600)
-	if err != nil {
+	if err := os.MkdirAll(bpmCfg.LogDir().External(), 0750); err != nil {
 		return err
 	}
 
@@ -134,7 +129,7 @@ func setupBpmLogs(sessionName string) error {
 		return err
 	}
 
-	err = os.Chown(bpmCfg.BPMLog(), int(usr.UID), int(usr.GID))
+	logFile, err := safeio.OpenAppendChown(bpmCfg.BPMLog(), int(usr.UID), int(usr.GID), 0600)
 	if err != nil {
 		return err
 	}
