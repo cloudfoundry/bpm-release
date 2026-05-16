@@ -1,9 +1,9 @@
-code.cloudfoundry.org/bytefmt v0.71.0 h1:+ai7jFxAU6TwisSqZTU/rRoJ9NQWR8nhAWbtUyxfamM=
-code.cloudfoundry.org/bytefmt v0.71.0/go.mod h1:dYsmQDtzxxUnlKA59sk4nTVlaNwyWap7LbQnEA0Enew=
-code.cloudfoundry.org/clock v1.69.0 h1:1hR864FRXyCcjw+1p77iUoxTIDgoXVvhblIsOrXaxOM=
-code.cloudfoundry.org/clock v1.69.0/go.mod h1:+ikbfwCwwAad/NxA3wKkF9BmP4UYID6/gWDZnMtWXjU=
-code.cloudfoundry.org/lager/v3 v3.68.0 h1:b33D5fOtsIxbkZ38sDBF+caplshMLE9FgyTOkZWK0LY=
-code.cloudfoundry.org/lager/v3 v3.68.0/go.mod h1:BZ2gnIin10+CWClXj0ixcE9BHlaydZehY643zvKAO5c=
+code.cloudfoundry.org/bytefmt v0.72.0 h1:6sJjxwXLeL/8Z70Cj52Axm+ohmjjiLoKNivoYk0xzhg=
+code.cloudfoundry.org/bytefmt v0.72.0/go.mod h1:KNDUc8LYkjSCcw+9irl75koG753EmDq9m3H6Eoc2MVI=
+code.cloudfoundry.org/clock v1.70.0 h1:uG04cx3v0ztdmtcGSVmYfHUdG596A5V5Slt37xwJGTM=
+code.cloudfoundry.org/clock v1.70.0/go.mod h1:h5C2CUJ0PsVnVeEe9c7eNmDdAbxjywHZHZx9dc2Gwnw=
+code.cloudfoundry.org/lager/v3 v3.69.0 h1:NXaYN5tL89ezjUM9JuF5xAfKMhvuSfvJYxushp3nwYY=
+code.cloudfoundry.org/lager/v3 v3.69.0/go.mod h1:9KUKXotqEJCu9X5BdVFFlbsR7d2mUQC/DwG4oKRJF3w=
 cyphar.com/go-pathrs v0.2.1 h1:9nx1vOgwVvX1mNBWDu93+vaceedpbsDqo+XuBGL40b8=
 cyphar.com/go-pathrs v0.2.1/go.mod h1:y8f1EMG7r+hCuFf/rXsKqMJrJAUoADZGNh5/vZPKcGc=
 github.com/Masterminds/semver/v3 v3.5.0 h1:kQceYJfbupGfZOKZQg0kou0DgAKhzDg2NZPAwZ/2OOE=
