@@ -3,9 +3,9 @@ module bpm
 go 1.25.0
 
 require (
-	code.cloudfoundry.org/bytefmt v0.73.0
-	code.cloudfoundry.org/clock v1.71.0
-	code.cloudfoundry.org/lager/v3 v3.70.0
+	code.cloudfoundry.org/bytefmt v0.74.0
+	code.cloudfoundry.org/clock v1.72.0
+	code.cloudfoundry.org/lager/v3 v3.71.0
 	github.com/cyphar/filepath-securejoin v0.6.1 // indirect
 	github.com/godbus/dbus/v5 v5.2.2 // indirect
 	github.com/kr/pty v1.1.8
@@ -15,7 +15,7 @@ require (
 	github.com/opencontainers/runtime-spec v1.3.0
 	github.com/satori/go.uuid v1.2.0
 	github.com/spf13/cobra v1.10.2
-	golang.org/x/net v0.54.0 // indirect
+	golang.org/x/net v0.55.0 // indirect
 	golang.org/x/sys v0.45.0
 	gopkg.in/yaml.v3 v3.0.1
 )
