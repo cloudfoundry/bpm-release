@@ -228,6 +228,12 @@ func WithPrivileged() SpecOption {
 	}
 }
 
+func WithCgroupsPath(path string) SpecOption {
+	return func(spec *specs.Spec) {
+		spec.Linux.CgroupsPath = path
+	}
+}
+
 func removeNosuidMountOption(opts []string) []string {
 	for i := 0; i < len(opts); i++ {
 		if opts[i] == "nosuid" {
