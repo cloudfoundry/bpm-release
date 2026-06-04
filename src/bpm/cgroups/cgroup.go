@@ -129,6 +129,54 @@ func selfCgroupPathFromReader(r io.Reader) (string, error) {
 	return "", fmt.Errorf("no cgroup v2 entry found in /proc/self/cgroup")
 }
 
+// ToSystemdCgroupsPath converts an absolute cgroup v2 unified-mode path and
+// a container ID into the "slice:prefix:name" format expected by runc's
+// systemd cgroup driver. It extracts the parent slice and a unique identifier
+// from the first non-slice component (e.g., the garden container scope) to
+// ensure the resulting scope name is unique per warden container.
+//
+// Example:
+//
+//	selfPath = "/system.slice/garden-abc.scope/monit.service"
+//	containerID = "bpm-uaa"
+//	result = "system.slice:garden-abc-scope-bpm:bpm-uaa"
+func ToSystemdCgroupsPath(selfPath, containerID string) string {
+	parts := strings.Split(strings.TrimLeft(selfPath, "/"), "/")
+
+	slice := "system.slice" // fallback if no .slice found
+	uniquePart := ""
+
+	for i, part := range parts {
+		if strings.HasSuffix(part, ".slice") {
+			slice = part
+			if i+1 < len(parts) {
+				normalized := normalizeForSystemdName(parts[i+1])
+				if normalized != "" {
+					uniquePart = normalized + "-"
+				}
+			}
+			break
+		}
+	}
+
+	return fmt.Sprintf("%s:%sbpm:%s", slice, uniquePart, containerID)
+}
+
+// normalizeForSystemdName replaces characters invalid in systemd unit name
+// components with dashes. Valid characters are alphanumeric, '-', and '_'.
+func normalizeForSystemdName(s string) string {
+	var b strings.Builder
+	for _, c := range s {
+		if (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
+			(c >= '0' && c <= '9') || c == '-' || c == '_' {
+			b.WriteRune(c)
+		} else {
+			b.WriteRune('-')
+		}
+	}
+	return b.String()
+}
+
 func mountCgroupTmpfsIfNotPresent(mountInfos []*mountinfo.Info) error {
 	for _, mnt := range mountInfos {
 		if mnt.Mountpoint == cgroupRoot {

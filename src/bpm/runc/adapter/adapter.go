@@ -51,18 +51,20 @@ type VolumeLocker interface {
 }
 
 type RuncAdapter struct {
-	features   sysfeat.Features
-	glob       GlobFunc
-	shareMount MountShare
-	locker     VolumeLocker
+	features       sysfeat.Features
+	glob           GlobFunc
+	shareMount     MountShare
+	locker         VolumeLocker
+	cgroupsPathFor func(containerID string) (string, error)
 }
 
-func NewRuncAdapter(features sysfeat.Features, glob GlobFunc, mountSharer MountShare, locker VolumeLocker) *RuncAdapter {
+func NewRuncAdapter(features sysfeat.Features, glob GlobFunc, mountSharer MountShare, locker VolumeLocker, cgroupsPathFor func(containerID string) (string, error)) *RuncAdapter {
 	return &RuncAdapter{
-		features:   features,
-		glob:       glob,
-		shareMount: mountSharer,
-		locker:     locker,
+		features:       features,
+		glob:           glob,
+		shareMount:     mountSharer,
+		locker:         locker,
+		cgroupsPathFor: cgroupsPathFor,
 	}
 }
 
@@ -296,6 +298,14 @@ func (a *RuncAdapter) BuildSpec(
 
 	if procCfg.Unsafe != nil && procCfg.Unsafe.Privileged {
 		specbuilder.Apply(spec, specbuilder.WithPrivileged())
+	}
+
+	if a.cgroupsPathFor != nil {
+		if cgroupsPath, err := a.cgroupsPathFor(bpmCfg.ContainerID()); err == nil {
+			specbuilder.Apply(spec, specbuilder.WithCgroupsPath(cgroupsPath))
+		} else {
+			logger.Info("cgroups-path-fallback", lager.Data{"error": err.Error(), "container-id": bpmCfg.ContainerID()})
+		}
 	}
 
 	return *spec, nil

@@ -183,7 +183,7 @@ func newRuncLifecycle() (*lifecycle.RuncLifecycle, error) {
 		return nil, fmt.Errorf("failed to fetch system features: %w", err)
 	}
 
-	runcAdapter := adapter.NewRuncAdapter(*features, filepath.Glob, sharedvolume.MakeShared, locks)
+	runcAdapter := adapter.NewRuncAdapter(*features, filepath.Glob, sharedvolume.MakeShared, locks, cgroupsPathForContainer)
 	return lifecycle.NewRuncLifecycle(
 		runcClient,
 		runcAdapter,
@@ -202,6 +202,17 @@ func processByNameFromJobConfig(jobCfg *config.JobConfig, procName string) (*con
 	}
 
 	return nil, fmt.Errorf("invalid process: %s", procName)
+}
+
+func cgroupsPathForContainer(containerID string) (string, error) {
+	selfPath, err := cgroups.SelfCgroupPath()
+	if err != nil {
+		return "", err
+	}
+	if isRunningSystemd() {
+		return cgroups.ToSystemdCgroupsPath(selfPath, containerID), nil
+	}
+	return filepath.Join(selfPath, containerID), nil
 }
 
 func isRunningSystemd() bool {
