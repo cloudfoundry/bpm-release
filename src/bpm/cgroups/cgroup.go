@@ -102,6 +102,33 @@ func subsystemGroupingFromProcCgroup(f io.Reader, subsystem string) (string, err
 	return subsystem, nil
 }
 
+// SelfCgroupPath returns the cgroup v2 unified-mode path of the calling
+// process by reading /proc/self/cgroup. Returns an error if no unified-mode
+// entry (0::<path>) is found.
+func SelfCgroupPath() (string, error) {
+	f, err := os.Open("/proc/self/cgroup")
+	if err != nil {
+		return "", fmt.Errorf("opening /proc/self/cgroup: %w", err)
+	}
+	defer f.Close() //nolint:errcheck
+	return selfCgroupPathFromReader(f)
+}
+
+func selfCgroupPathFromReader(r io.Reader) (string, error) {
+	s := bufio.NewScanner(r)
+	for s.Scan() {
+		line := s.Text()
+		// cgroup v2 unified-mode line: "0::<path>"
+		if strings.HasPrefix(line, "0::") {
+			return strings.TrimRight(strings.TrimPrefix(line, "0::"), "\r\n"), nil
+		}
+	}
+	if err := s.Err(); err != nil {
+		return "", fmt.Errorf("reading /proc/self/cgroup: %w", err)
+	}
+	return "", fmt.Errorf("no cgroup v2 entry found in /proc/self/cgroup")
+}
+
 func mountCgroupTmpfsIfNotPresent(mountInfos []*mountinfo.Info) error {
 	for _, mnt := range mountInfos {
 		if mnt.Mountpoint == cgroupRoot {
