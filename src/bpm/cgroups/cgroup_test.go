@@ -90,14 +90,14 @@ var _ = Describe("Cgroups", func() {
 				To(Equal("system.slice:garden-abc-scope-bpm:bpm-uaa"))
 		})
 
-		It("handles a path with no intermediate scope", func() {
+		It("uses slice name for uniqueness when path has no intermediate scope", func() {
 			Expect(ToSystemdCgroupsPath("/system.slice", "bpm-uaa")).
-				To(Equal("system.slice:bpm:bpm-uaa"))
+				To(Equal("system.slice:system-slice-bpm:bpm-uaa"))
 		})
 
-		It("uses system.slice fallback when no .slice component found", func() {
+		It("uses first path element for uniqueness when no .slice component found", func() {
 			Expect(ToSystemdCgroupsPath("/garden-abc.scope", "bpm-uaa")).
-				To(Equal("system.slice:bpm:bpm-uaa"))
+				To(Equal("system.slice:garden-abc-scope-bpm:bpm-uaa"))
 		})
 	})
 })

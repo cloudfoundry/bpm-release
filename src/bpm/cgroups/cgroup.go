@@ -159,6 +159,17 @@ func ToSystemdCgroupsPath(selfPath, containerID string) string {
 		}
 	}
 
+	// If no .slice was found, use the first non-empty path element as a
+	// uniqueness anchor so the scope name still reflects the host context.
+	if uniquePart == "" {
+		for _, part := range parts {
+			if normalized := normalizeForSystemdName(part); normalized != "" {
+				uniquePart = normalized + "-"
+				break
+			}
+		}
+	}
+
 	return fmt.Sprintf("%s:%sbpm:%s", slice, uniquePart, containerID)
 }
 
