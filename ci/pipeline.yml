@@ -114,22 +114,9 @@ resources:
   check_every: 168h
   source:
     repository: cfbpm/bpm-ci
+    tag: latest
     username: ((bpm-docker.username))
     password: ((bpm-docker.password))
-
-- name: bpm-ci-image
-  type: docker-image
-  check_every: never
-  source:
-    repository: cfbpm/bpm-ci
-    username: ((bpm-docker.username))
-    password: ((bpm-docker.password))
-
-- name: bosh-golang-release-image
-  type: docker-image
-  check_every: 1h
-  source:
-    repository: ghcr.io/cloudfoundry/bosh/golang-release
 
 - name: daily
   type: time
@@ -536,10 +523,6 @@ jobs:
     - get: bpm-ci
       trigger: true
       attempts: 3
-    - get: bosh-golang-release-image
-      trigger: true
-      attempts: 3
-      params: {save: true}
     - get: runc-linux
       trigger: true
       attempts: 3
@@ -549,10 +532,27 @@ jobs:
       params:
         globs:
         - tini-amd64
-  - put: bpm-ci-image
+  - task: build-image
+    privileged: true
     attempts: 3
-    inputs: all
+    config:
+      platform: linux
+      image_resource:
+        type: registry-image
+        source:
+          repository: concourse/oci-build-task
+      inputs:
+      - name: bpm-ci
+      - name: runc-linux
+      - name: tini
+      outputs:
+      - name: image
+      params:
+        CONTEXT: .
+        DOCKERFILE: bpm-ci/ci/Dockerfile
+      run:
+        path: build
+  - put: bpm-ci-registry-image
+    attempts: 3
     params:
-      load_base: bosh-golang-release-image
-      build: .
-      dockerfile: bpm-ci/ci/Dockerfile
+      image: image/image.tar
