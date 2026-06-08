@@ -134,6 +134,17 @@ var _ = Describe("SpecBuilder", func() {
 		})
 	})
 
+	Describe("WithCgroupsPath", func() {
+		It("sets the cgroups path on the spec", func() {
+			spec := specbuilder.DefaultSpec()
+			Expect(spec.Linux.CgroupsPath).To(BeEmpty())
+
+			specbuilder.Apply(spec, specbuilder.WithCgroupsPath("/garden/abc-123/bpm.uaa"))
+
+			Expect(spec.Linux.CgroupsPath).To(Equal("/garden/abc-123/bpm.uaa"))
+		})
+	})
+
 	Describe("DefaultSpec", func() {
 		It("includes seccomp by default", func() {
 			spec := specbuilder.DefaultSpec()

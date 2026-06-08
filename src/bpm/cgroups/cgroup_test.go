@@ -24,6 +24,35 @@ import (
 )
 
 var _ = Describe("Cgroups", func() {
+	Describe("SelfCgroupPath", func() {
+		It("returns the cgroup v2 path from a valid unified-mode entry", func() {
+			r := strings.NewReader("0::/garden/abc-123/\n")
+			path, err := selfCgroupPathFromReader(r)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(path).To(Equal("/garden/abc-123/"))
+		})
+
+		It("strips carriage return from CRLF line endings", func() {
+			r := strings.NewReader("0::/some/path\r\n")
+			path, err := selfCgroupPathFromReader(r)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(path).To(Equal("/some/path"))
+		})
+
+		It("errors when there is no unified-mode entry", func() {
+			r := strings.NewReader("12:memory:/user.slice\n11:cpu:/user.slice\n")
+			_, err := selfCgroupPathFromReader(r)
+			Expect(err).To(HaveOccurred())
+			Expect(err).To(MatchError(ContainSubstring("no cgroup v2 entry")))
+		})
+
+		It("errors on empty input", func() {
+			r := strings.NewReader("")
+			_, err := selfCgroupPathFromReader(r)
+			Expect(err).To(HaveOccurred())
+		})
+	})
+
 	Describe("checking subsystem grouping", func() {
 		var r io.Reader
 
@@ -52,6 +81,23 @@ var _ = Describe("Cgroups", func() {
 			group, err := subsystemGroupingFromProcCgroup(r, "cpu")
 			Expect(err).ToNot(HaveOccurred())
 			Expect(group).To(Equal("cpu,cpuacct"))
+		})
+	})
+
+	Describe("ToSystemdCgroupsPath", func() {
+		It("converts a nested garden scope path", func() {
+			Expect(ToSystemdCgroupsPath("/system.slice/garden-abc.scope/monit.service", "bpm-uaa")).
+				To(Equal("system.slice:garden-abc-scope-bpm:bpm-uaa"))
+		})
+
+		It("uses slice name for uniqueness when path has no intermediate scope", func() {
+			Expect(ToSystemdCgroupsPath("/system.slice", "bpm-uaa")).
+				To(Equal("system.slice:system-slice-bpm:bpm-uaa"))
+		})
+
+		It("uses first path element for uniqueness when no .slice component found", func() {
+			Expect(ToSystemdCgroupsPath("/garden-abc.scope", "bpm-uaa")).
+				To(Equal("system.slice:garden-abc-scope-bpm:bpm-uaa"))
 		})
 	})
 })

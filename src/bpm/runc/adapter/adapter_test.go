@@ -55,6 +55,8 @@ var _ = Describe("RuncAdapter", func() {
 
 		mountSharer  *fakeMountSharer
 		volumeLocker *fakeVolumeLocker
+
+		cgroupsPathForFn func(containerID string) (string, error)
 	)
 
 	BeforeEach(func() {
@@ -86,6 +88,10 @@ var _ = Describe("RuncAdapter", func() {
 
 		mountSharer = &fakeMountSharer{}
 		volumeLocker = &fakeVolumeLocker{}
+
+		cgroupsPathForFn = func(containerID string) (string, error) {
+			return "", fmt.Errorf("not on cgroup v2")
+		}
 	})
 
 	JustBeforeEach(func() {
@@ -94,7 +100,7 @@ var _ = Describe("RuncAdapter", func() {
 		identityGlob := func(pattern string) ([]string, error) {
 			return []string{pattern}, nil
 		}
-		runcAdapter = NewRuncAdapter(features, identityGlob, mountSharer.MakeShared, volumeLocker)
+		runcAdapter = NewRuncAdapter(features, identityGlob, mountSharer.MakeShared, volumeLocker, cgroupsPathForFn)
 	})
 
 	AfterEach(func() {
@@ -889,7 +895,7 @@ var _ = Describe("RuncAdapter", func() {
 				identityGlob := func(pattern string) ([]string, error) {
 					return []string{pattern}, nil
 				}
-				runcAdapter = NewRuncAdapter(features, identityGlob, mountSharer.MakeShared, volumeLocker)
+				runcAdapter = NewRuncAdapter(features, identityGlob, mountSharer.MakeShared, volumeLocker, cgroupsPathForFn)
 			})
 
 			It("disables seccomp in the spec", func() {
@@ -955,7 +961,7 @@ var _ = Describe("RuncAdapter", func() {
 				identityGlob := func(pattern string) ([]string, error) {
 					return []string{pattern}, nil
 				}
-				runcAdapter = NewRuncAdapter(features, identityGlob, mountSharer.MakeShared, volumeLocker)
+				runcAdapter = NewRuncAdapter(features, identityGlob, mountSharer.MakeShared, volumeLocker, cgroupsPathForFn)
 			})
 
 			It("includes seccomp in the spec", func() {
@@ -1105,7 +1111,7 @@ var _ = Describe("RuncAdapter", func() {
 							return []string{pattern}, nil
 						}
 					}
-					runcAdapter = NewRuncAdapter(features, fakeGlob, mountSharer.MakeShared, volumeLocker)
+					runcAdapter = NewRuncAdapter(features, fakeGlob, mountSharer.MakeShared, volumeLocker, cgroupsPathForFn)
 				})
 
 				It("adds volumes for whatever the volume matches", func() {
@@ -1149,13 +1155,55 @@ var _ = Describe("RuncAdapter", func() {
 						fail := func(path string) ([]string, error) {
 							return nil, errors.New("doomed from the start")
 						}
-						runcAdapter = NewRuncAdapter(features, fail, mountSharer.MakeShared, volumeLocker)
+						runcAdapter = NewRuncAdapter(features, fail, mountSharer.MakeShared, volumeLocker, cgroupsPathForFn)
 					})
 
 					It("returns an error", func() {
 						_, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
 						Expect(err).To(HaveOccurred())
 					})
+				})
+			})
+		})
+
+		Context("cgroup path scoping", func() {
+			Context("when cgroupsPathForFn returns a path", func() {
+				BeforeEach(func() {
+					cgroupsPathForFn = func(containerID string) (string, error) {
+						return "/scoped/" + containerID, nil
+					}
+				})
+
+				It("sets CgroupsPath to the returned value", func() {
+					spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
+					Expect(err).NotTo(HaveOccurred())
+					Expect(spec.Linux.CgroupsPath).To(Equal("/scoped/" + bpmCfg.ContainerID()))
+				})
+			})
+
+			Context("when cgroupsPathForFn returns an error", func() {
+				BeforeEach(func() {
+					cgroupsPathForFn = func(containerID string) (string, error) {
+						return "", fmt.Errorf("not on cgroup v2")
+					}
+				})
+
+				It("leaves CgroupsPath empty", func() {
+					spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
+					Expect(err).NotTo(HaveOccurred())
+					Expect(spec.Linux.CgroupsPath).To(BeEmpty())
+				})
+			})
+
+			Context("when cgroupsPathForFn is nil", func() {
+				BeforeEach(func() {
+					cgroupsPathForFn = nil
+				})
+
+				It("leaves CgroupsPath empty", func() {
+					spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
+					Expect(err).NotTo(HaveOccurred())
+					Expect(spec.Linux.CgroupsPath).To(BeEmpty())
 				})
 			})
 		})
