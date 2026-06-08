@@ -303,8 +303,6 @@ func (a *RuncAdapter) BuildSpec(
 	if a.cgroupsPathFor != nil {
 		if cgroupsPath, err := a.cgroupsPathFor(bpmCfg.ContainerID()); err == nil {
 			specbuilder.Apply(spec, specbuilder.WithCgroupsPath(cgroupsPath))
-		} else {
-			logger.Info("cgroups-path-fallback", lager.Data{"error": err.Error(), "container-id": bpmCfg.ContainerID()})
 		}
 	}
 
