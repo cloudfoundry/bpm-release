@@ -22,6 +22,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"bpm/jobid"
 )
 
 type cgroupLimitsResponse struct {
@@ -45,21 +47,21 @@ func CgroupLimits(w http.ResponseWriter, r *http.Request) {
 		job = "test-server"
 	}
 
-	// Build the runc scope name that bpm uses.
-	// Main process: runc-bpm-<job>.scope
-	// Named process: runc-bpm-<job>.2e<process>.scope
-	var scopeName string
-	if process == "" || process == job {
-		scopeName = fmt.Sprintf("runc-bpm-%s.scope", job)
-	} else {
-		scopeName = fmt.Sprintf("runc-bpm-%s.2e%s.scope", job, process)
+	// Build the container ID exactly the way bpm does (config.BPMConfig.ContainerID):
+	// the bare job name for the main process, or "<job>.<process>" for a named
+	// process, run through jobid.Encode. Reusing jobid.Encode keeps this in sync
+	// if the encoding ever changes.
+	name := job
+	if process != "" && process != job {
+		name = fmt.Sprintf("%s.%s", job, process)
 	}
+	containerID := jobid.Encode(name)
 
-	cgroupDir, err := findCgroupDir("/sys/fs/cgroup", scopeName)
+	cgroupDir, err := findCgroupDir("/sys/fs/cgroup", containerID)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(cgroupLimitsResponse{ //nolint:errcheck
-			Error: fmt.Sprintf("could not find cgroup dir for scope %s: %v", scopeName, err),
+			Error: fmt.Sprintf("could not find cgroup dir for container %s: %v", containerID, err),
 		})
 		return
 	}
@@ -74,17 +76,29 @@ func CgroupLimits(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(resp) //nolint:errcheck
 }
 
-// findCgroupDir walks the cgroup filesystem looking for a directory with the
-// given scope name. Returns the full path to the scope directory.
-func findCgroupDir(root, scopeName string) (string, error) {
+// findCgroupDir walks the cgroup filesystem looking for the cgroup directory
+// for the given bpm container ID. It handles two naming conventions:
+//
+//   - cgroupfs mode (cgroup v2 without systemd): a directory named exactly
+//     containerID, e.g. "bpm-test-server"
+//   - systemd mode: a scope directory whose name ends with "-<containerID>.scope",
+//     e.g. "runc-bpm-test-server.scope" (legacy) or
+//     "garden-abc-scope-bpm-bpm-test-server.scope" (cgroup-v2-aware naming)
+//
+// Returns the full path to the matching directory.
+func findCgroupDir(root, containerID string) (string, error) {
+	scopeSuffix := "-" + containerID + ".scope"
 	var found string
 	err := filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return nil
 		}
-		if d.IsDir() && d.Name() == scopeName {
-			found = path
-			return filepath.SkipAll
+		if d.IsDir() {
+			name := d.Name()
+			if name == containerID || strings.HasSuffix(name, scopeSuffix) {
+				found = path
+				return filepath.SkipAll
+			}
 		}
 		return nil
 	})
@@ -92,7 +106,7 @@ func findCgroupDir(root, scopeName string) (string, error) {
 		return "", err
 	}
 	if found == "" {
-		return "", fmt.Errorf("scope %s not found under %s", scopeName, root)
+		return "", fmt.Errorf("no cgroup dir found for container %s under %s", containerID, root)
 	}
 	return found, nil
 }
