@@ -16,106 +16,101 @@
 package handlers
 
 import (
-	"os"
-	"path/filepath"
+	"encoding/json"
+	"flag"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
+func init() {
+	// ginkgo -r (recursive) passes all flags from the outer acceptance suite to
+	// every discovered sub-package. Define them here (unused) so that
+	// flag.Parse() does not fail with "flag provided but not defined".
+	flag.String("agent-uri", "", "unused in handlers unit tests")
+	flag.String("observer-uri", "", "unused in handlers unit tests")
+}
+
 func TestHandlers(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Handlers Suite")
 }
 
-var _ = Describe("findCgroupDir", func() {
-	var root string
+var _ = Describe("CgroupLimits path traversal guard", func() {
+	callHandler := func(cgroupPath string) cgroupLimitsResponse {
+		req := httptest.NewRequest(http.MethodGet, "/cgroup-limits?cgroup-path="+cgroupPath, nil)
+		rec := httptest.NewRecorder()
+		CgroupLimits(rec, req)
+		var resp cgroupLimitsResponse
+		Expect(json.NewDecoder(rec.Body).Decode(&resp)).To(Succeed())
+		return resp
+	}
 
-	BeforeEach(func() {
-		var err error
-		root, err = os.MkdirTemp("", "cgroup-test-*")
+	DescribeTable("rejects paths that escape /sys/fs/cgroup",
+		func(traversal string) {
+			resp := callHandler(traversal)
+			Expect(resp.Error).To(ContainSubstring("escapes the cgroup root"),
+				"path %q should be rejected", traversal)
+		},
+		Entry("parent traversal", "/../etc"),
+		Entry("double traversal", "/docker/abc/../../etc"),
+		Entry("URL-decoded traversal kept by Go query parsing", "/valid/../../../etc"),
+	)
+
+	It("accepts a well-formed absolute path inside the cgroup root", func() {
+		// The path won't exist on the test host so memory.max will error, but
+		// the traversal guard must not reject it.
+		resp := callHandler("/docker/abc123/system.slice/monit-service-bpm-bpm-test-server.scope")
+		Expect(resp.Error).NotTo(ContainSubstring("escapes"))
+	})
+})
+
+var _ = Describe("parseCgroupV2Path", func() {
+	It("returns the cgroup v2 unified-mode path", func() {
+		input := strings.NewReader("12:blkio:/\n0::/docker/abc123/system.slice/monit.service\n")
+		path, err := parseCgroupV2Path(input)
 		Expect(err).NotTo(HaveOccurred())
+		Expect(path).To(Equal("/docker/abc123/system.slice/monit.service"))
 	})
 
-	AfterEach(func() {
-		Expect(os.RemoveAll(root)).To(Succeed())
+	It("ignores v1 hierarchy entries and returns the 0:: entry", func() {
+		input := strings.NewReader(
+			"11:memory:/docker/abc123\n" +
+				"10:cpu,cpuacct:/docker/abc123\n" +
+				"0::/docker/abc123/system.slice/monit-service-bpm-bpm-test-server.scope\n",
+		)
+		path, err := parseCgroupV2Path(input)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(path).To(Equal("/docker/abc123/system.slice/monit-service-bpm-bpm-test-server.scope"))
 	})
 
-	Context("legacy systemd mode (runc default scope name)", func() {
-		It("finds runc-bpm-test-server.scope", func() {
-			scopeDir := filepath.Join(root, "system.slice", "runc-bpm-test-server.scope")
-			Expect(os.MkdirAll(scopeDir, 0755)).To(Succeed())
-
-			found, err := findCgroupDir(root, "bpm-test-server")
-			Expect(err).NotTo(HaveOccurred())
-			Expect(found).To(Equal(scopeDir))
-		})
+	It("returns an error when there is no 0:: entry", func() {
+		input := strings.NewReader("11:memory:/foo\n10:cpu:/foo\n")
+		_, err := parseCgroupV2Path(input)
+		Expect(err).To(HaveOccurred())
+		Expect(err.Error()).To(ContainSubstring("0::"))
 	})
 
-	Context("cgroup-v2-aware systemd mode (scope name from ToSystemdCgroupsPath)", func() {
-		It("finds a scope with a warden garden prefix ending in -bpm-test-server.scope", func() {
-			scopeDir := filepath.Join(root, "system.slice", "garden-abc-scope-bpm-bpm-test-server.scope")
-			Expect(os.MkdirAll(scopeDir, 0755)).To(Succeed())
-
-			found, err := findCgroupDir(root, "bpm-test-server")
-			Expect(err).NotTo(HaveOccurred())
-			Expect(found).To(Equal(scopeDir))
-		})
-
-		It("finds a scope with a monit-service prefix", func() {
-			scopeDir := filepath.Join(root, "system.slice", "bpm-service-bpm-bpm-test-server.scope")
-			Expect(os.MkdirAll(scopeDir, 0755)).To(Succeed())
-
-			found, err := findCgroupDir(root, "bpm-test-server")
-			Expect(err).NotTo(HaveOccurred())
-			Expect(found).To(Equal(scopeDir))
-		})
+	It("returns an error for an empty file", func() {
+		_, err := parseCgroupV2Path(strings.NewReader(""))
+		Expect(err).To(HaveOccurred())
 	})
 
-	Context("cgroupfs mode (cgroup v2 without systemd)", func() {
-		It("finds a directory named exactly containerID", func() {
-			cgroupDir := filepath.Join(root, "docker", "abc123", "bpm-test-server")
-			Expect(os.MkdirAll(cgroupDir, 0755)).To(Succeed())
-
-			found, err := findCgroupDir(root, "bpm-test-server")
-			Expect(err).NotTo(HaveOccurred())
-			Expect(found).To(Equal(cgroupDir))
-		})
+	It("handles a pure cgroup v2 system where 0:: is the only entry", func() {
+		input := strings.NewReader("0::/user.slice/user-1000.slice/session-1.scope\n")
+		path, err := parseCgroupV2Path(input)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(path).To(Equal("/user.slice/user-1000.slice/session-1.scope"))
 	})
 
-	Context("named process", func() {
-		It("finds the scope for a named process using the .2e encoding", func() {
-			scopeDir := filepath.Join(root, "system.slice", "runc-bpm-test-server.2ealt-server.scope")
-			Expect(os.MkdirAll(scopeDir, 0755)).To(Succeed())
-
-			found, err := findCgroupDir(root, "bpm-test-server.2ealt-server")
-			Expect(err).NotTo(HaveOccurred())
-			Expect(found).To(Equal(scopeDir))
-		})
-	})
-
-	Context("not found", func() {
-		It("returns an error when no matching directory exists", func() {
-			_, err := findCgroupDir(root, "bpm-test-server")
-			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("bpm-test-server"))
-		})
-
-		It("does not match a directory that only partially matches the container ID", func() {
-			wrongDir := filepath.Join(root, "bpm-test-server-extra")
-			Expect(os.MkdirAll(wrongDir, 0755)).To(Succeed())
-
-			_, err := findCgroupDir(root, "bpm-test-server")
-			Expect(err).To(HaveOccurred())
-		})
-
-		It("does not match a scope for a different container", func() {
-			wrongScope := filepath.Join(root, "system.slice", "runc-bpm-other-server.scope")
-			Expect(os.MkdirAll(wrongScope, 0755)).To(Succeed())
-
-			_, err := findCgroupDir(root, "bpm-test-server")
-			Expect(err).To(HaveOccurred())
-		})
+	It("handles a path of / (container at the cgroup root)", func() {
+		input := strings.NewReader("0::/\n")
+		path, err := parseCgroupV2Path(input)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(path).To(Equal("/"))
 	})
 })

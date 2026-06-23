@@ -16,14 +16,14 @@
 package handlers
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
-
-	"bpm/jobid"
 )
 
 type cgroupLimitsResponse struct {
@@ -33,82 +33,99 @@ type cgroupLimitsResponse struct {
 	Error     string `json:"error,omitempty"`
 }
 
-// CgroupLimits reads cgroup limit files for a given bpm process by searching
-// the host's /sys/fs/cgroup filesystem. This handler is intended to run in a
-// privileged bpm container that has /sys/fs/cgroup mounted.
+type selfCgroupPathResponse struct {
+	CgroupV2Path string `json:"cgroup_v2_path,omitempty"`
+	Error        string `json:"error,omitempty"`
+}
+
+// SelfCgroupPath returns the cgroup v2 unified-mode path of the calling
+// process by reading /proc/self/cgroup. The returned path is relative to the
+// cgroup root (e.g. "/docker/CONTAINERID/system.slice/monit-service-bpm-bpm-test-server.scope").
+// Callers pass this to the privileged observer's CgroupLimits as the cgroup-path
+// parameter to read limits from the exact live cgroup.
+func SelfCgroupPath(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	f, err := os.Open("/proc/self/cgroup")
+	if err != nil {
+		if encErr := json.NewEncoder(w).Encode(selfCgroupPathResponse{
+			Error: fmt.Sprintf("open /proc/self/cgroup: %v", err),
+		}); encErr != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+		return
+	}
+	defer f.Close() //nolint:errcheck
+
+	path, err := parseCgroupV2Path(f)
+	if err != nil {
+		if encErr := json.NewEncoder(w).Encode(selfCgroupPathResponse{Error: err.Error()}); encErr != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+		return
+	}
+	if err := json.NewEncoder(w).Encode(selfCgroupPathResponse{CgroupV2Path: path}); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+}
+
+// parseCgroupV2Path reads a /proc/<pid>/cgroup-format stream and returns the
+// cgroup v2 unified-mode path — the entry whose hierarchy ID is 0 (format: "0::<path>").
+func parseCgroupV2Path(r io.Reader) (string, error) {
+	scanner := bufio.NewScanner(r)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(line, "0::") {
+			return strings.TrimPrefix(line, "0::"), nil
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return "", fmt.Errorf("reading cgroup file: %w", err)
+	}
+	return "", fmt.Errorf("no cgroup v2 unified-mode entry (0::<path>) in /proc/self/cgroup")
+}
+
+// CgroupLimits reads cgroup limit files from an exact path previously obtained
+// from the target process via SelfCgroupPath. This handler is intended to run
+// in a privileged bpm container that has /sys/fs/cgroup mounted.
 //
 // Query params:
-//   - process: the bpm process name (e.g. "test-server", "alt-test-server")
-//   - job: the bpm job name (default: "test-server")
+//   - cgroup-path: the cgroup v2 path returned by SelfCgroupPath on the target
+//     process (e.g. "/docker/CONTAINERID/system.slice/monit-service-bpm-bpm-test-server.scope").
+//     Reading from the live process's own path avoids stale-cgroup and
+//     concurrent-build interference entirely.
 func CgroupLimits(w http.ResponseWriter, r *http.Request) {
-	process := r.URL.Query().Get("process")
-	job := r.URL.Query().Get("job")
-	if job == "" {
-		job = "test-server"
-	}
+	w.Header().Set("Content-Type", "application/json")
 
-	// Build the container ID exactly the way bpm does (config.BPMConfig.ContainerID):
-	// the bare job name for the main process, or "<job>.<process>" for a named
-	// process, run through jobid.Encode. Reusing jobid.Encode keeps this in sync
-	// if the encoding ever changes.
-	name := job
-	if process != "" && process != job {
-		name = fmt.Sprintf("%s.%s", job, process)
-	}
-	containerID := jobid.Encode(name)
-
-	cgroupDir, err := findCgroupDir("/sys/fs/cgroup", containerID)
-	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(cgroupLimitsResponse{ //nolint:errcheck
-			Error: fmt.Sprintf("could not find cgroup dir for container %s: %v", containerID, err),
-		})
+	exactPath := r.URL.Query().Get("cgroup-path")
+	if exactPath == "" {
+		if err := json.NewEncoder(w).Encode(cgroupLimitsResponse{
+			Error: "cgroup-path query parameter is required",
+		}); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
 		return
 	}
 
-	resp := cgroupLimitsResponse{
+	// Canonicalize before use so that sequences like "/../etc" in exactPath
+	// cannot escape the cgroup root.
+	const cgroupRoot = "/sys/fs/cgroup"
+	cgroupDir := filepath.Clean(cgroupRoot + exactPath)
+	if cgroupDir != cgroupRoot && !strings.HasPrefix(cgroupDir, cgroupRoot+"/") {
+		if err := json.NewEncoder(w).Encode(cgroupLimitsResponse{
+			Error: fmt.Sprintf("cgroup-path %q escapes the cgroup root", exactPath),
+		}); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+		return
+	}
+	if err := json.NewEncoder(w).Encode(cgroupLimitsResponse{
 		CgroupDir: cgroupDir,
 		MemoryMax: readCgroupValue(cgroupDir, "memory.max"),
 		PidsMax:   readCgroupValue(cgroupDir, "pids.max"),
+	}); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp) //nolint:errcheck
-}
-
-// findCgroupDir walks the cgroup filesystem looking for the cgroup directory
-// for the given bpm container ID. It handles two naming conventions:
-//
-//   - cgroupfs mode (cgroup v2 without systemd): a directory named exactly
-//     containerID, e.g. "bpm-test-server"
-//   - systemd mode: a scope directory whose name ends with "-<containerID>.scope",
-//     e.g. "runc-bpm-test-server.scope" (legacy) or
-//     "garden-abc-scope-bpm-bpm-test-server.scope" (cgroup-v2-aware naming)
-//
-// Returns the full path to the matching directory.
-func findCgroupDir(root, containerID string) (string, error) {
-	scopeSuffix := "-" + containerID + ".scope"
-	var found string
-	err := filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
-		if err != nil {
-			return nil
-		}
-		if d.IsDir() {
-			name := d.Name()
-			if name == containerID || strings.HasSuffix(name, scopeSuffix) {
-				found = path
-				return filepath.SkipAll
-			}
-		}
-		return nil
-	})
-	if err != nil {
-		return "", err
-	}
-	if found == "" {
-		return "", fmt.Errorf("no cgroup dir found for container %s under %s", containerID, root)
-	}
-	return found, nil
 }
 
 func readCgroupValue(dir, filename string) string {

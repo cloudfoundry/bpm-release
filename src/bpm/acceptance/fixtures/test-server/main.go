@@ -62,6 +62,7 @@ func main() {
 	http.HandleFunc("/syslog", handlers.Syslog)
 	http.HandleFunc("/resource-limits", handlers.ResourceLimits)
 	http.HandleFunc("/cgroup-limits", handlers.CgroupLimits)
+	http.HandleFunc("/self-cgroup-path", handlers.SelfCgroupPath)
 	http.HandleFunc("/spawn-processes", handlers.SpawnProcesses)
 
 	signals := make(chan os.Signal, 1)
