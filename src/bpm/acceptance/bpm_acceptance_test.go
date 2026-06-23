@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"sort"
 	"strings"
 
@@ -293,18 +294,19 @@ var _ = Describe("BpmAcceptance", func() {
 
 var _ = Describe("CgroupLimits", func() {
 	BeforeEach(func() {
+		Expect(*agentURI).NotTo(BeEmpty(), "-agent-uri must be provided")
 		Expect(*observerURI).NotTo(BeEmpty(), "-observer-uri must be provided")
 	})
 
 	It("sets the correct memory limit on test-server", func() {
-		limits := getCgroupLimits("test-server")
+		limits := getCgroupLimits()
 		// 743M = 743 * 1024 * 1024 = 779091968
 		Expect(limits.MemoryMax).To(Equal("779091968"),
 			"memory cgroup limit should match bpm.yml memory: 743M (cgroup_dir: %s)", limits.CgroupDir)
 	})
 
 	It("sets the correct pids limit on test-server", func() {
-		limits := getCgroupLimits("test-server")
+		limits := getCgroupLimits()
 		Expect(limits.PidsMax).To(Equal("503"),
 			"pids cgroup limit should match bpm.yml processes: 503 (cgroup_dir: %s)", limits.CgroupDir)
 	})
@@ -342,8 +344,17 @@ type cgroupLimitsResult struct {
 	Error     string `json:"error,omitempty"`
 }
 
-func getCgroupLimits(process string) cgroupLimitsResult {
-	resp, err := client.Get(fmt.Sprintf("%s/cgroup-limits?process=%s", *observerURI, process))
+// getCgroupLimits reads cgroup limits for the test-server using a two-step approach:
+//  1. Ask the test-server for its own live cgroup v2 path via /self-cgroup-path.
+//     The path is unique per Docker container ID — it never matches stale scopes
+//     from previous builds or scopes from concurrent builds on the same worker.
+//  2. Pass that exact path to the privileged observer's /cgroup-limits endpoint,
+//     which reads memory.max and pids.max directly without any directory search.
+func getCgroupLimits() cgroupLimitsResult {
+	cgroupPath := fetchSelfCgroupPath()
+
+	resp, err := client.Get(fmt.Sprintf("%s/cgroup-limits?cgroup-path=%s",
+		*observerURI, url.QueryEscape(cgroupPath)))
 	ExpectWithOffset(1, err).NotTo(HaveOccurred())
 	defer resp.Body.Close() //nolint:errcheck
 
@@ -353,6 +364,26 @@ func getCgroupLimits(process string) cgroupLimitsResult {
 	ExpectWithOffset(1, json.NewDecoder(resp.Body).Decode(&result)).To(Succeed())
 	ExpectWithOffset(1, result.Error).To(BeEmpty(), "cgroup-limits returned error: %s", result.Error)
 	return result
+}
+
+// fetchSelfCgroupPath retrieves the test-server's own cgroup v2 unified-mode
+// path via /self-cgroup-path. Fails the test if the endpoint returns an error
+// (e.g. on cgroup v1 systems where there is no 0:: entry in /proc/self/cgroup).
+func fetchSelfCgroupPath() string {
+	resp, err := client.Get(fmt.Sprintf("%s/self-cgroup-path", *agentURI))
+	ExpectWithOffset(1, err).NotTo(HaveOccurred())
+	defer resp.Body.Close() //nolint:errcheck
+
+	ExpectWithOffset(1, resp.StatusCode).To(Equal(http.StatusOK))
+
+	var result struct {
+		CgroupV2Path string `json:"cgroup_v2_path"`
+		Error        string `json:"error,omitempty"`
+	}
+	ExpectWithOffset(1, json.NewDecoder(resp.Body).Decode(&result)).To(Succeed())
+	ExpectWithOffset(1, result.Error).To(BeEmpty(), "self-cgroup-path returned error: %s", result.Error)
+	ExpectWithOffset(1, result.CgroupV2Path).NotTo(BeEmpty(), "self-cgroup-path returned empty path")
+	return result.CgroupV2Path
 }
 
 func containsString(list []string, item string) bool {
