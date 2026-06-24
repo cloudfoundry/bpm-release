@@ -56,10 +56,15 @@ var _ = Describe("CgroupLimits path traversal guard", func() {
 			Expect(resp.Error).To(ContainSubstring("escapes the cgroup root"),
 				"path %q should be rejected", traversal)
 		},
-		Entry("parent traversal", "/../etc"),
-		Entry("double traversal", "/docker/abc/../../etc"),
-		Entry("URL-decoded traversal kept by Go query parsing", "/valid/../../../etc"),
+		Entry("one level above cgroup root", "/../etc"),
+		Entry("three levels above cgroup root", "/../../../etc"),
+		Entry("traversal starting inside subtree", "/docker/abc/../../../../etc"),
 	)
+
+	It("does not reject a path that stays inside the cgroup root via ..", func() {
+		resp := callHandler("/docker/abc/../../etc")
+		Expect(resp.Error).NotTo(ContainSubstring("escapes"))
+	})
 
 	It("accepts a well-formed absolute path inside the cgroup root", func() {
 		// The path won't exist on the test host so memory.max will error, but
