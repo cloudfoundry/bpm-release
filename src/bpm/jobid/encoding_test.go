@@ -17,13 +17,12 @@ package jobid
 
 import (
 	"os"
+	"path/filepath"
 	"regexp"
 	"testing/quick"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
-	"github.com/opencontainers/runc/libcontainer/utils"
 )
 
 var _ = Describe("Job ID Codec", func() {
@@ -88,9 +87,22 @@ var _ = Describe("Job ID Codec", func() {
 	})
 })
 
-var idRegex = regexp.MustCompile(`^[\w+-\.]+$`)
+var idRegex = regexp.MustCompile(`^[\w+-.]+$`)
 
 // https://github.com/opencontainers/runc/blob/e4fa8a457544ca646e02e60d124aebb0bb7f52ad/libcontainer/factory_linux.go#L373.
 func validRuncID(id string) bool {
-	return idRegex.MatchString(id) && string(os.PathSeparator)+id == utils.CleanPath(string(os.PathSeparator)+id)
+	return idRegex.MatchString(id) && string(os.PathSeparator)+id == lexicallyCleanPath(string(os.PathSeparator)+id)
+}
+
+// https://github.com/opencontainers/runc/blob/42a1e19d6788fde798fa960f047afbffbc319f8e/internal/pathrs/path.go#L45-L66
+func lexicallyCleanPath(path string) string {
+	// If the path isn't absolute, we need to do more processing to fix paths
+	// such as "../../../../<etc>/some/path". We also shouldn't convert absolute
+	// paths to relative ones.
+	path = filepath.Clean(string(os.PathSeparator) + path)
+
+	path, err := filepath.Rel(string(os.PathSeparator), path)
+	Expect(err).NotTo(HaveOccurred()) // This can't fail, as (by definition) all paths are relative to root.
+
+	return path
 }
