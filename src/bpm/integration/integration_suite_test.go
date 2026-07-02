@@ -38,7 +38,7 @@ import (
 
 // This needs to be different from /tmp as /tmp is bind mounted into the
 // container
-const bpmTmpDir = "/bpmtmp"
+var bpmTmpDir string
 
 func TestBpm(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -48,12 +48,16 @@ func TestBpm(t *testing.T) {
 var bpmPath string
 
 var _ = SynchronizedBeforeSuite(func() []byte {
-	bpmPath, err := gexec.Build("bpm/cmd/bpm")
+	compiledBpmPath, err := gexec.Build("bpm/cmd/bpm")
 	Expect(err).NotTo(HaveOccurred())
+
+	userHomeDir, err := os.UserHomeDir()
+	Expect(err).NotTo(HaveOccurred())
+	bpmTmpDir = filepath.Join(userHomeDir, "bpmtmp")
 
 	Expect(os.MkdirAll(bpmTmpDir, 0755)).To(Succeed())
 
-	return []byte(bpmPath)
+	return []byte(compiledBpmPath)
 }, func(data []byte) {
 	bpmPath = string(data)
 	sandbox.BPMPath = bpmPath
