@@ -11,7 +11,7 @@ require (
 	github.com/kr/pty v1.1.8
 	github.com/moby/sys/mountinfo v0.7.2
 	github.com/onsi/gomega v1.42.0
-	github.com/opencontainers/runc v1.2.8
+	github.com/opencontainers/runc v1.3.6
 	github.com/opencontainers/runtime-spec v1.3.0
 	github.com/satori/go.uuid v1.2.0
 	github.com/spf13/cobra v1.10.2
