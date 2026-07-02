@@ -96,13 +96,24 @@ func validRuncID(id string) bool {
 
 // https://github.com/opencontainers/runc/blob/42a1e19d6788fde798fa960f047afbffbc319f8e/internal/pathrs/path.go#L45-L66
 func lexicallyCleanPath(path string) string {
+	// Deal with empty strings nicely.
+	if path == "" {
+		return ""
+	}
+
+	// Ensure that all paths are cleaned (especially problematic ones like
+	// "/../../../../../" which can cause lots of issues).
+
+	if filepath.IsAbs(path) {
+		return filepath.Clean(path)
+	}
+
 	// If the path isn't absolute, we need to do more processing to fix paths
 	// such as "../../../../<etc>/some/path". We also shouldn't convert absolute
 	// paths to relative ones.
 	path = filepath.Clean(string(os.PathSeparator) + path)
-
-	path, err := filepath.Rel(string(os.PathSeparator), path)
-	Expect(err).NotTo(HaveOccurred()) // This can't fail, as (by definition) all paths are relative to root.
+	// This can't fail, as (by definition) all paths are relative to root.
+	path, _ = filepath.Rel(string(os.PathSeparator), path) //nolint:errcheck
 
 	return path
 }
