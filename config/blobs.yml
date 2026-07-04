@@ -2,10 +2,10 @@ gperf/gperf-3.3.tar.gz:
   size: 1831294
   object_id: 5bdc28eb-de7b-4f70-4207-09665a906667
   sha: sha256:fd87e0aba7e43ae054837afd6cd4db03a3f2693deb3619085e6ed9d8d9604ad8
-libseccomp/libseccomp-2.6.0.tar.gz:
-  size: 685655
-  object_id: 59077e0f-1b9c-476f-65a3-cb1edcb4c853
-  sha: sha256:83b6085232d1588c379dc9b9cae47bb37407cf262e6e74993c61ba72d2a784dc
+libseccomp/libseccomp-2.6.1.tar.gz:
+  size: 656231
+  object_id: 4578804c-c232-4aa6-71e9-17f170a048a6
+  sha: sha256:501f66c667225d53791b97e1d7cf85ab764c297d04881f60f38f451c4b0ee1be
 pkgconf/pkgconf-2.9.95.tar.gz:
   size: 237334
   object_id: 47e7c413-2f7a-4286-753d-e99a60fdce0b
