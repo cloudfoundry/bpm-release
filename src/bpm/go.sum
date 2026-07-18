@@ -1,9 +1,9 @@
-code.cloudfoundry.org/bytefmt v0.80.0 h1:Qn/AUEcNINLFCy8xhYZqGg9zFGz2szN7nIcTGW3xX0c=
-code.cloudfoundry.org/bytefmt v0.80.0/go.mod h1:flJhyKImx77XZeSOFHFSQ7ibApajv1ycSRME/4H21tU=
-code.cloudfoundry.org/clock v1.78.0 h1:DGECrKZCjf3kVoI4TmWH990/JZ5e8J4Y/7Ogbtxzm3w=
-code.cloudfoundry.org/clock v1.78.0/go.mod h1:dQlTy94p6U+od/RJve8qD54N7sYvW2RHQQe2H/FVeRc=
-code.cloudfoundry.org/lager/v3 v3.77.0 h1:Li7nd+Hq4u+gBFEXV79h4XJTOtuX3liJOEL3houSaDw=
-code.cloudfoundry.org/lager/v3 v3.77.0/go.mod h1:dD/SvEx5Iqo9pISAQ8Hned9erkel84c/ZGtH6lDWKIM=
+code.cloudfoundry.org/bytefmt v0.81.0 h1:fcLdzhk1pIx4dt7mjj3D37jasoG9BXvhYm3fq9ZHS78=
+code.cloudfoundry.org/bytefmt v0.81.0/go.mod h1:CvZVyKWOI1yYedIGsl6xIhyjgOHgOTpl4hqDVfeZmSo=
+code.cloudfoundry.org/clock v1.79.0 h1:9/gu3ovbYCROlpIShqMmTkQrQxHpTUpJk9ovxJz+n2I=
+code.cloudfoundry.org/clock v1.79.0/go.mod h1:f+X2+DeOrYJgReWyyDaFlPccMZ8j4jLulsT4Pxr6WDw=
+code.cloudfoundry.org/lager/v3 v3.78.0 h1:99UJanQimgW6+PLJXqeJy/O5phCab//wmpjnmH3cAcQ=
+code.cloudfoundry.org/lager/v3 v3.78.0/go.mod h1:IrC9fglXy7qSvpJ6fhOHd/FVYYmKn5R7jmRlYsATObc=
 github.com/Masterminds/semver/v3 v3.5.0 h1:kQceYJfbupGfZOKZQg0kou0DgAKhzDg2NZPAwZ/2OOE=
 github.com/Masterminds/semver/v3 v3.5.0/go.mod h1:4V+yj/TJE1HU9XfppCwVMZq3I84lprf4nC11bSS5beM=
 github.com/coreos/go-systemd/v22 v22.7.0 h1:LAEzFkke61DFROc7zNLX/WA2i5J8gYqe0rSj9KI28KA=

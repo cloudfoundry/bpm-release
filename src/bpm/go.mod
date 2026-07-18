@@ -3,9 +3,9 @@ module bpm
 go 1.25.0
 
 require (
-	code.cloudfoundry.org/bytefmt v0.80.0
-	code.cloudfoundry.org/clock v1.78.0
-	code.cloudfoundry.org/lager/v3 v3.77.0
+	code.cloudfoundry.org/bytefmt v0.81.0
+	code.cloudfoundry.org/clock v1.79.0
+	code.cloudfoundry.org/lager/v3 v3.78.0
 	github.com/cyphar/filepath-securejoin v0.7.0 // indirect
 	github.com/godbus/dbus/v5 v5.2.2 // indirect
 	github.com/kr/pty v1.1.8
