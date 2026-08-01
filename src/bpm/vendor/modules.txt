@@ -1,11 +1,11 @@
-# code.cloudfoundry.org/bytefmt v0.82.0
+# code.cloudfoundry.org/bytefmt v0.83.0
 ## explicit; go 1.25.0
 code.cloudfoundry.org/bytefmt
-# code.cloudfoundry.org/clock v1.80.0
+# code.cloudfoundry.org/clock v1.81.0
 ## explicit; go 1.25.0
 code.cloudfoundry.org/clock
 code.cloudfoundry.org/clock/fakeclock
-# code.cloudfoundry.org/lager/v3 v3.79.0
+# code.cloudfoundry.org/lager/v3 v3.80.0
 ## explicit; go 1.25.0
 code.cloudfoundry.org/lager/v3
 code.cloudfoundry.org/lager/v3/internal/truncate
@@ -123,7 +123,7 @@ github.com/spf13/pflag
 go.uber.org/mock/gomock
 go.uber.org/mock/mockgen
 go.uber.org/mock/mockgen/model
-# go.yaml.in/yaml/v3 v3.0.4
+# go.yaml.in/yaml/v3 v3.0.5
 ## explicit; go 1.16
 go.yaml.in/yaml/v3
 # golang.org/x/mod v0.38.0
