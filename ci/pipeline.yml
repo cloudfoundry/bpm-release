@@ -82,6 +82,11 @@ resources:
   source:
     name: bosh-warden-boshlite-ubuntu-noble
 
+- name: boshlite-resolute-stemcell
+  type: bosh-io-stemcell
+  source:
+    name: bosh-warden-boshlite-ubuntu-resolute
+
 - name: runc-linux
   type: github-release
   check_every: 24h
@@ -162,6 +167,22 @@ jobs:
       bosh-stemcell: boshlite-noble-stemcell
     privileged: true
 
+- name: test-acceptance-resolute
+  plan:
+  - in_parallel:
+    - get: bpm-release
+      trigger: true
+    - get: boshlite-resolute-stemcell
+      trigger: true
+  - task: test-acceptance
+    file: bpm-release/ci/tasks/test-acceptance.yml
+    params:
+      STEMCELL_NAME: ubuntu-resolute
+    input_mapping:
+      bosh-stemcell: boshlite-resolute-stemcell
+    privileged: true
+
+
 - name: test-upgrade
   plan:
   - in_parallel:
@@ -216,7 +237,9 @@ jobs:
   - get: bpm-release
     trigger: true
     passed:
+    - test-acceptance-jammy
     - test-acceptance-noble
+    - test-acceptance-resolute
     - test-unit
     - test-upgrade
     - test-bosh-deployment
