@@ -21,7 +21,7 @@ require (
 
 require (
 	github.com/onsi/ginkgo/v2 v2.32.1
-	github.com/opencontainers/cgroups v0.0.8
+	github.com/opencontainers/cgroups v0.0.9
 	go.uber.org/mock v0.6.0
 )
 
