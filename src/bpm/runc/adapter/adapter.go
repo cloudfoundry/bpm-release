@@ -338,7 +338,7 @@ func filterVolumesUnderBoshMounts(boshMounts []specs.Mount, unrestrictedVolumes 
 }
 
 func wrapWithInit(bpmCfg *config.BPMConfig, procCfg *config.ProcessConfig) (string, []string) {
-	exe := bpmCfg.TiniPath().Internal()
+	exe := bpmCfg.TiniPath()
 	args := append([]string{"-w", "-s", "--", procCfg.Executable}, procCfg.Args...)
 	return exe, args
 }
