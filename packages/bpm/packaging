@@ -12,6 +12,10 @@ pushd "bpm/cmd/bpm"
   go build -mod=vendor -ldflags "-X bpm/commands.Version=${version}" -o ${BOSH_INSTALL_TARGET}/bin/ .
 popd
 
+pushd "bpm/cmd/bpm-symlink-watcher"
+  go build -mod=vendor -o ${BOSH_INSTALL_TARGET}/bin/ .
+popd
+
 # runc
 cp /var/vcap/packages/bpm-runc/bin/runc ${BOSH_INSTALL_TARGET}/bin
 

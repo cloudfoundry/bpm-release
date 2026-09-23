@@ -1,0 +1,12 @@
+[Unit]
+Description=Restore /var/vcap/jobs/bpm/bin/bpm symlink to the embedded binary in the case a BPM job is deployed and then removed
+After=local-fs.target
+Before=bosh-agent.service
+
+[Service]
+ExecStart=/usr/libexec/bpm-symlink-watcher
+Restart=always
+RestartSec=1
+
+[Install]
+WantedBy=multi-user.target
