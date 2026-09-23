@@ -77,6 +77,11 @@ resources:
     versioned_file: release-notes.md
     initial_content_text: ""
 
+- name: boshlite-jammy-stemcell
+  source:
+    name: bosh-warden-boshlite-ubuntu-jammy-go_agent
+  type: bosh-io-stemcell
+
 - name: boshlite-noble-stemcell
   type: bosh-io-stemcell
   source:
@@ -151,6 +156,22 @@ jobs:
   - task: test-bosh-deployment
     file: bpm-release/ci/tasks/test-bosh-deployment.yml
     privileged: true
+
+- name: test-acceptance-jammy
+  plan:
+  - in_parallel:
+      steps:
+      - get: bpm-release
+        trigger: true
+      - get: boshlite-jammy-stemcell
+        trigger: true
+  - file: bpm-release/ci/tasks/test-acceptance.yml
+    input_mapping:
+      bosh-stemcell: boshlite-jammy-stemcell
+    params:
+      STEMCELL_NAME: ubuntu-jammy
+    privileged: true
+    task: test-acceptance
 
 - name: test-acceptance-noble
   plan:
