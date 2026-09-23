@@ -1,30 +1,15 @@
 set -eu
 
-# We need to perform some linker tomfoolery in order to successfully compile
-# runc for running on a BOSH VM. runc systemd support requires dynamic linking.
+# runc is linked statically, as upstream runc's release binaries are
+# (`make static`), with libseccomp built into it.
 #
-# We could modify the dynamic linker path settings of the machine as a whole or
-# add our libraries to the machine's pool. We're not ok with this because this
-# will interfere with other jobs on the machine which is unacceptable.
-#
-# Typically, you can set the LD_LIBRARY_PATH environment variable which will
-# modify the linker's search path in any programs which have that environment
-# variable present. Unfortunately this does not work in this case because runc
-# re-execs itself with an empty environment which causes the child process to
-# crash because it cannot find the libraries to link against.
-#
-# Instead we add an attribute in the binary to tell the linker where to find
-# libraries whenever this binary is executed. We feel this is acceptable
-# because we have such tight control over the execution environment in our
-# deployments.
-#
-# The path we set is different from the current package path because we
-# eventually move the binary and libraries before running them, as part of bpm
-# packaging.
-# 
-# The runc Makefile has a parameter for modifying the linker options but it is
-# broken in the case that Git is not installed on the system because of quoting
-# mishaps.
+# A dynamically linked runc has to find libseccomp.so at run time, and no
+# search path works for every exec: runc re-execs itself as `runc init` from a
+# sealed copy (an overlayfs or memfd behind /proc/self/fd/N), with an empty
+# environment. That copy cannot see a path relative to the binary, and
+# LD_LIBRARY_PATH does not survive, so the loader silently falls back to the
+# system libseccomp. An absolute RPATH works only where the package is
+# unpacked at /var/vcap/packages/bpm, and the stemcell installs it elsewhere.
 
 source /var/vcap/packages/golang-1-linux/bosh/compile.env
 
@@ -34,10 +19,9 @@ PKGCONF_VERSION="$(ls pkgconf/pkgconf-*.tar.gz | sed 's|pkgconf/pkgconf-||' | se
 PKG_CONFIG_PREFIX="$(mktemp -d)"
 
 GPERF_VERSION="$(ls gperf/gperf-*.tar.gz | sed 's|gperf/gperf-||' | sed 's|.tar.gz||')"
-GPERF_PREFIX="${BOSH_INSTALL_TARGET}/gperf"
+GPERF_PREFIX="$(mktemp -d)"
 
-LIBSECCOMP_PREFIX="${BOSH_INSTALL_TARGET}/lib/libseccomp"
-LIBSECCOMP_RUNTIME_PATH=/var/vcap/packages/bpm/lib/libseccomp/lib
+LIBSECCOMP_PREFIX="$(mktemp -d)"
 LIBSECCOMP_VERSION="$(ls libseccomp/libseccomp-*.tar.gz | sed 's|libseccomp/libseccomp-||' | sed 's|.tar.gz||')"
 
 RUNC_PACKAGE_PATH=github.com/opencontainers/runc
@@ -73,7 +57,7 @@ RUNC_PACKAGE_PATH=github.com/opencontainers/runc
 
   tar xf "libseccomp/libseccomp-${LIBSECCOMP_VERSION}.tar.gz"
   cd "libseccomp-${LIBSECCOMP_VERSION}"
-  ./configure --prefix="${LIBSECCOMP_PREFIX}"
+  ./configure --prefix="${LIBSECCOMP_PREFIX}" --enable-static --disable-shared
   make
   make install
 )
@@ -92,8 +76,8 @@ RUNC_PACKAGE_PATH=github.com/opencontainers/runc
     GOPROXY=off \
     go build \
       -buildmode=pie \
-      -ldflags "-X main.gitCommit=unknown -X main.version=${RUNC_VERSION} -r ${LIBSECCOMP_RUNTIME_PATH}" \
-      -tags "seccomp apparmor" \
+      -ldflags "-X main.gitCommit=unknown -X main.version=${RUNC_VERSION} -linkmode external -extldflags -static-pie" \
+      -tags "seccomp apparmor netgo osusergo" \
 	    -mod=vendor \
       -o "${BOSH_INSTALL_TARGET}/bin/runc" \
       .
@@ -102,4 +86,4 @@ RUNC_PACKAGE_PATH=github.com/opencontainers/runc
 )
 
 # clean up source artifacts
-rm -r "${PKG_CONFIG_PREFIX}"
+rm -r "${PKG_CONFIG_PREFIX}" "${LIBSECCOMP_PREFIX}" "${GPERF_PREFIX}"
