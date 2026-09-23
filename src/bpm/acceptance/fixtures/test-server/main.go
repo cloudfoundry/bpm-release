@@ -66,7 +66,7 @@ func main() {
 	http.HandleFunc("/spawn-processes", handlers.SpawnProcesses)
 
 	signals := make(chan os.Signal, 1)
-	signal.Notify(signals)
+	signal.Notify(signals, syscall.SIGTERM, syscall.SIGQUIT)
 
 	go handleSignals(signals)
 

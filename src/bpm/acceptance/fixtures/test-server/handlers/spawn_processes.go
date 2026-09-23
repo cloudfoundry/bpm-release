@@ -34,12 +34,23 @@ func SpawnProcesses(w http.ResponseWriter, r *http.Request) {
 	}
 
 	spawned := 0
+	var spawnedCmds []*exec.Cmd
+	defer func() {
+		for _, cmd := range spawnedCmds {
+			if cmd != nil && cmd.Process != nil {
+				cmd.Process.Kill() //nolint:errcheck
+				cmd.Wait()         //nolint:errcheck // always "signal: killed"
+			}
+		}
+	}()
+
 	for i := 0; i < count; i++ {
 		cmd := exec.Command("sleep", "3600")
 		if err := cmd.Start(); err != nil {
 			fmt.Fprintf(w, "spawned %d of %d, fork failed: %v\n", spawned, count, err) //nolint:errcheck
 			return
 		}
+		spawnedCmds = append(spawnedCmds, cmd)
 		spawned++
 	}
 
