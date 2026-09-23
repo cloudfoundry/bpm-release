@@ -17,13 +17,36 @@ package config
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"bpm/bosh"
 	"bpm/jobid"
 )
 
+// packageDirEnv overrides the root of the bpm package: the directory that
+// holds bin/runc and bin/tini. It defaults to <root>/packages/bpm, where the
+// BOSH package lives. A stemcell that installs bpm elsewhere sets it in its
+// wrapper. The directory must be under a path that systemIdentityMounts
+// exposes to every container, because tini runs inside the container at the
+// same path.
+const packageDirEnv = "BPM_PACKAGE_DIR"
+
+// ValidatePackageDir returns an error if BPM_PACKAGE_DIR is set to a relative
+// path, which would otherwise resolve against the working directory.
+func ValidatePackageDir() error {
+	if dir := os.Getenv(packageDirEnv); dir != "" && !filepath.IsAbs(dir) {
+		return fmt.Errorf("%s must be an absolute path, got %q", packageDirEnv, dir)
+	}
+
+	return nil
+}
+
 func RuncPath(env *bosh.Env) string {
+	if dir := os.Getenv(packageDirEnv); dir != "" {
+		return filepath.Join(dir, "bin", "runc")
+	}
+
 	return env.Root().Join("packages", "bpm", "bin", "runc").External()
 }
 
@@ -118,8 +141,13 @@ func (c *BPMConfig) JobConfig() string {
 	return c.JobDir().Join(filepath.Join("config", "bpm.yml")).External()
 }
 
-func (c *BPMConfig) TiniPath() bosh.Path {
-	return c.PackageDir().Join("bpm", "bin", "tini")
+// TiniPath returns the path to tini inside the job's container.
+func (c *BPMConfig) TiniPath() string {
+	if dir := os.Getenv(packageDirEnv); dir != "" {
+		return filepath.Join(dir, "bin", "tini")
+	}
+
+	return c.PackageDir().Join("bpm", "bin", "tini").Internal()
 }
 
 func (c *BPMConfig) DefaultVolumes() []string {

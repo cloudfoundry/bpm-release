@@ -743,6 +743,33 @@ var _ = Describe("RuncAdapter", func() {
 			})
 		})
 
+		Context("when BPM_PACKAGE_DIR is set", func() {
+			BeforeEach(func() {
+				originalPackageDir, packageDirSet := os.LookupEnv("BPM_PACKAGE_DIR")
+				Expect(os.Setenv("BPM_PACKAGE_DIR", "/usr/libexec/bpm")).To(Succeed())
+				DeferCleanup(func() {
+					if packageDirSet {
+						Expect(os.Setenv("BPM_PACKAGE_DIR", originalPackageDir)).To(Succeed())
+					} else {
+						Expect(os.Unsetenv("BPM_PACKAGE_DIR")).To(Succeed())
+					}
+				})
+			})
+
+			It("wraps the process with tini from BPM_PACKAGE_DIR and leaves mounts identical to unset", func() {
+				spec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(os.Unsetenv("BPM_PACKAGE_DIR")).To(Succeed())
+				unsetSpec, err := runcAdapter.BuildSpec(logger, bpmCfg, procCfg, user)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(unsetSpec.Process.Args[0]).To(Equal("/var/vcap/packages/bpm/bin/tini"))
+				Expect(spec.Process.Args[0]).To(Equal("/usr/libexec/bpm/bin/tini"))
+				Expect(spec.Mounts).To(ConsistOf(unsetSpec.Mounts))
+			})
+		})
+
 		Context("when limits are provided", func() {
 			BeforeEach(func() {
 				procCfg.Limits = &config.Limits{}

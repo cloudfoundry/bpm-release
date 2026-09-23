@@ -57,7 +57,12 @@ func init() {
 }
 
 var RootCmd = &cobra.Command{
-	Long:              "A bosh process manager for starting and stopping release jobs",
+	Long: `A bosh process manager for starting and stopping release jobs
+
+Environment:
+  BPM_PACKAGE_DIR  Directory containing bin/runc and bin/tini.
+                   Default: /var/vcap/packages/bpm. Must be under /usr (or
+                   another path mounted into every container) when set.`,
 	RunE:              root,
 	Short:             "A bosh process manager for starting and stopping release jobs",
 	SilenceErrors:     true,
@@ -79,6 +84,11 @@ func rootPre(cmd *cobra.Command, _ []string) error {
 	if usr.Uid != "0" && usr.Gid != "0" {
 		cmd.SilenceUsage = true
 		return errors.New("bpm must be run as root. Please run 'sudo -i' to become the root user.") //nolint:staticcheck
+	}
+
+	if err := config.ValidatePackageDir(); err != nil {
+		cmd.SilenceUsage = true
+		return err
 	}
 
 	lockDir := config.LocksPath(boshEnv)
