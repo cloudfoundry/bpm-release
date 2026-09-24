@@ -199,6 +199,7 @@ jobs:
     file: bpm-release/ci/tasks/test-acceptance.yml
     params:
       STEMCELL_NAME: ubuntu-resolute
+      TEST_SYSTEM_INSTALL: true
     input_mapping:
       bosh-stemcell: boshlite-resolute-stemcell
     privileged: true
