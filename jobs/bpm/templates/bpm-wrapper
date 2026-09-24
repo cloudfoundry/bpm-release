@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# Setting ulimit due to changes in rlimit being inherited from
+# process that runs it. Monit hard limit on xenial/bionic
+# stecemlls are 4096 and is 524288 on jammy. 
+# Refer to https://github.com/golang/go/issues/59064 for more info
+ulimit -n 524288
+
+export BPM_PACKAGE_DIR=/usr/libexec/bpm
+exec /usr/libexec/bpm/bin/bpm "$@"

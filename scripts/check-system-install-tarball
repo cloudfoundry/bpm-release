@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Checks a tarball from build-system-install-tarball: its checksum, that it
+# holds exactly what the stemcell installs, that runc is statically linked, and
+# that bpm reports the expected version. It runs the binaries, so run it on a
+# linux/amd64 host with ldd: a stemcell container in CI, or a BOSH VM.
+#
+# Usage: check-system-install-tarball [--expect-version VERSION] TARBALL
+#
+# Only a final release's bpm reports its release version. A dev release
+# reports src/version, which lacks the release's +dev.N suffix, so leave
+# --expect-version off for dev builds.
+
+expect_version=""
+tarball=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --expect-version) expect_version="$2"; shift 2 ;;
+    -*) echo "usage: $0 [--expect-version VERSION] TARBALL" >&2; exit 1 ;;
+    *) tarball="$1"; shift ;;
+  esac
+done
+: "${tarball:?usage: $0 [--expect-version VERSION] TARBALL}"
+
+name="$(basename "${tarball}")"
+if [ -n "${expect_version}" ] && [ "${name}" != "bpm-${expect_version}-linux-amd64.tar.gz" ]; then
+  echo "expected bpm-${expect_version}-linux-amd64.tar.gz, got ${name}" >&2
+  exit 1
+fi
+
+(cd "$(dirname "${tarball}")" && sha256sum -c "${name}.sha256")
+
+expected_entries='usr/
+usr/bin/
+usr/bin/bpm
+usr/lib/
+usr/lib/systemd/
+usr/lib/systemd/system/
+usr/lib/systemd/system/bpm-symlink-watcher.service
+usr/libexec/
+usr/libexec/bpm-symlink-watcher
+usr/libexec/bpm/
+usr/libexec/bpm/bin/
+usr/libexec/bpm/bin/bpm
+usr/libexec/bpm/bin/runc
+usr/libexec/bpm/bin/tini'
+actual_entries="$(tar -tzf "${tarball}" | LC_ALL=C sort)"
+if [ "${actual_entries}" != "$(LC_ALL=C sort <<< "${expected_entries}")" ]; then
+  echo "unexpected entries in ${name}:" >&2
+  diff <(LC_ALL=C sort <<< "${expected_entries}") <(echo "${actual_entries}") >&2 || true
+  exit 1
+fi
+
+dir="$(mktemp -d)"
+trap 'rm -rf "${dir}"' EXIT
+tar -xzf "${tarball}" -C "${dir}"
+
+# Statically linked, so neither runc nor `runc init`, which runs from a sealed
+# copy of the binary, can pick up the system libseccomp.
+if ! ldd "${dir}/usr/libexec/bpm/bin/runc" 2>&1 | tee /dev/stderr | grep -Eq "statically linked|not a dynamic executable"; then
+  echo "runc is not statically linked" >&2
+  exit 1
+fi
+
+actual="$("${dir}/usr/libexec/bpm/bin/bpm" --version)"
+echo "bpm --version: ${actual}"
+if [ -n "${expect_version}" ] && [ "${actual}" != "${expect_version}" ]; then
+  echo "expected bpm --version to be ${expect_version}" >&2
+  exit 1
+fi
+
+echo "${name} OK"
