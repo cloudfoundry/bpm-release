@@ -1,0 +1,18 @@
+---
+platform: linux
+
+# Runs in a stemcell image, set by the pipeline, because
+# check-system-install-tarball runs the binaries.
+
+inputs:
+- name: bpm-release
+# The release compiled by bosh-agent-compile
+- name: compiled-release
+# version, from create-final-release
+- name: release_metadata
+
+outputs:
+- name: tarball-output
+
+run:
+  path: bpm-release/ci/tasks/build-system-install-tarball.sh
