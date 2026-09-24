@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+set -x
+
+# Runs the acceptance specs against bpm installed the way the stemcell installs
+# it. Run it after run-acceptance-specs-bosh-job-install, on that deployment:
+# it builds the system install tarball from the bpm package the director
+# compiled, installs it on bpm/0 in place of the BOSH job, and runs the specs
+# again. The BOSH job is put back on exit.
+
+RELEASE_PATH="$(cd "$(dirname "$0")/.." && pwd)"
+export RELEASE_PATH
+export BOSH_DEPLOYMENT="${BOSH_DEPLOYMENT:-bpm}"
+export BOSH_NON_INTERACTIVE=true
+
+# shellcheck source=scripts/lib/acceptance.bash
+source "${RELEASE_PATH}/scripts/lib/acceptance.bash"
+
+OUTPUT_DIR="${OUTPUT_DIR:-$(mktemp -d)}"
+
+# Restarts every job and waits for every process to run again, with a new
+# test-server pid. monit restarts asynchronously, refuses a restart while
+# another action is in progress, and waits out the stop timeout of
+# alt-test-server, so this can take minutes.
+restart_and_wait='
+  pid() { sudo /var/vcap/jobs/bpm/bin/bpm list | awk "/^test-server .*running/ { print \$2 }"; }
+  idle() {
+    summary="$(sudo monit summary 2>&1)" || return 1
+    echo "${summary}" | grep -q "^Process" && ! echo "${summary}" | grep "^Process" | grep -vq "running$"
+  }
+  for _ in $(seq 1 150); do idle && break; sleep 2; done
+  old_pid="$(pid)"
+  sudo monit restart all
+  for _ in $(seq 1 150); do
+    new_pid="$(pid)"
+    if [ -n "${new_pid}" ] && [ "${new_pid}" != "${old_pid}" ] && idle; then
+      break
+    fi
+    sleep 2
+  done
+  [ -n "${new_pid}" ] && [ "${new_pid}" != "${old_pid}" ] && idle || { echo "jobs did not come back up" >&2; exit 1; }
+'
+
+echo "=== Build the system install tarball ==="
+# Export the bpm package this director compiled for the deployment.
+deployment="$(bosh deployments --json | jq -e --arg d "${BOSH_DEPLOYMENT}" '.Tables[0].Rows[] | select(.name == $d)')"
+bpm_version="$(jq -r '.release_s' <<< "${deployment}" | sed -n 's|^bpm/||p')"
+stemcell="$(jq -r '.stemcell_s' <<< "${deployment}")"
+stemcell_os="$(bosh stemcells --json | jq -er --arg n "${stemcell%/*}" '[.Tables[0].Rows[] | select(.name == $n)][0].os')"
+export_dir="$(mktemp -d)"
+bosh export-release "bpm/${bpm_version}" "${stemcell_os}/${stemcell#*/}" --dir "${export_dir}"
+"${RELEASE_PATH}/scripts/build-system-install-tarball" \
+  --compiled-release "$(ls "${export_dir}"/bpm-*.tgz)" --output-dir "${OUTPUT_DIR}"
+rm -rf "${export_dir}"
+tarball="$(ls "${OUTPUT_DIR}"/bpm-*-linux-amd64.tar.gz)"
+
+# The check runs the binaries, so run it on the VM.
+bosh scp "${RELEASE_PATH}/scripts/check-system-install-tarball" "${tarball}" "${tarball}.sha256" bpm/0:/tmp/
+vm "sudo /tmp/check-system-install-tarball /tmp/$(basename "${tarball}"); rm -f /tmp/check-system-install-tarball /tmp/$(basename "${tarball}")*"
+
+echo "=== Install the stemcell layout ==="
+# Replace the agent's /var/vcap/jobs/bpm link with the directory the stemcell
+# ships. The agent's job directory under /var/vcap/data stays untouched, and
+# the next deploy replaces this directory again.
+# A deploy with no changes does not re-apply jobs, so put the agent's link
+# back on exit. Otherwise the next run's BOSH job install would still run the
+# stemcell layout.
+restore_bosh_layout() {
+  vm '
+    if [ -f /var/vcap/data/bpm-jobs-link ]; then
+      sudo rm -rf /var/vcap/jobs/bpm
+      sudo ln -s "$(cat /var/vcap/data/bpm-jobs-link)" /var/vcap/jobs/bpm
+      sudo rm /var/vcap/data/bpm-jobs-link
+      '"${restart_and_wait}"'
+    fi
+  '
+}
+trap restore_bosh_layout EXIT
+
+bosh scp "${tarball}" bpm/0:/tmp/bpm-stemcell.tar.gz
+vm '
+  sudo tar -xzf /tmp/bpm-stemcell.tar.gz -C / --no-same-owner --no-overwrite-dir
+  rm -f /tmp/bpm-stemcell.tar.gz
+  readlink /var/vcap/jobs/bpm | sudo tee /var/vcap/data/bpm-jobs-link
+  sudo rm /var/vcap/jobs/bpm
+  sudo mkdir -p /var/vcap/jobs/bpm/bin
+  sudo ln -s /usr/bin/bpm /var/vcap/jobs/bpm/bin/bpm
+  '"${restart_and_wait}"'
+'
+
+# Installed from the system install tarball, bpm runs tini from
+# /usr/libexec/bpm.
+expect_arg0 /usr/libexec/bpm/bin/tini
+
+echo "=== Run the specs ==="
+run_specs
+
+echo "Tarball: ${tarball}"

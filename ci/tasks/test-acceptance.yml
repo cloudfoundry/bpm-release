@@ -14,6 +14,8 @@ inputs:
 
 params:
   STEMCELL_NAME:
+  # true to also run the specs against the stemcell's system install of bpm
+  TEST_SYSTEM_INSTALL: false
 
 run:
   path: bpm-release/ci/tasks/test-acceptance.sh
