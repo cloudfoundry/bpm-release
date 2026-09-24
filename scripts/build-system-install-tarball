@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Builds bpm-<version>-linux-amd64.tar.gz, the bpm a stemcell installs under
+# /usr/libexec/bpm, from a compiled bpm release: the output of
+# `bosh export-release` or `bosh-agent compile`. Nothing is built here.
+#
+# Usage: build-system-install-tarball --compiled-release TGZ --output-dir DIR
+
+RELEASE_PATH="$(cd "$(dirname "$0")/.." && pwd)"
+
+compiled_release=""
+output_dir=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --compiled-release) compiled_release="$2"; shift 2 ;;
+    --output-dir) output_dir="$2"; shift 2 ;;
+    *) echo "usage: $0 --compiled-release TGZ --output-dir DIR" >&2; exit 1 ;;
+  esac
+done
+: "${compiled_release:?--compiled-release is required}"
+: "${output_dir:?--output-dir is required}"
+
+workdir="$(mktemp -d)"
+trap 'rm -rf "${workdir}"' EXIT
+
+mkdir -p "${workdir}/release"
+tar -xzf "${compiled_release}" -C "${workdir}/release"
+if [ ! -f "${workdir}/release/compiled_packages/bpm.tgz" ]; then
+  echo "${compiled_release} has no compiled bpm package" >&2
+  exit 1
+fi
+bpm_version="$(sed -n "s/^version: *['\"]\{0,1\}\([^'\"]*\)['\"]\{0,1\} *$/\1/p" "${workdir}/release/release.MF")"
+: "${bpm_version:?no version in release.MF}"
+
+root="${workdir}/root"
+mkdir -p "${root}/usr/libexec/bpm" "${root}/usr/bin" "${root}/usr/lib/systemd/system"
+tar -xzf "${workdir}/release/compiled_packages/bpm.tgz" -C "${root}/usr/libexec/bpm"
+
+# The watcher is compiled into the bpm package, but it belongs to the stemcell,
+# not to the package tree that BPM_PACKAGE_DIR points at.
+mv "${root}/usr/libexec/bpm/bin/bpm-symlink-watcher" "${root}/usr/libexec/bpm-symlink-watcher"
+install -m 0644 "${RELEASE_PATH}/src/bpm/cmd/bpm-symlink-watcher/bpm-symlink-watcher.service" \
+  "${root}/usr/lib/systemd/system/bpm-symlink-watcher.service"
+
+install -m 0755 "${RELEASE_PATH}/jobs/bpm/templates/bpm-wrapper" "${root}/usr/bin/bpm"
+
+tarball="bpm-${bpm_version}-linux-amd64.tar.gz"
+mkdir -p "${output_dir}"
+# Publish root-owned entries without group or world write, so the tarball can
+# be extracted as-is into the stemcell's /usr.
+chmod -R go-w "${root}"
+COPYFILE_DISABLE=1 tar --no-xattrs --owner=0 --group=0 --numeric-owner -czf "${output_dir}/${tarball}" -C "${root}" usr
+(cd "${output_dir}" && sha256sum "${tarball}" > "${tarball}.sha256")
+
+echo "Created ${output_dir}/${tarball}"
