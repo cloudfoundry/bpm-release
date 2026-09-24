@@ -92,6 +92,13 @@ resources:
   source:
     name: bosh-warden-boshlite-ubuntu-resolute
 
+- name: ubuntu-resolute-stemcell-registry-image
+  type: registry-image
+  source:
+    repository: ghcr.io/cloudfoundry/ubuntu-resolute-stemcell
+    username: ((github_read_write_packages.username))
+    password: ((github_read_write_packages.password))
+
 - name: runc-linux
   type: github-release
   check_every: 24h
@@ -409,6 +416,8 @@ jobs:
       params:
         bump: final
     - get: release-notes
+    - get: bosh-deployment
+    - get: ubuntu-resolute-stemcell-registry-image
   - task: bump-local-version
     file: bpm-release/ci/tasks/bump-local-version.yml
     image: bosh-integration-image
@@ -421,12 +430,28 @@ jobs:
     params:
       GIT_USER_NAME: CI Bot
       GIT_USER_EMAIL: bots@cloudfoundry.org
+      RELEASE_TARBALL_BASE_NAME: bpm
       PRIVATE_YML: |
         ---
         blobstore:
           options:
             credentials_source: static
             json_key: '((gcp_json_key))'
+  # The final bpm package embeds the release version, so it is compiled
+  # afresh here, by the agent in a stemcell image rather than a director.
+  # test-acceptance-resolute already tested this code in both layouts; this
+  # checks the artifact. It runs before anything is pushed, so the GitHub
+  # release is created with the tarball already attached.
+  - task: compile-release
+    file: bosh-deployment/ci/tasks/shared/bosh-agent-compile.yml
+    image: ubuntu-resolute-stemcell-registry-image
+    input_mapping:
+      release: release_metadata
+  - task: build-system-install-tarball
+    file: bpm-release/ci/tasks/build-system-install-tarball.yml
+    image: ubuntu-resolute-stemcell-registry-image
+    input_mapping:
+      bpm-release: release_repo
   - put: bpm-release
     params:
       repository: release_repo
@@ -439,6 +464,8 @@ jobs:
       body: release-notes/release-notes.md
       commitish: bpm-release/.git/ref
       generate_release_notes: true
+      globs:
+      - tarball-output/bpm-*-linux-amd64.tar.gz*
   - task: bump-local-version
     image: bosh-integration-image
     file: bpm-release/ci/tasks/bump-local-version.yml
