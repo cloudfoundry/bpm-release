@@ -8,7 +8,8 @@ export RELEASE_PATH
 
 bosh deploy \
   "${RELEASE_PATH}/manifests/bosh-lite-ci.yml" \
-  -v "stemcell_name=${STEMCELL_NAME}"
+  -v "stemcell_name=${STEMCELL_NAME}" \
+  -v "stemcell_version=${STEMCELL_VERSION:-latest}"
 
 AGENT_HOST="$(bosh -d bpm instances | grep running | awk '{ print $4 }')"
 agent_port=1337
@@ -16,7 +17,9 @@ agent_port=1337
 "${RELEASE_PATH}/scripts/go-generate"
 
 pushd "${RELEASE_PATH}/src/bpm/acceptance" > /dev/null
-  go run github.com/onsi/ginkgo/v2/ginkgo -r -p --race --randomize-all -- \
+  # GINKGO_EXTRA_ARGS is for local runs, e.g. --skip-package=fixtures on macOS.
+  # shellcheck disable=SC2086
+  go run github.com/onsi/ginkgo/v2/ginkgo -r -p --race --randomize-all ${GINKGO_EXTRA_ARGS:-} -- \
     --agent-uri="http://${AGENT_HOST}:${agent_port}" \
     --observer-uri="http://${AGENT_HOST}:1339"
 popd > /dev/null
