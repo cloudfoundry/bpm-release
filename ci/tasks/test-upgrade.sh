@@ -19,7 +19,8 @@ echo "Deploying latest final version of bpm"
 bosh upload-release bpm-bosh-io/*.tgz
 bosh deploy \
   "${RELEASE_PATH}/manifests/bosh-lite-ci.yml" \
-  -v "stemcell_name=${STEMCELL_NAME}"
+  -v "stemcell_name=${STEMCELL_NAME}" \
+  -v "stemcell_version=latest"
 
 echo "Deploying latest dev version of bpm"
 bosh create-release --dir "${RELEASE_PATH}/" --timestamp-version
