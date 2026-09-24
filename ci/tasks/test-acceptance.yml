@@ -16,4 +16,4 @@ params:
   STEMCELL_NAME:
 
 run:
-  path: bpm-release/scripts/test-acceptance
+  path: bpm-release/ci/tasks/test-acceptance.sh

@@ -3,7 +3,7 @@ set -euo pipefail
 
 set -x
 
-RELEASE_PATH="$(cd "$(dirname "$0")/.." && pwd)"
+RELEASE_PATH="$(cd "$(dirname "$0")/../.." && pwd)"
 export RELEASE_PATH
 
 . start-bosh
@@ -18,4 +18,4 @@ bosh upload-stemcell bosh-stemcell/*.tgz
 bosh create-release --dir "${RELEASE_PATH}/"
 bosh upload-release --dir "${RELEASE_PATH}/"
 
-"${RELEASE_PATH}/scripts/run-acceptance-specs"
+"${RELEASE_PATH}/scripts/run-acceptance-specs-bosh-job-install"

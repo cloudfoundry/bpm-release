@@ -17,4 +17,4 @@ params:
   STEMCELL_NAME: ubuntu-noble
 
 run:
-  path: bpm-release/scripts/test-upgrade
+  path: bpm-release/ci/tasks/test-upgrade.sh

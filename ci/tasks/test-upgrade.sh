@@ -3,7 +3,7 @@ set -euo pipefail
 
 set -x
 
-RELEASE_PATH="$(cd "$(dirname "$0")/.." && pwd)"
+RELEASE_PATH="$(cd "$(dirname "$0")/../.." && pwd)"
 export RELEASE_PATH
 
 . start-bosh
@@ -25,4 +25,4 @@ echo "Deploying latest dev version of bpm"
 bosh create-release --dir "${RELEASE_PATH}/" --timestamp-version
 bosh upload-release --dir "${RELEASE_PATH}/"
 
-"${RELEASE_PATH}/scripts/run-acceptance-specs"
+"${RELEASE_PATH}/scripts/run-acceptance-specs-bosh-job-install"
