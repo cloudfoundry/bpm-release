@@ -19,3 +19,7 @@ bosh create-release --dir "${RELEASE_PATH}/"
 bosh upload-release --dir "${RELEASE_PATH}/"
 
 "${RELEASE_PATH}/scripts/run-acceptance-specs-bosh-job-install"
+
+if [ "${TEST_SYSTEM_INSTALL}" = true ]; then
+  "${RELEASE_PATH}/scripts/run-acceptance-specs-system-install"
+fi
