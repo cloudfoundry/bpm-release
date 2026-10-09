@@ -208,6 +208,35 @@ var _ = Describe("RuncAdapter", func() {
 			})
 		})
 
+		Context("when an additional volume provided is a symlink", func() {
+			var (
+				sentinelFile string
+				symlinkPath  string
+			)
+
+			BeforeEach(func() {
+				sentinelFile = filepath.Join(systemRoot, "sentinel.target")
+				Expect(os.WriteFile(sentinelFile, []byte("protected"), 0600)).To(Succeed())
+
+				symlinkPath = filepath.Join(systemRoot, "symlink-vol")
+				Expect(os.Symlink(sentinelFile, symlinkPath)).To(Succeed())
+
+				procCfg.AdditionalVolumes = append(procCfg.AdditionalVolumes, config.Volume{
+					Path: symlinkPath,
+				})
+			})
+
+			It("refuses to configure the volume and does not modify the target", func() {
+				_, _, err := runcAdapter.CreateJobPrerequisites(bpmCfg, procCfg, user)
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("refusing to configure additional volume at symlink"))
+
+				contents, readErr := os.ReadFile(sentinelFile)
+				Expect(readErr).NotTo(HaveOccurred())
+				Expect(string(contents)).To(Equal("protected"))
+			})
+		})
+
 		Context("when a volume should be mounted only", func() {
 			BeforeEach(func() {
 				procCfg.AdditionalVolumes = append(procCfg.AdditionalVolumes, config.Volume{
@@ -360,6 +389,30 @@ var _ = Describe("RuncAdapter", func() {
 				contents, readErr := os.ReadFile(sentinel)
 				Expect(readErr).NotTo(HaveOccurred())
 				Expect(string(contents)).To(Equal("untouched"))
+			})
+		})
+
+		Context("when a job directory is a symlink to an existing directory", func() {
+			var sentinelDir string
+
+			BeforeEach(func() {
+				sentinelDir = filepath.Join(systemRoot, "sentinel-dir")
+				Expect(os.MkdirAll(sentinelDir, 0755)).To(Succeed())
+
+				// Plant a symlink at the temp directory pointing to sentinel
+				tempDirParent := filepath.Dir(bpmCfg.TempDir().External())
+				Expect(os.MkdirAll(tempDirParent, 0700)).To(Succeed())
+				Expect(os.Symlink(sentinelDir, bpmCfg.TempDir().External())).To(Succeed())
+			})
+
+			It("refuses to follow the symlink and does not alter the target", func() {
+				_, _, err := runcAdapter.CreateJobPrerequisites(bpmCfg, procCfg, user)
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("refusing to create directory through symlink"))
+
+				info, statErr := os.Lstat(sentinelDir)
+				Expect(statErr).NotTo(HaveOccurred())
+				Expect(info.Mode() & os.ModePerm).To(Equal(os.FileMode(0755)))
 			})
 		})
 

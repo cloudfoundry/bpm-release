@@ -15,9 +15,9 @@
 
 // Package safeio provides helpers for performing privileged file operations
 // against paths that live in directories writable by less-privileged users
-// (e.g. job log directories). The helpers use O_NOFOLLOW + fchown so that a
-// pre-planted symlink at the leaf path cannot redirect the operation onto an
-// arbitrary host file.
+// (e.g. job log directories). The helpers use O_NOFOLLOW, Lstat, and lchown
+// so that a pre-planted symlink at the leaf path cannot redirect the operation
+// onto an arbitrary host file.
 package safeio
 
 import (
@@ -53,4 +53,50 @@ func OpenAppendChown(path string, uid, gid int, perm os.FileMode) (*os.File, err
 	}
 
 	return f, nil
+}
+
+// MkdirAllChown creates a directory (and any parent directories) with 0700
+// permissions and chowns the leaf directory to the specified uid and gid.
+// If the path already exists and is a symlink, or if the leaf is a symlink,
+// it refuses to follow it and returns an error.
+func MkdirAllChown(path string, uid, gid int) error {
+	fi, err := os.Lstat(path)
+	if err == nil {
+		if fi.Mode()&os.ModeSymlink != 0 {
+			return fmt.Errorf("refusing to create directory through symlink at %s", path)
+		}
+		if !fi.IsDir() {
+			return fmt.Errorf("path %s exists and is not a directory", path)
+		}
+	} else if !os.IsNotExist(err) {
+		return err
+	}
+
+	if err := os.MkdirAll(path, 0700); err != nil {
+		return err
+	}
+
+	fi, err = os.Lstat(path)
+	if err != nil {
+		return err
+	}
+	if fi.Mode()&os.ModeSymlink != 0 {
+		return fmt.Errorf("refusing to chown symlink at %s", path)
+	}
+
+	return os.Lchown(path, uid, gid)
+}
+
+// Lchown changes the ownership of the named file or directory without following
+// symbolic links. If the path is a symlink, it refuses to chown and returns an error.
+func Lchown(path string, uid, gid int) error {
+	fi, err := os.Lstat(path)
+	if err != nil {
+		return err
+	}
+	if fi.Mode()&os.ModeSymlink != 0 {
+		return fmt.Errorf("refusing to chown symlink at %s", path)
+	}
+
+	return os.Lchown(path, uid, gid)
 }

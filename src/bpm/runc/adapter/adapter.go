@@ -90,11 +90,13 @@ func (a *RuncAdapter) CreateJobPrerequisites(
 			continue
 		}
 
-		fi, err := os.Stat(vol.Path)
+		fi, err := os.Lstat(vol.Path)
 		if os.IsNotExist(err) {
 			dirsToCreate = append(dirsToCreate, vol.Path)
 		} else if err != nil {
 			return nil, nil, err
+		} else if fi.Mode()&os.ModeSymlink != 0 {
+			return nil, nil, fmt.Errorf("refusing to configure additional volume at symlink %s", vol.Path)
 		} else if fi.IsDir() && fi.Mode() != 0700 {
 			if err := os.Chmod(vol.Path, 0700); err != nil {
 				return nil, nil, err
@@ -168,17 +170,12 @@ func createDirs(dirs []string, user specs.User) error {
 }
 
 func createDirFor(path string, uid, gid int) error {
-	err := os.MkdirAll(path, 0700)
-	if err != nil {
-		return err
-	}
-
-	return os.Chown(path, uid, gid)
+	return safeio.MkdirAllChown(path, uid, gid)
 }
 
 func chownPaths(paths []string, user specs.User) error {
 	for _, path := range paths {
-		err := os.Chown(path, int(user.UID), int(user.GID))
+		err := safeio.Lchown(path, int(user.UID), int(user.GID))
 		if err != nil {
 			return err
 		}
