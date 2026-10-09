@@ -140,3 +140,162 @@ var _ = Describe("OpenAppendChown", func() {
 		})
 	})
 })
+
+var _ = Describe("MkdirAllChown", func() {
+	var (
+		tmpDir   string
+		uid, gid int
+	)
+
+	BeforeEach(func() {
+		var err error
+		tmpDir, err = os.MkdirTemp("", "safeio-mkdir")
+		Expect(err).NotTo(HaveOccurred())
+
+		uid = os.Getuid()
+		gid = os.Getgid()
+	})
+
+	AfterEach(func() {
+		Expect(os.RemoveAll(tmpDir)).To(Succeed())
+	})
+
+	Context("when the directory does not exist", func() {
+		It("creates the directory with 0700 permissions and correct ownership", func() {
+			dirPath := filepath.Join(tmpDir, "sub", "newdir")
+
+			err := safeio.MkdirAllChown(dirPath, uid, gid)
+			Expect(err).NotTo(HaveOccurred())
+
+			info, err := os.Stat(dirPath)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(info.IsDir()).To(BeTrue())
+			Expect(info.Mode() & os.ModePerm).To(Equal(os.FileMode(0700)))
+			Expect(info.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(uid)))
+			Expect(info.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(gid)))
+		})
+	})
+
+	Context("when the directory already exists", func() {
+		It("ensures ownership without error", func() {
+			dirPath := filepath.Join(tmpDir, "existingdir")
+			Expect(os.Mkdir(dirPath, 0700)).To(Succeed())
+
+			err := safeio.MkdirAllChown(dirPath, uid, gid)
+			Expect(err).NotTo(HaveOccurred())
+
+			info, err := os.Stat(dirPath)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(info.IsDir()).To(BeTrue())
+		})
+	})
+
+	Context("when the path is a symlink to an existing directory", func() {
+		var (
+			targetDir string
+			linkPath  string
+		)
+
+		BeforeEach(func() {
+			targetDir = filepath.Join(tmpDir, "target-dir")
+			linkPath = filepath.Join(tmpDir, "symlink-dir")
+
+			Expect(os.Mkdir(targetDir, 0755)).To(Succeed())
+			Expect(os.Symlink(targetDir, linkPath)).To(Succeed())
+		})
+
+		It("refuses to follow the symlink and returns an error", func() {
+			err := safeio.MkdirAllChown(linkPath, uid, gid)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("refusing to create directory through symlink"))
+
+			// Target directory should retain original permissions
+			info, err := os.Lstat(targetDir)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(info.Mode() & os.ModePerm).To(Equal(os.FileMode(0755)))
+		})
+	})
+
+	Context("when the path is a symlink to a non-existent path", func() {
+		var (
+			targetDir string
+			linkPath  string
+		)
+
+		BeforeEach(func() {
+			targetDir = filepath.Join(tmpDir, "nonexistent-target")
+			linkPath = filepath.Join(tmpDir, "dangling-link")
+
+			Expect(os.Symlink(targetDir, linkPath)).To(Succeed())
+		})
+
+		It("refuses to follow the symlink and does not create the target", func() {
+			err := safeio.MkdirAllChown(linkPath, uid, gid)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("refusing to create directory through symlink"))
+
+			_, err = os.Lstat(targetDir)
+			Expect(os.IsNotExist(err)).To(BeTrue())
+		})
+	})
+
+	Context("when the path exists as a regular file", func() {
+		It("returns an error", func() {
+			filePath := filepath.Join(tmpDir, "regular-file")
+			Expect(os.WriteFile(filePath, []byte("data"), 0600)).To(Succeed())
+
+			err := safeio.MkdirAllChown(filePath, uid, gid)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("exists and is not a directory"))
+		})
+	})
+})
+
+var _ = Describe("Lchown", func() {
+	var (
+		tmpDir   string
+		uid, gid int
+	)
+
+	BeforeEach(func() {
+		var err error
+		tmpDir, err = os.MkdirTemp("", "safeio-lchown")
+		Expect(err).NotTo(HaveOccurred())
+
+		uid = os.Getuid()
+		gid = os.Getgid()
+	})
+
+	AfterEach(func() {
+		Expect(os.RemoveAll(tmpDir)).To(Succeed())
+	})
+
+	Context("when the path is a regular file", func() {
+		It("successfully changes ownership", func() {
+			filePath := filepath.Join(tmpDir, "file.txt")
+			Expect(os.WriteFile(filePath, []byte("test"), 0600)).To(Succeed())
+
+			err := safeio.Lchown(filePath, uid, gid)
+			Expect(err).NotTo(HaveOccurred())
+
+			info, err := os.Stat(filePath)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(info.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(uid)))
+			Expect(info.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(gid)))
+		})
+	})
+
+	Context("when the path is a symlink", func() {
+		It("refuses to chown and returns an error without altering the target", func() {
+			target := filepath.Join(tmpDir, "target.txt")
+			link := filepath.Join(tmpDir, "link.txt")
+
+			Expect(os.WriteFile(target, []byte("protected"), 0600)).To(Succeed())
+			Expect(os.Symlink(target, link)).To(Succeed())
+
+			err := safeio.Lchown(link, uid, gid)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("refusing to chown symlink"))
+		})
+	})
+})
