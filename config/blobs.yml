@@ -6,10 +6,10 @@ libseccomp/libseccomp-2.6.1.tar.gz:
   size: 656231
   object_id: 4578804c-c232-4aa6-71e9-17f170a048a6
   sha: sha256:501f66c667225d53791b97e1d7cf85ab764c297d04881f60f38f451c4b0ee1be
-pkgconf/pkgconf-3.0.7.tar.gz:
-  size: 267765
-  object_id: fa22750b-a267-4666-6ada-cc98a4918e08
-  sha: sha256:a9ae678879771fcf15247ac2435e7ad8308be8a5921898e6720b3b8949410f73
+pkgconf/pkgconf-3.0.8.tar.gz:
+  size: 269445
+  object_id: cc9b4f86-eea6-4739-4de1-c1bd93b4612f
+  sha: sha256:44f67cdda8192efecd9be9f8df2fe54f087f8c84062ddff0027133f94543bf8a
 runc/runc-1.2.8.tar.xz:
   size: 1665124
   object_id: b2889dde-d4b1-475f-54d8-7213e868d03d
