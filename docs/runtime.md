@@ -43,7 +43,7 @@ this would not forward signals. You can now remove this workaround.
 
 ## Environment Variables
 
-| *Name* | *Value*                          |
+| Name   | Value                            |
 |--------|----------------------------------|
 | TMPDIR | `/var/vcap/data/JOB/tmp`         |
 
