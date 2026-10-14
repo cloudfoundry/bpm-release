@@ -152,6 +152,11 @@ var _ = Describe("MkdirAllChown", func() {
 		tmpDir, err = os.MkdirTemp("", "safeio-mkdir")
 		Expect(err).NotTo(HaveOccurred())
 
+		// MkdirAllChown rejects symlinks in every path component, and on some
+		// platforms the temp root itself sits behind one.
+		tmpDir, err = filepath.EvalSymlinks(tmpDir)
+		Expect(err).NotTo(HaveOccurred())
+
 		uid = os.Getuid()
 		gid = os.Getgid()
 	})
@@ -247,6 +252,36 @@ var _ = Describe("MkdirAllChown", func() {
 			err := safeio.MkdirAllChown(filePath, uid, gid)
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("exists and is not a directory"))
+		})
+	})
+
+	Context("when an intermediate component is a symlink", func() {
+		var protectedDir string
+
+		BeforeEach(func() {
+			protectedDir = filepath.Join(tmpDir, "protected")
+			Expect(os.MkdirAll(protectedDir, 0755)).To(Succeed())
+
+			writable := filepath.Join(tmpDir, "writable")
+			Expect(os.MkdirAll(writable, 0777)).To(Succeed())
+			Expect(os.Symlink(protectedDir, filepath.Join(writable, "a"))).To(Succeed())
+		})
+
+		It("refuses to follow the symlink and does not create the leaf under the target", func() {
+			err := safeio.MkdirAllChown(filepath.Join(tmpDir, "writable", "a", "b"), uid, gid)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("refusing to create directory through symlink"))
+
+			_, statErr := os.Lstat(filepath.Join(protectedDir, "b"))
+			Expect(os.IsNotExist(statErr)).To(BeTrue(), "leaf was created through the intermediate symlink")
+		})
+	})
+
+	Context("when the path is relative", func() {
+		It("returns an error", func() {
+			err := safeio.MkdirAllChown("relative/path", uid, gid)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("relative path"))
 		})
 	})
 })

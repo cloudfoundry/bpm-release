@@ -16,14 +16,18 @@
 // Package safeio provides helpers for performing privileged file operations
 // against paths that live in directories writable by less-privileged users
 // (e.g. job log directories). The helpers use O_NOFOLLOW, Lstat, and lchown
-// so that a pre-planted symlink at the leaf path cannot redirect the operation
-// onto an arbitrary host file.
+// so that a pre-planted symlink cannot redirect the operation onto an
+// arbitrary host file. MkdirAllChown checks every component of the path;
+// OpenAppendChown and Lchown operate on an existing parent and so guard the
+// leaf only.
 package safeio
 
 import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"golang.org/x/sys/unix"
 )
@@ -57,34 +61,65 @@ func OpenAppendChown(path string, uid, gid int, perm os.FileMode) (*os.File, err
 
 // MkdirAllChown creates a directory (and any parent directories) with 0700
 // permissions and chowns the leaf directory to the specified uid and gid.
-// If the path already exists and is a symlink, or if the leaf is a symlink,
-// it refuses to follow it and returns an error.
+//
+// The path is walked one component at a time from the filesystem root, and
+// every component is opened with O_NOFOLLOW. A symlink anywhere in the path —
+// not just at the leaf — is refused. Checking only the leaf is not sufficient:
+// an attacker who can plant a symlink at an intermediate component redirects
+// the whole subtree, so MkdirAll would create the leaf under the symlink's
+// target and the subsequent chown would hand that target to uid/gid.
+//
+// The final chown is issued against the open directory descriptor (fchown(2)),
+// so the path cannot be swapped between the walk and the ownership change.
+//
+// Because every component is checked, a legitimate symlink in the path prefix
+// is rejected too. Callers must pass paths whose ancestors are real
+// directories.
 func MkdirAllChown(path string, uid, gid int) error {
-	fi, err := os.Lstat(path)
-	if err == nil {
-		if fi.Mode()&os.ModeSymlink != 0 {
-			return fmt.Errorf("refusing to create directory through symlink at %s", path)
+	if !filepath.IsAbs(path) {
+		return fmt.Errorf("refusing to create directory at relative path %s", path)
+	}
+
+	// O_PATH would be enough to walk, but it makes O_NOFOLLOW return a
+	// descriptor to the symlink itself rather than ELOOP, so use a real
+	// directory open instead.
+	parent, err := unix.Open("/", unix.O_RDONLY|unix.O_DIRECTORY|unix.O_CLOEXEC, 0)
+	if err != nil {
+		return fmt.Errorf("open /: %w", err)
+	}
+	defer func() { _ = unix.Close(parent) }() //nolint:errcheck
+
+	for _, component := range strings.Split(strings.Trim(filepath.Clean(path), "/"), "/") {
+		if err := unix.Mkdirat(parent, component, 0700); err != nil && !errors.Is(err, unix.EEXIST) {
+			return fmt.Errorf("mkdir %s: %w", path, err)
 		}
-		if !fi.IsDir() {
+
+		// Classify the component before opening it. Errno alone is not
+		// portable here: with O_DIRECTORY set, a symlink reports ENOTDIR on
+		// some platforms and ELOOP on others.
+		var st unix.Stat_t
+		if err := unix.Fstatat(parent, component, &st, unix.AT_SYMLINK_NOFOLLOW); err != nil {
+			return fmt.Errorf("stat %s: %w", path, err)
+		}
+		switch st.Mode & unix.S_IFMT {
+		case unix.S_IFLNK:
+			return fmt.Errorf("refusing to create directory through symlink at %s", path)
+		case unix.S_IFDIR:
+		default:
 			return fmt.Errorf("path %s exists and is not a directory", path)
 		}
-	} else if !os.IsNotExist(err) {
-		return err
+
+		// O_NOFOLLOW closes the window between the check above and the open.
+		child, err := unix.Openat(parent, component, unix.O_RDONLY|unix.O_DIRECTORY|unix.O_NOFOLLOW|unix.O_CLOEXEC, 0)
+		if err != nil {
+			return fmt.Errorf("open %s: %w", path, err)
+		}
+
+		_ = unix.Close(parent) //nolint:errcheck
+		parent = child
 	}
 
-	if err := os.MkdirAll(path, 0700); err != nil {
-		return err
-	}
-
-	fi, err = os.Lstat(path)
-	if err != nil {
-		return err
-	}
-	if fi.Mode()&os.ModeSymlink != 0 {
-		return fmt.Errorf("refusing to chown symlink at %s", path)
-	}
-
-	return os.Lchown(path, uid, gid)
+	return unix.Fchown(parent, uid, gid)
 }
 
 // Lchown changes the ownership of the named file or directory without following
