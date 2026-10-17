@@ -208,6 +208,35 @@ var _ = Describe("RuncAdapter", func() {
 			})
 		})
 
+		Context("when an additional volume provided is a symlink", func() {
+			var (
+				sentinelFile string
+				symlinkPath  string
+			)
+
+			BeforeEach(func() {
+				sentinelFile = filepath.Join(systemRoot, "sentinel.target")
+				Expect(os.WriteFile(sentinelFile, []byte("protected"), 0600)).To(Succeed())
+
+				symlinkPath = filepath.Join(systemRoot, "symlink-vol")
+				Expect(os.Symlink(sentinelFile, symlinkPath)).To(Succeed())
+
+				procCfg.AdditionalVolumes = append(procCfg.AdditionalVolumes, config.Volume{
+					Path: symlinkPath,
+				})
+			})
+
+			It("refuses to configure the volume and does not modify the target", func() {
+				_, _, err := runcAdapter.CreateJobPrerequisites(bpmCfg, procCfg, user)
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("refusing to configure additional volume at symlink"))
+
+				contents, readErr := os.ReadFile(sentinelFile)
+				Expect(readErr).NotTo(HaveOccurred())
+				Expect(string(contents)).To(Equal("protected"))
+			})
+		})
+
 		Context("when a volume should be mounted only", func() {
 			BeforeEach(func() {
 				procCfg.AdditionalVolumes = append(procCfg.AdditionalVolumes, config.Volume{
@@ -360,6 +389,131 @@ var _ = Describe("RuncAdapter", func() {
 				contents, readErr := os.ReadFile(sentinel)
 				Expect(readErr).NotTo(HaveOccurred())
 				Expect(string(contents)).To(Equal("untouched"))
+			})
+		})
+
+		Context("when a job directory is a symlink to an existing directory", func() {
+			var sentinelDir string
+
+			BeforeEach(func() {
+				sentinelDir = filepath.Join(systemRoot, "sentinel-dir")
+				Expect(os.MkdirAll(sentinelDir, 0755)).To(Succeed())
+
+				// Plant a symlink at the temp directory pointing to sentinel
+				tempDirParent := filepath.Dir(bpmCfg.TempDir().External())
+				Expect(os.MkdirAll(tempDirParent, 0700)).To(Succeed())
+				Expect(os.Symlink(sentinelDir, bpmCfg.TempDir().External())).To(Succeed())
+			})
+
+			It("refuses to follow the symlink and does not alter the target", func() {
+				_, _, err := runcAdapter.CreateJobPrerequisites(bpmCfg, procCfg, user)
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("refusing to create directory through symlink"))
+
+				info, statErr := os.Lstat(sentinelDir)
+				Expect(statErr).NotTo(HaveOccurred())
+				Expect(info.Mode() & os.ModePerm).To(Equal(os.FileMode(0755)))
+			})
+		})
+
+		// TNZGOV-18900 (CWE-59): CreateJobPrerequisites runs as root on the host.
+		// Several of the paths it chowns live in directories that are bind-mounted
+		// writable into the container and owned by vcap, so a compromised container
+		// can pre-plant a symlink and redirect root's chown onto an arbitrary host
+		// file — a container escape. These tests reproduce the escape against the
+		// real entry point and assert the host target's ownership is never changed.
+		//
+		// The escape is only observable when the chown can actually change an owner,
+		// which requires root; the whole suite already runs as root in CI (other
+		// cases assert Uid == 200). We skip explicitly when not root so a rootless
+		// run reports "skipped" rather than a misleading pass.
+		Describe("SECURITY: symlink-following chown (TNZGOV-18900)", func() {
+			var hostTarget, hostSentinel string
+
+			ownerUID := func(path string) uint32 {
+				info, err := os.Stat(path)
+				Expect(err).NotTo(HaveOccurred())
+				return info.Sys().(*syscall.Stat_t).Uid
+			}
+
+			BeforeEach(func() {
+				if os.Getuid() != 0 {
+					Skip("must run as root to observe the ownership change that constitutes the escape")
+				}
+
+				// Stand-in for a sensitive host location (e.g. /etc) that lives
+				// OUTSIDE the job tree and is owned by root.
+				hostTarget = filepath.Join(systemRoot, "host-sensitive")
+				Expect(os.MkdirAll(hostTarget, 0700)).To(Succeed())
+				hostSentinel = filepath.Join(hostTarget, "shadow")
+				Expect(os.WriteFile(hostSentinel, []byte("root:!locked:"), 0600)).To(Succeed())
+
+				Expect(ownerUID(hostTarget)).To(Equal(uint32(0)))
+			})
+
+			Context("when the attacker plants a symlink at a created job directory (leaf)", func() {
+				BeforeEach(func() {
+					// vcap owns the job data dir inside the container, so it can
+					// replace TempDir with a symlink to the host target.
+					tempDirParent := filepath.Dir(bpmCfg.TempDir().External())
+					Expect(os.MkdirAll(tempDirParent, 0700)).To(Succeed())
+					Expect(os.Symlink(hostTarget, bpmCfg.TempDir().External())).To(Succeed())
+				})
+
+				It("refuses to follow it and does not chown the host target to vcap", func() {
+					_, _, err := runcAdapter.CreateJobPrerequisites(bpmCfg, procCfg, user)
+					Expect(ownerUID(hostTarget)).To(Equal(uint32(0)), "host target was chowned to vcap — CONTAINER ESCAPE")
+					Expect(err).To(HaveOccurred())
+					Expect(err.Error()).To(ContainSubstring("refusing to create directory through symlink"))
+
+					contents, readErr := os.ReadFile(hostSentinel)
+					Expect(readErr).NotTo(HaveOccurred())
+					Expect(string(contents)).To(Equal("root:!locked:"))
+				})
+			})
+
+			Context("when the attacker plants a symlink at an additional volume (leaf)", func() {
+				BeforeEach(func() {
+					volParent := filepath.Join(systemRoot, "vcap-writable")
+					Expect(os.MkdirAll(volParent, 0770)).To(Succeed())
+					volPath := filepath.Join(volParent, "vol")
+					Expect(os.Symlink(hostTarget, volPath)).To(Succeed())
+
+					procCfg.AdditionalVolumes = append(procCfg.AdditionalVolumes, config.Volume{Path: volPath})
+				})
+
+				It("refuses to configure it and does not chown the host target to vcap", func() {
+					_, _, err := runcAdapter.CreateJobPrerequisites(bpmCfg, procCfg, user)
+					Expect(ownerUID(hostTarget)).To(Equal(uint32(0)), "host target was chowned to vcap — CONTAINER ESCAPE")
+					Expect(err).To(HaveOccurred())
+					Expect(err.Error()).To(ContainSubstring("refusing to configure additional volume at symlink"))
+
+				})
+			})
+
+			Context("when the attacker plants a symlink at an intermediate component of an additional volume", func() {
+				BeforeEach(func() {
+					// A nested volume path below a vcap-writable directory. The
+					// attacker controls an intermediate component, not the leaf —
+					// the case a leaf-only guard misses.
+					volParent := filepath.Join(systemRoot, "vcap-writable")
+					Expect(os.MkdirAll(volParent, 0770)).To(Succeed())
+					Expect(os.Symlink(hostTarget, filepath.Join(volParent, "sub"))).To(Succeed())
+
+					procCfg.AdditionalVolumes = append(procCfg.AdditionalVolumes, config.Volume{
+						Path: filepath.Join(volParent, "sub", "leaf"),
+					})
+				})
+
+				It("refuses to follow the intermediate symlink and does not create or chown under the target", func() {
+					_, _, err := runcAdapter.CreateJobPrerequisites(bpmCfg, procCfg, user)
+					Expect(err).To(HaveOccurred())
+					Expect(err.Error()).To(ContainSubstring("refusing to create directory through symlink"))
+
+					Expect(ownerUID(hostTarget)).To(Equal(uint32(0)), "host target was chowned to vcap — CONTAINER ESCAPE")
+					_, statErr := os.Lstat(filepath.Join(hostTarget, "leaf"))
+					Expect(os.IsNotExist(statErr)).To(BeTrue(), "leaf was created under the host target through the intermediate symlink")
+				})
 			})
 		})
 
