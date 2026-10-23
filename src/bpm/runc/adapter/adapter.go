@@ -78,7 +78,7 @@ func (a *RuncAdapter) CreateJobPrerequisites(
 		return nil, nil, err
 	}
 
-	var dirsToCreate, pathsToChown []string
+	var dirsToCreate []string
 	for _, vol := range procCfg.AdditionalVolumes {
 		if vol.Shared {
 			if err := a.makeShared(vol); err != nil {
@@ -90,18 +90,10 @@ func (a *RuncAdapter) CreateJobPrerequisites(
 			continue
 		}
 
-		fi, err := os.Stat(vol.Path)
-		if os.IsNotExist(err) {
-			dirsToCreate = append(dirsToCreate, vol.Path)
-		} else if err != nil {
+		if err := safeio.PrepareVolume(vol.Path, int(user.UID), int(user.GID)); err != nil {
 			return nil, nil, err
-		} else if fi.IsDir() && fi.Mode() != 0700 {
-			if err := os.Chmod(vol.Path, 0700); err != nil {
-				return nil, nil, err
-			}
 		}
 
-		pathsToChown = append(pathsToChown, vol.Path)
 	}
 
 	dirsToCreate = append(
@@ -134,11 +126,6 @@ func (a *RuncAdapter) CreateJobPrerequisites(
 		return nil, nil, err
 	}
 
-	err = chownPaths(pathsToChown, user)
-	if err != nil {
-		return nil, nil, err
-	}
-
 	return createLogFiles(bpmCfg, user)
 }
 
@@ -167,25 +154,7 @@ func createDirs(dirs []string, user specs.User) error {
 	return nil
 }
 
-func createDirFor(path string, uid, gid int) error {
-	err := os.MkdirAll(path, 0700)
-	if err != nil {
-		return err
-	}
-
-	return os.Chown(path, uid, gid)
-}
-
-func chownPaths(paths []string, user specs.User) error {
-	for _, path := range paths {
-		err := os.Chown(path, int(user.UID), int(user.GID))
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
+func createDirFor(path string, uid, gid int) error { return safeio.MkdirChown(path, uid, gid) }
 
 func createLogFiles(bpmCfg *config.BPMConfig, user specs.User) (*os.File, *os.File, error) {
 	files := make([]*os.File, 2)

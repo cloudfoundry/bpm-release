@@ -108,6 +108,36 @@ var _ = Describe("RuncAdapter", func() {
 	})
 
 	Describe("CreateJobPrerequisites", func() {
+		It("does not chown a host target through an additional-volume symlink", func() {
+			target := filepath.Join(systemRoot, "host-target")
+			Expect(os.WriteFile(target, []byte("unchanged"), 0644)).To(Succeed())
+			link := filepath.Join(systemRoot, "volume-link")
+			Expect(os.Symlink(target, link)).To(Succeed())
+			procCfg.AdditionalVolumes = []config.Volume{{Path: link}}
+			_, _, err := runcAdapter.CreateJobPrerequisites(bpmCfg, procCfg, user)
+			Expect(err).To(HaveOccurred())
+			info, err := os.Stat(target)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(info.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(0)))
+			Expect(info.Mode().Perm()).To(Equal(os.FileMode(0644)))
+		})
+		It("does not create or chown paths through an untrusted ancestor symlink", func() {
+			parent := filepath.Join(systemRoot, "shared")
+			Expect(os.Mkdir(parent, 0777)).To(Succeed())
+			Expect(os.Chmod(parent, 0777)).To(Succeed())
+			target := filepath.Join(systemRoot, "host-directory")
+			Expect(os.Mkdir(target, 0755)).To(Succeed())
+			link := filepath.Join(parent, "volume-link")
+			Expect(os.Symlink(target, link)).To(Succeed())
+			procCfg.AdditionalVolumes = []config.Volume{{Path: filepath.Join(link, "nested")}}
+			_, _, err := runcAdapter.CreateJobPrerequisites(bpmCfg, procCfg, user)
+			Expect(err).To(HaveOccurred())
+			Expect(filepath.Join(target, "nested")).NotTo(BeAnExistingFile())
+			info, err := os.Stat(target)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(info.Mode().Perm()).To(Equal(os.FileMode(0755)))
+		})
+
 		It("creates the job prerequisites", func() {
 			stdout, stderr, err := runcAdapter.CreateJobPrerequisites(bpmCfg, procCfg, user)
 			Expect(err).NotTo(HaveOccurred())
