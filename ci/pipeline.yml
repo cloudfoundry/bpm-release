@@ -491,6 +491,16 @@ jobs:
       - get: bpm-release
       - get: golang-release
       - get: boshlite-noble-stemcell
+    - task: go-generate
+      image: bpm-ci-registry-image
+      config:
+        platform: linux
+        inputs:
+          - name: bpm-release
+        outputs:
+          - name: bpm-release
+        run:
+          path: bpm-release/scripts/go-generate
     - task: bump-go-deps
       file: golang-release/ci/tasks/shared/bump-deps.yml
       input_mapping:
