@@ -1,11 +1,11 @@
-# code.cloudfoundry.org/bytefmt v0.95.0
+# code.cloudfoundry.org/bytefmt v0.96.0
 ## explicit; go 1.26.0
 code.cloudfoundry.org/bytefmt
-# code.cloudfoundry.org/clock v1.93.0
+# code.cloudfoundry.org/clock v1.94.0
 ## explicit; go 1.26.0
 code.cloudfoundry.org/clock
 code.cloudfoundry.org/clock/fakeclock
-# code.cloudfoundry.org/lager/v3 v3.92.0
+# code.cloudfoundry.org/lager/v3 v3.93.0
 ## explicit; go 1.26.0
 code.cloudfoundry.org/lager/v3
 code.cloudfoundry.org/lager/v3/internal/truncate
@@ -24,7 +24,7 @@ github.com/creack/pty
 ## explicit; go 1.18
 github.com/cyphar/filepath-securejoin
 github.com/cyphar/filepath-securejoin/internal/consts
-# github.com/gkampitakis/go-snaps v0.5.24
+# github.com/gkampitakis/go-snaps v0.5.25
 ## explicit; go 1.23
 # github.com/go-logr/logr v1.4.4
 ## explicit; go 1.18
@@ -43,7 +43,7 @@ github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
-# github.com/google/pprof v0.0.0-20261016150608-1facf8f91b50
+# github.com/google/pprof v0.0.0-20261026192309-dbd0ed30aa88
 ## explicit; go 1.26.0
 github.com/google/pprof/profile
 # github.com/inconshreveable/mousetrap v1.1.0
@@ -52,8 +52,8 @@ github.com/inconshreveable/mousetrap
 # github.com/kr/pty v1.1.8
 ## explicit; go 1.12
 github.com/kr/pty
-# github.com/moby/sys/mountinfo v0.7.2
-## explicit; go 1.17
+# github.com/moby/sys/mountinfo v0.7.3
+## explicit; go 1.18
 github.com/moby/sys/mountinfo
 # github.com/moby/sys/userns v0.2.1
 ## explicit; go 1.21
@@ -142,7 +142,7 @@ golang.org/x/mod/internal/lazyregexp
 golang.org/x/mod/modfile
 golang.org/x/mod/module
 golang.org/x/mod/semver
-# golang.org/x/net v0.61.0
+# golang.org/x/net v0.62.0
 ## explicit; go 1.26.0
 golang.org/x/net/html
 golang.org/x/net/html/atom
