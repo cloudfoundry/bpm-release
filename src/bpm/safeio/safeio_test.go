@@ -20,6 +20,7 @@ import (
 	"os"
 	"path/filepath"
 	"syscall"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -496,8 +497,18 @@ var _ = Describe("Lchmod", func() {
 			fifoPath := filepath.Join(tmpDir, "test.fifo")
 			Expect(unix.Mkfifo(fifoPath, 0644)).To(Succeed())
 
-			err := safeio.Lchmod(fifoPath, 0600)
-			Expect(err).NotTo(HaveOccurred())
+			done := make(chan error, 1)
+			go func() {
+				done <- safeio.Lchmod(fifoPath, 0600)
+			}()
+
+			var err error
+			select {
+			case err = <-done:
+				Expect(err).NotTo(HaveOccurred())
+			case <-time.After(2 * time.Second):
+				Fail("safeio.Lchmod blocked on opening FIFO")
+			}
 
 			info, err := os.Stat(fifoPath)
 			Expect(err).NotTo(HaveOccurred())

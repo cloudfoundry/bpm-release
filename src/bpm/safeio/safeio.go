@@ -93,11 +93,11 @@ func trustedSymlinkComponent(parent int, linkStat *unix.Stat_t) bool {
 // permissions and chowns the leaf directory to the specified uid and gid.
 //
 // The path is walked one component at a time from the filesystem root, and
-// every component is opened with O_NOFOLLOW. A symlink anywhere in the path —
-// not just at the leaf — is refused. Checking only the leaf is not sufficient:
-// an attacker who can plant a symlink at an intermediate component redirects
-// the whole subtree, so MkdirAll would create the leaf under the symlink's
-// target and the subsequent chown would hand that target to uid/gid.
+// components are opened with O_NOFOLLOW except for trusted intermediate
+// symlinks. Checking only the leaf is not sufficient: an attacker who can
+// plant a symlink at an intermediate component redirects the whole subtree,
+// so MkdirAll would create the leaf under the symlink's target and the
+// subsequent chown would hand that target to uid/gid.
 //
 // The final chown is issued against the open directory descriptor (fchown(2)),
 // so the path cannot be swapped between the walk and the ownership change.
