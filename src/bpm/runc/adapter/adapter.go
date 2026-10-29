@@ -97,13 +97,14 @@ func (a *RuncAdapter) CreateJobPrerequisites(
 			return nil, nil, err
 		} else if fi.Mode()&os.ModeSymlink != 0 {
 			return nil, nil, fmt.Errorf("refusing to configure additional volume at symlink %s", vol.Path)
-		} else if fi.IsDir() && fi.Mode() != 0700 {
-			if err := os.Chmod(vol.Path, 0700); err != nil {
-				return nil, nil, err
+		} else {
+			if fi.IsDir() && fi.Mode() != 0700 {
+				if err := safeio.Lchmod(vol.Path, 0700); err != nil {
+					return nil, nil, err
+				}
 			}
+			pathsToChown = append(pathsToChown, vol.Path)
 		}
-
-		pathsToChown = append(pathsToChown, vol.Path)
 	}
 
 	dirsToCreate = append(

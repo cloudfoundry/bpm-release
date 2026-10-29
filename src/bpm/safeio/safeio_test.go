@@ -264,6 +264,7 @@ var _ = Describe("MkdirAllChown", func() {
 
 			writable := filepath.Join(tmpDir, "writable")
 			Expect(os.MkdirAll(writable, 0777)).To(Succeed())
+			Expect(os.Chmod(writable, 0777)).To(Succeed())
 			Expect(os.Symlink(protectedDir, filepath.Join(writable, "a"))).To(Succeed())
 		})
 
@@ -284,6 +285,95 @@ var _ = Describe("MkdirAllChown", func() {
 			Expect(err.Error()).To(ContainSubstring("relative path"))
 		})
 	})
+
+	// The BOSH root is configurable (bosh.Path), and depending on stemcell and
+	// release any of sys, sys/log or sys/run may be a root-owned symlink into
+	// /var/vcap/data. These specs model that layout under the temp root rather
+	// than touching the real /var/vcap
+	Describe("trusted intermediate symlinks", func() {
+		BeforeEach(func() {
+			if os.Getuid() != 0 {
+				Skip("must run as root to control the ownership the trust check keys off")
+			}
+		})
+
+		It("follows a root-owned symlink in a root-owned, non-writable parent", func() {
+			target := filepath.Join(tmpDir, "data", "sys", "log")
+			Expect(os.MkdirAll(target, 0755)).To(Succeed())
+
+			sysDir := filepath.Join(tmpDir, "sys")
+			Expect(os.MkdirAll(sysDir, 0755)).To(Succeed())
+			Expect(os.Symlink(target, filepath.Join(sysDir, "log"))).To(Succeed())
+
+			jobDir := filepath.Join(sysDir, "log", "test-job")
+			Expect(safeio.MkdirAllChown(jobDir, uid, gid)).To(Succeed())
+
+			info, err := os.Lstat(filepath.Join(target, "test-job"))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(info.IsDir()).To(BeTrue())
+		})
+
+		It("follows a root-owned symlink at the sys component itself", func() {
+			target := filepath.Join(tmpDir, "data", "sys")
+			Expect(os.MkdirAll(filepath.Join(target, "log"), 0755)).To(Succeed())
+			Expect(os.Symlink(target, filepath.Join(tmpDir, "sys"))).To(Succeed())
+
+			jobDir := filepath.Join(tmpDir, "sys", "log", "test-job")
+			Expect(safeio.MkdirAllChown(jobDir, uid, gid)).To(Succeed())
+
+			info, err := os.Lstat(filepath.Join(target, "log", "test-job"))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(info.IsDir()).To(BeTrue())
+		})
+
+		It("refuses a root-owned symlink whose parent is group-writable", func() {
+			target := filepath.Join(tmpDir, "host-sensitive")
+			Expect(os.MkdirAll(target, 0700)).To(Succeed())
+
+			writable := filepath.Join(tmpDir, "writable")
+			Expect(os.MkdirAll(writable, 0775)).To(Succeed())
+			Expect(os.Chmod(writable, 0775)).To(Succeed())
+			Expect(os.Symlink(target, filepath.Join(writable, "sub"))).To(Succeed())
+
+			err := safeio.MkdirAllChown(filepath.Join(writable, "sub", "job"), uid, gid)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("refusing to create directory through symlink"))
+
+			_, statErr := os.Lstat(filepath.Join(target, "job"))
+			Expect(os.IsNotExist(statErr)).To(BeTrue())
+		})
+
+		It("refuses a symlink not owned by root", func() {
+			target := filepath.Join(tmpDir, "host-sensitive")
+			Expect(os.MkdirAll(target, 0700)).To(Succeed())
+
+			parent := filepath.Join(tmpDir, "parent")
+			Expect(os.MkdirAll(parent, 0755)).To(Succeed())
+			link := filepath.Join(parent, "sub")
+			Expect(os.Symlink(target, link)).To(Succeed())
+			Expect(os.Lchown(link, 1000, 1000)).To(Succeed())
+
+			err := safeio.MkdirAllChown(filepath.Join(parent, "sub", "job"), uid, gid)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("refusing to create directory through symlink"))
+
+			_, statErr := os.Lstat(filepath.Join(target, "job"))
+			Expect(os.IsNotExist(statErr)).To(BeTrue())
+		})
+
+		It("refuses a trusted-looking symlink at the leaf", func() {
+			target := filepath.Join(tmpDir, "data", "job")
+			Expect(os.MkdirAll(target, 0755)).To(Succeed())
+
+			sysDir := filepath.Join(tmpDir, "sys")
+			Expect(os.MkdirAll(sysDir, 0755)).To(Succeed())
+			Expect(os.Symlink(target, filepath.Join(sysDir, "job"))).To(Succeed())
+
+			err := safeio.MkdirAllChown(filepath.Join(sysDir, "job"), uid, gid)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("refusing to create directory through symlink"))
+		})
+	})
 })
 
 var _ = Describe("Lchown", func() {
@@ -295,6 +385,9 @@ var _ = Describe("Lchown", func() {
 	BeforeEach(func() {
 		var err error
 		tmpDir, err = os.MkdirTemp("", "safeio-lchown")
+		Expect(err).NotTo(HaveOccurred())
+
+		tmpDir, err = filepath.EvalSymlinks(tmpDir)
 		Expect(err).NotTo(HaveOccurred())
 
 		uid = os.Getuid()
@@ -331,6 +424,73 @@ var _ = Describe("Lchown", func() {
 			err := safeio.Lchown(link, uid, gid)
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("refusing to chown symlink"))
+		})
+	})
+
+	Context("when an intermediate component is a symlink", func() {
+		It("refuses to chown without altering the target", func() {
+			protectedDir := filepath.Join(tmpDir, "protected")
+			Expect(os.MkdirAll(protectedDir, 0755)).To(Succeed())
+			Expect(os.WriteFile(filepath.Join(protectedDir, "target.txt"), []byte("data"), 0600)).To(Succeed())
+
+			writable := filepath.Join(tmpDir, "writable")
+			Expect(os.MkdirAll(writable, 0777)).To(Succeed())
+			Expect(os.Chmod(writable, 0777)).To(Succeed())
+			Expect(os.Symlink(protectedDir, filepath.Join(writable, "sub"))).To(Succeed())
+
+			err := safeio.Lchown(filepath.Join(writable, "sub", "target.txt"), uid, gid)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("refusing to chown symlink"))
+		})
+	})
+})
+
+var _ = Describe("Lchmod", func() {
+	var (
+		tmpDir string
+	)
+
+	BeforeEach(func() {
+		var err error
+		tmpDir, err = os.MkdirTemp("", "safeio-lchmod")
+		Expect(err).NotTo(HaveOccurred())
+
+		tmpDir, err = filepath.EvalSymlinks(tmpDir)
+		Expect(err).NotTo(HaveOccurred())
+	})
+
+	AfterEach(func() {
+		Expect(os.RemoveAll(tmpDir)).To(Succeed())
+	})
+
+	Context("when the path is a directory", func() {
+		It("changes permissions successfully", func() {
+			dirPath := filepath.Join(tmpDir, "testdir")
+			Expect(os.Mkdir(dirPath, 0755)).To(Succeed())
+
+			err := safeio.Lchmod(dirPath, 0700)
+			Expect(err).NotTo(HaveOccurred())
+
+			info, err := os.Stat(dirPath)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(info.Mode() & os.ModePerm).To(Equal(os.FileMode(0700)))
+		})
+	})
+
+	Context("when the path or an intermediate component is a symlink", func() {
+		It("refuses to chmod and returns an error without altering the target", func() {
+			targetDir := filepath.Join(tmpDir, "target")
+			Expect(os.Mkdir(targetDir, 0755)).To(Succeed())
+			link := filepath.Join(tmpDir, "link")
+			Expect(os.Symlink(targetDir, link)).To(Succeed())
+
+			err := safeio.Lchmod(link, 0700)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("refusing to chmod symlink"))
+
+			info, err := os.Stat(targetDir)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(info.Mode() & os.ModePerm).To(Equal(os.FileMode(0755)))
 		})
 	})
 })
