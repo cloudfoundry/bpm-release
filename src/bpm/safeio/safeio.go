@@ -59,22 +59,6 @@ func OpenAppendChown(path string, uid, gid int, perm os.FileMode) (*os.File, err
 	return f, nil
 }
 
-// MkdirAllChown creates a directory (and any parent directories) with 0700
-// permissions and chowns the leaf directory to the specified uid and gid.
-//
-// The path is walked one component at a time from the filesystem root, and
-// every component is opened with O_NOFOLLOW. A symlink anywhere in the path —
-// not just at the leaf — is refused. Checking only the leaf is not sufficient:
-// an attacker who can plant a symlink at an intermediate component redirects
-// the whole subtree, so MkdirAll would create the leaf under the symlink's
-// target and the subsequent chown would hand that target to uid/gid.
-//
-// The final chown is issued against the open directory descriptor (fchown(2)),
-// so the path cannot be swapped between the walk and the ownership change.
-//
-// A symlink at an intermediate component is followed only when it satisfies
-// trustedSymlinkComponent, which the standard BOSH sys/log and sys/run symlinks
-// do. A symlink at the leaf is always refused.
 // trustedSymlinkComponent reports whether a symlink found at an intermediate
 // path component may safely be followed. parent is an open descriptor for the
 // directory containing the symlink, and linkStat is the lstat of the link.
@@ -105,6 +89,22 @@ func trustedSymlinkComponent(parent int, linkStat *unix.Stat_t) bool {
 	return parentStat.Uid == 0 && parentStat.Mode&(unix.S_IWGRP|unix.S_IWOTH) == 0
 }
 
+// MkdirAllChown creates a directory (and any parent directories) with 0700
+// permissions and chowns the leaf directory to the specified uid and gid.
+//
+// The path is walked one component at a time from the filesystem root, and
+// every component is opened with O_NOFOLLOW. A symlink anywhere in the path —
+// not just at the leaf — is refused. Checking only the leaf is not sufficient:
+// an attacker who can plant a symlink at an intermediate component redirects
+// the whole subtree, so MkdirAll would create the leaf under the symlink's
+// target and the subsequent chown would hand that target to uid/gid.
+//
+// The final chown is issued against the open directory descriptor (fchown(2)),
+// so the path cannot be swapped between the walk and the ownership change.
+//
+// A symlink at an intermediate component is followed only when it satisfies
+// trustedSymlinkComponent, which the standard BOSH sys/log and sys/run symlinks
+// do. A symlink at the leaf is always refused.
 func MkdirAllChown(path string, uid, gid int) error {
 	if !filepath.IsAbs(path) {
 		return fmt.Errorf("refusing to create directory at relative path %s", path)
@@ -133,7 +133,7 @@ func MkdirAllChown(path string, uid, gid int) error {
 		if err := unix.Fstatat(parent, component, &st, unix.AT_SYMLINK_NOFOLLOW); err != nil {
 			return fmt.Errorf("stat %s: %w", path, err)
 		}
-		var openFlags int = unix.O_RDONLY | unix.O_DIRECTORY | unix.O_CLOEXEC
+		openFlags := unix.O_RDONLY | unix.O_DIRECTORY | unix.O_CLOEXEC
 		switch st.Mode & unix.S_IFMT {
 		case unix.S_IFLNK:
 			if !isLeaf && trustedSymlinkComponent(parent, &st) {
@@ -295,7 +295,7 @@ func Lchmod(path string, mode uint32) error {
 			parent = child
 		default:
 			if isLeaf {
-				child, err := unix.Openat(parent, component, unix.O_RDONLY|unix.O_NOFOLLOW|unix.O_CLOEXEC, 0)
+				child, err := unix.Openat(parent, component, unix.O_RDONLY|unix.O_NOFOLLOW|unix.O_NONBLOCK|unix.O_CLOEXEC, 0)
 				if err != nil {
 					return fmt.Errorf("open %s: %w", path, err)
 				}

@@ -477,7 +477,35 @@ var _ = Describe("Lchmod", func() {
 		})
 	})
 
-	Context("when the path or an intermediate component is a symlink", func() {
+	Context("when the path is a regular file", func() {
+		It("changes permissions successfully", func() {
+			filePath := filepath.Join(tmpDir, "file.txt")
+			Expect(os.WriteFile(filePath, []byte("test"), 0644)).To(Succeed())
+
+			err := safeio.Lchmod(filePath, 0600)
+			Expect(err).NotTo(HaveOccurred())
+
+			info, err := os.Stat(filePath)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(info.Mode() & os.ModePerm).To(Equal(os.FileMode(0600)))
+		})
+	})
+
+	Context("when the path is a FIFO", func() {
+		It("changes permissions without blocking", func() {
+			fifoPath := filepath.Join(tmpDir, "test.fifo")
+			Expect(unix.Mkfifo(fifoPath, 0644)).To(Succeed())
+
+			err := safeio.Lchmod(fifoPath, 0600)
+			Expect(err).NotTo(HaveOccurred())
+
+			info, err := os.Stat(fifoPath)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(info.Mode() & os.ModePerm).To(Equal(os.FileMode(0600)))
+		})
+	})
+
+	Context("when the path is a symlink", func() {
 		It("refuses to chmod and returns an error without altering the target", func() {
 			targetDir := filepath.Join(tmpDir, "target")
 			Expect(os.Mkdir(targetDir, 0755)).To(Succeed())
@@ -489,6 +517,26 @@ var _ = Describe("Lchmod", func() {
 			Expect(err.Error()).To(ContainSubstring("refusing to chmod symlink"))
 
 			info, err := os.Stat(targetDir)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(info.Mode() & os.ModePerm).To(Equal(os.FileMode(0755)))
+		})
+	})
+
+	Context("when an intermediate component is a symlink", func() {
+		It("refuses to chmod without altering the target", func() {
+			protectedDir := filepath.Join(tmpDir, "protected")
+			Expect(os.MkdirAll(protectedDir, 0755)).To(Succeed())
+
+			writable := filepath.Join(tmpDir, "writable")
+			Expect(os.MkdirAll(writable, 0777)).To(Succeed())
+			Expect(os.Chmod(writable, 0777)).To(Succeed())
+			Expect(os.Symlink(protectedDir, filepath.Join(writable, "sub"))).To(Succeed())
+
+			err := safeio.Lchmod(filepath.Join(writable, "sub", "testdir"), 0700)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("refusing to chmod symlink"))
+
+			info, err := os.Stat(protectedDir)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(info.Mode() & os.ModePerm).To(Equal(os.FileMode(0755)))
 		})
