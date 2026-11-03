@@ -6,7 +6,7 @@ request](https://help.github.com/articles/using-pull-requests).
 The `bpm-release` repository is a [BOSH](https://github.com/cloudfoundry/bosh)
 release for BPM.
 
-Changes are via pull request (PR) to the master branch of its repository. 
+Changes are via pull request (PR) to the main branch of its repository.
 
 Please verify your changes before submitting the PR by following the
 [Testing](#testing) section below.
