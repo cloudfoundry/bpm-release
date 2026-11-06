@@ -321,6 +321,41 @@ var _ = Describe("MkdirAllChown", func() {
 			Expect(info.IsDir()).To(BeTrue())
 		})
 
+		It("changes file ownership through a trusted intermediate symlink with Lchown", func() {
+			target := filepath.Join(tmpDir, "data", "sys", "log")
+			Expect(os.MkdirAll(target, 0755)).To(Succeed())
+			filePath := filepath.Join(target, "test.log")
+			Expect(os.WriteFile(filePath, []byte("data"), 0600)).To(Succeed())
+
+			sysDir := filepath.Join(tmpDir, "sys")
+			Expect(os.MkdirAll(sysDir, 0755)).To(Succeed())
+			Expect(os.Symlink(target, filepath.Join(sysDir, "log"))).To(Succeed())
+
+			Expect(safeio.Lchown(filepath.Join(sysDir, "log", "test.log"), 1000, 1000)).To(Succeed())
+
+			info, err := os.Stat(filePath)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(info.Sys().(*syscall.Stat_t).Uid).To(Equal(uint32(1000)))
+			Expect(info.Sys().(*syscall.Stat_t).Gid).To(Equal(uint32(1000)))
+		})
+
+		It("changes file mode through a trusted intermediate symlink with Lchmod", func() {
+			target := filepath.Join(tmpDir, "data", "sys", "log")
+			Expect(os.MkdirAll(target, 0755)).To(Succeed())
+			filePath := filepath.Join(target, "test.log")
+			Expect(os.WriteFile(filePath, []byte("data"), 0600)).To(Succeed())
+
+			sysDir := filepath.Join(tmpDir, "sys")
+			Expect(os.MkdirAll(sysDir, 0755)).To(Succeed())
+			Expect(os.Symlink(target, filepath.Join(sysDir, "log"))).To(Succeed())
+
+			Expect(safeio.Lchmod(filepath.Join(sysDir, "log", "test.log"), 0640)).To(Succeed())
+
+			info, err := os.Stat(filePath)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(info.Mode() & os.ModePerm).To(Equal(os.FileMode(0640)))
+		})
+
 		It("follows a root-owned symlink at the sys component itself", func() {
 			target := filepath.Join(tmpDir, "data", "sys")
 			Expect(os.MkdirAll(filepath.Join(target, "log"), 0755)).To(Succeed())
