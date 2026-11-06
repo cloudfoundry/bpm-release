@@ -129,8 +129,11 @@ func openDirComponent(parent int, component string, followTrusted bool, path, re
 	return child, nil
 }
 
-// openLeafParent walks every component of path except the leaf and returns a
-// descriptor for the leaf's parent directory,
+//openLeafParent walks every component of path except the leaf and returns a
+// descriptor for the leaf's parent directory, the leaf name, and the leaf's
+// lstat result. The caller must close the descriptor. It refuses a symlink
+// leaf and follows an intermediate symlink only when trustedSymlinkComponent
+// allows it.
 func openLeafParent(path, op string) (int, string, unix.Stat_t, error) {
 	var st unix.Stat_t
 
