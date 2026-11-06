@@ -89,6 +89,84 @@ func trustedSymlinkComponent(parent int, linkStat *unix.Stat_t) bool {
 	return parentStat.Uid == 0 && parentStat.Mode&(unix.S_IWGRP|unix.S_IWOTH) == 0
 }
 
+// splitAbsPath splits an absolute path into its components.
+func splitAbsPath(path, op string) ([]string, error) {
+	if !filepath.IsAbs(path) {
+		return nil, fmt.Errorf("refusing to %s at relative path %s", op, path)
+	}
+
+	cleanPath := filepath.Clean(path)
+	if cleanPath == "/" {
+		return nil, fmt.Errorf("refusing to %s at /", op)
+	}
+
+	return strings.Split(strings.TrimPrefix(cleanPath, "/"), "/"), nil
+}
+
+func openDirComponent(parent int, component string, followTrusted bool, path, refusal string) (int, error) {
+	var st unix.Stat_t
+	if err := unix.Fstatat(parent, component, &st, unix.AT_SYMLINK_NOFOLLOW); err != nil {
+		return -1, fmt.Errorf("stat %s: %w", path, err)
+	}
+
+	openFlags := unix.O_RDONLY | unix.O_DIRECTORY | unix.O_CLOEXEC
+	switch st.Mode & unix.S_IFMT {
+	case unix.S_IFLNK:
+		if !followTrusted || !trustedSymlinkComponent(parent, &st) {
+			return -1, fmt.Errorf("refusing to %s at %s", refusal, path)
+		}
+	case unix.S_IFDIR:
+		openFlags |= unix.O_NOFOLLOW
+	default:
+		return -1, fmt.Errorf("path component %s of %s exists and is not a directory", component, path)
+	}
+
+	child, err := unix.Openat(parent, component, openFlags, 0)
+	if err != nil {
+		return -1, fmt.Errorf("open %s: %w", path, err)
+	}
+
+	return child, nil
+}
+
+// openLeafParent walks every component of path except the leaf and returns a
+// descriptor for the leaf's parent directory,
+func openLeafParent(path, op string) (int, string, unix.Stat_t, error) {
+	var st unix.Stat_t
+
+	components, err := splitAbsPath(path, op)
+	if err != nil {
+		return -1, "", st, err
+	}
+
+	parent, err := unix.Open("/", unix.O_RDONLY|unix.O_DIRECTORY|unix.O_CLOEXEC, 0)
+	if err != nil {
+		return -1, "", st, fmt.Errorf("open /: %w", err)
+	}
+
+	refusal := op + " symlink"
+	for _, component := range components[:len(components)-1] {
+		child, err := openDirComponent(parent, component, true, path, refusal)
+		_ = unix.Close(parent) //nolint:errcheck
+		if err != nil {
+			return -1, "", st, err
+		}
+		parent = child
+	}
+
+	leaf := components[len(components)-1]
+	if err := unix.Fstatat(parent, leaf, &st, unix.AT_SYMLINK_NOFOLLOW); err != nil {
+		_ = unix.Close(parent) //nolint:errcheck
+		return -1, "", st, fmt.Errorf("stat %s: %w", path, err)
+	}
+	if st.Mode&unix.S_IFMT == unix.S_IFLNK {
+		_ = unix.Close(parent) //nolint:errcheck
+		return -1, "", st, fmt.Errorf("refusing to %s at %s", refusal, path)
+	}
+
+	return parent, leaf, st, nil
+}
+
 // MkdirAllChown creates a directory (and any parent directories) with 0700
 // permissions and chowns the leaf directory to the specified uid and gid.
 //
@@ -106,49 +184,26 @@ func trustedSymlinkComponent(parent int, linkStat *unix.Stat_t) bool {
 // trustedSymlinkComponent, which the standard BOSH sys/log and sys/run symlinks
 // do. A symlink at the leaf is always refused.
 func MkdirAllChown(path string, uid, gid int) error {
-	if !filepath.IsAbs(path) {
-		return fmt.Errorf("refusing to create directory at relative path %s", path)
+	components, err := splitAbsPath(path, "create directory")
+	if err != nil {
+		return err
 	}
 
-	// O_PATH would be enough to walk, but it makes O_NOFOLLOW return a
-	// descriptor to the symlink itself rather than ELOOP, so use a real
-	// directory open instead.
 	parent, err := unix.Open("/", unix.O_RDONLY|unix.O_DIRECTORY|unix.O_CLOEXEC, 0)
 	if err != nil {
 		return fmt.Errorf("open /: %w", err)
 	}
 	defer func() { _ = unix.Close(parent) }() //nolint:errcheck
 
-	components := strings.Split(strings.Trim(filepath.Clean(path), "/"), "/")
 	for i, component := range components {
-		isLeaf := i == len(components)-1
 		if err := unix.Mkdirat(parent, component, 0700); err != nil && !errors.Is(err, unix.EEXIST) {
 			return fmt.Errorf("mkdir %s: %w", path, err)
 		}
 
-		// Classify the component before opening it. Errno alone is not
-		// portable here: with O_DIRECTORY set, a symlink reports ENOTDIR on
-		// some platforms and ELOOP on others.
-		var st unix.Stat_t
-		if err := unix.Fstatat(parent, component, &st, unix.AT_SYMLINK_NOFOLLOW); err != nil {
-			return fmt.Errorf("stat %s: %w", path, err)
-		}
-		openFlags := unix.O_RDONLY | unix.O_DIRECTORY | unix.O_CLOEXEC
-		switch st.Mode & unix.S_IFMT {
-		case unix.S_IFLNK:
-			if !isLeaf && trustedSymlinkComponent(parent, &st) {
-				break
-			}
-			return fmt.Errorf("refusing to create directory through symlink at %s", path)
-		case unix.S_IFDIR:
-			openFlags |= unix.O_NOFOLLOW
-		default:
-			return fmt.Errorf("path %s exists and is not a directory", path)
-		}
-
-		child, err := unix.Openat(parent, component, openFlags, 0)
+		isLeaf := i == len(components)-1
+		child, err := openDirComponent(parent, component, !isLeaf, path, "create directory through symlink")
 		if err != nil {
-			return fmt.Errorf("open %s: %w", path, err)
+			return err
 		}
 
 		_ = unix.Close(parent) //nolint:errcheck
@@ -163,73 +218,23 @@ func MkdirAllChown(path string, uid, gid int) error {
 // outright and following one at an intermediate component only when
 // trustedSymlinkComponent allows it.
 func Lchown(path string, uid, gid int) error {
-	if !filepath.IsAbs(path) {
-		return fmt.Errorf("refusing to chown relative path %s", path)
-	}
-
-	cleanPath := filepath.Clean(path)
-	components := strings.Split(strings.Trim(cleanPath, "/"), "/")
-	if len(components) == 0 {
-		return errors.New("cannot chown root")
-	}
-
-	parent, err := unix.Open("/", unix.O_RDONLY|unix.O_DIRECTORY|unix.O_CLOEXEC, 0)
+	parent, leaf, st, err := openLeafParent(path, "chown")
 	if err != nil {
-		return fmt.Errorf("open /: %w", err)
+		return err
 	}
 	defer func() { _ = unix.Close(parent) }() //nolint:errcheck
 
-	var currentPath string
-	for i, component := range components {
-		currentPath = filepath.Join(currentPath, component)
-		if !strings.HasPrefix(currentPath, "/") {
-			currentPath = "/" + currentPath
-		}
-
-		var st unix.Stat_t
-		if err := unix.Fstatat(parent, component, &st, unix.AT_SYMLINK_NOFOLLOW); err != nil {
-			return fmt.Errorf("stat %s: %w", path, err)
-		}
-
-		isLeaf := (i == len(components)-1)
-		switch st.Mode & unix.S_IFMT {
-		case unix.S_IFLNK:
-			if !isLeaf && trustedSymlinkComponent(parent, &st) {
-				child, err := unix.Openat(parent, component, unix.O_RDONLY|unix.O_DIRECTORY|unix.O_CLOEXEC, 0)
-				if err != nil {
-					return fmt.Errorf("open %s: %w", path, err)
-				}
-				_ = unix.Close(parent) //nolint:errcheck
-				parent = child
-				continue
-			}
-			return fmt.Errorf("refusing to chown symlink at %s", path)
-		case unix.S_IFDIR:
-			if isLeaf {
-				// Leaf directory: open with O_DIRECTORY|O_NOFOLLOW and fchown
-				child, err := unix.Openat(parent, component, unix.O_RDONLY|unix.O_DIRECTORY|unix.O_NOFOLLOW|unix.O_CLOEXEC, 0)
-				if err != nil {
-					return fmt.Errorf("open %s: %w", path, err)
-				}
-				defer func() { _ = unix.Close(child) }() //nolint:errcheck
-				return unix.Fchown(child, uid, gid)
-			}
-			child, err := unix.Openat(parent, component, unix.O_RDONLY|unix.O_DIRECTORY|unix.O_NOFOLLOW|unix.O_CLOEXEC, 0)
-			if err != nil {
-				return fmt.Errorf("open %s: %w", path, err)
-			}
-			_ = unix.Close(parent) //nolint:errcheck
-			parent = child
-		default:
-			// Non-directory (regular file, etc.)
-			if isLeaf {
-				return unix.Fchownat(parent, component, uid, gid, unix.AT_SYMLINK_NOFOLLOW)
-			}
-			return fmt.Errorf("path component %s exists and is not a directory", currentPath)
-		}
+	if st.Mode&unix.S_IFMT != unix.S_IFDIR {
+		return unix.Fchownat(parent, leaf, uid, gid, unix.AT_SYMLINK_NOFOLLOW)
 	}
 
-	return nil
+	child, err := unix.Openat(parent, leaf, unix.O_RDONLY|unix.O_DIRECTORY|unix.O_NOFOLLOW|unix.O_CLOEXEC, 0)
+	if err != nil {
+		return fmt.Errorf("open %s: %w", path, err)
+	}
+	defer func() { _ = unix.Close(child) }() //nolint:errcheck
+
+	return unix.Fchown(child, uid, gid)
 }
 
 // Lchmod changes the mode of the named file or directory without following
@@ -237,74 +242,24 @@ func Lchown(path string, uid, gid int) error {
 // outright and following one at an intermediate component only when
 // trustedSymlinkComponent allows it.
 func Lchmod(path string, mode uint32) error {
-	if !filepath.IsAbs(path) {
-		return fmt.Errorf("refusing to chmod relative path %s", path)
-	}
-
-	cleanPath := filepath.Clean(path)
-	components := strings.Split(strings.Trim(cleanPath, "/"), "/")
-	if len(components) == 0 {
-		return errors.New("cannot chmod root")
-	}
-
-	parent, err := unix.Open("/", unix.O_RDONLY|unix.O_DIRECTORY|unix.O_CLOEXEC, 0)
+	parent, leaf, st, err := openLeafParent(path, "chmod")
 	if err != nil {
-		return fmt.Errorf("open /: %w", err)
+		return err
 	}
 	defer func() { _ = unix.Close(parent) }() //nolint:errcheck
 
-	var currentPath string
-	for i, component := range components {
-		currentPath = filepath.Join(currentPath, component)
-		if !strings.HasPrefix(currentPath, "/") {
-			currentPath = "/" + currentPath
-		}
-
-		var st unix.Stat_t
-		if err := unix.Fstatat(parent, component, &st, unix.AT_SYMLINK_NOFOLLOW); err != nil {
-			return fmt.Errorf("stat %s: %w", path, err)
-		}
-
-		isLeaf := (i == len(components)-1)
-		switch st.Mode & unix.S_IFMT {
-		case unix.S_IFLNK:
-			if !isLeaf && trustedSymlinkComponent(parent, &st) {
-				child, err := unix.Openat(parent, component, unix.O_RDONLY|unix.O_DIRECTORY|unix.O_CLOEXEC, 0)
-				if err != nil {
-					return fmt.Errorf("open %s: %w", path, err)
-				}
-				_ = unix.Close(parent) //nolint:errcheck
-				parent = child
-				continue
-			}
-			return fmt.Errorf("refusing to chmod symlink at %s", path)
-		case unix.S_IFDIR:
-			if isLeaf {
-				child, err := unix.Openat(parent, component, unix.O_RDONLY|unix.O_DIRECTORY|unix.O_NOFOLLOW|unix.O_CLOEXEC, 0)
-				if err != nil {
-					return fmt.Errorf("open %s: %w", path, err)
-				}
-				defer func() { _ = unix.Close(child) }() //nolint:errcheck
-				return unix.Fchmod(child, mode)
-			}
-			child, err := unix.Openat(parent, component, unix.O_RDONLY|unix.O_DIRECTORY|unix.O_NOFOLLOW|unix.O_CLOEXEC, 0)
-			if err != nil {
-				return fmt.Errorf("open %s: %w", path, err)
-			}
-			_ = unix.Close(parent) //nolint:errcheck
-			parent = child
-		default:
-			if isLeaf {
-				child, err := unix.Openat(parent, component, unix.O_RDONLY|unix.O_NOFOLLOW|unix.O_NONBLOCK|unix.O_CLOEXEC, 0)
-				if err != nil {
-					return fmt.Errorf("open %s: %w", path, err)
-				}
-				defer func() { _ = unix.Close(child) }() //nolint:errcheck
-				return unix.Fchmod(child, mode)
-			}
-			return fmt.Errorf("path component %s exists and is not a directory", currentPath)
-		}
+	openFlags := unix.O_RDONLY | unix.O_NOFOLLOW | unix.O_CLOEXEC
+	if st.Mode&unix.S_IFMT == unix.S_IFDIR {
+		openFlags |= unix.O_DIRECTORY
+	} else {
+		openFlags |= unix.O_NONBLOCK
 	}
 
-	return nil
+	child, err := unix.Openat(parent, leaf, openFlags, 0)
+	if err != nil {
+		return fmt.Errorf("open %s: %w", path, err)
+	}
+	defer func() { _ = unix.Close(child) }() //nolint:errcheck
+
+	return unix.Fchmod(child, mode)
 }

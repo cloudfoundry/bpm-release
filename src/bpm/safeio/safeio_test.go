@@ -287,6 +287,13 @@ var _ = Describe("MkdirAllChown", func() {
 		})
 	})
 
+	Context("when the path is the filesystem root", func() {
+		It("returns an error", func() {
+			err := safeio.MkdirAllChown("/", uid, gid)
+			Expect(err).To(MatchError(ContainSubstring("refusing to create directory at /")))
+		})
+	})
+
 	// The BOSH root is configurable (bosh.Path), and depending on stemcell and
 	// release any of sys, sys/log or sys/run may be a root-owned symlink into
 	// /var/vcap/data. These specs model that layout under the temp root rather
@@ -444,6 +451,13 @@ var _ = Describe("Lchown", func() {
 			Expect(err.Error()).To(ContainSubstring("refusing to chown symlink"))
 		})
 	})
+
+	Context("when the path is the filesystem root", func() {
+		It("returns an error", func() {
+			err := safeio.Lchown("/", uid, gid)
+			Expect(err).To(MatchError(ContainSubstring("refusing to chown at /")))
+		})
+	})
 })
 
 var _ = Describe("Lchmod", func() {
@@ -550,6 +564,13 @@ var _ = Describe("Lchmod", func() {
 			info, err := os.Stat(protectedDir)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(info.Mode() & os.ModePerm).To(Equal(os.FileMode(0755)))
+		})
+	})
+
+	Context("when the path is the filesystem root", func() {
+		It("returns an error", func() {
+			err := safeio.Lchmod("/", 0700)
+			Expect(err).To(MatchError(ContainSubstring("refusing to chmod at /")))
 		})
 	})
 })
