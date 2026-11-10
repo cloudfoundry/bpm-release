@@ -1,11 +1,11 @@
-# code.cloudfoundry.org/bytefmt v0.97.0
+# code.cloudfoundry.org/bytefmt v0.98.0
 ## explicit; go 1.26.0
 code.cloudfoundry.org/bytefmt
-# code.cloudfoundry.org/clock v1.95.0
+# code.cloudfoundry.org/clock v1.96.0
 ## explicit; go 1.26.0
 code.cloudfoundry.org/clock
 code.cloudfoundry.org/clock/fakeclock
-# code.cloudfoundry.org/lager/v3 v3.94.0
+# code.cloudfoundry.org/lager/v3 v3.95.0
 ## explicit; go 1.26.0
 code.cloudfoundry.org/lager/v3
 code.cloudfoundry.org/lager/v3/internal/truncate
@@ -43,7 +43,7 @@ github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
-# github.com/google/pprof v0.0.0-20261105003125-4bf881d7fb0b
+# github.com/google/pprof v0.0.0-20261110164715-8bb1ee682bd8
 ## explicit; go 1.26.0
 github.com/google/pprof/profile
 # github.com/inconshreveable/mousetrap v1.1.0
@@ -122,13 +122,13 @@ github.com/spf13/cobra
 # github.com/spf13/pflag v1.1.0
 ## explicit; go 1.12
 github.com/spf13/pflag
-# github.com/tidwall/gjson v1.20.1
+# github.com/tidwall/gjson v1.20.2
 ## explicit; go 1.23
 # github.com/tidwall/match v1.2.0
 ## explicit; go 1.15
-# github.com/tidwall/pretty v1.2.2
+# github.com/tidwall/pretty v1.3.0
 ## explicit; go 1.16
-# github.com/tidwall/sjson v1.2.7
+# github.com/tidwall/sjson v1.2.9
 ## explicit; go 1.23
 # go.uber.org/mock v0.6.0
 ## explicit; go 1.23.0
@@ -138,7 +138,7 @@ go.uber.org/mock/mockgen/model
 # go.yaml.in/yaml/v3 v3.0.6
 ## explicit; go 1.16
 go.yaml.in/yaml/v3
-# golang.org/x/mod v0.42.0
+# golang.org/x/mod v0.43.0
 ## explicit; go 1.26.0
 golang.org/x/mod/internal/lazyregexp
 golang.org/x/mod/modfile
@@ -149,14 +149,14 @@ golang.org/x/mod/semver
 golang.org/x/net/html
 golang.org/x/net/html/atom
 golang.org/x/net/html/charset
-# golang.org/x/sync v0.24.0
+# golang.org/x/sync v0.25.0
 ## explicit; go 1.26.0
 golang.org/x/sync/errgroup
-# golang.org/x/sys v0.49.0
+# golang.org/x/sys v0.50.0
 ## explicit; go 1.26.0
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/text v0.43.0
+# golang.org/x/text v0.44.0
 ## explicit; go 1.26.0
 golang.org/x/text/encoding
 golang.org/x/text/encoding/charmap
