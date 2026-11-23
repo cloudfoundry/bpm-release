@@ -115,9 +115,14 @@ var _ = Describe("BpmAcceptance", func() {
 
 		mounts := parseMounts(string(body))
 
-		expectedMountPaths := []string{"/bin", "/etc", "/lib", "/lib64", "/sbin", "/usr"}
+		expectedMountPaths := []string{"/bin", "/etc", "/lib", "/sbin", "/usr"}
 		var found []string
 		for _, mount := range mounts {
+			// /lib64 is only mounted if it exists on the VM.
+			if mount.path == "/lib64" {
+				Expect(mount.options).To(ContainElement("ro"), "no read only permissions for /lib64")
+				continue
+			}
 			if containsString(expectedMountPaths, mount.path) {
 				found = append(found, mount.path)
 				Expect(mount.options).To(ContainElement("ro"), fmt.Sprintf("no read only permissions for %s", mount.path))

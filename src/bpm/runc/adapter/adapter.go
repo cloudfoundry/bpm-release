@@ -234,6 +234,15 @@ func (a *RuncAdapter) BuildSpec(
 		mounts = append(mounts, IdentityMount(systemdResolvedConfDir))
 	}
 
+	// /lib64 is absent on some platforms (e.g. Ubuntu arm64).
+	lib64Exists, err := checkDirExists("/lib64")
+	if err != nil {
+		return specs.Spec{}, err
+	}
+	if lib64Exists {
+		mounts = append(mounts, IdentityMount("/lib64", AllowExec()))
+	}
+
 	ms.addMounts(mounts)
 	boshMounts := boshMounts(bpmCfg, procCfg.EphemeralDisk, procCfg.PersistentDisk)
 	ms.addMounts(boshMounts)
@@ -348,7 +357,6 @@ func systemIdentityMounts() []specs.Mount {
 		IdentityMount("/bin", AllowExec()),
 		IdentityMount("/etc", AllowExec()),
 		IdentityMount("/lib", AllowExec()),
-		IdentityMount("/lib64", AllowExec()),
 		IdentityMount("/sbin", AllowExec()),
 		IdentityMount("/usr", AllowExec()),
 	}
