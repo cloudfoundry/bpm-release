@@ -461,7 +461,11 @@ var _ = Describe("RuncAdapter", func() {
 				Path: bpmCfg.RootFSPath(),
 			}))
 
-			Expect(spec.Mounts).To(HaveLen(24), fmt.Sprintf("spec.Mounts is actually length %d", len(spec.Mounts)))
+			expectedMounts := 24
+			if _, err := os.Stat("/lib64"); err != nil {
+				expectedMounts--
+			}
+			Expect(spec.Mounts).To(HaveLen(expectedMounts), fmt.Sprintf("spec.Mounts is actually length %d", len(spec.Mounts)))
 			Expect(spec.Mounts).To(HaveMount(specs.Mount{
 				Destination: "/proc",
 				Type:        "proc",
@@ -522,12 +526,17 @@ var _ = Describe("RuncAdapter", func() {
 				Source:      "/lib",
 				Options:     []string{"nosuid", "nodev", "exec", "bind", "ro"},
 			}))
-			Expect(spec.Mounts).To(HaveMount(specs.Mount{
+			lib64 := specs.Mount{
 				Destination: "/lib64",
 				Type:        "bind",
 				Source:      "/lib64",
 				Options:     []string{"nosuid", "nodev", "exec", "bind", "ro"},
-			}))
+			}
+			if _, err := os.Stat("/lib64"); err == nil {
+				Expect(spec.Mounts).To(HaveMount(lib64))
+			} else {
+				Expect(spec.Mounts).NotTo(HaveMount(lib64))
+			}
 			Expect(spec.Mounts).To(HaveMount(specs.Mount{
 				Destination: "/sbin",
 				Type:        "bind",
